@@ -1,0 +1,31 @@
+node_modules
+Dockerfile
+bun.Dockerfile
+.dockerignore
+.gitignore
+a.yml
+a.*
+b.*
+bun.lockb
+bun.lock
+/.vscode
+
+docker-compose*
+
+
+# check this: TODO:
+
+# Ignore everything by default
+*
+
+# Allow specific files and folders
+!.data
+!.env
+!.env.development
+!.env.production
+!node_modules
+!.nuxt
+!.output
+!package.json
+!tsconfig.json
+!server/config/bun.Dockerfile

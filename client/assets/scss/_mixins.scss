@@ -1,0 +1,74 @@
+@use './variables' as *;
+@mixin list-reset {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+@mixin circle($dimensions) {
+  border-radius: 50%;
+  width: $dimensions;
+  height: $dimensions;
+}
+
+@mixin main-padding($pTop: 100px, $pBottom: 100px) {
+  padding-top: $pTop;
+  padding-bottom: $pBottom;
+  position: relative;
+}
+@mixin grid-minmax-auto-filled($min: 300px, $max: 1fr, $gap: 40px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min, $max));
+  gap: $gap;
+}
+@mixin middle-me($position: absolute) {
+  position: $position;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/*//! ===============================================  */
+/*//? ================== Portfolio ==================  */
+/*//! ===============================================  */
+
+@mixin mainMiddleSettings() {
+  font-family: $main-font;
+  position: relative;
+  background-color: $primary2;
+  border-left: 1px solid $lines;
+  border-right: 1px solid $lines;
+  border-top: 1px solid $lines;
+  & {
+    @media (max-width: 768px) {
+      height: calc(100vh - 90px);
+    }
+  }
+  & {
+    @media (min-width: 768px) {
+      // height: calc(100vh - 180px);
+      // height: calc(100% - 180px);
+      overflow: hidden;
+    }
+    @media (min-width: 769px) {
+      height: calc(100vh - 180px);
+    }
+  }
+}
+
+/*
+border-radius: 0 0 5px 5px;
+&:not(.phone-body) {
+  border-bottom: 1px solid $lines; //Need to be fixed! 🤦‍♀️
+}
+*/
+
+@mixin viewsRadius {
+}
+@mixin phone-borders {
+  border-top: 1px solid $lines !important;
+  border-right: 1px solid $lines;
+  border-bottom: 1px solid $lines;
+  border-left: 1px solid $lines;
+  border-radius: 0 0 5px 5px;
+  overflow: hidden;
+}

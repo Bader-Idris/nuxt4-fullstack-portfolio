@@ -1,0 +1,51 @@
+import mongoose from 'mongoose'
+import { defineNitroPlugin } from 'nitropack/runtime/plugin'
+
+export default defineNitroPlugin(async () => {
+  const config = useRuntimeConfig()
+
+  // const MONGO_URI = `mongodb://${config.mongo.user}:${config.mongo.password}@${config.mongo.ip}:${config.mongo.port}/${config.mongo.dbName}?authSource=admin`;
+  const MONGO_URI = config.mongoUri
+
+  mongoose.set('strictQuery', false)
+
+  let connected = false
+  let attempts = 0
+  const maxAttempts = 10 // Adjust as needed
+
+  while (!connected && attempts < maxAttempts) {
+    try {
+      await mongoose.connect(MONGO_URI as string)
+
+      /*
+        TODO: for prod use
+
+      await mongoose.connect(MONGO_URI, {
+        maxPoolSize: 10, // Adjust based on your needs
+        serverSelection
+      */
+      connected = true
+      console.log('✅ Successfully connected to MongoDB')
+    }
+    catch (error) {
+      attempts++
+      console.error(`❌ MongoDB connection attempt ${attempts} failed:`)
+
+      if (attempts >= maxAttempts) {
+        console.error(
+          '🔥 All MongoDB connection attempts failed - exiting process',
+        )
+        process.exit(1)
+      }
+
+      console.log(`⏳ Retrying connection in 5 seconds...`)
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+  }
+
+  // Graceful shutdown
+  // nitroApp.hooks.hook("close", async () => {
+  //   await mongoose.disconnect();
+  //   console.log("✅ MongoDB connection closed");
+  // });
+})

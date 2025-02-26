@@ -1,0 +1,56 @@
+FROM nginx:stable-alpine
+
+# Install dependencies
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/v$(cut -d'.' -f1,2 /etc/alpine-release)/community/" >> /etc/apk/repositories && \
+  apk add --no-cache --update \
+  fail2ban \
+  iptables \
+  ip6tables \
+  dos2unix
+
+# Create fail2ban user/group
+RUN addgroup -S fail2ban && \
+  adduser -S -G fail2ban fail2ban
+
+# Create directories with correct ownership
+RUN mkdir -p \
+  /var/run/fail2ban \
+  /var/lib/fail2ban \
+  /etc/fail2ban/jail.d && \
+  chown -R fail2ban:fail2ban \
+  /var/run/fail2ban \
+  /var/lib/fail2ban
+
+# Configure Fail2Ban core settings
+RUN touch /var/log/fail2ban.log && \
+  chown fail2ban:fail2ban /var/log/fail2ban.log && \
+  chmod 644 /var/log/fail2ban.log && \
+  sed -i \
+  -e 's|^logtarget =.*|logtarget = /var/log/fail2ban.log|' \
+  -e 's|^socket =.*|socket = /var/run/fail2ban/fail2ban.sock|' \
+  -e 's|^pidfile =.*|pidfile = /var/run/fail2ban/fail2ban.pid|' \
+  -e 's|^dbfile =.*|dbfile = /var/lib/fail2ban/fail2ban.sqlite3|' \
+  /etc/fail2ban/fail2ban.conf
+
+# Copy configurations
+COPY entrypoint.sh /entrypoint.sh
+COPY nginx-jail.local /etc/fail2ban/jail.d/
+COPY nginx-filter.conf /etc/fail2ban/filter.d/
+
+# Fix file permissions and line endings
+RUN dos2unix /entrypoint.sh && \
+  chmod +x /entrypoint.sh && \
+  sed -i 's|/run/nginx.pid|/var/run/nginx.pid|g' /etc/fail2ban/action.d/nginx-block-map.conf && \
+  ln -s /etc/fail2ban/jail.d/nginx-jail.local /etc/fail2ban/jail.local
+
+# Configure NGINX logs
+RUN sed -i \
+  -e 's|access_log /dev/stdout main;|access_log /var/log/nginx/access.log main;|' \
+  -e 's|error_log /dev/stderr warn;|error_log /var/log/nginx/error.log warn;|' \
+  /etc/nginx/nginx.conf && \
+  mkdir -p /var/log/nginx && \
+  touch /var/log/nginx/access.log /var/log/nginx/error.log && \
+  chown -R nginx:nginx /var/log/nginx
+
+# ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

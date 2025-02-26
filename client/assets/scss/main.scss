@@ -1,0 +1,83 @@
+@use '../scss/' as *;
+/* Global Rules */
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  font-family: 'cairo', sans-serif;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+@media screen and (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -ms-tap-highlight-color: transparent;
+  }
+}
+/* End Global Rules */
+
+/* screen sizes */
+/* Small */
+@media (min-width: 768px) {
+  //! needs improvements
+  .container {
+    width: 750px;
+  }
+}
+/* Medium */
+@media (min-width: 992px) {
+  .container {
+    width: 970px;
+  }
+}
+/* Large */
+@media (min-width: 1200px) {
+  .container {
+    width: 1170px;
+  }
+}
+/* End screen sizes */
+
+/* Custom scrollbar styles */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    color: transparent;
+  }
+}
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 20px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: $primary2;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba($primary2, 0.8); // Equivalent to a darker version
+    border-left: 1px solid $lines;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba($primary2, 0.6); // Equivalent to a lighter version
+  }
+}
+/* End custom scrollbar styles */
+
+/* custom selection */
+::selection {
+  color: $primary1;
+  background-color: $accent1;
+  font-weight: bold;
+}
+/* End custom selection */

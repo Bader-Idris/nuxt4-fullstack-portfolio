@@ -1,0 +1,8 @@
+node_modules/
+priv_key*
+config/certbot/
+/mailserver
+
+package-lock.json
+bun.lockb
+/config/nginx/ssl_renew_prod.sh

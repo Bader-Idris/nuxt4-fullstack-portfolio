@@ -1,0 +1,77 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    restart: always
+    # ports:
+    #   - "5000:80"
+    volumes:
+      # - ./client/dist:/usr/share/nginx/html:ro
+      - ./.output/public:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+  app:
+    build:
+      context: .
+      dockerfile: ./server/config/bun.Dockerfile
+      # dockerfile: ./server/config/Dockerfile
+    image: baderidris/personal-portfolio
+    restart: always
+    environment:
+      - PORT=3000
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo:4.4
+    container_name: mongo
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=Bader
+      - MONGO_INITDB_ROOT_PASSWORD=secretPassword
+    volumes:
+      - mongo-db:/data/db:rw  # 🔴chmod +x if (node.length > 1)🔴
+      - ./server/config/mongo/mongod.conf:/etc/mongod.conf:ro
+    command: mongod --config /etc/mongod.conf  # Specify the custom configuration file path
+  redis:
+    image: redis:alpine3.18
+    container_name: redis
+    restart: always
+    volumes:
+      - ./server/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      # - ./config/redis/.overcommit_memory:/proc/sys/vm/overcommit_memory
+    # command:
+      # - sh -c "echo 1 > /proc/sys/vm/overcommit_memory"
+      # - ./redis-server /usr/local/etc/redis/redis.conf
+      # - redis-server AUTH default secretPassword
+      # - AUTH default secretPassword
+  postgres:
+    image: postgres:16-alpine3.18
+    container_name: psql
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: articles
+    volumes:
+      - psql-data:/var/lib/postgresql/data:rw  # 🔴chmod +x if (node.length > 1)🔴
+      - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+  # adminer:  # I think it's not important to obtain
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+
+  # rabbitMQ doc https://hub.docker.com/_/rabbitmq
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitMQ
+  #   restart: always
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=bader  # user
+  #     - RABBITMQ_DEFAULT_PASS=secret # password
+  #   ports:
+  #     - "5672:5672" # AMQP port
+  #     - "15672:15672" # management interface port
+
+volumes:
+  mongo-db:
+  psql-data:

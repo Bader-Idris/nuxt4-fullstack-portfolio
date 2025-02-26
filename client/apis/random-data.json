@@ -1,0 +1,31 @@
+[
+  {
+    "socialLinks": [
+      {
+        "social-title": "telegram",
+        "url": "https://t.me/BaderIdrees",
+        "img": "",
+        "imgAlt": "",
+        "desc": "Lorem ipsum dolor",
+        "container-class": "telegram"
+      },
+      {
+        "social-title": "facebook",
+        "url": "https://www.facebook.com/Bader.Idris.developer",
+        "img": "",
+        "imgAlt": "",
+        "desc": "Lorem ipsum dolor",
+        "container-class": "facebook"
+      },
+      {
+        "social-title": "github",
+        "url": "https://github.com/bader-idris",
+        "img": "",
+        "imgAlt": "",
+        "desc": "Lorem ipsum dolor",
+        "container-class": "github"
+      }
+    ]
+  },
+  {}
+]

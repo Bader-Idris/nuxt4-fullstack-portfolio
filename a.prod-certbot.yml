@@ -1,0 +1,139 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./server/config/nginx/nginx_with_certbot.conf:/etc/nginx/conf.d/default.conf:ro
+      - web-root:/var/www/html
+      - ./server/config/nginx/for_server_exclusively.html:/usr/share/nginx/html/index.html
+      # - ./server/config/certbot/www:/var/www/certbot:rw
+      # - ./server/config/certbot/conf:/etc/letsencrypt:rw
+
+      - certbot-etc:/etc/letsencrypt     # ? certs and keys
+      - certbot-var:/var/lib/letsencrypt # ? default working dir
+    depends_on:
+      - app
+    networks:
+      - app-network
+  certbot:  # Official build of EFF's Certbot tool for obtaining TLS/SSL certificates from Let's Encrypt.
+    # ? best source to learn it is https://www.digitalocean.com/community/tutorials/how-to-secure-a-containerized-node-js-application-with-nginx-let-s-encrypt-and-docker-compose#step-4-obtaining-ssl-certificates-and-credentials
+    # ? it's important to share the networks option
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      # - ./server/config/certbot/www:/var/www/certbot:rw
+      # - ./server/config/certbot/conf:/etc/letsencrypt:rw
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
+    depends_on:
+      - nginx
+    # entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet --deploy-hook \"nginx -s reload\"; sleep 12h; done;'"
+    # environment:
+      # - CERTBOT_EMAIL=www.bader.com9@gmail.com
+      # - CERTBOT_DOMAINS=baderidris.com,www.baderidris.com
+
+    command: certonly --webroot --webroot-path=/var/www/html --email www.bader.com9@gmail.com --agree-tos --no-eff-email --staging -d baderidris.com -d www.baderidris.com
+    # TODO: first time, use --staging, after making sure needed files are in nginx:/etc/letsencrypt/live, and use --force-renewal flag instead!
+    # command: certonly --webroot --webroot-path=/var/www/html --email www.bader.com9@gmail.com --agree-tos --no-eff-email --force-renewal -d baderidris.com -d www.baderidris.com
+
+    # - certonly
+    # - --webroot
+    # - --webroot-path=/var/www/html
+    # - --email=$CERTBOT_EMAIL
+    # - --agree-tos
+    # - --no-eff-email
+    # - --staging
+    # - -d=$CERTBOT_DOMAINS
+  app:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: baderidris/portfolio
+    restart: always
+    volumes:
+      - ./server:/app
+      - /app/node_modules # ? is no need in prod, it takes more space
+      - web-root:/app/statics:ro
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+
+    depends_on:
+      - mongo
+    command: npm start
+    networks:
+      - app-network
+  mongo:
+    image: mongo:4.4
+    container_name: mongo
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=Bader
+      - MONGO_INITDB_ROOT_PASSWORD=myPassword
+    volumes:
+      - mongo-db:/data/db:rw  # 🔴chmod +x if (node.length > 1)🔴
+      - ./server/config/mongo/mongod.conf:/etc/mongod.conf:ro
+    command: mongod --config /etc/mongod.conf  # Specify the custom configuration file path
+    networks:
+      - app-network
+  redis:
+    image: redis:alpine3.18
+    container_name: redis
+    restart: always
+    volumes:
+      - ./server/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    environment:
+      - REDIS_USER=default
+      - REDIS_PASSWORD=myPassword
+  #   command:
+  #     - redis-server --requirepass myPassword
+  postgres:
+    image: postgres:16-alpine3.18
+    container_name: psql
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: articles
+    volumes:
+      - psql-data:/var/lib/postgresql/data:rw  # 🔴chmod +x if (node.length > 1)🔴
+      - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+  # adminer:  # I think it's not important to obtain
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+
+  # rabbitMQ doc https://hub.docker.com/_/rabbitmq
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitMQ
+  #   restart: always
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=bader  # user
+  #     - RABBITMQ_DEFAULT_PASS=secret # password
+  #   ports:
+  #     - "5672:5672" # AMQP port
+  #     - "15672:15672" # management interface port
+
+volumes:
+  mongo-db:
+  psql-data:
+  certbot-etc:
+  certbot-var:
+  web-root:
+    driver: local
+    driver_opts:
+      type: none
+      # device: /home/bader/node_project/views/ # might change node_project which is WEB_DIR
+      device: ./client/dist/
+      o: bind
+
+networks:
+  app-network:
+    driver: bridge

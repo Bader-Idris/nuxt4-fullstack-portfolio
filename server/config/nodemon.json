@@ -1,0 +1,9 @@
+{
+  "ext": "ts",
+  "watch": ["src"],
+  "ignore": ["node_modules", "dist"],
+  "exec": "ts-node src/app.ts",
+  // "exec": "docker-compose restart app"
+  "delay": 1000,
+  "restartable": "rs"
+}

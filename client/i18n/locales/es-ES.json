@@ -1,0 +1,28 @@
+{
+  "home": {
+    "greeting": "Hola a todos. Soy",
+    "name": "Bader Idris",
+    "role": "> Desarrollador Full-Stack",
+    "task": "// completa el juego para continuar",
+    "github": "// Encuentra mi perfil en GitHub",
+    "profile": "github.com/bader-idris",
+    "pageMobile": "// Encuentra mi perfil en GitHub",
+    "gameTips_0": "// use teclado",
+    "gameTips_1": "// flechas para jugar",
+    "foodLeft": "// comida restante",
+    "gameCommand": "Iniciar Juego",
+    "gameCongratsTitle": "¡Enhorabuena!",
+    "gameCongrats": "¡Felicidades! ¡Has ganado el juego!",
+    "skip": "Saltar",
+    "score": "Punto",
+    "scores": "Puntos",
+    "hasWon": "¡Enhorabuena!",
+    "hasNotWon": "¡Has perdido!",
+    "again": "Empezar-de-nuevo"
+  },
+  "about": {},
+  "projects": {
+    "caution": "Por favor, selecciona una herramienta de programación\n para ver mis proyectos. Tu elección es crucial para continuar."
+  },
+  "contact": {}
+}
