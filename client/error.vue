@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
-import { useLocalePath } from '#imports'
 const localePath = useLocalePath()
 
 defineProps({
@@ -13,7 +12,9 @@ defineProps({
   <div class="not-found">
     <h1 class="text">{{ error?.statusCode || 404 }}</h1>
     <p>This page is not found <strong>{{ useRequestURL().pathname }}</strong></p>
-    <CustomLink aria-label="go to main page" :to="localePath('/')"
+    <CustomLink
+      aria-label="go to main page"
+      :to="localePath('/')"
       class="go-back">
       <span> back to main page </span>
     </CustomLink>

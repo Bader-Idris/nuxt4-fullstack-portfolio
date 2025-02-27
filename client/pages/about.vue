@@ -234,6 +234,7 @@ onUnmounted(() => {
       img {
         margin: 10px;
         cursor: pointer;
+        width: 24px;
 
         &:hover,
         &.active {

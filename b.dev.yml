@@ -1,9 +1,5 @@
 services:
   nginx:
-    build:
-      context: ./server/config/nginx
-      dockerfile: Dockerfile.nginx
-    image: custom-nginx-secure  # Cacheable image
     ports:
       - "5000:80"
       # - "80:80"
@@ -24,6 +20,7 @@ services:
       - ./.env.development:/app/.env.development
       - ./.env.production:/app/.env.production
       - ./node_modules:/app/node_modules
+      - /app/node_modules
       - ./.nuxt:/app/.nuxt
       - ./.output:/app/.output
       - ./package.json:/app/package.json

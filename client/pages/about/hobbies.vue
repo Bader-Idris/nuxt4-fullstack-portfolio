@@ -1,22 +1,14 @@
 <template>
   <div class="hobbies-info">
-    <h1>hobbies nested Page</h1>
+    <h1>hobbies page is under construction </h1>
   </div>
 </template>
 
-<script setup lang="ts"></script>
-
 <script setup lang="ts">
-useHead({
-  title: 'Projects I created during my career',
-  meta: [
-    { name: 'description', content: 'Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Node.js, and more.' },
-  ],
+useSeoMeta({
+  title: 'under development hobbies nested page',
+  description: 'this page requires fixes, so please stay tuned',
 })
-
-// definePageMeta({
-//   layout: 'about', // Specify the layout
-// });
 </script>
 
 <style lang="scss" scoped>

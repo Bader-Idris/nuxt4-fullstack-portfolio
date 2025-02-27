@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
+    // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     // experimental: {
     //   websocket: true
     // },
@@ -262,10 +263,22 @@ export default defineNuxtConfig({
     },
     mailUser: process.env.MAIL_USER,
     mailPass: process.env.MAIL_PASS,
+    mailFrom: "Bader Idris <contact@baderidris.com>",
+    mailReplyTo: "Bader Idris <contact@baderidris.com>",
     jwtSecret: process.env.JWT_SECRET,
+    jwtLifetime: process.env.JWT_LIFETIME,
     nodeEnv: process.env.NODE_ENV,
     originUrl: process.env.DOMAIN_NAME,
     mongoUri: process.env.MONGO_URI,
   },
   // content: {}, check content.config.ts
+  imports: {
+    // ? to have auto-import from third party packages, modules do it already in often
+    // presets: [
+    //   {
+    //     from: "vue-i18n",
+    //     imports: ["useI18n"],
+    //   },
+    // ],
+  },
 });

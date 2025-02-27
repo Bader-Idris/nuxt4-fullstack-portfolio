@@ -99,7 +99,7 @@ const register = async (): Promise<void> => {
       // Handle API errors
       switch (error.value.statusCode) {
         case 400:
-          toast(error.value.data?.msg || 'Invalid request.', {
+          toast(error.value.data?.message || 'Invalid request.', {
             theme: 'dark',
             type: 'error',
             position: 'top-center',

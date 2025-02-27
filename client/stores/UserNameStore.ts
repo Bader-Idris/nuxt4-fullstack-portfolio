@@ -13,28 +13,30 @@ interface UserState {
 }
 
 // Define and export the Pinia store
-export const useUserStore = defineStore('user', {
+export const useUserStore = defineStore("user", {
   state: (): UserState => ({
     // Initialize user from localStorage or null
-    user: JSON.parse(
-      localStorage.getItem('user') || 'null',
-    ),
+    user:
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("user") || "null")
+        : null,
   }),
 
   actions: {
     // Action to set the user in the store and localStorage
     setUser(user: User): void {
-      this.user = user
-      localStorage.setItem(
-        'user',
-        JSON.stringify(user),
-      )
+      this.user = user;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
     },
 
     // Action to clear the user in the store and localStorage
     clearUser(): void {
-      this.user = null
-      localStorage.removeItem('user')
+      this.user = null;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("user");
+      }
     },
   },
 
@@ -42,11 +44,11 @@ export const useUserStore = defineStore('user', {
     // Getter to check if the user is logged in
     isLoggedIn: (state): boolean => {
       return !!(
-        state.user
-        && state.user.username
-        && state.user.userId
-        && state.user.role
-      )
+        state.user &&
+        state.user.username &&
+        state.user.userId &&
+        state.user.role
+      );
     },
   },
-})
+});

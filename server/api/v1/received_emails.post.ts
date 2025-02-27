@@ -1,61 +1,77 @@
-// import { ReceivedEmail } from "@server/models/mongo/index.ts";
-import { defineEventHandler, readBody } from 'h3'
-import { ReceivedEmail } from '../../models/mongo/index'
-import { useRuntimeConfig } from '#imports'
+import {  readBody, getRequestIP, createError } from "h3";
+import { useRuntimeConfig } from "#imports";
+import { ReceivedEmail } from "../../models/mongo/index";
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const body = await readBody(event)
+  const config = useRuntimeConfig();
+  const body = await readBody(event);
 
   // Validation
-  const { name, email, message } = body
+  const { name, email, message } = body;
 
   if (!name || !email || !message) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Missing required fields', // TODO: is it json??
-    })
+      data: { msg: "Missing required fields" },
+    });
   }
 
   // Email validation
   if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(email)) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Invalid email format',
-    })
+      data: { msg: "Invalid email format" },
+    });
   }
 
   if (message.length > 5000) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Message is too long',
-    })
+      data: { msg: "Message is too long" },
+    });
   }
 
-  // Get IP address
-  const ip
-    = getRequestHeader(event, 'x-forwarded-for')
-      || event.node.req.socket.remoteAddress
+  // const ip =
+  //   getRequestHeader(event, "x-forwarded-for") ||
+  //   event.node.req.socket.remoteAddress;
+  const ip = getRequestIP(event, { xForwardedFor: true }); // for nginx
 
   try {
     // Save to MongoDB
-    const newEmail = await ReceivedEmail.create({ name, email, message, ip })
+    const newEmail = await ReceivedEmail.create({ name, email, message, ip });
 
-    // Send email using the configured mailer
-    await event.context.mailer.sendMail({
-      from: email,
-      to: 'Bader Idris <contact@baderidris.com>',
-      subject: 'New Email from a client',
-      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
-    })
+    let emailSent = false;
+    try {
+      // Send email using the configured mailer
+      await event.context.mailer.sendMail({
+        from: email,
+        to: "Bader Idris <contact@baderidris.com>",
+        subject: "New Email from a client",
+        text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+      });
+      emailSent = true;
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+    }
 
-    return { success: true, data: newEmail }
-  }
-  catch (error) {
-    console.error('Error processing request:', error)
+    if (emailSent) {
+      return {
+        success: true,
+        data: newEmail,
+        msg: "Email saved and sent successfully",
+      };
+    } else {
+      return {
+        success: true,
+        data: newEmail,
+        msg: "Email saved in DB, but failed to send to Dovecot",
+      };
+    }
+  } catch (error) {
+    console.error("Error processing request:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error',
-    })
+      data: { msg: "Internal server error" },
+    });
   }
-})
+});

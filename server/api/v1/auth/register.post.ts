@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
   await sendVerificationEmail({
     name: user.name,
     email: user.email,
+    // @ts-ignore fix its types
     verificationToken: user.verificationToken,
     origin: useRuntimeConfig().originUrl,
   })

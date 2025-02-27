@@ -1,5 +1,6 @@
 <template>
   <div class="reset-password-form">
+    <!-- TODO: add toast -->
     <form @submit.prevent="forgotPassword">
       <h2>add your email to reset the password</h2>
       <label for="email">Email</label>

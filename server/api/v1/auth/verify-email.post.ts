@@ -8,8 +8,10 @@ export default defineEventHandler(async (event) => {
   if (!user || user.verificationToken !== verificationToken) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Verification Failed',
-    })
+      // statusMessage: "Unauthorized",
+      message: "Verification Failed",
+      data: { msg: "Verification Failed" },
+    });
   }
 
   user.isVerified = true

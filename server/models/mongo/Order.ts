@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose'
-import type { IOrder, IOrderItem } from './types'
 
 const SingleOrderItemSchema = new Schema<IOrderItem>({
   name: { type: String, required: true },

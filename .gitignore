@@ -26,4 +26,6 @@ logs
 
 a.prod*
 b.prod*
+a.comp.prod.yaml
+b.comp.prod.yaml
 !a.prod-certbot.yml

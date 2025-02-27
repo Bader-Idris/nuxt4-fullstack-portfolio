@@ -1,4 +1,3 @@
-// server/models/mongo/Product.ts
 import { Schema, model } from 'mongoose'
 import { Review } from './Review'
 

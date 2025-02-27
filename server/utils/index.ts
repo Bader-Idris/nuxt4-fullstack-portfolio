@@ -1,6 +1,5 @@
 export * from './jwt'
 export * from './createTokenUser'
 export * from './checkPermissions'
-export * from './email'
-export * from './mailer'
+export * from './sendVerificationEmail'
 export * from './createHash'

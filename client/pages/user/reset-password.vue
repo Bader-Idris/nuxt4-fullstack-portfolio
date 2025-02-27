@@ -38,6 +38,7 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 
 const email = computed(() => route.query.email?.toString() || '')
+// TODO: fix this token to be brought from the cookies, or should it be sent from server, check forgot password function
 const token = computed(() => route.query.token?.toString() || '')
 
 async function resetPassword() {

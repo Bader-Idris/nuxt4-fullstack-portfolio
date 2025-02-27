@@ -1,26 +1,20 @@
 <template>
   <div class="verify-comp">
-    <div
-      v-if="verified"
-      class="verify"
-    >
-      <p>your email's been verified</p>
+    <div v-if="verified" class="verify">
+      <p>Your email has been verified</p>
       <p>
         <span>{{ seconds < 10 ? '0' + seconds : seconds }}</span> seconds to go
         to the main page
       </p>
     </div>
-    <div
-      v-else
-      class="warn"
-    >
-      <p>please check your email again</p>
+    <div v-else class="warn">
+      <p>Please check your email again</p>
       <CustomButtons
         class="go-back"
         button-type="primary"
         aria-label="go to main page"
       >
-        <CustomLink to="/">
+        <CustomLink :to="localePath('/')">
           <span> or go back to main page </span>
         </CustomLink>
       </CustomButtons>
@@ -32,6 +26,9 @@
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import { useIntervalFn } from '@vueuse/core'
+import { useRoute, useFetch,  useLocalePath } from '#imports'
+
+const localePath = useLocalePath()
 
 type VerifyEmailResponse = {
   success: boolean
@@ -40,25 +37,25 @@ type VerifyEmailResponse = {
 
 const route = useRoute()
 const email = computed(() => route.query.email?.toString() || '')
-const token = computed(() => route.query.token?.toString() || '')
+const verificationToken = computed(() => route.query.verificationToken?.toString() || '')
 const seconds = ref(10)
 const verified = ref(false)
 
 useSeoMeta({
-  title: 'Projects I created during my career',
-  description: 'Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Node.js, and more.',
+  title: 'Verify Email',
+  description: 'A redirect page for email verification via email',
 })
 
 const { pause } = useIntervalFn(() => {
   seconds.value--
   if (seconds.value <= 0) {
     pause()
-    if (verified.value) navigateTo('/')
+    if (verified.value) navigateTo(localePath('/'))
   }
 }, 1000)
 
 async function verifyEmail() {
-  if (!email.value || !token.value) {
+  if (!email.value || !verificationToken.value) {
     toast('Missing verification parameters', { theme: 'dark', type: 'error' })
     return
   }
@@ -71,8 +68,9 @@ async function verifyEmail() {
         method: 'POST',
         body: {
           email: email.value,
-          verificationToken: token.value,
+          verificationToken: verificationToken.value, // Ensure this matches your server's expected parameter
         },
+        immediate: false,
         server: false,
       },
     )
@@ -80,9 +78,13 @@ async function verifyEmail() {
     if (data.value?.success) {
       verified.value = true
       toast('Email verified successfully', { theme: 'dark', type: 'success' })
+    } else {
+      toast(data.value?.message || 'Verification failed', {
+        theme: 'dark',
+        type: 'error',
+      })
     }
-  }
-  catch (error: any) {
+  } catch (error: any) {
     toast(error.data?.message || 'Verification failed', {
       theme: 'dark',
       type: 'error',

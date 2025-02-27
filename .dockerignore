@@ -13,8 +13,6 @@ bun.lock
 docker-compose*
 
 
-# check this: TODO:
-
 # Ignore everything by default
 *
 
@@ -23,7 +21,6 @@ docker-compose*
 !.env
 !.env.development
 !.env.production
-!node_modules
 !.nuxt
 !.output
 !package.json

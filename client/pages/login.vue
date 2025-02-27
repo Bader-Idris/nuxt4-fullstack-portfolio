@@ -24,7 +24,6 @@
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import { useUserStore } from '~/stores/UserNameStore'
-import { useLocalePath } from '#imports'
 
 // Define page meta
 definePageMeta({

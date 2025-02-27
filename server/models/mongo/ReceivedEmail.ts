@@ -1,16 +1,6 @@
-import type { Document } from 'mongoose'
 import { Schema, model } from 'mongoose'
 
-export interface IReceivedEmail extends Document {
-  name: string
-  email: string
-  message: string
-  ip: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-const EmailSchema = new Schema<IReceivedEmail>(
+const EmailSchema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
@@ -22,4 +12,4 @@ const EmailSchema = new Schema<IReceivedEmail>(
   },
 )
 
-export const ReceivedEmail = model<IReceivedEmail>('Email', EmailSchema)
+export const ReceivedEmail = model('Email', EmailSchema)

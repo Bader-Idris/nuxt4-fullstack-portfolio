@@ -106,7 +106,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { debounce } from 'lodash-es'
-import { useLocalePath } from '#imports' // Nuxt 3's localePath composable
 
 const localePath = useLocalePath()
 
