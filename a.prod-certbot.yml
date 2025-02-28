@@ -7,13 +7,15 @@ services:
       - "80:80"
     volumes:
       - ./server/config/nginx/nginx_with_certbot.conf:/etc/nginx/conf.d/default.conf:ro
-      - web-root:/var/www/html
+      - ./.output/public:/var/www/html
       - ./server/config/nginx/for_server_exclusively.html:/usr/share/nginx/html/index.html
       # - ./server/config/certbot/www:/var/www/certbot:rw
       # - ./server/config/certbot/conf:/etc/letsencrypt:rw
 
       - certbot-etc:/etc/letsencrypt     # ? certs and keys
       - certbot-var:/var/lib/letsencrypt # ? default working dir
+      # to add mta-sts, we need this txt file:
+      - ./server/config/mailserver/mta-sts.txt:/var/www/html/.well-known/mta-sts.txt:ro
     depends_on:
       - app
     networks:
@@ -28,7 +30,7 @@ services:
       # - ./server/config/certbot/conf:/etc/letsencrypt:rw
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
-      - web-root:/var/www/html
+      - ./.output/public:/var/www/html
     depends_on:
       - nginx
     # entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet --deploy-hook \"nginx -s reload\"; sleep 12h; done;'"
@@ -36,37 +38,37 @@ services:
       # - CERTBOT_EMAIL=www.bader.com9@gmail.com
       # - CERTBOT_DOMAINS=baderidris.com,www.baderidris.com
 
-    command: certonly --webroot --webroot-path=/var/www/html --email www.bader.com9@gmail.com --agree-tos --no-eff-email --staging -d baderidris.com -d www.baderidris.com
+    command: certonly --webroot --webroot-path=/var/www/html --email www.bader.com9@gmail.com --agree-tos --no-eff-email --staging -d baderidris.com -d www.baderidris.com -d mail.baderidris.com -d mta-sts.baderidris.com
     # TODO: first time, use --staging, after making sure needed files are in nginx:/etc/letsencrypt/live, and use --force-renewal flag instead!
-    # command: certonly --webroot --webroot-path=/var/www/html --email www.bader.com9@gmail.com --agree-tos --no-eff-email --force-renewal -d baderidris.com -d www.baderidris.com
-
-    # - certonly
-    # - --webroot
-    # - --webroot-path=/var/www/html
-    # - --email=$CERTBOT_EMAIL
-    # - --agree-tos
-    # - --no-eff-email
-    # - --staging
-    # - -d=$CERTBOT_DOMAINS
+    # command: certonly --webroot --webroot-path=/var/www/html --email www.bader.com9@gmail.com --agree-tos --no-eff-email --force-renewal -d baderidris.com -d www.baderidris.com -d mail.baderidris.com -d mta-sts.baderidris.com
   app:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      # ? to run npm, remove use file Dockerfile instead, and command to: npm start
+      dockerfile: ./server/config/bun.Dockerfile
       args:
         NODE_ENV: production
-    image: baderidris/portfolio
+    image: baderidris/nuxt-portfolio:latest
     restart: always
     volumes:
-      - ./server:/app
-      - /app/node_modules # ? is no need in prod, it takes more space
-      - web-root:/app/statics:ro
+      - ./.data:/app/.data
+      - ./.env:/app/.env
+      - ./.env.development:/app/.env.development
+      - ./.env.production:/app/.env.production
+      - ./node_modules:/app/node_modules
+      - /app/node_modules
+      - ./.nuxt:/app/.nuxt
+      - ./.output:/app/.output
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      # TODO: fix web-root to put .output/public instead
     environment:
       - PORT=3000
       - NODE_ENV=production
 
     depends_on:
       - mongo
-    command: npm start
+    command: bun start
     networks:
       - app-network
   mongo:
@@ -126,13 +128,6 @@ volumes:
   psql-data:
   certbot-etc:
   certbot-var:
-  web-root:
-    driver: local
-    driver_opts:
-      type: none
-      # device: /home/bader/node_project/views/ # might change node_project which is WEB_DIR
-      device: ./client/dist/
-      o: bind
 
 networks:
   app-network:

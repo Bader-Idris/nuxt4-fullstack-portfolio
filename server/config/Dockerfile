@@ -1,6 +1,16 @@
 FROM node:22.14.0-alpine3.21
+
+# Install Python and build tools for native dependencies
+RUN apt-get update && apt-get install -y \
+  python3 \
+  build-essential \
+  && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
 WORKDIR /app
 # COPY package.json .
+
+# Copy package.json and bun.lockb (if it exists)
 COPY ./.output/server/package.json .
 ARG NODE_ENV
 RUN if [ "$NODE_ENV" = "development" ]; \
@@ -8,7 +18,6 @@ RUN if [ "$NODE_ENV" = "development" ]; \
   else npm install --only=production; \
   fi
 # COPY . ./
-COPY . ./
 ENV PORT 3000
 EXPOSE $PORT
 CMD ["npm", "start"]

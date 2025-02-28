@@ -269,7 +269,7 @@ export default defineNuxtConfig({
     jwtLifetime: process.env.JWT_LIFETIME,
     nodeEnv: process.env.NODE_ENV,
     originUrl: process.env.DOMAIN_NAME,
-    mongoUri: process.env.MONGO_URI,
+    // mongoUri: process.env.MONGO_URI,
   },
   // content: {}, check content.config.ts
   imports: {

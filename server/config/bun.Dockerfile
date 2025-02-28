@@ -27,7 +27,4 @@ RUN if [ "$NODE_ENV" = "development" ]; \
 # Set environment variables
 ENV PORT 3000
 EXPOSE $PORT
-
-# Start the application
-# CMD ["bun", "start"]
 CMD ["bun", "start"]
