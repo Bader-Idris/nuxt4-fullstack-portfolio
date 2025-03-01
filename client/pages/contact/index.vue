@@ -571,8 +571,13 @@ button-type="default"
     .received-to-admin {
       margin-top: 50px;
 
+      
       >button {
         margin-bottom: 20px;
+      margin-left: 15px;
+      @media screen and (max-width: 768px) {
+          width: calc(100% - 20px);
+        }
       }
     }
   }

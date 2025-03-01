@@ -1,58 +1,94 @@
-// import { ReceivedEmail, User } from "../../models/mongo/index";
-// import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import { getCookie } from "h3";
+// import type { NitroApp } from "nitropack";
+import { ReceivedEmail, User } from "../../models/mongo/index";
 
-// export default defineEventHandler(async (event) => {
-//   // Authentication
-//   const authHeader = getRequestHeader(event, "Authorization");
-//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//     throw createError({
-//       statusCode: 401,
-//       data: { msg: "Authentication invalid" },
-//     });
-//   }
+export default defineEventHandler(async (event) => {
+  try {
+    // 1. Get JWT from cookies
+    const accessToken = getCookie(event, "accessToken");
+    if (!accessToken) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "Authentication required",
+        data: { message: "Missing authentication token" },
+      });
+    }
 
-//   const token = authHeader.split(" ")[1];
+    // @ts-ignore 2. Verify JWT
+    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET) as {
+      user: {
+        userId: string;
+        role: string;
+      };
+    };
 
-//   try {
-//     const payload = jwt.verify(token, process.env.JWT_SECRET) as {
-//       userId: string;
-//       role: string;
-//     };
+    // 3. Verify user exists and has admin role
+    const user = await User.findById(decoded.user.userId);
+    if (!user || user.role !== "admin") {
+      throw createError({
+        statusCode: 403,
+        statusMessage: "Forbidden",
+        data: { message: "Insufficient permissions" },
+      });
+    }
 
-//     // Verify user exists in the database and is an admin
-//     const user = await User.findOne({ _id: payload.userId });
-//     if (!user || user.role !== "admin") {
-//       throw createError({
-//         statusCode: 403,
-//         data: { msg: "Unauthorized access" },
-//       });
-//     }
+    // 4. Fetch emails with proper typing
+    const emails = await ReceivedEmail.find({})
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
 
-//     // Retrieve all emails from the database
-//     const emails = await ReceivedEmail.find({}).sort({ createdAt: -1 });
+    if (!emails || emails.length === 0) {
+      return {
+        statusCode: 204,
+        data: [],
+      };
+    }
 
-//     if (emails.length === 0) {
-//       return {
-//         statusCode: 204,
-//         data: { msg: "No emails found" },
-//       };
-//     }
+    // 5. Return properly typed response
+    return {
+      statusCode: 200,
+      data: emails.map((email) => ({
+        id: email._id.toString(),
+        name: email.name,
+        email: email.email,
+        message: email.message,
+        ip: email.ip,
+        createdAt: email.createdAt,
+      })),
+    };
+  } catch (error) {
+    // Handle JWT errors specifically
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "Invalid token",
+        data: { message: "Authentication token is invalid" },
+      });
+    }
 
-//     return {
-//       statusCode: 200,
-//       data: { emails },
-//     };
-//   } catch (err) {
-//     if (err instanceof jwt.JsonWebTokenError) {
-//       throw createError({
-//         statusCode: 401,
-//         data: { msg: "Invalid token" },
-//       });
-//     }
-//     console.error("Error retrieving emails:", err);
-//     throw createError({
-//       statusCode: 500,
-//       data: { msg: "An error occurred while fetching emails" },
-//     });
-//   }
-// });
+    // Handle MongoDB errors
+    if (error.name === "MongoError") {
+      console.error("Database error:", error);
+      throw createError({
+        statusCode: 503,
+        statusMessage: "Service unavailable",
+        data: { message: "Database operation failed" },
+      });
+    }
+
+    // Propagate existing errors
+    if (error.statusCode) {
+      throw error;
+    }
+
+    // Generic error fallback
+    console.error("Unexpected error:", error);
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Internal server error",
+      data: { message: "An unexpected error occurred" },
+    });
+  }
+});

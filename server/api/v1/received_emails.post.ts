@@ -1,9 +1,8 @@
 import {  readBody, getRequestIP, createError } from "h3";
-import { useRuntimeConfig } from "#imports";
 import { ReceivedEmail } from "../../models/mongo/index";
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig();
+  // const config = useRuntimeConfig();
   const body = await readBody(event);
 
   // Validation

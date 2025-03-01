@@ -1,6 +1,5 @@
 import jwt, { type SignOptions } from "jsonwebtoken";
 import { setCookie } from "h3";
-import type { TokenPayload, TokenUser } from "./auth.types";
 
 const config = useRuntimeConfig();
 

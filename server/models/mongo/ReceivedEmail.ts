@@ -8,8 +8,8 @@ const EmailSchema = new Schema(
     ip: { type: String, required: true },
   },
   {
-    timestamps: true,
-  },
-)
+    timestamps: { createdAt: true, updatedAt: false },
+  }
+);
 
 export const ReceivedEmail = model('Email', EmailSchema)

@@ -1,16 +1,16 @@
 <template>
   <div class="received-set">
     <h1>Admin Panel</h1>
-    <ul v-if="emails.length > 0">
-      <li
-        v-for="email in emails"
-        :key="email._id"
-      >
+    <div v-if="pending" class="loading-indicator">
+      <span>Loading emails...</span>
+    </div>
+    <ul v-else-if="emails.length > 0">
+      <li v-for="email in emails" :key="email._id">
         <p><strong>From:</strong> {{ email.name }} ({{ email.email }})</p>
         <p><strong>IP:</strong> {{ email.ip }}</p>
         <p>
           <strong>Created At:</strong> {{ new
-            Date(email.createdAt).toLocaleString() }}
+          Date(email.createdAt).toLocaleString() }}
         </p>
         <p class="message">
           {{ email.message }}
@@ -29,12 +29,12 @@ import { useUserStore } from '~/stores/UserNameStore'
 import 'vue3-toastify/dist/index.css'
 
 useSeoMeta({
-  title: 'fetch emails | Bader Idris',
+  title: 'Admin Emails | Bader Idris',
   description: 'Exclusive to admins only',
 })
 
 interface Email {
-  _id: string
+  id: string
   name: string
   email: string
   message: string
@@ -42,54 +42,99 @@ interface Email {
   createdAt: string
 }
 
+
 const emails = ref<Email[]>([])
 const userStore = useUserStore()
-const isMounted = ref(false)
+const route = useRoute()
+const localePath = useLocalePath()
 
-// Use client-only fetch with authorization check
-const { execute } = useFetch('/api/v1/received_emails', {
-  credentials: 'include',
-  immediate: false,
-  server: false,
-  onResponse({ response }) {
-    if (response.ok) {
-      if (response._data?.emails) {
-        emails.value = response._data.emails
-        toast('Emails successfully loaded!', {
-          theme: 'auto',
-          type: 'success',
-          position: 'top-center',
-        })
-      }
-    }
-    else {
-      toast(`Failed to fetch emails: ${response.statusText}`, {
-        theme: 'dark',
-        type: 'error',
-        position: 'top-center',
-      })
-    }
-  },
-  onResponseError() {
-    toast('An unexpected error occurred while fetching emails.', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-    })
-  },
+// Get redirect path with query preservation
+const getRedirectPath = () => ({ // TODO: this requires fixes!
+  path: localePath('/login'),
+  query: { redirect: route.fullPath }
 })
 
-onMounted(() => {
-  isMounted.value = true
-  if (!userStore.user || userStore.user.role !== 'admin') {
-    toast('Unauthorized: You must be an admin to view this page.', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-    })
-    return
+// Professional fetch implementation
+const { execute, pending } = useLazyFetch<{ data: Email[] }>('/api/v1/received_emails', {
+  immediate: false,
+  server: false,
+  credentials: 'include',
+  async onResponse({ response }) {
+    if (response.ok) {
+      emails.value = response._data?.data || []
+      showSuccessToast('Emails loaded successfully')
+    }
+  },
+  async onResponseError({ response }) {
+    handleFetchError(response?.status)
   }
-  execute()
+})
+
+// Centralized error handling
+const handleFetchError = (statusCode?: number) => {
+  const errorMap: Record<number, string> = {
+    401: 'Session expired - please login again',
+    403: 'Insufficient permissions',
+    500: 'Server error - please try again later'
+  }
+
+  showErrorToast(errorMap[statusCode || 500] || 'Failed to fetch emails')
+
+  if ([401, 403].includes(statusCode || 0)) {
+    return navigateTo(getRedirectPath(), { redirectCode: 302 })
+  }
+}
+
+// Toast helpers
+const showSuccessToast = (message: string) => {
+  toast(message, {
+    theme: 'auto',
+    type: 'success',
+    position: 'top-center',
+    timeout: 3000
+  })
+}
+
+const showErrorToast = (message: string) => {
+  toast(message, {
+    theme: 'dark',
+    type: 'error',
+    position: 'top-center',
+    timeout: 5000
+  })
+}
+
+// Auth check composable
+const checkAdminAccess = () => {
+  if (!userStore.user || userStore.user.role !== 'admin') {
+    showErrorToast('Admin access required')
+    return navigateTo(getRedirectPath(), { redirectCode: 302 })
+  }
+  return true
+}
+
+// Universal fetch handler
+const fetchEmails = async () => {
+  if (!checkAdminAccess()) return navigateTo(getRedirectPath(), { redirectCode: 302 })
+
+  try {
+    await execute()
+  } catch (error) {
+    handleFetchError(error.statusCode)
+  }
+}
+
+// SSR/CSR compatible data fetching
+onServerPrefetch(async () => {
+  if (import.meta.server && checkAdminAccess()) {
+    await fetchEmails()
+  }
+})
+
+onMounted(async () => {
+  if (import.meta.client) {
+    await fetchEmails()
+  }
 })
 </script>
 
@@ -117,6 +162,7 @@ onMounted(() => {
 
   @media (min-width: 769px) {
     width: 50%;
+    margin-left: 350px;
   }
 
   h1 {
@@ -141,6 +187,8 @@ onMounted(() => {
   .message {
     border: 5px dotted #43d9ad;
     padding: 15px;
+        flex: 1;
+    flex-basis: 100%;
   }
 }
 </style>

@@ -62,11 +62,9 @@ aria-label="go to my code wars profile"
         </ul>
       </div>
     </aside>
-
-    <NuxtPage />
     <ClientOnly>
       <section
-v-if="authStore.user?.role === 'admin'"
+        v-if="authStore.user?.role === 'admin'"
         class="received-to-admin">
         <CustomButtons button-type="ghost">
           <CustomLink to="/contact/admin">fetch-messages</CustomLink>
