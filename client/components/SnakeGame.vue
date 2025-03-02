@@ -1,107 +1,84 @@
 <template>
-  <div
-    ref="board"
-    class="game-screen"
-  >
+  <div ref="board" class="game-screen">
     <div class="scores">
       <p v-if="gameStarted || !gameOver">
         {{ formattedScore }}
       </p>
     </div>
-    <div
-      v-if="!gameStarted || gameOver"
-      class="outcome-display"
-    >
-      <CustomButtons
-        v-if="!gameStarted && !gameOver"
+    <div v-if="!gameStarted || gameOver" class="outcome-display">
+      <CustomButtons 
+        v-if="!gameStarted && !gameOver" 
         button-type="ghost"
-        @click="startGame"
-      >
+        @click="startGame">
         {{ $t('home.gameCommand') }}
       </CustomButtons>
 
-      <p
-        v-if="gameOver && congratsMessage"
-        class="outcome"
-      >
+      <p v-if="gameOver && congratsMessage" class="outcome">
         {{ isWon }}
       </p>
       <div
-        v-if="congratsMessage"
-        class="congrats"
+        v-if="congratsMessage" 
+        class="congrats" 
         @click="startGame"
-        @keydown.space="startGame"
-      >
+        @keydown.space="startGame">
         {{ congratsMessage }}
       </div>
     </div>
-    <div
-      v-for="(segment, index) in snake"
-      :key="index"
-      class="snake"
-      :style="{ gridColumn: segment.x, gridRow: segment.y }"
-    />
-    <div
-      class="food"
-      :style="{ gridColumn: food.x, gridRow: food.y }"
-    />
+    <client-only>
+      <div
+        v-for="(segment, index) in snake" 
+        :key="index" 
+        class="snake"
+        :style="{ gridColumn: segment.x, gridRow: segment.y }" />
+      <div class="food" :style="{ gridColumn: food.x, gridRow: food.y }" />
+    </client-only>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Haptics, ImpactStyle } from '@capacitor/haptics'
-import { LocalNotifications } from '@capacitor/local-notifications'
-import { Capacitor } from '@capacitor/core'
-import { Howl, Howler } from 'howler'
-import confetti from 'canvas-confetti'
+import { Howl } from 'howler'
 import { useI18n } from 'vue-i18n'
-// import { useInterval } from '@vueuse/core'
+import { useIntervalFn, useEventListener } from '@vueuse/core'
 import eatingSound from '@/assets/sounds/swallow.wav'
 import victorySound from '@/assets/sounds/victory.wav'
 import wallHitSound from '@/assets/sounds/wall-hit.wav'
 import snakeHissing from '@/assets/sounds/snake-hissing.wav'
 import ouch from '@/assets/sounds/ouch.wav'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
+import { LocalNotifications } from '@capacitor/local-notifications'
+import { Capacitor } from '@capacitor/core'
+import confetti from 'canvas-confetti'
 
 // Define the shape of the `sounds` object
 type SoundKeys = 'snakeHissing' | 'eating' | 'wallHit' | 'ouch' | 'victory'
 type SoundsMap = Record<SoundKeys, Howl | null>
 
 // Initialize `sounds` as a reactive object
-let sounds: SoundsMap | null = null
+const sounds = ref<SoundsMap | null>(null)
+const board = ref<HTMLElement | null>(null)
+const isClient = import.meta.client
 
 // Function to initialize sounds (called on user interaction)
 const initializeSounds = () => {
-  if (!sounds) {
-    sounds = {
-      snakeHissing: new Howl({ src: [snakeHissing], html5: true }),
-      ouch: new Howl({ src: [ouch], html5: true }),
-      eating: new Howl({ src: [eatingSound], html5: true }),
-      wallHit: new Howl({ src: [wallHitSound], html5: true }),
-      victory: new Howl({ src: [victorySound], html5: true }),
+  if (isClient && !sounds.value) {
+    sounds.value = {
+      snakeHissing: new Howl({ src: [snakeHissing], html5: true, preload: true }),
+      ouch: new Howl({ src: [ouch], html5: true, preload: true }),
+      eating: new Howl({ src: [eatingSound], html5: true, preload: true }),
+      wallHit: new Howl({ src: [wallHitSound], html5: true, preload: true }),
+      victory: new Howl({ src: [victorySound], html5: true, preload: true }),
     }
   }
 }
 
 // Function to play a sound by key
 const playSound = (key: SoundKeys) => {
-  if (!sounds) {
-    console.error('Sounds not initialized yet.')
-    return
-  }
-
-  const sound = sounds[key]
-  if (sound) {
-    try {
-      sound.stop() // Stop any existing playback to avoid overlapping
-      sound.play() // Play the sound
-    }
-    catch (error) {
-      console.error(`Error playing sound "${key}":`, error)
-    }
-  }
-  else {
-    console.error(`Sound key "${key}" not found.`)
+  if (!isClient || !sounds.value?.[key]) return
+  try {
+    sounds.value[key]!.stop()
+    sounds.value[key]!.play()
+  } catch (error) {
+    console.error(`Error playing sound "${key}":`, error)
   }
 }
 
@@ -123,13 +100,10 @@ const emit = defineEmits<{
 
 // Reactive variables with types
 const gridSize = ref<number>(20)
-const snake = ref<{ x: number, y: number }[]>(
-  Array.from({ length: 10 }, (_, index) => ({ x: 10, y: 20 + index })),
-)
-const food = ref<{ x: number, y: number }>({ x: 0, y: 0 }) // Initialize with default values
+const snake = ref<{ x: number, y: number }[]>([])
+const food = ref<{ x: number, y: number }>({ x: 0, y: 0 })
 const direction = ref<string>('up')
-const lastDirection = ref<string>('up') // Store last valid direction to avoid opposite direction issue
-let gameInterval: number
+const lastDirection = ref<string>('up')
 const gameSpeedDelay = ref<number>(150)
 const gameStarted = ref<boolean>(false)
 const gameOver = ref<boolean>(false)
@@ -138,39 +112,47 @@ const score = ref<number>(0)
 const winningScore = ref<number>(10)
 const foodEatenRecently = ref<boolean>(false)
 
+// Initialize snake and food on client side
+if (isClient) {
+  snake.value = Array.from({ length: 10 }, (_, index) => ({ x: 10, y: 20 + index }))
+  food.value = generateFood()
+}
+
 // Formatted score for singular/plural
 const formattedScore = computed(() =>
-  score.value === 1 ? `${t('home.score')}: ${score.value}` : `${t('home.scores')}: ${score.value}`,
+  score.value === 1 ? `${t('home.score')}: ${score.value}` : `${t('home.scores')}: ${score.value}`
 )
 
-// Key event listener lifecycle hooks
+// Computed property for win condition
+const isWon = computed(() =>
+  score.value >= winningScore.value ? t('home.hasWon') : t('home.hasNotWon')
+)
+
+// UseIntervalFn for game loop
+const { pause, resume } = useIntervalFn(() => {
+  move()
+  checkCollision()
+}, gameSpeedDelay, { immediate: false })
+
+// Client-side setup
 onMounted(() => {
-  if (import.meta.client) {
-    document.addEventListener('keydown', handleKeyPress)
-    const snakeHead = document.querySelector<HTMLElement>('div.game-screen > div:nth-child(3)')
-    if (snakeHead) {
+  if (!isClient) return
+
+  initializeSounds()
+  food.value = generateFood()
+
+  // Update snake head style
+  nextTick(() => {
+    const snakeHead = board.value?.querySelector('.snake')
+    if (snakeHead instanceof HTMLElement) {
       snakeHead.style.borderRadius = '10px 10px 0 0'
     }
-
-    // HTML5 Audio pool size
-    Howler.html5PoolSize = 10 // same as default!
-    // TODO: initializeSounds()
-
-    // Generate food position on client side only
-    food.value = generateFood()
-  }
-})
-
-onUnmounted(() => {
-  clearInterval(gameInterval)
-  if (import.meta.client) {
-    document.removeEventListener('keydown', handleKeyPress)
-  }
+  })
 })
 
 // Watch for recent food eaten to reset animation after a delay
 watch(foodEatenRecently, (newVal) => {
-  if (newVal) {
+  if (newVal && isClient) {
     setTimeout(() => {
       foodEatenRecently.value = false
     }, 300)
@@ -179,65 +161,56 @@ watch(foodEatenRecently, (newVal) => {
 
 // Function to show notification
 async function showNotification(message: string) {
-  // Check if the app is running on Electron
+  if (!isClient) return
+
   if (isElectron) {
     const granted = await Notification.requestPermission()
     if (granted === 'granted') {
       const notification = new Notification('Victory!', {
         body: message,
         icon: '../../assets/icon-only.png',
-        // vibrate: [200, 100, 200, 100, 200, 100, 200],
-        tag: 'victory', // as ids, can override its same value
+        tag: 'victory',
       })
       setTimeout(() => notification.close(), 3000)
     }
-    // was new Notification
-  }
-  else if (
-    Capacitor.getPlatform() === 'web'
-    || Capacitor.getPlatform() === 'ios'
-    || Capacitor.getPlatform() === 'android'
-  ) {
-    // Request permission for notifications if not already granted
+  } else if (Capacitor.getPlatform() === 'web' || Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android') {
     const granted = await LocalNotifications.requestPermissions()
     if (granted.display === 'granted') {
-      // Schedule the notification
       await LocalNotifications.schedule({
         notifications: [
           {
             title: t('home.gameCongratsTitle'),
             body: message,
-            id: 1, // Can we set it to TimeStamp
-            schedule: { at: new Date(Date.now() + 3000) }, // 3 seconds delay
+            id: 1,
+            schedule: { at: new Date(Date.now() + 3000) },
             sound: '',
             largeIcon: '/pwa-192x192.png',
-            smallIcon: '/favicon-16x16.png', // should be in res/drawable, so this wouldn't work
-            // attachments: null,
+            smallIcon: '/favicon-16x16.png',
             silent: false,
             actionTypeId: '',
-            extra: null, // for custom data
+            extra: null,
           },
         ],
       })
-      await Haptics.impact({ style: ImpactStyle.Heavy }) // Haptic feedback on win
+      await Haptics.impact({ style: ImpactStyle.Heavy })
     }
-  }
-  else {
+  } else {
     console.log('Platform not supported for notifications')
   }
 }
 
-// Game logic (existing functions are skipped for brevity)
+// Game logic
 function checkWinCondition() {
-  // Check if the player has won
   if (score.value >= winningScore.value) {
     playSound('victory')
-    launchConfetti()
-    launchConfettiInMiddle()
+    if (isClient) {
+      launchConfetti()
+      launchConfettiInMiddle()
+    }
     stopGame('Play-again')
-
-    // Trigger local notification on win
-    showNotification(t('home.gameCongrats'))
+    if (isClient) {
+      showNotification(t('home.gameCongrats'))
+    }
   }
 }
 
@@ -265,17 +238,18 @@ function generateFood(): { x: number, y: number } {
 }
 
 function move(): void {
+  if (!isClient) return
+
   const head = { ...snake.value[0] }
 
   if (
-    (lastDirection.value === 'up' && direction.value === 'down')
-    || (lastDirection.value === 'down' && direction.value === 'up')
-    || (lastDirection.value === 'left' && direction.value === 'right')
-    || (lastDirection.value === 'right' && direction.value === 'left')
+    (lastDirection.value === 'up' && direction.value === 'down') ||
+    (lastDirection.value === 'down' && direction.value === 'up') ||
+    (lastDirection.value === 'left' && direction.value === 'right') ||
+    (lastDirection.value === 'right' && direction.value === 'left')
   ) {
     direction.value = lastDirection.value
-  }
-  else {
+  } else {
     lastDirection.value = direction.value
   }
 
@@ -295,9 +269,9 @@ function move(): void {
       break
   }
 
-  // Reactively update the snake's head style
-  const headElement = document.querySelector<HTMLElement>('div.game-screen .snake')!
-  if (headElement) {
+  // Update the snake's head style
+  const headElement = board.value?.querySelector('.snake')
+  if (headElement instanceof HTMLElement) {
     headElement.classList.add('head')
     updateHeadStyle(headElement)
   }
@@ -312,14 +286,8 @@ function move(): void {
     score.value++
     foodEatenRecently.value = true
     playSound('eating')
-    Haptics.vibrate({ duration: 50 }) // Vibration feedback on food eat
-    clearInterval(gameInterval)
-    gameInterval = window.setInterval(() => {
-      move()
-      checkCollision()
-    }, gameSpeedDelay.value)
-  }
-  else {
+    if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 50 })
+  } else {
     snake.value.pop()
   }
 
@@ -327,13 +295,11 @@ function move(): void {
 }
 
 function startGame(): void {
-  initializeSounds()
+  if (!isClient) return
+
   resetGame()
   playSound('snakeHissing')
-  gameInterval = window.setInterval(() => {
-    move()
-    checkCollision()
-  }, gameSpeedDelay.value)
+  resume()
 }
 
 function resetGame(): void {
@@ -343,38 +309,13 @@ function resetGame(): void {
   score.value = 0
   snake.value = Array.from({ length: 10 }, (_, index) => ({ x: 10, y: 20 + index }))
   food.value = generateFood()
-  clearInterval(gameInterval)
+  pause()
   emit('gameOver')
 }
 
-const isWon = computed(() =>
-  score.value >= winningScore.value ? t('home.hasWon') : t('home.hasNotWon'),
-)
-
-function handleKeyPress(event: KeyboardEvent): void {
-  // Allow starting/restarting the game with the space bar whether game is over or not
-  if ((gameOver.value || !gameStarted.value) && (event.code === 'Space' || event.key === ' ')) {
-    startGame() // Restart game on space bar
-  }
-  else if (gameStarted.value) {
-    switch (event.key) {
-      case 'ArrowUp':
-        if (lastDirection.value !== 'down') direction.value = 'up'
-        break
-      case 'ArrowDown':
-        if (lastDirection.value !== 'up') direction.value = 'down'
-        break
-      case 'ArrowLeft':
-        if (lastDirection.value !== 'right') direction.value = 'left'
-        break
-      case 'ArrowRight':
-        if (lastDirection.value !== 'left') direction.value = 'right'
-        break
-    }
-  }
-}
-
 function launchConfettiInMiddle() {
+  if (!isClient) return
+
   const count = 200
   const defaults = {
     origin: { y: 0.7 },
@@ -396,29 +337,31 @@ function launchConfettiInMiddle() {
 }
 
 function launchConfetti() {
+  if (!isClient) return
+
   const end = Date.now() + 5 * 1000 // Confetti lasts for 5 seconds
   const colors = ['#bb0000', '#ffffff'] // Custom colors (Buckeyes)
 
     ; (function frame() {
-    confetti({
-      particleCount: 2,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0 },
-      colors,
-    })
-    confetti({
-      particleCount: 2,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1 },
-      colors,
-    })
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors,
+      })
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors,
+      })
 
-    if (Date.now() < end) {
-      requestAnimationFrame(frame) // Continue the confetti animation
-    }
-  })()
+      if (Date.now() < end) {
+        requestAnimationFrame(frame) // Continue the confetti animation
+      }
+    })()
 }
 
 function increaseSpeed(): void {
@@ -428,17 +371,19 @@ function increaseSpeed(): void {
 }
 
 function checkCollision(): void {
+  if (!isClient) return
+
   const head = snake.value[0]
   if (head.x < 1 || head.x > gridSize.value || head.y < 1 || head.y > gridSize.value + 14) {
     playSound('wallHit')
-    Haptics.vibrate({ duration: 100 }) // Vibration feedback on collision
+    if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 100 })
     stopGame(t('home.again'))
     return
   }
   for (let i = 1; i < snake.value.length; i++) {
     if (head.x === snake.value[i].x && head.y === snake.value[i].y) {
       playSound('ouch')
-      Haptics.vibrate({ duration: 100 }) // Vibration feedback on collision with self
+      if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 100 })
       stopGame(t('home.again'))
       return
     }
@@ -452,9 +397,34 @@ function stopGame(message: string): void {
   direction.value = 'up'
   lastDirection.value = 'up'
   congratsMessage.value = message
-  clearInterval(gameInterval)
+  pause()
 }
+
+// Key event listener using useEventListener
+useEventListener(document, 'keydown', (event: KeyboardEvent) => {
+  if (!isClient) return
+
+  if ((gameOver.value || !gameStarted.value) && (event.code === 'Space' || event.key === ' ')) {
+    startGame()
+  } else if (gameStarted.value) {
+    switch (event.key) {
+      case 'ArrowUp':
+        if (lastDirection.value !== 'down') direction.value = 'up'
+        break
+      case 'ArrowDown':
+        if (lastDirection.value !== 'up') direction.value = 'down'
+        break
+      case 'ArrowLeft':
+        if (lastDirection.value !== 'right') direction.value = 'left'
+        break
+      case 'ArrowRight':
+        if (lastDirection.value !== 'left') direction.value = 'right'
+        break
+    }
+  }
+})
 </script>
+
 
 <style lang="scss">
 .game-screen {

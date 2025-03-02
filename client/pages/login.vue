@@ -28,7 +28,7 @@ import { useUserStore } from '~/stores/UserNameStore'
 // Define page meta
 definePageMeta({
   layout: 'default',
-  // hideLayout: true,
+  hideLayout: true,
 })
 
 // SEO Meta
@@ -72,7 +72,7 @@ const login = async (): Promise<void> => {
   }
 
   try {
-    const response = await useFetch<LoginResponse>(url, {
+    const response = await useLazyFetch<LoginResponse>(url, {
       method: 'POST',
       body: data,
       baseURL: useRuntimeConfig().public.originUrl,

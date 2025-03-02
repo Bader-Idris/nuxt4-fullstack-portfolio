@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 const isFirstLoad = ref(true);
 const handleBeforeEnter = () => {
   if (isFirstLoad.value) {

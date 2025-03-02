@@ -40,7 +40,7 @@
     "vue3-toastify": "^0.2.8"
   },
   "devDependencies": {
-    "@capacitor-community/app-icon": "^5.0.0",
+    "@capacitor-community/app-icon": "^6.0.0",
     "@capacitor/action-sheet": "^7.0.0",
     "@capacitor/android": "^7.0.1",
     "@capacitor/app": "^7.0.0",
@@ -48,7 +48,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/browser": "^7.0.0",
     "@capacitor/camera": "^7.0.0",
-    "@capacitor/cli": "7.0.1",
+    "@capacitor/cli": "^7.0.1",
     "@capacitor/clipboard": "^7.0.0",
     "@capacitor/core": "^7.0.1",
     "@capacitor/device": "^7.0.0",
@@ -68,7 +68,7 @@
     "@capacitor/text-zoom": "^7.0.0",
     "@capacitor/toast": "^7.0.0",
     "@nuxt/eslint": "^1.1.0",
-    "@nuxtjs/seo": "2.1.1",
+    "@nuxtjs/seo": "^2.2.0",
     "@types/bun": "^1.2.4",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
@@ -82,6 +82,6 @@
     "postcss-preset-env": "^10.1.5",
     "postcss-pxtorem": "^6.1.0",
     "sass": "^1.85.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   }
 }

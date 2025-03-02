@@ -31,22 +31,6 @@
 </template>
 
 <script setup lang="ts">
-// useHead({
-//   title: 'Bader Idris - Full-Stack Developer Portfolio',
-//   meta: [
-//     { name: 'description', content: "Explore Bader Idris's portfolio as a full-stack developer specializing in Vue, Node.js, and modern web technologies. Crafting responsive, dynamic web experiences." },
-//     {
-//       name: 'content-security-policy', content: `default-src 'self' https: ws: wss: blob: data: 'unsafe-inline';
-//         img-src 'self' https://raw.githubusercontent.com data:;
-//         connect-src 'self' https://baderidris.com ws: wss:;`
-//     }
-//   ],
-//   // bodyAttrs: {
-//   //   class: 'test'
-//   // },
-//   // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
-// })
-
 useSeoMeta({
   title: 'Bader Idris - Full-Stack Developer Portfolio',
   ogTitle: 'Bader Idris - Full-Stack Developer Portfolio',
@@ -56,14 +40,6 @@ useSeoMeta({
   ogSiteName: 'Bader Idris Portfolio',
   ogImage: 'https://baderidris.com/thumbnail.jpg',
   ogImageWidth: 1200,
-
-  // TODO: fix the /client/public/apple-touch-icon.png
-  /*
-    TODO: fix the
-
-    Uncaught (in promise) non-precached-url: non-precached-url :: [{"url":"/"}]
-    at O.createHandlerBoundToURL (
-  */
   ogImageHeight: 630,
   ogType: 'website',
   twitterCard: 'summary_large_image',
@@ -86,6 +62,17 @@ useHead({
       href: '/apple-touch-icon.png',
     },
   ],
+  //   meta: [
+  //     {
+  //       name: 'content-security-policy', content: `default-src 'self' https: ws: wss: blob: data: 'unsafe-inline';
+  //         img-src 'self' https://raw.githubusercontent.com data:;
+  //         connect-src 'self' https://baderidris.com ws: wss:;`
+  //     }
+  //   ],
+  //   // bodyAttrs: {
+  //   //   class: 'test'
+  //   // },
+  //   // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
 })
 </script>
 

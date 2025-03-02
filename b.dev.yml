@@ -27,18 +27,30 @@ services:
       - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
+      - MONGO_USER=Bader
+      - MONGO_PASSWORD=myPassword
+      - MONGO_DB_NAME=portfolio
+      - SESSION_SECRET=someSecret
+      - REDIS_USER=default
+      - REDIS_PASSWORD=myPassword
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_DB=articles
+      - JWT_SECRET=jwtSecret
+      - JWT_LIFETIME=3h # zach says 2 weeks for prod!
+
+      - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
 
     command: bun start
   mongo:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=Bader
-      - MONGO_INITDB_ROOT_PASSWORD=secretPassword
+      - MONGO_INITDB_ROOT_PASSWORD=myPassword
   redis:
     environment:
       - REDIS_USER=default
-      - REDIS_PASSWORD=secretPassword
+      - REDIS_PASSWORD=myPassword
   #   command:
-  #     - redis-server --requirepass secretPassword
+  #     - redis-server --requirepass myPassword
 
 volumes:
   nginx-logs:

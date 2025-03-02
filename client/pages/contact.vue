@@ -4,58 +4,50 @@
       <FoldableTab @toggle="toggleContact">
         <p>contacts</p>
       </FoldableTab>
-      <div
-        :style="{ display: contactDisplay }"
-        class="personal-contact"
+      <div :style="{ display: contactDisplay }" class="personal-contact"
         :class="{ hidden: isContactHidden }">
         <ClientOnly>
-        <p @click="(openMailTo(0), copyToClipboard(0))">
-          {{ firstContact }}
-          <i v-if="showIcon[0]" class="fa-solid fa-envelope" />
-        </p>
-        <p @click="copyToClipboard(1)">
-          {{ secondContact }}
-          <i v-if="showIcon[1]" class="fa-solid fa-copy" />
-        </p>
+          <p @click="(openMailTo(0), copyToClipboard(0))">
+            {{ firstContact }}
+            <i v-if="showIcon[0]" class="fa-solid fa-envelope" />
+          </p>
+          <p @click="copyToClipboard(1)">
+            {{ secondContact }}
+            <i v-if="showIcon[1]" class="fa-solid fa-copy" />
+          </p>
         </ClientOnly>
       </div>
 
       <FoldableTab @toggle="toggleSocials">
         <p>find-me-also-in</p>
       </FoldableTab>
-      <div
-:style="{ display: socialsDisplay }"
-        class="personal-socials"
+      <div :style="{ display: socialsDisplay }" class="personal-socials"
         :class="{ hidden: isSocialsHidden }">
         <ul>
           <li>
-            <CustomLink
-aria-label="go to my css battle page"
+            <CustomLink aria-label="go to my css battle page"
               to="https://cssbattle.dev/player/bader_idris"
               class="external-link">Css Battle
             </CustomLink>
           </li>
-          <li>
+          <!-- <li>
             <CustomLink
               aria-label="go to my youtube channel"
               to="/not-created-yet">YouTube Channel
             </CustomLink>
-          </li>
+          </li> -->
           <li>
-            <CustomLink
-aria-label="go to my front end mentor profile"
+            <CustomLink aria-label="go to my front end mentor profile"
               to="https://www.frontendmentor.io/profile/Bader-Idris"
               class="external-link">Front End Mentor</CustomLink>
           </li>
           <li>
-            <CustomLink
-aria-label="go to my exercism profile"
+            <CustomLink aria-label="go to my exercism profile"
               to="https://exercism.org/profiles/Bader-Idris"
               class="external-link">Exercism</CustomLink>
           </li>
           <li>
-            <CustomLink
-aria-label="go to my code wars profile"
+            <CustomLink aria-label="go to my code wars profile"
               to="https://www.codewars.com/users/Bader-Idris"
               class="external-link">CodeWar</CustomLink>
           </li>
@@ -63,22 +55,20 @@ aria-label="go to my code wars profile"
       </div>
     </aside>
     <ClientOnly>
-      <section
-        v-if="authStore.user?.role === 'admin'"
+      <section v-if="authStore.user?.role === 'admin'"
         class="received-to-admin">
         <CustomButtons button-type="ghost">
           <CustomLink to="/contact/admin">fetch-messages</CustomLink>
         </CustomButtons>
-        <NuxtPage />
       </section>
+      <span v-else />
+      <NuxtPage />
     </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
-// import { ref, onMounted, onBeforeUnmount } from 'vue';
 // import { useClipboard } from '@vueuse/core';
-
 import { useUserStore } from '~/stores/UserNameStore';
 
 useSeoMeta({
@@ -89,8 +79,6 @@ useSeoMeta({
 const contactDisplay = ref('block');
 const socialsDisplay = ref('block');
 const authStore = useUserStore();
-
-// State variables for toggling contact and socials
 
 // State variables for toggling contact and socials
 const isContactHidden = ref<boolean>(false);
@@ -107,7 +95,6 @@ const toggleContact = () => {
     }, 300);
   }
 };
-
 
 const toggleSocials = () => {
   if (isSocialsHidden.value) {
@@ -126,7 +113,6 @@ const showIcon = ref<boolean[]>([false, false]);
 const firstContact = computed(() => contInfo.value[0] || '');
 const secondContact = computed(() => contInfo.value[1] || '');
 
-// Function to open mail client with email address
 const openMailTo = (index: number): void => {
   if (import.meta.client) {
     const email = contInfo.value[index]
@@ -138,7 +124,6 @@ const openMailTo = (index: number): void => {
   }
 }
 
-// Function to copy contact info to clipboard securely
 const copyToClipboard = async (index: number): Promise<void> => {
   if (import.meta.client) {
     try {

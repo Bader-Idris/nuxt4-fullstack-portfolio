@@ -5,9 +5,10 @@
 //     if (!isAuthenticated) {
 //       return navigateTo("/"); // Redirect to home if not authenticated
 //     }
-//   }
-// );
+// });
 
 export default defineEventHandler((event) => {
-  event.context.auth = { user: 123 }
+  // event.context.auth = { user: 123 }
+// console.log('testing yo');
+
 })

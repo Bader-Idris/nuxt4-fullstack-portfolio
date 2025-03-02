@@ -30,7 +30,6 @@
             :class="{ active: activeHobbyIndex === index }"
             @click="setActiveHobby(index)"
           >
-            <!-- <img :src="hobby.icon" :alt="hobby.iconAlt" /> -->
             <NuxtImg
               :src="hobby.icon"
               :alt="hobby.iconAlt"
@@ -70,7 +69,6 @@
         </div>
       </div>
     </aside>
-
     <main>
       <NuxtPage />
     </main>
@@ -78,10 +76,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter, navigateTo } from '#app'
-import { useSeoMeta, useLocalePath } from '#imports'
-
 const route = useRoute()
 const localePath = useLocalePath()
 

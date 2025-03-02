@@ -1,8 +1,10 @@
-// import { useUserStore } from "~/stores/UserNameStore";
-// import { useLocalePath } from "#imports"; // Import useLocalePath for localized paths
+import { useUserStore } from "~/stores/UserNameStore";
 
-// export default defineNuxtRouteMiddleware(
-//   (to, from) => {
+export default defineNuxtRouteMiddleware(
+  (to, from) => {
+
+  console.log("testing");
+
 //     const userStore = useUserStore(); // Use your user store
 //     const localePath = useLocalePath();
 
@@ -23,5 +25,6 @@
 
 //     // If everything is fine, continue to the route
 //     return undefined; // Explicitly return undefined to satisfy TypeScript
-//   }
-// );
+  }
+);
+

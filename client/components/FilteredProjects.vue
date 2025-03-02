@@ -47,7 +47,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import projects from '~/apis/projects_info.json'
 
 const props = defineProps({

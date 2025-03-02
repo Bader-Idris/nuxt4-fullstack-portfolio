@@ -33,8 +33,6 @@
 </template>
 
 <script setup lang="ts">
-// import { PropType } from 'vue'
-
 import HTML from './svg/SvgHtml.vue'
 import CSS from './svg/SvgCss.vue'
 import SvgVuejs from './svg/SvgVuejs.vue'
@@ -69,8 +67,6 @@ const componentMap = {
 </script>
 
 <style lang="scss">
-// @use '~' as *;
-
 .projects-sidebar {
   width: 301px;
   transition:

@@ -32,8 +32,6 @@ const removeItem = (item) => {
 </script>
 
 <style lang="scss">
-// @use '~' as *;
-
 .selected-projects {
   display: inline-block;
   left: 300px;
