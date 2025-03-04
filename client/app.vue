@@ -15,6 +15,39 @@
 </template>
 
 <script setup lang="ts">
+
+
+useHead({
+  link: [
+    {
+      rel: 'icon',
+      type: 'image/x-icon',
+      href: '/favicon.ico',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      size: '16x16',
+      href: '/favicon-16x16.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      size: '32x32',
+      href: '/favicon-32x32.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      href: '/apple-touch-icon.png',
+    },
+  ],
+  // bodyAttrs: {
+  //   class: 'test'
+  // },
+  // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
+})
+
 const isFirstLoad = ref(true);
 const handleBeforeEnter = () => {
   if (isFirstLoad.value) {

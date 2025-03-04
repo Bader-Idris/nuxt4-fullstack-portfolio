@@ -64,25 +64,6 @@ useSeoMeta({
   // contentSecurityPolicy: "default-src 'self' https: ws: wss: blob: data: 'unsafe-inline'; img-src 'self' https://raw.githubusercontent.com data:; connect-src 'self' https://baderidris.com ws: wss:;",
 })
 
-useHead({
-  link: [
-    {
-      rel: 'icon',
-      type: 'image/png',
-      href: '/favicon-32x32.png',
-    },
-    {
-      rel: 'icon',
-      type: 'image/png',
-      href: '/apple-touch-icon.png',
-    },
-  ],
-  //   // bodyAttrs: {
-  //   //   class: 'test'
-  //   // },
-  //   // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
-})
-
 </script>
 
 <style lang="scss" scoped>
