@@ -4,7 +4,9 @@
       <FoldableTab @toggle="toggleContact">
         <p>contacts</p>
       </FoldableTab>
-      <div :style="{ display: contactDisplay }" class="personal-contact"
+      <div 
+        :style="{ display: contactDisplay }" 
+        class="personal-contact"
         :class="{ hidden: isContactHidden }">
         <ClientOnly>
           <p @click="(openMailTo(0), copyToClipboard(0))">
@@ -21,7 +23,8 @@
       <FoldableTab @toggle="toggleSocials">
         <p>find-me-also-in</p>
       </FoldableTab>
-      <div :style="{ display: socialsDisplay }" class="personal-socials"
+      <div :style="{ display: socialsDisplay }" 
+        class="personal-socials"
         :class="{ hidden: isSocialsHidden }">
         <ul>
           <li>
@@ -58,7 +61,7 @@
       <section v-if="authStore.user?.role === 'admin'"
         class="received-to-admin">
         <CustomButtons button-type="ghost">
-          <CustomLink to="/contact/admin">fetch-messages</CustomLink>
+          <CustomLink :to="localePath('/contact/admin')">fetch-messages</CustomLink>
         </CustomButtons>
       </section>
       <span v-else />
@@ -70,11 +73,20 @@
 <script setup lang="ts">
 // import { useClipboard } from '@vueuse/core';
 import { useUserStore } from '~/stores/UserNameStore';
+const localePath = useLocalePath()
 
 useSeoMeta({
   title: 'Get in Touch with Bader Idris, via multiple approaches',
   description: "Connect with Bader Idris for collaborations or tech innovations. Reach out via email, phone call, or GitHub to bring your ideas to life with a full-stack expert.",
 })
+
+useSchemaOrg([
+  {
+    "@type": "ContactPage",
+    name: "Get in Touch with Bader Idris",
+    description: "Connect with Bader Idris for collaborations or tech innovations. Reach out via email, phone call, or GitHub to bring your ideas to life with a full-stack expert.",
+  }
+])
 
 const contactDisplay = ref('block');
 const socialsDisplay = ref('block');

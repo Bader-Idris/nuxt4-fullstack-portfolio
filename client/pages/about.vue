@@ -135,11 +135,11 @@ const icons = ref([
 ])
 
 const hobbiesObj = ref([
-  { title: 'bio', icon: '/imgs/svgs/red-dir.svg', iconAlt: 'red folder' },
-  { title: 'interests', icon: '/imgs/svgs/green-dir.svg', iconAlt: 'green folder' },
-  { title: 'education', icon: '/imgs/svgs/purple-dir.svg', iconAlt: 'purple folder' },
+  { title: 'bio',         icon: '/imgs/svgs/red-dir.svg', iconAlt: 'red folder' },
+  { title: 'interests',   icon: '/imgs/svgs/green-dir.svg', iconAlt: 'green folder' },
+  { title: 'education',   icon: '/imgs/svgs/purple-dir.svg', iconAlt: 'purple folder' },
   { title: 'high-school', icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
-  { title: 'University', icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
+  { title: 'University',  icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
 ])
 
 const toggleHobbies = () => {

@@ -5,7 +5,7 @@
       <span>Loading emails...</span>
     </div>
     <ul v-else-if="emails.length > 0">
-      <li v-for="email in emails" :key="email._id">
+      <li v-for="email in emails" :key="email.id">
         <p><strong>From:</strong> {{ email.name }} ({{ email.email }})</p>
         <p><strong>IP:</strong> {{ email.ip }}</p>
         <p>
@@ -24,14 +24,22 @@
 </template>
 
 <script setup lang="ts">
-import { toast } from 'vue3-toastify'
-import { useUserStore } from '~/stores/UserNameStore'
 import 'vue3-toastify/dist/index.css'
+import { storeToRefs } from 'pinia'
+import { useUserStore } from '~/stores/UserNameStore'
 
 useSeoMeta({
   title: 'Admin Emails | Bader Idris',
   description: 'Exclusive to admins only',
 })
+
+useSchemaOrg([
+  {
+    "@type": "ContactPage",
+    name: "Admin Emails | Bader Idris",
+    description: "Exclusive to admins only",
+  }
+])
 
 interface Email {
   id: string
@@ -42,100 +50,116 @@ interface Email {
   createdAt: string
 }
 
-
+const { t } = useI18n()
 const emails = ref<Email[]>([])
 const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
 const route = useRoute()
+const router = useRouter()
 const localePath = useLocalePath()
 
-// Get redirect path with query preservation
-const getRedirectPath = () => ({ // TODO: this requires fixes!
-  path: localePath('/login'),
-  query: { redirect: route.fullPath }
-})
-
-// Professional fetch implementation
-const { execute, pending } = useLazyFetch<{ data: Email[] }>('/api/v1/received_emails', {
-  immediate: false,
-  server: false,
-  credentials: 'include',
-  async onResponse({ response }) {
-    if (response.ok) {
-      emails.value = response._data?.data || []
-      showSuccessToast('Emails loaded successfully')
-    }
-  },
-  async onResponseError({ response }) {
-    handleFetchError(response?.status)
-  }
-})
-
-// Centralized error handling
-const handleFetchError = (statusCode?: number) => {
-  const errorMap: Record<number, string> = {
-    401: 'Session expired - please login again',
-    403: 'Insufficient permissions',
-    500: 'Server error - please try again later'
-  }
-
-  showErrorToast(errorMap[statusCode || 500] || 'Failed to fetch emails')
-
-  if ([401, 403].includes(statusCode || 0)) {
-    return navigateTo(getRedirectPath(), { redirectCode: 302 })
+// Client-only toast initialization
+const showToast = (type: 'success' | 'error', message: string) => {
+  if (import.meta.client) {
+    import('vue3-toastify').then(({ toast }) => {
+      toast(message, {
+        theme: 'auto',
+        type,
+        position: 'top-center',
+        timeout: type === 'success' ? 3000 : 5000
+      })
+    })
   }
 }
 
-// Toast helpers
-const showSuccessToast = (message: string) => {
-  toast(message, {
-    theme: 'auto',
-    type: 'success',
-    position: 'top-center',
-    timeout: 3000
-  })
-}
 
-const showErrorToast = (message: string) => {
-  toast(message, {
-    theme: 'dark',
-    type: 'error',
-    position: 'top-center',
-    timeout: 5000
-  })
-}
-
-// Auth check composable
+// Unified auth check handler
 const checkAdminAccess = () => {
-  if (!userStore.user || userStore.user.role !== 'admin') {
-    showErrorToast('Admin access required')
-    return navigateTo(getRedirectPath(), { redirectCode: 302 })
+  // Server-side check
+  if (import.meta.server) {
+    const nuxtApp = useNuxtApp()
+    const cookies = parseCookies(nuxtApp.ssrContext?.event)
+    if (!cookies.authToken) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: t('errors.adminAccessRequired')
+      })
+    }
+    return true
+  }
+
+  // Client-side check
+  if (!user.value || user.value.role !== 'admin') {
+    showToast('error', t('errors.adminAccessRequired'))
+    router.push({
+      path: localePath('/login'),
+      query: { redirect: route.fullPath }
+    })
+    return false
   }
   return true
 }
 
-// Universal fetch handler
-const fetchEmails = async () => {
-  if (!checkAdminAccess()) return navigateTo(getRedirectPath(), { redirectCode: 302 })
+// Data fetching handler
+const { pending, execute } = useLazyAsyncData<Email[]>(
+  'admin-emails',
+  async () => {
+    if (!checkAdminAccess()) return []
 
-  try {
-    await execute()
-  } catch (error) {
-    handleFetchError(error.statusCode)
+    const { data, error } = await useFetch<{ data: Email[] }>(
+      '/api/v1/received_emails',
+      {
+        credentials: 'include',
+        server: false,
+        retry: 0,
+        headers: import.meta.server ? {
+          cookie: useRequestHeaders(['cookie']).cookie || ''
+        } : undefined
+      }
+    )
+
+    if (error.value) {
+      const status = error.value.statusCode
+      const message = status === 403 ? t('errors.adminAccessRequired') :
+        status === 401 ? t('errors.sessionExpired') :
+          t('errors.serverError')
+
+      if (import.meta.client) {
+        showToast('error', message)
+        if ([401, 403].includes(status)) {
+          router.push({
+            path: localePath('/login'),
+            query: { redirect: route.fullPath }
+          })
+        }
+      } else {
+        throw createError({ statusCode: status, statusMessage: message })
+      }
+      return []
+    }
+
+    emails.value = data.value?.data || []
+    showToast('success', t('messages.emailsLoaded'))
+    return emails.value
+  },
+  {
+    server: false,
+    immediate: false
   }
-}
+)
 
-// SSR/CSR compatible data fetching
-onServerPrefetch(async () => {
-  if (import.meta.server && checkAdminAccess()) {
-    await fetchEmails()
-  }
-})
-
+// Lifecycle handling
 onMounted(async () => {
   if (import.meta.client) {
-    await fetchEmails()
+    await execute()
   }
 })
+
+// Server-side initialization
+if (import.meta.server) {
+  checkAdminAccess() // Will automatically throw error if not authenticated
+  await execute()
+}
 </script>
 
 <style lang="scss">

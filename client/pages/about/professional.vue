@@ -9,6 +9,13 @@ useSeoMeta({
   title: 'under development professional nested page',
   description: 'Please stay tuned, this page requires fixes,',
 })
+
+useSchemaOrg({
+  "@type": "AboutPage", // or "WebPage"
+  name: "Professional Background",
+  description: "Professional experience of Bader Idris."
+})
+
 </script>
 
 <style lang="scss" scoped>

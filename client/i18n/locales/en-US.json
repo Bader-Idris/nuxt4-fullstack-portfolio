@@ -24,5 +24,13 @@
   "projects": {
     "caution": "Please select a programming tool to view my projects. \n Your choice is crucial to proceed."
   },
-  "contact": {}
+  "contact": {},
+  "errors": {
+    "adminAccessRequired": "Admin access required",
+    "sessionExpired": "Session expired - please login again",
+    "serverError": "Server error - please try again later"
+  },
+  "messages": {
+    "emailsLoaded": "Emails loaded successfully"
+  }
 }

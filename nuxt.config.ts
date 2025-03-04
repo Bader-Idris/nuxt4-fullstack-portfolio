@@ -1,3 +1,5 @@
+import { definePerson } from "nuxt-schema-org/schema";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
@@ -9,6 +11,23 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
+    // routeRules: {
+      // "/api/**": {
+      //   cors: true,
+      // },
+    // },
+    devProxy: {
+      "/api/**": {
+        target: "http://localhost:3000/api",
+        changeOrigin: true,
+        // cors: {
+        //   origin: ['http://localhost:3000', 'https://your-production-domain.com'],
+        //   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        //   allowedHeaders: ['Content-Type', 'Authorization'],
+        //   credentials: true
+        // }
+      },
+    },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     // experimental: {
     //   websocket: true
@@ -39,18 +58,9 @@ export default defineNuxtConfig({
       },
     },
   },
-  modules: [
-    // "@vite-pwa/nuxt",
-    "@nuxtjs/i18n",
-    "@nuxtjs/seo",
-    "@pinia/nuxt",
-    "@nuxtjs/device",
-    "@nuxt/eslint",
-    "@nuxt/content",
-    "@vueuse/nuxt",
-    "@nuxt/image",
-    // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
-  ],
+  modules: [// "@vite-pwa/nuxt",
+  "@nuxtjs/i18n", "@nuxtjs/seo", "@pinia/nuxt", "@nuxtjs/device", "@nuxt/eslint", "@nuxt/content", "@vueuse/nuxt", // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
+  "@nuxt/image", "@nuxt/icon"],
   // pwa: {
   //   // official source: https://github.com/vite-pwa/nuxt/blob/main/playground/nuxt.config.ts
   //   strategies: sw ? "injectManifest" : "generateSW",
@@ -203,9 +213,10 @@ export default defineNuxtConfig({
       // "./custom-folder/stores/**",
     ],
   },
-  // image: {
-  // // Options
-  // },
+  image: {
+    provider: "ipx",
+    format: ["webp"],
+  },
   postcss: {
     plugins: {
       "postcss-flexbugs-fixes": {},
@@ -251,10 +262,34 @@ export default defineNuxtConfig({
     name: "Bader Idris - Full-Stack Developer Portfolio",
     defaultLocale: "en",
   },
+  schemaOrg: {
+    // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
+    identity: definePerson({
+      name: "Bader Idris",
+      image: "/imgs/me_2024-03-13.jpg",
+      description: "Full stack developer",
+      url: "baderidris.com",
+      sameAs: [
+        "https://www.facebook.com/Bader.Idris.developer",
+        "https://github.com/bader-idris",
+      ],
+    }),
+  },
+  robots: {
+    sitemap: [
+      "/sitemap.xml",
+      "/sitemap_index.xml",
+      "/__sitemap__/en-US.xml",
+      "/__sitemap__/ar-PS.xml",
+      "/__sitemap__/es-ES.xml",
+    ],
+  },
   // ionic: {},
   routeRules: {
     // here we can separately define ssr or csr for specific routes, that's amazing!
     // https://nuxt.com/docs/guide/concepts/rendering#route-rules
+    // "/": { prerender: true },
+    "/api/**": { cors: true }, // where to put in be
   },
   // TODO: we might need to set vars as this for client-side:
   runtimeConfig: {

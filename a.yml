@@ -6,7 +6,6 @@ services:
     # ports:
     #   - "5000:80"
     volumes:
-      # - ./client/dist:/usr/share/nginx/html:ro
       - ./.output/public:/usr/share/nginx/html:ro
     depends_on:
       - app

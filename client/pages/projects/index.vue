@@ -17,16 +17,36 @@
 </template>
 
 <script setup lang="ts">
+const img = useImage()
+const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
+  width: 1200,
+  height: 630,
+  format: 'webp'
+});
+
 useSeoMeta({
   title: 'Projects I created during my career',
-  description: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Node.js, and more.",
+  description: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
+  ogTitle: 'Projects I created during my career',
+  ogDescription: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
+  ogImage: optimizedProjectsThumbnail,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
 })
+
+useSchemaOrg([
+  {
+    "@type": "CollectionPage",
+    name: "Projects I created during my career",
+    description: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
+  }
+])
 
 const sidebarDisplay = ref('block')
 const list = ref<Array<{ title: string, imgAlt: string, isActive: boolean }>>([
-  { title: 'HTML', imgAlt: 'html icon', isActive: false },
-  { title: 'CSS', imgAlt: 'css icon', isActive: false },
-  { title: 'Vue', imgAlt: 'vue icon', isActive: false },
+  { title: 'HTML', imgAlt: 'html icon', isActive: true },
+  { title: 'CSS', imgAlt: 'css icon', isActive: true },
+  { title: 'Vue', imgAlt: 'vue icon', isActive: true },
   // { title: "Docker", imgAlt: "docker icon", isActive: false },
   { title: 'Typescript', imgAlt: 'Typescript icon', isActive: true },
   // { title: "Express", imgAlt: "Express icon", isActive: false },

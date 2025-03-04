@@ -10,6 +10,7 @@ services:
       - ./server/config/certbot/dhparam.pem:/etc/nginx/dhparam.pem:ro
       - nginx-logs:/var/log/nginx
 
+      - ./server/config/mailserver/mta-sts.txt:/var/www/html/.well-known/mta-sts.txt:ro
   app:
     build:
       context: .

@@ -50,12 +50,30 @@ class="javascript"
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css' // You can change the theme here
 // import { useI18n } from 'vue-i18n';
 // const { t } = useI18n({ useScope: 'global' });
+
+
+useSeoMeta({
+  title: 'About my career',
+  description: 'Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions.',
+})
+
+useSchemaOrg([
+  {
+    "@type": "AboutPage",
+    name: "About Bader Idris",
+    description: "Learn more about Bader Idris, a full-stack developer.",
+    mainEntity: {
+      "@type": "Person",
+      name: "Bader Idris",
+      jobTitle: "Full-Stack Developer",
+      description: "A skilled developer excelling in Nuxt.js, Express.js, and more."
+    }
+  }
+])
 
 const codeBlock = ref<HTMLElement | null>(null)
 const bioContainer = ref<HTMLElement | null>(null)
