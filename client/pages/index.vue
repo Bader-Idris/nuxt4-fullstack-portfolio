@@ -55,6 +55,13 @@ useSeoMeta({
   twitterImage: optimizedThumbnail,
   twitterSite: '@badr_idris_',
   // fbAppId: 'YOUR_FACEBOOK_APP_ID', // Add your Facebook App ID here
+  appleMobileWebAppStatusBarStyle: 'black-translucent',
+  articleAuthor: ['https://baderidris.com/contact'],
+  viewport: 'width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes',
+  mobileWebAppCapable: 'yes',
+  themeColor: '#CCCCCC',
+  keywords: "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, beautiful snake game, Bader Idris portfolio",
+  // contentSecurityPolicy: "default-src 'self' https: ws: wss: blob: data: 'unsafe-inline'; img-src 'self' https://raw.githubusercontent.com data:; connect-src 'self' https://baderidris.com ws: wss:;",
 })
 
 useHead({
@@ -70,13 +77,6 @@ useHead({
       href: '/apple-touch-icon.png',
     },
   ],
-  //   meta: [
-  //     {
-  //       name: 'content-security-policy', content: `default-src 'self' https: ws: wss: blob: data: 'unsafe-inline';
-  //         img-src 'self' https://raw.githubusercontent.com data:;
-  //         connect-src 'self' https://baderidris.com ws: wss:;`
-  //     }
-  //   ],
   //   // bodyAttrs: {
   //   //   class: 'test'
   //   // },

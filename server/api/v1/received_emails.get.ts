@@ -3,6 +3,22 @@ import { getCookie } from "h3";
 // import type { NitroApp } from "nitropack";
 import { ReceivedEmail, User } from "../../models/mongo/index";
 
+interface DecodedToken {
+  user: {
+    userId: string;
+    role: string;
+  };
+}
+
+interface EmailDocument {
+  _id: any;
+  name: string;
+  email: string;
+  message: string;
+  ip: string;
+  createdAt: Date;
+}
+
 export default defineEventHandler(async (event) => {
   try {
     // 1. Get JWT from cookies
@@ -15,13 +31,11 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // @ts-ignore 2. Verify JWT
-    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET) as {
-      user: {
-        userId: string;
-        role: string;
-      };
-    };
+    // 2. Verify JWT with proper type assertion
+    const decoded = jwt.verify(
+      accessToken,
+      process.env.JWT_SECRET!
+    ) as unknown as DecodedToken;
 
     // 3. Verify user exists and has admin role
     const user = await User.findById(decoded.user.userId);
@@ -36,7 +50,7 @@ export default defineEventHandler(async (event) => {
     // 4. Fetch emails with proper typing
     const emails = await ReceivedEmail.find({})
       .sort({ createdAt: -1 })
-      .lean()
+      .lean<EmailDocument[]>()
       .exec();
 
     if (!emails || emails.length === 0) {

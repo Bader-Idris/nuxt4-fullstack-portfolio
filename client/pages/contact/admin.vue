@@ -79,7 +79,7 @@ const checkAdminAccess = () => {
   if (import.meta.server) {
     const nuxtApp = useNuxtApp()
     const cookies = parseCookies(nuxtApp.ssrContext?.event)
-    if (!cookies.authToken) {
+    if (!cookies.accessToken) {
       throw createError({
         statusCode: 403,
         statusMessage: t('errors.adminAccessRequired')
