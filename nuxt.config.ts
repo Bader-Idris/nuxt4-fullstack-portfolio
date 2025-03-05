@@ -11,6 +11,7 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
+    compressPublicAssets: true, // TODO: is this useful
     routeRules: {
       "/:slug(?!api/**).*": {
         cache: {
