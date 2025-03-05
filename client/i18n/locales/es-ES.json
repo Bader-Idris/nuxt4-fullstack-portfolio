@@ -1,5 +1,7 @@
 {
   "home": {
+    "title": "Bader Idris - Desarrollador Full-Stack",
+    "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
     "greeting": "Hola a todos. Soy",
     "name": "Bader Idris",
     "role": "> Desarrollador Full-Stack",
@@ -20,11 +22,35 @@
     "hasNotWon": "¡Has perdido!",
     "again": "Empezar-de-nuevo"
   },
-  "about": {},
+  "about": {
+    "title": "sobre mi carrera",
+    "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
+    "personal": {
+      "title": "sobre mi carrera, como desarrollador full-stack",
+      "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive."
+    },
+    "professional": {
+      "title": "Este contenido se encuentra en desarrollo",
+      "description": "Por favor, espera, esta pagina requiere correciones,"
+    },
+    "hobbies": {
+      "title": "Este contenido se encuentra en desarrollo",
+      "description": "Por favor, espera, esta pagina requiere correciones,"
+    }
+  },
   "projects": {
+    "title": "Proyectos que he creado durante mi carrera",
+    "description": "Aqui puedes ver mis proyectos como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
     "caution": "Por favor, selecciona una herramienta de programación\n para ver mis proyectos. Tu elección es crucial para continuar."
   },
-  "contact": {},
+  "contact": {
+    "title": "Habla con Bader Idris, mediante multiples enlaces",
+    "description": "encontrarse con Bader Idris para colaboraciones o innovaciones tecnologicas. comuniquese a traves de email, llamada telefonica o github para llevar sus ideas a vida con un experto full-stack.",
+    "admin": {
+      "title": "Administración de emails | Bader Idris",
+      "description": "Contenido exclusivo para administradores"
+    }
+  },
   "errors": {
     "adminAccessRequired": "Acceso de administrador requerido",
     "sessionExpired": "el sesion ha caducado - por favor inicia sesion de nuevo",

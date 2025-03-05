@@ -11,21 +11,37 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
-    // routeRules: {
-      // "/api/**": {
-      //   cors: true,
-      // },
-    // },
+    prerender: {
+      ignore: ["/api/**"], // Exclude all API routes from prerendering
+    },
+    routeRules: {
+      "/**": {
+        cache: {
+          maxAge: 28800, // 28800 8hs
+          swr: true, // Stale-while-revalidate for freshness
+        },
+        headers: {
+          "Cache-Control": "public, max-age=28800",
+          // TODO: I added the security headers in nginx
+        },
+      },
+      "/contact/admin": {
+        cache: false,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
+      "/api/**": {
+        cors: true,
+        prerender: false,
+        // TODO: create a middleware for cors, this only provides boolean value
+      },
+    },
     devProxy: {
       "/api/**": {
+        // ! check in prod, containerized
         target: "http://localhost:3000/api",
         changeOrigin: true,
-        // cors: {
-        //   origin: ['http://localhost:3000', 'https://your-production-domain.com'],
-        //   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        //   allowedHeaders: ['Content-Type', 'Authorization'],
-        //   credentials: true
-        // }
       },
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
@@ -58,9 +74,19 @@ export default defineNuxtConfig({
       },
     },
   },
-  modules: [// "@vite-pwa/nuxt",
-  "@nuxtjs/i18n", "@nuxtjs/seo", "@pinia/nuxt", "@nuxtjs/device", "@nuxt/eslint", "@nuxt/content", "@vueuse/nuxt", // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
-  "@nuxt/image", "@nuxt/icon"],
+  modules: [
+    // "@vite-pwa/nuxt",
+    "@nuxtjs/device",
+    "@nuxtjs/seo",
+    "@nuxtjs/i18n",
+    "@pinia/nuxt",
+    "@vueuse/nuxt",
+    "@nuxt/image",
+    "@nuxt/icon",
+    // "@nuxt/content", // TODO: crashes the app due to misconfigs with caching!
+    "@nuxt/eslint",
+    // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
+  ],
   // pwa: {
   //   // official source: https://github.com/vite-pwa/nuxt/blob/main/playground/nuxt.config.ts
   //   strategies: sw ? "injectManifest" : "generateSW",
@@ -176,15 +202,12 @@ export default defineNuxtConfig({
         code: "en",
         iso: "en-US",
         dir: "ltr",
-        name: "English",
-        //       file: "en.json",
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
         // https://i18n.nuxtjs.org/docs/guide/lazy-load-translations#basic-usage
         // TODO: 🥊 to be able to fetch from nuxt server 🥊
-        // file: "en/**/*",
         file: "en-US.json",
+        name: "English",
       },
-      // { code: 'ar', iso: 'ar-EG', file: 'ar.json' },
       {
         code: "ar",
         iso: "ar-PS",
@@ -195,6 +218,7 @@ export default defineNuxtConfig({
       {
         code: "es",
         iso: "es-ES",
+        dir: "ltr",
         file: "es-ES.json",
         name: "Español",
       },
@@ -252,9 +276,45 @@ export default defineNuxtConfig({
       charset: "utf-8",
       viewport:
         "viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=3.0, user-scalable=yes",
-      // htmlAttrs: {
-      //   dir: "ltr",
-      // },
+      // meta: [{}],
+      link: [
+        {
+          rel: "icon",
+          type: "image/x-icon",
+          sizes: "48x48",
+          href: "/favicon.ico",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "16x16",
+          href: "/favicon-16x16.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32x32.png",
+        },
+        {
+          rel: "apple-touch-icon",
+          type: "image/png",
+          // sizes:
+          href: "/apple-touch-icon.png",
+        },
+        {
+          rel: "icon",
+          type: "image/webp",
+          sizes: "192x192",
+          href: "/icon-192.webp",
+        },
+        {
+          rel: "icon",
+          type: "image/webp",
+          sizes: "128x128",
+          href: "/icon-128.webp",
+        },
+      ],
     },
   },
   site: {
@@ -276,6 +336,7 @@ export default defineNuxtConfig({
     }),
   },
   robots: {
+    disallow: ["/contact/admin"],
     sitemap: [
       "/sitemap.xml",
       "/sitemap_index.xml",
@@ -285,24 +346,25 @@ export default defineNuxtConfig({
     ],
   },
   // ionic: {},
-  routeRules: {
-    // here we can separately define ssr or csr for specific routes, that's amazing!
-    // https://nuxt.com/docs/guide/concepts/rendering#route-rules
-    // "/": { prerender: true },
-    "/api/**": { cors: true }, // where to put in be
-  },
-  // TODO: we might need to set vars as this for client-side:
+  // routeRules: {
+  //   // here we can separately define ssr or csr for specific routes, that's amazing!
+  //   // https://nuxt.com/docs/guide/concepts/rendering#route-rules
+  //   // "/": { prerender: true },
+  //   "/api/**": { cors: true }, // where to put in be
+  // },
   runtimeConfig: {
+    // ? publicly for client
     public: {
       originUrl: process.env.DOMAIN_NAME,
     },
+    // ? secretly for server
     mailUser: process.env.MAIL_USER,
     mailPass: process.env.MAIL_PASS,
     mailFrom: "Bader Idris <contact@baderidris.com>",
     mailReplyTo: "Bader Idris <contact@baderidris.com>",
     jwtSecret: process.env.JWT_SECRET,
-    jwtLifetime: process.env.JWT_LIFETIME,
-    nodeEnv: process.env.NODE_ENV,
+    jwtLifetime: process.env.JWT_LIFETIME || "1h",
+    nodeEnv: process.env.NODE_ENV || "production",
     originUrl: process.env.DOMAIN_NAME,
     // mongoUri: process.env.MONGO_URI,
   },

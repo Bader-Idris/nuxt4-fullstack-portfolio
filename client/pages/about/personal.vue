@@ -21,11 +21,11 @@
 
     <div class="code-snippet">
       <div class="code-author">
-        <NuxtImg
-          class="mi-imagen"
-          src="/imgs/me_2024-03-13.jpg"
+        <img
+          src="/imgs/meTwentyFour.jpg"
           alt="personal-img"
-        />
+          class="mi-imagen"
+        >
         <div class="auth-aside">
           <p>@bader-idris</p>
           <p>{{ createTimeCodeSnippet }}</p>
@@ -52,13 +52,11 @@ class="javascript"
 <script setup lang="ts">
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css' // You can change the theme here
-// import { useI18n } from 'vue-i18n';
-// const { t } = useI18n({ useScope: 'global' });
-
+const { t } = useI18n()
 
 useSeoMeta({
-  title: 'About my career',
-  description: 'Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions.',
+  title: t('about.personal.title'),
+  description: t('about.personal.description'),
 })
 
 useSchemaOrg([

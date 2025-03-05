@@ -78,6 +78,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const localePath = useLocalePath()
+const { t } = useI18n()
 
 // const route = useRoute()
 const router = useRouter()
@@ -87,8 +88,8 @@ const isContactHidden = ref(true)
 const activeHobbyIndex = ref(0)
 
 useSeoMeta({
-  title: 'About my career',
-  description: 'Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Vue.js, Node.js, and more. Turning ideas into innovative digital solutions.',
+  title: t('about.title'),
+  description: t('about.description'),
 })
 
 const isMobile = useMobile()

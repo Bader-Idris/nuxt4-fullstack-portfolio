@@ -18,6 +18,8 @@
 
 <script setup lang="ts">
 const img = useImage()
+const { t } = useI18n()
+
 const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
   width: 1200,
   height: 630,
@@ -25,10 +27,10 @@ const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
 });
 
 useSeoMeta({
-  title: 'Projects I created during my career',
-  description: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
-  ogTitle: 'Projects I created during my career',
-  ogDescription: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
+  title: t('projects.title'),
+  description: t('projects.description'),
+  ogTitle: t('projects.title'),
+  ogDescription: t('projects.description'),
   ogImage: optimizedProjectsThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,

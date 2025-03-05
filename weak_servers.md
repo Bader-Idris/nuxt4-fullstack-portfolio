@@ -37,7 +37,7 @@ sudo sysctl -p
 Now, it's better to run the build command with this variable:
 
 ```sh
-NODE_OPTIONS=--max-old-space-size=3072 bun run build
+NODE_OPTIONS=--max-old-space-size=4048 bun run build
 ```
 
 > Now the building process does not get killed due to leap issues! 🎆🎇

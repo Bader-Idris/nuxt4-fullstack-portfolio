@@ -74,17 +74,18 @@
 // import { useClipboard } from '@vueuse/core';
 import { useUserStore } from '~/stores/UserNameStore';
 const localePath = useLocalePath()
+const { t } = useI18n()
 
 useSeoMeta({
-  title: 'Get in Touch with Bader Idris, via multiple approaches',
-  description: "Connect with Bader Idris for collaborations or tech innovations. Reach out via email, phone call, or GitHub to bring your ideas to life with a full-stack expert.",
+  title: t('contact.title'),
+  description: t('contact.description'),
 })
 
 useSchemaOrg([
   {
     "@type": "ContactPage",
-    name: "Get in Touch with Bader Idris",
-    description: "Connect with Bader Idris for collaborations or tech innovations. Reach out via email, phone call, or GitHub to bring your ideas to life with a full-stack expert.",
+    name: t('contact.title'),
+    description: t('contact.description'),
   }
 ])
 

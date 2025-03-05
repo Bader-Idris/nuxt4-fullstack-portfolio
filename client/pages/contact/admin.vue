@@ -27,17 +27,18 @@
 import 'vue3-toastify/dist/index.css'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '~/stores/UserNameStore'
+const { t } = useI18n()
 
 useSeoMeta({
-  title: 'Admin Emails | Bader Idris',
-  description: 'Exclusive to admins only',
+  title: t('contact.admin.title'),
+  description: t('contact.admin.description'),
 })
 
 useSchemaOrg([
   {
     "@type": "ContactPage",
-    name: "Admin Emails | Bader Idris",
-    description: "Exclusive to admins only",
+    name: t('contact.admin.title'),
+    description: t('contact.admin.description'),
   }
 ])
 
@@ -50,7 +51,6 @@ interface Email {
   createdAt: string
 }
 
-const { t } = useI18n()
 const emails = ref<Email[]>([])
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)

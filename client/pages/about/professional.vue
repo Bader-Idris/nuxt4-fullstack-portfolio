@@ -5,9 +5,11 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 useSeoMeta({
-  title: 'under development professional nested page',
-  description: 'Please stay tuned, this page requires fixes,',
+  title: t('about.professional.title'),
+  description: t('about.professional.description'),
 })
 
 useSchemaOrg({

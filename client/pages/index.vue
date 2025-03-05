@@ -32,6 +32,8 @@
 
 <script setup lang="ts">
 const img = useImage()
+const { t } = useI18n()
+
 const optimizedThumbnail = img('/thumbnail.jpg', {
   width: 1200,
   height: 630,
@@ -39,10 +41,10 @@ const optimizedThumbnail = img('/thumbnail.jpg', {
 });
 
 useSeoMeta({
-  title: 'Bader Idris - Full-Stack Developer Portfolio',
-  ogTitle: 'Bader Idris - Full-Stack Developer Portfolio',
-  description: 'Explore Bader Idris\'s portfolio as a full-stack developer specializing in Vue, Nuxt, Express.js, and modern web technologies. Crafting responsive, dynamic web experiences.',
-  ogDescription: 'Explore Bader Idris\'s portfolio showcasing skills in modern web development technologies, including Nuxt, Express.js, and more.',
+  title: t('home.title'),
+  ogTitle: t('home.title'),
+  description: t('home.description'),
+  ogDescription: t('home.description'),
   ogUrl: 'https://baderidris.com/',
   ogSiteName: 'Bader Idris Portfolio',
   ogImage: optimizedThumbnail,
@@ -50,8 +52,8 @@ useSeoMeta({
   ogImageHeight: 630,
   ogType: 'website',
   twitterCard: 'summary_large_image',
-  twitterTitle: 'Bader Idris - Full-Stack Developer Portfolio',
-  twitterDescription: 'Explore Bader Idris\'s portfolio showcasing skills in modern web development technologies, including Vue, Nuxt, Express.js, and more.',
+  twitterTitle: t('home.title'),
+  twitterDescription: t('home.description'),
   twitterImage: optimizedThumbnail,
   twitterSite: '@badr_idris_',
   // fbAppId: 'YOUR_FACEBOOK_APP_ID', // Add your Facebook App ID here
