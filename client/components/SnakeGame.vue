@@ -62,11 +62,11 @@ const isClient = import.meta.client
 const initializeSounds = () => {
   if (isClient && !sounds.value) {
     sounds.value = {
-      snakeHissing: new Howl({ src: [snakeHissing], html5: true, preload: true }),
-      ouch: new Howl({ src: [ouch], html5: true, preload: true }),
-      eating: new Howl({ src: [eatingSound], html5: true, preload: true }),
-      wallHit: new Howl({ src: [wallHitSound], html5: true, preload: true }),
-      victory: new Howl({ src: [victorySound], html5: true, preload: true }),
+      snakeHissing: new Howl({ src: [snakeHissing],  preload: true }),
+      ouch: new Howl({ src: [ouch] }),
+      eating: new Howl({ src: [eatingSound],  preload: true }),
+      wallHit: new Howl({ src: [wallHitSound] }),
+      victory: new Howl({ src: [victorySound] }),
     }
   }
 }

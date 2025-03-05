@@ -21,11 +21,11 @@
 
     <div class="code-snippet">
       <div class="code-author">
-        <img
+        <NuxtImg
           src="/imgs/meTwentyFour.jpg"
           alt="personal-img"
           class="mi-imagen"
-        >
+        />
         <div class="auth-aside">
           <p>@bader-idris</p>
           <p>{{ createTimeCodeSnippet }}</p>

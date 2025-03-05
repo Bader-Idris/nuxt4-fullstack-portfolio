@@ -11,24 +11,15 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
-    prerender: {
-      ignore: ["/api/**"], // Exclude all API routes from prerendering
-    },
     routeRules: {
-      "/**": {
+      "/:slug(?!api/**).*": {
         cache: {
-          maxAge: 28800, // 28800 8hs
-          swr: true, // Stale-while-revalidate for freshness
+          maxAge: 28800,
+          swr: true,
         },
         headers: {
           "Cache-Control": "public, max-age=28800",
-          // TODO: I added the security headers in nginx
-        },
-      },
-      "/contact/admin": {
-        cache: false,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
+          // ? I added the security headers in nginx
         },
       },
       "/api/**": {
@@ -36,12 +27,11 @@ export default defineNuxtConfig({
         prerender: false,
         // TODO: create a middleware for cors, this only provides boolean value
       },
-    },
-    devProxy: {
-      "/api/**": {
-        // ! check in prod, containerized
-        target: "http://localhost:3000/api",
-        changeOrigin: true,
+      "/contact/admin": {
+        cache: false,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
       },
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
@@ -83,7 +73,7 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@nuxt/image",
     "@nuxt/icon",
-    // "@nuxt/content", // TODO: crashes the app due to misconfigs with caching!
+    "@nuxt/content", // TODO: crashes the app due to misconfigs with caching!
     "@nuxt/eslint",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
