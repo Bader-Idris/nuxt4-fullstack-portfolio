@@ -282,6 +282,9 @@ action = %(action_)s
 # See "tests/files/logs/sshd" or "filter.d/sshd.conf" for usage example and details.
 #mode   = normal
 port    = ssh
+maxretry = 3
+findtime = 600
+bantime = 1800
 logpath = %(sshd_log)s
 backend = %(sshd_backend)s
 
@@ -379,10 +382,12 @@ logpath = /opt/openhab/logs/request.log
 # See "tests/files/logs/nginx-http-auth" or "filter.d/nginx-http-auth.conf" for usage example and details.
 [nginx-http-auth]
 enabled = true
-filter  = nginx-http-auth
-# mode = normal
-port    = http,https
+port = http,https
+filter = nginx-http-auth
 logpath = /var/log/nginx/error.log
+maxretry = 3
+findtime = 600
+bantime = 1800
 # logpath = %(nginx_error_log)s # it's weird that I can't use the variable, ever after checking its path in paths-common.conf
 
 # To use 'nginx-limit-req' jail you should have `ngx_http_limit_req_module`
@@ -391,15 +396,23 @@ logpath = /var/log/nginx/error.log
 # or for example see in 'config/filter.d/nginx-limit-req.conf'
 [nginx-limit-req]
 enabled = true
-port    = http,https
-logpath = /var/log/nginx/access.log
+port = http,https
+filter = nginx-limit-req
+logpath = /var/log/nginx/error.log
+maxretry = 10 
+findtime = 600
+bantime = 7200
 # logpath = %(nginx_error_log)s
 
 [nginx-botsearch]
 enabled  = true
 port     = http,https
-logpath = /var/log/nginx/error.log
+filter = nginx-botsearch
+logpath = /var/log/nginx/access.log
 # logpath = %(nginx_error_log)s
+maxretry = 10 
+findtime = 600
+bantime = 3600
 
 [nginx-bad-request]
 enabled = true
@@ -413,18 +426,19 @@ logpath = /var/log/nginx/access.log
 
 [nginx-ddos]
 enabled = true
-filter  = nginx-ddos
+port = http,https
+filter = nginx-ddos
 logpath = /var/log/nginx/access.log
-maxretry = 10
-findtime = 60
-bantime  = 300
+maxretry = 100
+findtime = 60 
+bantime = 600 
 
 [nginx-forbidden]
 enabled = true
 port    = http,https
 filter  = nginx-forbidden
 # logpath = %(nginx_error_log)s
-logpath = /var/log/nginx/error.log
+logpath = /var/log/nginx/access.log
 
 [nginx-sslerror]
 enabled = true

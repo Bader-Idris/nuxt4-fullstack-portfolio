@@ -60,7 +60,7 @@ body {
   color: $secondary1;
 }
 
-// #app {
+// #app { // if you wanna change it, change app.rootId in the nuxt.config.ts file
 #__nuxt {
   margin: 30px;
 

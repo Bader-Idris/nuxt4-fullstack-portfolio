@@ -3,7 +3,7 @@
 If you're trying to build the app in a weak server with 1GB of RAM, 1GB of CPU, and 25GBs of SSD, this is the solution to be able to build it in the server:
 
 ```sh
-# You have to wap storage to rent to rams, via:
+# You have to swap storage to rent to rams, via:
 sudo fallocate -l 4G /swapfile # if fallocate fails, use:
 # sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
 sudo chmod 600 /swapfile
@@ -37,7 +37,7 @@ sudo sysctl -p
 Now, it's better to run the build command with this variable:
 
 ```sh
-NODE_OPTIONS=--max-old-space-size=4048 bun run build
+NODE_OPTIONS=--max-old-space-size=4096 bun run build
 ```
 
 > Now the building process does not get killed due to leap issues! 🎆🎇

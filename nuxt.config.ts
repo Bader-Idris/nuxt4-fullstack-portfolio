@@ -261,7 +261,9 @@ export default defineNuxtConfig({
       },
     },
   },
+  // buildDir: "./dist", // Useful to change for electron/capacitor builds
   app: {
+    // rootId: "app", the one in the index.html
     // add in pages instead! WHY: TODO: https://nuxt.com/docs/getting-started/seo-meta#defaults
     head: {
       charset: "utf-8",
