@@ -1,12 +1,11 @@
-// /// <reference types="@capacitor/background-runner" />
-// TODO: here or at root
+/// <reference types="@capacitor/background-runner" />
 
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: "com.baderidris.portfolio",
   appName: "Portfolio",
-  webDir: ".output/public",
+  webDir: "./.output/public",
   // server: {
   //   hostname: 'localhost', // Default hostname used by Capacitor
   //   androidScheme: 'https', // Ensures HTTPS for Android WebView

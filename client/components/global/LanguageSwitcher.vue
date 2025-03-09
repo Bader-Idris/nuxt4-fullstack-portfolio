@@ -2,6 +2,7 @@
   <div class="language-switcher">
     <select
       v-model="selectedLocale"
+      aria-label="Select language"
       @change="handleLocaleChange"
     >
       <option

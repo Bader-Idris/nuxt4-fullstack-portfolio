@@ -49,7 +49,8 @@ services:
       - JWT_SECRET=jwtSecret
       - JWT_LIFETIME=3h # zach says 2 weeks for prod!
 
-      - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
+      - MONGO_URI=mongodb://Bader:myPassword@200.200.1.200:27017/portfolio?authSource=admin
+      # - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
     depends_on:
       - mongo
     command: bun start
