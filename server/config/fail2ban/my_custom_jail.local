@@ -98,7 +98,7 @@ before = paths-debian.conf
 ignorecommand =
 
 # "bantime" is the number of seconds that a host is banned.
-bantime  = 10m
+bantime  = 30m
 
 # A host is banned if it has generated "maxretry" during the last "findtime"
 # seconds.
@@ -871,12 +871,14 @@ logpath  = /var/log/mongodb/mongodb.log
 # 2. Increase dbpurgeage defined in fail2ban.conf to e.g. 648000 (7.5 days)
 #    to maintain entries for failed logins for sufficient amount of time
 [recidive]
-
+enabled = true
+# search for it using: cat /etc/fail2ban/fail2ban.conf | grep loglevel
 logpath  = /var/log/fail2ban.log
 banaction = %(banaction_allports)s
 bantime  = 1w
 findtime = 1d
-
+# Ban after 5 repeated offenses
+maxretry = 5
 
 # Generic filter for PAM. Has to be used with action which bans all
 # ports such as iptables-allports, shorewall

@@ -72,7 +72,6 @@
     "@types/bun": "^1.2.4",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
-    "bun": "^1.2.4",
     "eslint": "^9.21.0",
     "postcss-custom-media": "^11.0.5",
     "postcss-custom-properties": "^14.0.4",

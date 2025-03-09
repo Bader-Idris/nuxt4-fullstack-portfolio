@@ -29,7 +29,7 @@
 
 install docker, the easiest and fastest way is to get the file from the official site [here](https://get.docker.com/)
 
-install fail2ban: `sudo apt install fail2ban`, it'll be disabled by default, due to undesired configs, use this to check its status `systemctl status fail2ban.service`
+install fail2ban: `sudo apt install fail2ban`, it'll be disabled by default, due to undesired configs, use this to check its status `systemctl status fail2ban.service`, and install `pyinotify` using: `sudo apt install python3-pyinotify`, it's fast for fail2ban to monitor logs
 
 ```sh
 cd /etc/fail2ban
@@ -154,3 +154,19 @@ actionunban = iptables -D f2b-<name> -s <ip> -j DROP
 to view new rules we can use: `sudo iptables -S` and with grep as: `sudo iptables -S | grep f2b`
 🔴=======================================🔴
 
+---
+
+> [!WARNING]  
+> SYN Flood is a critical ugly DDoS attack
+
+To protect from this type of attack, activate it from `/etc/sysctl.conf` file, and add the filter in `fail2ban`
+
+```sh
+# activate/add these settings in /etc/sysctl.conf:
+net.ipv4.tcp_syncookies = 1
+
+net.ipv4.tcp_synack_retries = 2
+net.ipv4.tcp_max_syn_backlog = 4096
+```
+
+Then apply changes: `sudo sysctl -p`

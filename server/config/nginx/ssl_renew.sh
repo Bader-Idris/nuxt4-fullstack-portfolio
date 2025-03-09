@@ -2,11 +2,11 @@
 
 DOCKER="/usr/bin/docker"
 
-cd /root/personal-project || exit 1 # Ensure WORKDIR change succeeds
+cd /home/bader/portfolio || exit 1 # Ensure WORKDIR change succeeds
 
 # If the certificate is not within 30 days of expiration, Certbot skips renewal
 # although we can force it to renew using this flag after renew: --force-renewal
-$DOCKER compose -f ./b.prod-certbot.yml run certbot renew && $DOCKER compose -f ./b.prod-certbot.yml kill -s SIGHUP nginx
+$DOCKER compose -f ./b.comp.prod.yaml run certbot renew && $DOCKER compose -f ./b.comp.prod.yaml kill -s SIGHUP nginx
 $DOCKER system prune -af
 
 <<COMMENT

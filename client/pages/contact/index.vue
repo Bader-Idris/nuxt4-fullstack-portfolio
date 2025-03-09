@@ -121,7 +121,6 @@ function formatDate(inputDate: Date): string {
   return `${day} ${date} ${month}`;
 }
 
-
 // Update the date periodically
 let dateInterval: ReturnType<typeof setInterval>;
 

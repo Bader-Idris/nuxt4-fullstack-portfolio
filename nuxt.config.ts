@@ -74,7 +74,7 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@nuxt/image",
     "@nuxt/icon",
-    "@nuxt/content", // TODO: crashes the app due to misconfigs with caching!
+    "@nuxt/content",
     "@nuxt/eslint",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
