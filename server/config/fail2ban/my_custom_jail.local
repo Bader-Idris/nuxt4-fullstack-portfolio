@@ -429,9 +429,10 @@ enabled = true
 port = http,https
 filter = nginx-ddos
 logpath = /var/log/nginx/access.log
-maxretry = 100
+maxretry = 50
 findtime = 60 
-bantime = 600 
+bantime = 1800
+action   = iptables-multiport[name=nginx-ddos, port="http,https", protocol=tcp]
 
 [nginx-forbidden]
 enabled = true

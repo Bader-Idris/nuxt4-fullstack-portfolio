@@ -163,10 +163,33 @@ To protect from this type of attack, activate it from `/etc/sysctl.conf` file, a
 
 ```sh
 # activate/add these settings in /etc/sysctl.conf:
+# Enable SYN cookies to handle SYN floods
 net.ipv4.tcp_syncookies = 1
 
+# Reduce the time connections stay in SYN_RECV state
 net.ipv4.tcp_synack_retries = 2
+net.ipv4.tcp_syn_retries = 2
+
+# Increase the backlog queue for incoming connections
 net.ipv4.tcp_max_syn_backlog = 4096
+
+# Limit the number of orphaned connections (helps with resource exhaustion)
+net.ipv4.tcp_max_orphans = 16384
+
+# Enable TCP window scaling for better performance under load
+net.ipv4.tcp_window_scaling = 1
+
+# Drop spoofed packets and protect against source routing
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.default.accept_source_route = 0
+
+# Enable protection against IP spoofing
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+
+# Limit the rate of ICMP packets (optional, to mitigate ICMP-based floods)
+net.ipv4.icmp_echo_ignore_all = 0
+net.ipv4.icmp_ratelimit = 1000
 ```
 
 Then apply changes: `sudo sysctl -p`
