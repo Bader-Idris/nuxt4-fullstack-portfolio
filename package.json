@@ -8,7 +8,7 @@
     "build:client": "NUXT_SSR=false nuxt build",
     "build:client-old": "nuxt build --config-file nuxt.config.csr.ts",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "generate": "NUXT_GZIP=false nuxt generate",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

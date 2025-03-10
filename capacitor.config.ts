@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   appId: "com.baderidris.portfolio",
   appName: "Portfolio",
   webDir: "./.output/public",
+  loggingBehavior: "production",
   // server: {
   //   hostname: 'localhost', // Default hostname used by Capacitor
   //   androidScheme: 'https', // Ensures HTTPS for Android WebView
@@ -220,6 +221,9 @@ const config: CapacitorConfig = {
       // https://capacitorjs.com/docs/apis/share
     },
     StatusBar: {
+      style: "DARK", // Default style (optional)
+      backgroundColor: "#01080E", // Default background color (optional)
+      overlay: true, // Whether the status bar should overlay the webview (optional)
       // can hide top status bar, but not fully implemented as native
       // is there any workaround?
       // https://capacitorjs.com/docs/apis/status-bar
