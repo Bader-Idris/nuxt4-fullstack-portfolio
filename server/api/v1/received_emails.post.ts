@@ -1,5 +1,6 @@
 import {  readBody, getRequestIP, createError } from "h3";
 import { ReceivedEmail } from "../../models/mongo/index";
+// import sendEmail from "../../utils/";
 
 export default defineEventHandler(async (event) => {
   // const config = useRuntimeConfig();
@@ -36,16 +37,21 @@ export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event, { xForwardedFor: true }); // for nginx
 
   try {
-    // Save to MongoDB
+    // @ts-ignore Save to MongoDB
     const newEmail = await ReceivedEmail.create({ name, email, message, ip });
 
     let emailSent = false;
     try {
       // Send email using the configured mailer
-      await event.context.mailer.sendMail({
-        from: email,
+      await sendEmail({
+        // from: email,
         to: "Bader Idris <contact@baderidris.com>",
         subject: "New Email from a client",
+        html: `
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong> ${message}</p>
+        `,
         text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
       });
       emailSent = true;
@@ -53,17 +59,26 @@ export default defineEventHandler(async (event) => {
       console.error("Error sending email:", emailError);
     }
 
+    // Return only the specified properties
+    // const responseData = {
+    //   name: newEmail.name,
+    //   email: newEmail.email,
+    //   message: newEmail.message,
+    //   createdAt: newEmail.createdAt, // Assuming createdAt is automatically handled by your DB
+    // };
+
     if (emailSent) {
       return {
         success: true,
-        data: newEmail,
-        msg: "Email saved and sent successfully",
+        // data: responseData,
+        msg: "Email sent successfully",
       };
     } else {
       return {
         success: true,
-        data: newEmail,
-        msg: "Email saved in DB, but failed to send to Dovecot",
+        // data: responseData,
+        // msg: "Email saved in DB, but failed to send to Dovecot",
+        msg: "Email saved in DB",
       };
     }
   } catch (error) {

@@ -8,7 +8,7 @@
     "build:client": "NUXT_SSR=false nuxt build",
     "build:client-old": "nuxt build --config-file nuxt.config.csr.ts",
     "dev": "nuxt dev",
-    "generate": "NUXT_GZIP=false nuxt generate",
+    "generate": "NUXT_GZIP=false nuxt generate --dotenv .env.production",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -19,10 +19,10 @@
   },
   "dependencies": {
     "@nuxt/content": "^3.3.0",
-    "@nuxt/icon": "^1.10.3",
+    "@nuxt/icon": "^1.11.0",
     "@nuxt/image": "^1.9.0",
     "@nuxtjs/device": "^3.2.4",
-    "@nuxtjs/i18n": "^9.3.0",
+    "@nuxtjs/i18n": "^9.3.1",
     "@pinia/nuxt": "^0.10.1",
     "@vite-pwa/nuxt": "^0.10.6",
     "@vueuse/nuxt": "^12.8.2",
@@ -70,9 +70,9 @@
     "@capacitor/status-bar": "^7.0.0",
     "@capacitor/text-zoom": "^7.0.0",
     "@capacitor/toast": "^7.0.0",
-    "@nuxt/eslint": "^1.1.0",
+    "@nuxt/eslint": "^1.2.0",
     "@nuxtjs/seo": "^2.2.0",
-    "@types/bun": "^1.2.4",
+    "@types/bun": "^1.2.5",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
     "eslint": "^9.22.0",
@@ -87,3 +87,4 @@
     "typescript": "^5.8.2"
   }
 }
+

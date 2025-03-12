@@ -232,6 +232,7 @@ export default defineNuxtConfig({
   image: {
     provider: "ipx",
     format: ["webp"],
+    dir: "public",
   },
   postcss: {
     plugins: {
@@ -372,4 +373,14 @@ export default defineNuxtConfig({
     //   },
     // ],
   },
+  // scripts: {
+  //   registry: {
+  //     googleAnalytics: {
+  //       id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+  //     },
+  //     googleTagManager: {
+  //       id: process.env.GOOGLE_TAG_MANAGER_ID,
+  //     },
+  //   },
+  // },
 });

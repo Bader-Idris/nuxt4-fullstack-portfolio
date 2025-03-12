@@ -17,6 +17,8 @@ services:
       - ./server/config/mailserver/mta-sts.txt:/var/www/html/.well-known/mta-sts.txt:ro
     depends_on:
       - app
+    networks: # TODO: in prod, this would be a network vulnerability, remove all mongonet networks and rely on the dynamic name: "mongo"
+      - mongonet
   app:
     build:
       context: .
@@ -27,7 +29,7 @@ services:
     volumes:
       - ./.data:/app/.data
       - ./.env:/app/.env
-      - ./.env.development:/app/.env.development
+      # - ./.env.development:/app/.env.development
       - ./.env.production:/app/.env.production
       - ./node_modules:/app/node_modules
       - /app/node_modules
@@ -47,10 +49,10 @@ services:
       - POSTGRES_PASSWORD=example
       - POSTGRES_DB=articles
       - JWT_SECRET=jwtSecret
-      - JWT_LIFETIME=3h # zach says 2 weeks for prod!
-
-      - MONGO_URI=mongodb://Bader:myPassword@200.200.1.200:27017/portfolio?authSource=admin
-      # - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
+      - JWT_LIFETIME=3h # 2 weeks for prod!
+      - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
+    networks:
+      - mongonet
     depends_on:
       - mongo
     command: bun start
