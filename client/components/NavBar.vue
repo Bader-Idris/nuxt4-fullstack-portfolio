@@ -1,8 +1,8 @@
 <template>
   <header>
     <div class="container">
-      <div class="name">
-        {{ name }}
+      <div class="name"  @click="handleTripleClick">
+        {{ t('home.name2') }}
       </div>
       <nav class="nav">
         <CustomLink
@@ -10,21 +10,21 @@
           class="sub-navs"
           :class="{ active: $route.path === localePath('/') }"
         >
-          _hello
+          {{ t('home.hello') }}
         </CustomLink>
         <CustomLink
           :to="localePath('/about')"
           class="sub-navs"
           :class="{ active: $route.path.startsWith(localePath('/about')) }"
         >
-          _about-me
+          {{ t('home.about') }}
         </CustomLink>
         <CustomLink
           :to="localePath('/projects')"
           class="sub-navs"
           :class="{ active: $route.path.startsWith(localePath('/projects')) }"
         >
-          _projects
+          {{ t('home.projects') }}
         </CustomLink>
       </nav>
       <LanguageSwitcher />
@@ -33,7 +33,7 @@
         class="contact sub-navs"
         :class="{ active: $route.path.startsWith(localePath('/contact')) }"
       >
-        _contact-me
+        {{ t('home.contact') }}
       </CustomLink>
     </div>
     <div
@@ -61,7 +61,7 @@
       </div>
       <div class="phone-body">
         <div class="name">
-          {{ name }}
+          {{ t('home.name2') }}
         </div>
         <ul>
           <CustomLink
@@ -70,7 +70,7 @@
             :class="{ active: $route.path === localePath('/') }"
             @click="togglePhoneMenu"
           >
-            _hello
+            {{ t('home.hello') }}
           </CustomLink>
           <CustomLink
             :to="localePath('/about')"
@@ -78,7 +78,7 @@
             :class="{ active: $route.path.startsWith(localePath('/about')) }"
             @click="togglePhoneMenu"
           >
-            _about-me
+            {{ t('home.about') }}
           </CustomLink>
           <CustomLink
             :to="localePath('/projects')"
@@ -86,7 +86,7 @@
             :class="{ active: $route.path.startsWith(localePath('/projects')) }"
             @click="togglePhoneMenu"
           >
-            _projects
+            {{ t('home.projects') }}
           </CustomLink>
           <CustomLink
             :to="localePath('/contact')"
@@ -94,7 +94,7 @@
             :class="{ active: $route.path.startsWith(localePath('/contact')) }"
             @click="togglePhoneMenu"
           >
-            _contact-me
+            {{ t('home.contact') }}
           </CustomLink>
         </ul>
       </div>
@@ -106,15 +106,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { debounce } from 'lodash-es'
+import { useTimeoutFn } from '@vueuse/core';
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n({ useScope: 'global' })
 const localePath = useLocalePath()
-
-// Use Nuxt's useRoute instead of vue-router's
 const route = useRoute()
+const count = ref(0);
+const { start, stop } = useTimeoutFn(() => {
+  count.value = 0;
+}, 5000);
 
 const showBurgerNav = ref(false)
 const showPhoneMenu = ref(false)
-const name = ref('Bader-Idris')
 const currentPath = ref('')
 
 const handleResize = debounce(() => {
@@ -136,6 +140,20 @@ const togglePhoneMenu = () => {
   }
 }
 
+const handleTripleClick = () => {
+  count.value++;
+
+  // Reset and restart the 5-second timeout on each click
+  stop();
+  start();
+
+  if (count.value === 5) {
+    navigateTo(localePath('/register'));
+    count.value = 0; // Reset counter immediately after triggering
+    stop();
+  }
+};
+
 onMounted(() => {
   // Set initial value for showBurgerNav
   showBurgerNav.value = window.outerWidth <= 768
@@ -146,6 +164,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (import.meta.client) stop();
 })
 </script>
 

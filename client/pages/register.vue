@@ -131,7 +131,7 @@ const register = async (): Promise<void> => {
         dangerouslyHTMLString: true,
       });
 
-      const redirectPath = (route.query.redirect as string) || '/protected';
+      const redirectPath = (route.query.redirect as string) || '/dashboard';
       await navigateTo(redirectPath);
     }
   } catch (error) {

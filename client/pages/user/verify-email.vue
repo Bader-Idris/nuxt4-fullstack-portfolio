@@ -4,7 +4,7 @@
       <p>Your email has been verified</p>
       <p>
         <span>{{ seconds < 10 ? '0' + seconds : seconds }}</span> seconds to go
-        to the main page
+            to the main page
       </p>
     </div>
     <div v-else class="warn">
@@ -12,8 +12,7 @@
       <CustomButtons
         class="go-back"
         button-type="primary"
-        aria-label="go to main page"
-      >
+        aria-label="go to main page">
         <CustomLink :to="localePath('/')">
           <span> or go back to main page </span>
         </CustomLink>
@@ -26,26 +25,50 @@
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import { useIntervalFn } from '@vueuse/core'
-import { useRoute, useFetch,  useLocalePath } from '#imports'
+import { useRoute, useLocalePath, useAsyncData } from '#imports'
 
 const localePath = useLocalePath()
+const route = useRoute()
 
 type VerifyEmailResponse = {
-  success: boolean
-  message?: string
+  message: string
 }
 
-const route = useRoute()
-const email = computed(() => route.query.email?.toString() || '')
-const verificationToken = computed(() => route.query.verificationToken?.toString() || '')
+const email = route.query.email?.toString()
+const verificationToken = route.query.verificationToken?.toString()
 const seconds = ref(10)
 const verified = ref(false)
+
+// Use useAsyncData to handle server-side and client-side verification
+const { data, error } = await useAsyncData(
+  `verify-email-${route.fullPath}`, // Unique key based on URL
+  () => {
+    if (!email || !verificationToken) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Missing verification parameters',
+      })
+    }
+
+    return $fetch<VerifyEmailResponse>('/api/v1/auth/verify-email', {
+      baseURL: useRuntimeConfig().public.originUrl,
+      method: 'POST',
+      body: { email, verificationToken },
+    })
+  }
+)
+
+// Set verification status based on response
+if (data.value?.message === 'Email Verified') {
+  verified.value = true
+}
 
 useSeoMeta({
   title: 'Verify Email',
   description: 'A redirect page for email verification via email',
 })
 
+// Countdown timer
 const { pause } = useIntervalFn(() => {
   seconds.value--
   if (seconds.value <= 0) {
@@ -54,48 +77,15 @@ const { pause } = useIntervalFn(() => {
   }
 }, 1000)
 
-async function verifyEmail() {
-  if (!email.value || !verificationToken.value) {
-    toast('Missing verification parameters', { theme: 'dark', type: 'error' })
-    return
-  }
-
-  try {
-    const { data } = await useFetch<VerifyEmailResponse>(
-      '/api/v1/auth/verify-email',
-      {
-        baseURL: useRuntimeConfig().public.originUrl,
-        method: 'POST',
-        body: {
-          email: email.value,
-          verificationToken: verificationToken.value, // Ensure this matches your server's expected parameter
-        },
-        immediate: false,
-        server: false,
-      },
-    )
-
-    if (data.value?.success) {
-      verified.value = true
-      toast('Email verified successfully', { theme: 'dark', type: 'success' })
-    } else {
-      toast(data.value?.message || 'Verification failed', {
-        theme: 'dark',
-        type: 'error',
-      })
-    }
-  } catch (error: any) {
-    toast(error.data?.message || 'Verification failed', {
-      theme: 'dark',
-      type: 'error',
-    })
-    console.error('Verification error:', error)
-  }
-}
-
+// Client-side toast notifications
 onMounted(() => {
   if (import.meta.client) {
-    verifyEmail()
+    if (verified.value) {
+      toast('Email verified successfully', { theme: 'dark', type: 'success' })
+    } else if (error.value) {
+      const message = error.value.statusMessage || error.value.data?.message || 'Verification failed'
+      toast(message, { theme: 'dark', type: 'error' })
+    }
   }
 })
 </script>

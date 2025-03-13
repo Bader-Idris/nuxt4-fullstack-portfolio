@@ -134,7 +134,7 @@ const filteredProjects = computed(() => {
     }
   }
 
-  @media (min-width: 1400px) {
+  @media (min-width: 1430px) {
     .project-card {
       flex-basis: calc(33% - 10px);
     }

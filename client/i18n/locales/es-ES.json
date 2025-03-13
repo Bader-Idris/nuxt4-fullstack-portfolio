@@ -4,6 +4,7 @@
     "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
     "greeting": "Hola a todos. Soy",
     "name": "Bader Idris",
+    "name2": "Bader-Idris",
     "role": "> Desarrollador Full-Stack",
     "task": "// completa el juego para continuar",
     "github": "// Encuentra mi perfil en GitHub",
@@ -20,7 +21,11 @@
     "scores": "Puntos",
     "hasWon": "¡Enhorabuena!",
     "hasNotWon": "¡Has perdido!",
-    "again": "Empezar-de-nuevo"
+    "again": "Empezar-de-nuevo",
+    "hello": "_Hola",
+    "about": "_sobre_mi",
+    "projects": "_proyectos",
+    "contact": "_contacto"
   },
   "about": {
     "title": "sobre mi carrera",

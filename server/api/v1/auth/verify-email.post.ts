@@ -1,10 +1,11 @@
-import { User } from '../../../models/mongo/index'
+import { User } from "../../../models/mongo/index";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { verificationToken, email } = body
+  const body = await readBody(event);
+  const { verificationToken, email } = body;
 
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email });
+
   if (!user || user.verificationToken !== verificationToken) {
     throw createError({
       statusCode: 401,
@@ -14,10 +15,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  user.isVerified = true
-  user.verified = new Date()
-  user.verificationToken = ''
-  await user.save()
+  user.isVerified = true;
+  user.verified = new Date();
+  user.verificationToken = "";
+  await user.save();
 
-  return { message: 'Email Verified' }
-})
+  return { message: "Email Verified" };
+});

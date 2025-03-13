@@ -8,9 +8,8 @@ useSeoMeta({
   description: 'Access exclusive content, resources, and services on Bader Idris\'s platform. Join a tech-savvy community led by a skilled full-stack developer.',
 })
 
-// definePageMeta({
-//   // @ts-ignore
-//   middleware: 'auth', // Use the auth middleware
-//   requiresAdmin: true, // Require admin role for this page
-// })
+definePageMeta({
+  middleware: 'auth', // Use the auth middleware
+  // requiresAdmin: true, // Require admin role for this page
+})
 </script>

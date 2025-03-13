@@ -77,6 +77,7 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/content",
     "@nuxt/eslint",
+    "@nuxt/scripts",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
   // pwa: {
@@ -373,14 +374,14 @@ export default defineNuxtConfig({
     //   },
     // ],
   },
-  // scripts: {
-  //   registry: {
-  //     googleAnalytics: {
-  //       id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
-  //     },
-  //     googleTagManager: {
-  //       id: process.env.GOOGLE_TAG_MANAGER_ID,
-  //     },
-  //   },
-  // },
+  scripts: {
+    registry: {
+      googleAnalytics: {
+        id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+      },
+      googleTagManager: {
+        id: process.env.GOOGLE_TAG_MANAGER_ID,
+      },
+    },
+  },
 });
