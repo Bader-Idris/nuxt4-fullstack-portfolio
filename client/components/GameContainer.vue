@@ -33,7 +33,7 @@
       <FoodComp :food-left="foodLeft" />
       <CustomLink
         aria-label="about page"
-        to="/about"
+        :to="localePath('/about')"
         class="internal-link"
       >
         <CustomButtons
@@ -50,6 +50,7 @@
 <script setup lang="ts">
 // Reactive state for food, typed as an array of FoodItem
 const foodLeft = ref<{ eaten: boolean }[]>(Array.from({ length: 10 }, () => ({ eaten: false })))
+const localePath = useLocalePath()
 
 // Function to update foodLeft, based on the score
 function updateFoodLeft(score: number): void {

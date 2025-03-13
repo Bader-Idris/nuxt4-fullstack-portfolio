@@ -52,6 +52,7 @@ useSeoMeta({
   description: "Sign up on Bader Idris's platform to access exclusive content, resources, and services. Join a tech-savvy community led by a skilled full-stack developer.",
 })
 
+const localePath = useLocalePath()
 const user = ref<string>('')
 const email = ref<string>('')
 const password = ref<string>('')
@@ -132,7 +133,7 @@ const register = async (): Promise<void> => {
       });
 
       const redirectPath = (route.query.redirect as string) || '/dashboard';
-      await navigateTo(redirectPath);
+      await navigateTo(localePath(redirectPath));
     }
   } catch (error) {
     // Handle network or unexpected errors

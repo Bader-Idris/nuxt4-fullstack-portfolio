@@ -23,42 +23,49 @@
       <FoldableTab @toggle="toggleSocials">
         <p>find-me-also-in</p>
       </FoldableTab>
-      <div :style="{ display: socialsDisplay }" 
+      <div
+        :style="{ display: socialsDisplay }" 
         class="personal-socials"
         :class="{ hidden: isSocialsHidden }">
         <ul>
           <li>
-            <CustomLink aria-label="go to my css battle page"
-              to="https://cssbattle.dev/player/bader_idris"
+            <CustomLink
+              aria-label="go to my css battle page"
+              :to="localePath('https://cssbattle.dev/player/bader_idris')"
               class="external-link">Css Battle
             </CustomLink>
           </li>
           <!-- <li>
             <CustomLink
               aria-label="go to my youtube channel"
-              to="/not-created-yet">YouTube Channel
+              :to="localePath('/not-created-yet')">YouTube Channel
             </CustomLink>
           </li> -->
           <li>
-            <CustomLink aria-label="go to my front end mentor profile"
-              to="https://www.frontendmentor.io/profile/Bader-Idris"
+            <CustomLink
+              aria-label="go to my front end mentor profile"
+              :to="localePath('https://www.frontendmentor.io/profile/Bader-Idris')"
               class="external-link">Front End Mentor</CustomLink>
           </li>
           <li>
-            <CustomLink aria-label="go to my exercism profile"
-              to="https://exercism.org/profiles/Bader-Idris"
-              class="external-link">Exercism</CustomLink>
+            <CustomLink
+              aria-label="go to my exercism profile"
+              :to="localePath('https://exercism.org/profiles/Bader-Idris')"
+              class="external-link"
+              >Exercism</CustomLink>
           </li>
           <li>
-            <CustomLink aria-label="go to my code wars profile"
-              to="https://www.codewars.com/users/Bader-Idris"
+            <CustomLink
+              aria-label="go to my code wars profile"
+              :to="localePath('https://www.codewars.com/users/Bader-Idris')"
               class="external-link">CodeWar</CustomLink>
           </li>
         </ul>
       </div>
     </aside>
     <ClientOnly>
-      <section v-if="authStore.user?.role === 'admin'"
+      <section 
+        v-if="authStore.user?.role === 'admin'"
         class="received-to-admin">
         <CustomButtons button-type="ghost">
           <CustomLink :to="localePath('/contact/admin')">fetch-messages</CustomLink>

@@ -33,6 +33,7 @@ type ResetPasswordResponse = {
   message?: string
 }
 
+const localePath = useLocalePath()
 const route = useRoute()
 const newPassword = ref('')
 const confirmPassword = ref('')
@@ -74,7 +75,7 @@ async function resetPassword() {
 
     if (data.value?.success) {
       toast('Password reset successfully', { theme: 'dark', type: 'success' })
-      await navigateTo('/protected', { replace: true })
+      await navigateTo(localePath('/dashboard'), { replace: true })
     }
   }
   catch (error: any) {

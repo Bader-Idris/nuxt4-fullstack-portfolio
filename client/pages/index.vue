@@ -16,7 +16,7 @@
           <span>const</span> <span>githubLink</span> =
           <CustomLink
             aria-label="go to my github page"
-            to="https://github.com/bader-idris"
+            :to="localePath('https://github.com/bader-idris')"
             class="external-link"
           >
             {{ $t('home.profile') }}
@@ -33,6 +33,7 @@
 <script setup lang="ts">
 const img = useImage()
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const optimizedThumbnail = img('/thumbnail.jpg', {
   width: 1200,

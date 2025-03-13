@@ -5,7 +5,7 @@
 //     const isAuthenticated = false; // Replace with your auth logic
 
 //     if (!isAuthenticated) {
-//       return navigateTo("/"); // Redirect to home if not authenticated
+//       return navigateTo(localePath("/")); // Redirect to home if not authenticated
 //     }
 //   }
 // );

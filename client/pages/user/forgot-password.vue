@@ -30,6 +30,7 @@ type ForgotPasswordResponse = {
   message?: string
 }
 
+const localePath = useLocalePath()
 const email = ref('')
 
 useSeoMeta({
@@ -56,7 +57,7 @@ async function forgotPassword() {
 
     if (data.value?.success) {
       toast('Email sent successfully', { theme: 'dark', type: 'success' })
-      await navigateTo('/protected', { replace: true })
+      await navigateTo(localePath('/dashboard'), { replace: true })
     }
   }
   catch (error: any) {
