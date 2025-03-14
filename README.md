@@ -7,17 +7,8 @@ Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduct
 Make sure to install dependencies:
 
 ```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+# bun, go to it's official site to get it on your machine, the
+bun i
 ```
 
 ## Development Server
@@ -25,15 +16,6 @@ bun install
 Start the development server on `http://localhost:3000`:
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
 # bun
 bun run dev
 ```
@@ -43,15 +25,6 @@ bun run dev
 Build the application for production:
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
 # bun
 bun run build
 ```
@@ -59,17 +32,14 @@ bun run build
 Locally preview production build:
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
 # bun
 bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+heck out `b.dev.yml` file to get your full stack application up and running 
+
+make sure to put your correct environment variables from `.env.example` in a new file named `.env`, then run `docker compose -f b.dev.yml up -d --build`
+
+congratulations 🎉👏, you're running your own full stack production ready initial version project!
+
+make sure to create another file for production with the instructions in the b.dev.yml file and its siblings ending in yml or yaml, and make sure to modify my domain name `baderidris.com` in these files to your own domain name!
