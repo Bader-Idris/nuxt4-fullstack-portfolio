@@ -7,23 +7,35 @@
       v-for="item in list"
       :key="item.title"
     >
-      <label @click.prevent="toggleActiveItem(item)">
-        <input
-          v-model="item.isActive"
-          type="checkbox"
-          @click.stop
-        >
+      <label 
+        @click.prevent="toggleActiveItem(item)" 
+        tabindex="0" 
+        role="checkbox" 
+        :aria-checked="item.isActive" 
+        :aria-labelledby="`label-${item.title}`"
+      >
+        <span class="checkbox-icon" aria-hidden="true">
+          <Icon 
+            v-if="item.isActive"
+            name="fluent:checkbox-checked-24-filled"
+            width="35"
+          />
+          <Icon 
+            v-else
+            name="bxs:checkbox"
+            width="35"
+          />
+        </span>
         <component
           :is="componentMap[item.title]"
           :alt="item.imgAlt"
           :class="item.title"
           class="project-svg"
-          @click.stop
         />
         <p
           class="project-item"
           :class="{ active: item.isActive }"
-          @click.stop
+          :id="`label-${item.title}`"
         >
           {{ item.title }}
         </p>
@@ -87,7 +99,6 @@ const componentMap = {
       display: flex;
       justify-content: flex-start;
       align-items: center;
-      -webkit-user-drag: none;
       cursor: pointer;
       margin: 20px;
 
@@ -104,29 +115,14 @@ const componentMap = {
         }
       }
 
-      input[type='checkbox'] {
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        border: 2px solid $secondary1;
-        border-radius: 3px;
+      .checkbox-icon {
+        display: inline-flex;
+        align-items: center;
         cursor: pointer;
-        outline: none;
-        position: relative;
-
-        &:checked {
-          background-color: $secondary1;
-
-          &::before {
-            content: '\2713';
-            /* Unicode for check mark */
-            color: white;
-            font-size: 16px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-          }
+        margin-right: 10px;
+        span {
+          width: 25px;
+          height: 25px;
         }
       }
 
@@ -142,14 +138,10 @@ const componentMap = {
   }
 }
 
-.project-item {
-  margin-right: 20px;
-  margin-bottom: 20px;
-}
-
 .project-svg {
   width: 25px;
   height: 25px;
   margin-top: 10px;
 }
+
 </style>

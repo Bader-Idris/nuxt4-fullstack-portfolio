@@ -21,8 +21,8 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       email: user.email,
       token: passwordToken,
-      origin: useRuntimeConfig().originUrl,
-    })
+      origin: useRuntimeConfig().public.originUrl,
+    });
 
     user.passwordToken = createHash(passwordToken)
     user.passwordTokenExpirationDate = new Date(Date.now() + tenMinutes)

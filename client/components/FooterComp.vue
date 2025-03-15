@@ -8,10 +8,7 @@
             aria-label="go to my telegram profile"
             :to="telegramLink"
           >
-            <Telegram
-              class="svg"
-              width="30px"
-            />
+            <Icon name="ic:baseline-telegram" width="30" height="30" mode="svg" class="svg"/>
           </CustomLink>
         </div>
         <div class="facebook">
@@ -19,7 +16,7 @@
             aria-label="go to my facebook page"
             :to="facebookLink"
           >
-            <Fb class="svg" />
+            <Icon name="basil:facebook-solid" width="30" height="30" mode="svg" class="svg"/>
           </CustomLink>
         </div>
       </div>
@@ -32,7 +29,7 @@
           aria-label="go to my github profile"
           :to="githubLink"
         >
-          <Github class="svg" />
+          <Icon name="mdi:github" width="30" height="30" mode="svg" class="svg"/>
         </CustomLink>
       </div>
     </div>
@@ -40,10 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import Fb from '~/components/svg/socials/FbSvg.vue'
-import Telegram from '~/components/svg/socials/TelegramSvg.vue'
-import Github from '~/components/svg/socials/GithubSvg.vue'
-
 import socialData from '~/apis/random-data.json'
 
 const [{ socialLinks }] = socialData
@@ -52,10 +45,8 @@ const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => re
 </script>
 
 <style lang="scss" scoped>
-// @use '~' as *;
-// @use 'assets/scss/index.scss' as *;
 .svg {
-  fill: $secondary1;
+  color: $secondary1;
 }
 
 footer {
@@ -82,7 +73,6 @@ footer {
 
     .social {
       display: flex;
-      // margin-left: 20px;
       align-items: center;
 
       & > * {
@@ -103,7 +93,7 @@ footer {
       }
 
       .facebook {
-        padding-top: 7px;
+        padding-top: 15px;
       }
     }
 
@@ -116,7 +106,12 @@ footer {
       justify-content: flex-end;
       border-left: solid 1px $lines;
       color: $secondary1;
-      padding-right: 15px;
+      padding-right: 10px;
+      align-items: center;
+      height: 60px;
+      @media (max-width: 768px) {
+        justify-content: center;
+      }
 
       &:hover {
         background-color: $primary1-hovered;
@@ -124,19 +119,19 @@ footer {
 
       p {
         user-select: none;
+        margin-left: 5px;
+        padding-right: 5px;
       }
 
-      & > a {
-        padding-top: 20px;
-        padding-left: 10px;
+      > a {
+        margin-top: 5px;
       }
 
       @media (max-width: 768px) {
         & {
           width: 60px;
           border: none;
-          padding-bottom: 10px;
-          padding-left: 15px;
+          padding-left: 25px;
         }
 
         p {

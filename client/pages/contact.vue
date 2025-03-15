@@ -10,12 +10,14 @@
         :class="{ hidden: isContactHidden }">
         <ClientOnly>
           <p @click="(openMailTo(0), copyToClipboard(0))">
+            <Icon name="mdi:envelope" width="25" />
             {{ firstContact }}
-            <i v-if="showIcon[0]" class="fa-solid fa-envelope" />
+            <Icon v-if="showIcon[0]" name="mdi:envelope" width="24" height="24" />
           </p>
           <p @click="copyToClipboard(1)">
+            <Icon name="ic:baseline-phone" width="30" />
             {{ secondContact }}
-            <i v-if="showIcon[1]" class="fa-solid fa-copy" />
+            <Icon v-if="showIcon[1]" name="mingcute:copy-fill" width="24" height="24" />
           </p>
         </ClientOnly>
       </div>
@@ -32,33 +34,44 @@
             <CustomLink
               aria-label="go to my css battle page"
               :to="localePath('https://cssbattle.dev/player/bader_idris')"
-              class="external-link">Css Battle
+              class="external-link">
+              <Icon name="grommet-icons:share" width="10" />
+              Css Battle
             </CustomLink>
           </li>
           <!-- <li>
             <CustomLink
-              aria-label="go to my youtube channel"
-              :to="localePath('/not-created-yet')">YouTube Channel
+            aria-label="go to my youtube channel"
+            :to="localePath('/not-created-yet')">
+            <Icon name="grommet-icons:share" width="10" />
+            YouTube Channel
             </CustomLink>
           </li> -->
           <li>
             <CustomLink
               aria-label="go to my front end mentor profile"
               :to="localePath('https://www.frontendmentor.io/profile/Bader-Idris')"
-              class="external-link">Front End Mentor</CustomLink>
+              class="external-link">
+              <Icon name="grommet-icons:share" width="10" />
+              Front End Mentor
+            </CustomLink>
           </li>
           <li>
             <CustomLink
               aria-label="go to my exercism profile"
               :to="localePath('https://exercism.org/profiles/Bader-Idris')"
               class="external-link"
-              >Exercism</CustomLink>
+              >
+              <Icon name="grommet-icons:share" width="10" />
+              Exercism</CustomLink>
           </li>
           <li>
             <CustomLink
               aria-label="go to my code wars profile"
               :to="localePath('https://www.codewars.com/users/Bader-Idris')"
-              class="external-link">CodeWar</CustomLink>
+              class="external-link">
+              <Icon name="grommet-icons:share" width="10" />
+              CodeWar</CustomLink>
           </li>
         </ul>
       </div>
@@ -189,19 +202,9 @@ const copyToClipboard = async (index: number): Promise<void> => {
         cursor: pointer;
         width: fit-content;
 
-        &::before {
-          margin-right: 10px;
-          font-family: 'secret sauce';
-          display: inline-block;
-        }
-
-        &:first-of-type::before {
-          content: '\f0e0';
-        }
-
-        &:last-of-type::before {
-          content: '\f095';
-          transform: rotate(90deg);
+        span {
+          position: relative;
+          top: 3px;
         }
 
         &:hover {
@@ -228,10 +231,9 @@ const copyToClipboard = async (index: number): Promise<void> => {
         margin: 10px 0;
         padding: 0 10px;
 
-        &::before {
-          content: '\f35d';
-          margin-right: 10px;
-          font-family: 'secret sauce';
+        span {
+          top: 2px;
+          position: relative;
         }
 
         &:hover {
@@ -249,10 +251,5 @@ const copyToClipboard = async (index: number): Promise<void> => {
     }
   }
 
-}
-
-i {
-  font-family: 'secret sauce';
-  font-style: normal;
 }
 </style>

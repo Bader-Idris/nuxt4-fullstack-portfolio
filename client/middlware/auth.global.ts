@@ -1,11 +1,21 @@
-// export default defineNuxtRouteMiddleware(
-//   (to, from) => {
-//     // TODO: check the pinia store to handle this, especially with contact/admin, to go back to /login if mismatched
-//     // TODO: check routing transaction being vanished due to this!
-//     const isAuthenticated = false; // Replace with your auth logic
+import { useUserStore } from "~/stores/UserNameStore";
+const localePath = useLocalePath();
+export default defineNuxtRouteMiddleware((to, from) => {
+  // Get the auth store (assuming you're using Pinia for state management)
+  const authStore = useUserStore();
 
-//     if (!isAuthenticated) {
-//       return navigateTo(localePath("/")); // Redirect to home if not authenticated
-//     }
-//   }
-// );
+  // Define the protected routes and their required roles
+  const protectedRoutes = {
+    "/dashboard": ["admin", "user"], // Only admin or user can access the dashboard
+  };
+
+  // Check if the target route is protected
+  const requiredRoles = protectedRoutes[to.path];
+
+  if (requiredRoles) {
+    // If the user is not authenticated or doesn't have the required role, redirect to login
+    if (!authStore.user || !requiredRoles.includes(authStore.user.role)) {
+      return navigateTo(localePath("/login"));
+    }
+  }
+});

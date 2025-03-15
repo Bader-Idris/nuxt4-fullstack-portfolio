@@ -4,12 +4,12 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'Dashboard for registered users | Bader Idris',
+  title: 'Dashboard for registered users',
   description: 'Access exclusive content, resources, and services on Bader Idris\'s platform. Join a tech-savvy community led by a skilled full-stack developer.',
 })
 
 definePageMeta({
-  middleware: 'auth', // Use the auth middleware
+  // middleware: 'auth', // Use the auth middleware
   // requiresAdmin: true, // Require admin role for this page
 })
 </script>

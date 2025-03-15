@@ -48,7 +48,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: 'Register | Bader Idris',
+  title: 'Register page',
   description: "Sign up on Bader Idris's platform to access exclusive content, resources, and services. Join a tech-savvy community led by a skilled full-stack developer.",
 })
 

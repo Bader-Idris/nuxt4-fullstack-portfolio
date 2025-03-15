@@ -4,11 +4,25 @@
       <h1>Login</h1>
       <div class="input-container">
         <label for="email">Email</label>
-        <input v-model="email" name="email" type="text" class="input" aria-labelledby="email" >
+        <input 
+          id="email"
+          v-model="email" 
+          name="email" 
+          type="text" 
+          class="input" 
+          aria-labelledby="email" 
+        >
       </div>
       <div class="input-container">
         <label for="password">Password</label>
-        <input v-model="password" name="password" type="password" class="input" aria-labelledby="password" >
+        <input
+          id="password"
+          v-model="password" 
+          name="password" 
+          type="password" 
+          class="input" 
+          aria-labelledby="password" 
+        >
       </div>
       <button class="btn" :disabled="loading">
         <span v-if="loading">
@@ -21,105 +35,121 @@
 </template>
 
 <script setup lang="ts">
-import { toast } from 'vue3-toastify'
-import 'vue3-toastify/dist/index.css'
-import { useUserStore } from '~/stores/UserNameStore'
+import { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
+import { useUserStore } from '~/stores/UserNameStore';
 
 // Define page meta
 definePageMeta({
   layout: 'default',
   hideLayout: true,
-})
+});
 
 // SEO Meta
 useSeoMeta({
-  title: 'Login Page | Bader Idris',
+  title: 'Login Page',
   description: "Log in to Bader Idris's portfolio platform to explore projects, insights, and opportunities. Your gateway to cutting-edge web and multi-platform solutions.",
-})
+});
 
-const localePath = useLocalePath()
+const localePath = useLocalePath();
+
 // State for email, password, and loading
-const email = ref<string>('')
-const password = ref<string>('')
-const loading = ref<boolean>(false)
+const email = ref<string>('');
+const password = ref<string>('');
+const loading = ref<boolean>(false);
 
 // UserStore instance
-const userStore = useUserStore()
+const userStore = useUserStore();
 
 // Define interfaces for API response and user data
 interface LoginResponse {
   user: {
-    name: string
-    userId: string
-    role: string
-  }
+    name: string;
+    userId: string;
+    role: string;
+  };
 }
 
 interface User {
-  username: string
-  userId: string
-  role: string
+  username: string;
+  userId: string;
+  role: string;
 }
 
 // Function to handle login
 const login = async (): Promise<void> => {
-  loading.value = true; // TODO: check out using reloading of useFetch
+  loading.value = true;
 
-  const url = `/api/v1/auth/login`
+  const url = `/api/v1/auth/login`;
   const data = {
     email: email.value,
-    password: password.value
-  }
+    password: password.value,
+  };
 
   try {
-    const response = await useLazyFetch<LoginResponse>(url, {
-      method: 'POST',
-      body: data,
-      baseURL: useRuntimeConfig().public.originUrl,
-    })
+    // Use useAsyncData with $fetch
+    const { data: response, error } = await useAsyncData<LoginResponse>(
+      'login',
+      () =>
+        $fetch(url, {
+          method: 'POST',
+          body: data,
+          baseURL: useRuntimeConfig().public.originUrl,
+        })
+    );
 
-    if (!response.data.value) {
-      throw new Error('Invalid response format')
+    // Check for errors
+    if (error.value) {
+      throw new Error(error.value.message || 'Login failed');
     }
 
-    const result = response.data.value
+    // Ensure response data is valid
+    if (!response.value) {
+      throw new Error('No response received from the server');
+    }
 
-    // Check and validate the response for required fields
+    const result = response.value;
+
+    // Validate the response structure
     if (!result.user || !result.user.name || !result.user.userId || !result.user.role) {
-      throw new Error('Invalid response format')
+      throw new Error('Invalid response format');
     }
 
     // Set user in store
     const user: User = {
       username: result.user.name,
       userId: result.user.userId,
-      role: result.user.role
-    }
-    userStore.setUser(user)
+      role: result.user.role,
+    };
+    userStore.setUser(user);
 
     // Display success toast message
     toast('Successfully logged in', {
       theme: 'auto',
       type: 'success',
       position: 'top-center',
-      dangerouslyHTMLString: true
-    })
+      dangerouslyHTMLString: true,
+    });
 
     // Redirect after successful login
-    const redirectPath = useRoute().query.redirect as string || '/dashboard'
-    await navigateTo(localePath(redirectPath))
+    const redirectPath = useRoute().query.redirect as string || '/dashboard';
+    await navigateTo(localePath(redirectPath));
   } catch (error) {
-    console.error('Login error: ', error)
-    toast('Login failed, please try again', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-      dangerouslyHTMLString: true
-    })
+    console.error('Login error: ', error);
+
+    // Display error toast message only if it's a genuine error
+    if (error instanceof Error) {
+      toast(error.message || 'Login failed, please try again', {
+        theme: 'dark',
+        type: 'error',
+        position: 'top-center',
+        dangerouslyHTMLString: true,
+      });
+    }
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <style lang="scss">

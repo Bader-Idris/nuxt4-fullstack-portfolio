@@ -52,20 +52,18 @@
           class="personal-contact"
           :class="{ hidden: isContactHidden }"
         >
+        <ClientOnly>
           <p @click="(openMailTo(0), copyToClipboard(0))">
+            <Icon name="mdi:envelope" width="30" style="position: relative; top: 3px;" />
             {{ displayContactInfo[0] }}
-            <i
-              v-if="showIcon[0]"
-              class="fa-solid fa-envelope"
-            />
+            <Icon v-if="showIcon[0]" name="mdi:envelope" width="24" height="24" />
           </p>
           <p @click="copyToClipboard(1)">
+            <Icon name="ic:baseline-phone" width="30" style="position: relative; top: 3px;" />
             {{ contInfo[1] }}
-            <i
-              v-if="showIcon[1]"
-              class="fa-solid fa-copy"
-            />
+            <Icon v-if="showIcon[1]" name="mingcute:copy-fill" width="24" height="24" />
           </p>
+        </ClientOnly>
         </div>
       </div>
     </aside>
@@ -309,31 +307,11 @@ onUnmounted(() => {
         width: 100%;
       }
 
-      &::before {
-        margin-right: 10px;
-        font-family: 'secret sauce';
-        display: inline-block;
-      }
-
-      &:first-of-type::before {
-        content: '\f0e0';
-      }
-
-      &:last-of-type::before {
-        content: '\f095';
-        transform: rotate(90deg);
-      }
-
       &:hover {
         color: $secondary4;
         cursor: pointer;
       }
     }
   }
-}
-
-i {
-  font-family: 'secret sauce';
-  font-style: normal;
 }
 </style>

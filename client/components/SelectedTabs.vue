@@ -6,10 +6,7 @@
         :key="index"
       >
         {{ item }}
-        <span
-          class="remove"
-          @click="removeItem(item)"
-        >X</span>
+        <Icon name="hugeicons:cancel-02" width="20" class="remove" @click="removeItem(item)" />
       </li>
     </ul>
   </div>
@@ -59,13 +56,11 @@ const removeItem = (item) => {
       border-top-style: none;
 
       > .remove {
-        font-family: cursive, serif;
-        text-align: center;
-        line-height: 1.35;
-        width: 20px;
-        height: 20px;
         margin-left: 20px;
         cursor: pointer;
+        &:hover {
+          color: $secondary4;
+        }
       }
     }
   }

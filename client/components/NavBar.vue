@@ -50,15 +50,7 @@
       v-show="showPhoneMenu"
       class="phone-menu"
     >
-      <div
-        class="remove-phone-menu"
-        @click="togglePhoneMenu"
-      >
-        <span
-          v-for="i in 2"
-          :key="i"
-        />
-      </div>
+      <Icon name="hugeicons:cancel-02" width="40" class="remove-phone-menu" @click="togglePhoneMenu" />
       <div class="phone-body">
         <div class="name">
           {{ t('home.name2') }}
@@ -347,26 +339,9 @@ header {
         top: 15px;
         right: 15px;
         position: absolute;
-        width: 40px;
-        height: 40px;
+        width: 30px;
+        height: 30px;
         padding: 10px;
-
-        span {
-          display: block;
-          width: 100%;
-          height: 2px;
-          background-color: $secondary1;
-          border-radius: 1px;
-          margin-bottom: 4px;
-
-          &:first-of-type {
-            transform: rotate(45deg) translateX(20%);
-          }
-
-          &:last-of-type {
-            transform: rotate(-45deg) translateX(20%);
-          }
-        }
       }
 
       @media (max-width: 768px) {

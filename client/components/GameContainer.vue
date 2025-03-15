@@ -16,18 +16,18 @@
       <span>{{ $t('home.gameTips_0') }}</span>
       <span>{{ $t('home.gameTips_1') }}</span>
       <div class="board-arrows">
-        <span @click="triggerKeyPress('ArrowDown')"><i
-          class="fas fa-triangle"
-        /></span>
-        <span @click="triggerKeyPress('ArrowRight')"><i
-          class="fas fa-triangle left"
-        /></span>
-        <span @click="triggerKeyPress('ArrowUp')"><i
-          class="fas fa-triangle down"
-        /></span>
-        <span @click="triggerKeyPress('ArrowLeft')"><i
-          class="fas fa-triangle right"
-        /></span>
+        <span @click="triggerKeyPress('ArrowDown')">
+          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" />
+      </span>
+        <span @click="triggerKeyPress('ArrowRight')">
+          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" class="left" />
+        </span>
+        <span @click="triggerKeyPress('ArrowUp')">
+          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" class="down" />
+        </span>
+        <span @click="triggerKeyPress('ArrowLeft')">
+          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" class="right" />
+        </span>
       </div>
       <span>{{ $t('home.foodLeft') }}</span>
       <FoodComp :food-left="foodLeft" />
@@ -225,20 +225,25 @@ function handleGameOver(): void {
           order: 3;
         }
 
-        & > i {
-          font-size: 10px;
-          color: $secondary4;
+        & svg {
+          top: 3px;
+          position: relative;
+          
+          & {
+            font-size: 10px;
+            color: $secondary4;
 
-          &.left {
-            transform: rotate(-90deg);
-          }
+            &.left {
+              transform: rotate(-90deg);
+            }
 
-          &.right {
-            transform: rotate(-270deg);
-          }
+            &.right {
+              transform: rotate(-270deg);
+            }
 
-          &.down {
-            transform: rotate(180deg);
+            &.down {
+              transform: rotate(180deg);
+            }
           }
         }
       }

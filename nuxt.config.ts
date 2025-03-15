@@ -42,7 +42,6 @@ export default defineNuxtConfig({
     // },
   },
   css: [
-    "~/assets/css/fontawesome.min.css",
     "~/assets/css/normalize.css",
     "~/assets/scss/main.scss",
   ],
@@ -314,8 +313,8 @@ export default defineNuxtConfig({
     },
   },
   site: {
-    url: "https://baderidris.com",
-    name: "Bader Idris - Full-Stack Developer Portfolio",
+    url: process.env.DOMAIN_NAME,
+    name: "Bader Idris", // ! Causes stupid duplicate head.title
     defaultLocale: "en",
   },
   schemaOrg: {

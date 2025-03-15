@@ -6,7 +6,7 @@
       :class="{ 'is-folded': isToggled }"
       @click="toggleFolding"
     >
-      <span class="fas fa-triangle" />
+      <Icon name="bxs:up-arrow" width="20" mode="svg" />
       <slot />
     </div>
   </div>
@@ -34,8 +34,6 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-// @use '~' as *;
-
 .nav-titled {
   width: 301px;
   color: $secondary4;
@@ -75,15 +73,19 @@ watch(
     width: calc(100vw - 30px);
   }
 
-  > span {
+  > svg {
     transform: rotate(180deg);
     transition: transform 0.3s ease-in-out;
-    font-size: 10px;
-    padding: 15px 10px;
+    padding: 2px;
+    margin: 0px 5px 0;
+    @media (min-width: 768px) {
+      position: relative;
+      top: 4px;
+    }
   }
 }
 
-.foldable-tab.is-folded > span {
+.foldable-tab.is-folded > svg {
   transform: rotate(90deg);
 }
 </style>

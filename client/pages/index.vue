@@ -46,7 +46,7 @@ useSeoMeta({
   ogTitle: t('home.title'),
   description: t('home.description'),
   ogDescription: t('home.description'),
-  ogUrl: 'https://baderidris.com/',
+  ogUrl: useRuntimeConfig().public.originUrl,
   ogSiteName: 'Bader Idris Portfolio',
   ogImage: optimizedThumbnail,
   ogImageWidth: 1200,
