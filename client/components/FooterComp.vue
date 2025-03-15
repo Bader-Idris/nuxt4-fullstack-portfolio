@@ -4,32 +4,37 @@
       <p>find me in:</p>
       <div class="social">
         <div class="telegram">
-          <CustomLink
-            aria-label="go to my telegram profile"
-            :to="telegramLink"
-          >
-            <Icon name="ic:baseline-telegram" width="30" height="30" mode="svg" class="svg"/>
+          <CustomLink aria-label="go to my telegram profile" :to="telegramLink">
+            <Icon 
+              name="ic:baseline-telegram" 
+              width="30" 
+              height="30" 
+              mode="svg"
+              class="svg" />
           </CustomLink>
         </div>
         <div class="facebook">
-          <CustomLink
-            aria-label="go to my facebook page"
-            :to="facebookLink"
-          >
-            <Icon name="basil:facebook-solid" width="30" height="30" mode="svg" class="svg"/>
+          <CustomLink aria-label="go to my facebook page" :to="facebookLink">
+            <Icon 
+              name="basil:facebook-solid" 
+              width="30" 
+              height="30" 
+              mode="svg"
+              class="svg" />
           </CustomLink>
         </div>
       </div>
-      <div
-        class="github"
-        tabindex="0"
-      >
+      <div 
+        class="github" 
+        tabindex="0" 
+        @click="navigateToGithub">
         <p>@bader-idris</p>
-        <CustomLink
-          aria-label="go to my github profile"
-          :to="githubLink"
-        >
-          <Icon name="mdi:github" width="30" height="30" mode="svg" class="svg"/>
+        <CustomLink aria-label="go to my github profile" :to="githubLink">
+          <Icon name="mdi:github" 
+          width="30" 
+          height="30" 
+          mode="svg"
+            class="svg" />
         </CustomLink>
       </div>
     </div>
@@ -41,7 +46,14 @@ import socialData from '~/apis/random-data.json'
 
 const [{ socialLinks }] = socialData
 // @ts-ignore
-const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => ref(url))
+const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => url)
+
+// Handle client-side navigation
+const navigateToGithub = () => {
+  if (import.meta.client) { // Ensure this runs only on the client side
+    window.open(githubLink, '_blank') // Opens in a new tab
+  }
+}
 </script>
 
 <style lang="scss" scoped>

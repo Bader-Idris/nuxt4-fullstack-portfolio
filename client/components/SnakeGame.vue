@@ -104,7 +104,7 @@ const snake = ref<{ x: number, y: number }[]>([])
 const food = ref<{ x: number, y: number }>({ x: 0, y: 0 })
 const direction = ref<string>('up')
 const lastDirection = ref<string>('up')
-const gameSpeedDelay = ref<number>(150)
+const gameSpeedDelay = ref<number>(130)
 const gameStarted = ref<boolean>(false)
 const gameOver = ref<boolean>(false)
 const congratsMessage = ref<string>('')
@@ -393,7 +393,7 @@ function checkCollision(): void {
 function stopGame(message: string): void {
   gameOver.value = true
   gameStarted.value = false
-  gameSpeedDelay.value = 150
+  gameSpeedDelay.value = 130
   direction.value = 'up'
   lastDirection.value = 'up'
   congratsMessage.value = message
