@@ -83,7 +83,7 @@ const handleLocaleChange = () => {
     padding: 8px;
     font-size: 14px;
     appearance: none;
-    background-image: linear-gradient(to right, #ff7e5f, #fea55f);
+    background-image: linear-gradient(to right, #ff7e5f, $accent1);
     cursor: pointer;
     option {
       background-color: #333;
@@ -94,6 +94,12 @@ const handleLocaleChange = () => {
     width: 200px;
     padding: 8px;
     font-size: 14px;
+  }
+}
+
+html[lang="ar"] {
+  .language-switcher {
+    right: 125px
   }
 }
 </style>

@@ -27,6 +27,7 @@
           {{ t('home.projects') }}
         </CustomLink>
       </nav>
+      <!-- <LazyLanguageSwitcher hydrate-on-visible /> -->
       <LanguageSwitcher />
       <CustomLink
         :to="localePath('/contact')"

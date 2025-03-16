@@ -356,6 +356,7 @@ button-type="default"
     }
 
     .beautiful-results {
+      padding-top: 15px;
       font-weight: bold;
 
       .first-query {
@@ -470,6 +471,10 @@ button-type="default"
               max-height: 250px;
               overflow-y: scroll;
               font-weight: normal;
+
+              &::-webkit-scrollbar {
+                display: none;
+              }
             }
           }
         }

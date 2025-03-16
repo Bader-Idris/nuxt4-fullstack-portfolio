@@ -72,7 +72,7 @@
     "@capacitor/text-zoom": "^7.0.0",
     "@capacitor/toast": "^7.0.0",
     "@nuxt/eslint": "^1.2.0",
-    "@nuxtjs/seo": "3.0.0-beta.3",
+    "@nuxtjs/seo": "^3.0.1",
     "@types/bun": "^1.2.5",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",

@@ -74,6 +74,12 @@ defineProps<{
   }
 }
 
+html[lang="es"] {
+  .food-left {
+    top: 55%;
+  }
+}
+
 .snake {
   width: 100%;
   height: 100%;

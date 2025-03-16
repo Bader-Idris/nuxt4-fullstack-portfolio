@@ -449,6 +449,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
   }
 
   .outcome-display {
+    display: relative;
     button {
       background-color: $accent1;
       color: $primary1;
@@ -508,6 +509,16 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+    }
+  }
+}
+
+html[lang="es"] {
+  .outcome-display {
+    .congrats {
+      font-size: $code-snippets-size;
+      width: 150px;
+      text-align: center;
     }
   }
 }

@@ -32,14 +32,39 @@
 
 <script setup lang="ts">
 const img = useImage()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
-const optimizedThumbnail = img('/thumbnail.jpg', {
+// Define thumbnails for each language
+const thumbnailEn = img('/thumbnail.webp', {
   width: 1200,
   height: 630,
   format: 'webp'
-});
+})
+
+const thumbnailEs = img('/thumbnail-es.png', {
+  width: 1200,
+  height: 630,
+  format: 'webp'
+})
+
+const thumbnailAr = img('/thumbnail-ar.png', {
+  width: 1200,
+  height: 630,
+  format: 'webp'
+})
+
+// Create a computed property to determine which thumbnail to use
+const optimizedThumbnail = computed(() => {
+  switch (locale.value) {
+    case 'es':
+      return thumbnailEs
+    case 'ar':
+      return thumbnailAr
+    default:
+      return thumbnailEn
+  }
+})
 
 useSeoMeta({
   title: t('home.title'),
@@ -231,7 +256,6 @@ useSeoMeta({
 
         & > p {
           color: $secondary1;
-          // margin-bottom: 100px;
         }
 
         @media (max-width: 768px) {
@@ -311,7 +335,6 @@ useSeoMeta({
           color: $secondary3;
         }
 
-        // here
         & span:nth-of-type(2) {
           color: $accent2;
         }
@@ -349,9 +372,6 @@ useSeoMeta({
       > aside {
         display: none;
       }
-
-      & h1 {
-      }
     }
 
     @media (min-width: 769px) {
@@ -360,4 +380,21 @@ useSeoMeta({
     }
   }
 }
+
+html[lang="es"] {
+  .info {
+    p {
+      font-size: calc($sub-headline-size - 25%) !important;
+    }
+  }
+}
+
+html[lang="ar"] {
+  .info {
+    h1 {
+      font-size: calc($headline-size - 80%) !important;
+    }
+  }
+}
+
 </style>

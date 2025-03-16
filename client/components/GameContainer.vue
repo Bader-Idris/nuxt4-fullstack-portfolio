@@ -6,7 +6,8 @@
         :key="i"
       >x</span>
     </div>
-    <SnakeGame
+    <LazySnakeGame 
+      hydrate-on-media-query="(min-width: 769px)"
       :food-left="foodLeft"
       :update-food-left="Object(updateFoodLeft)"
       @food-eaten="handleFoodEaten"
@@ -30,7 +31,10 @@
         </span>
       </div>
       <span>{{ $t('home.foodLeft') }}</span>
-      <FoodComp :food-left="foodLeft" />
+      <LazyFoodComp 
+      :food-left="foodLeft" 
+      hydrate-on-media-query="(min-width: 769px)"
+      />
       <CustomLink
         aria-label="about page"
         :to="localePath('/about')"
@@ -257,4 +261,13 @@ function handleGameOver(): void {
     }
   }
 }
+
+html[lang="es"] {
+  .game-controller {
+    > span:nth-of-type(2) {
+      font-size: calc($body-text-size - 25%);
+    }
+  }
+}
+
 </style>
