@@ -62,6 +62,10 @@
     "serverError": "Server error - please try again later"
   },
   "messages": {
-    "emailsLoaded": "Emails loaded successfully"
+    "emailsLoaded": "Emails loaded successfully",
+    "NetworkStatus": {
+      "offline": "You are offline. Check your connection.",
+      "online": "You are online."
+    }
   }
 }

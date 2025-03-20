@@ -58,8 +58,8 @@
   {
     "title": "building 50 projects with Elzero",
     "url": "https://elzero.org",
-    "img": "",
-    "imgAlt": "",
+    "img": "https://elzero.org/favicon.ico",
+    "imgAlt": "image",
     "desc": "under development",
     "tags": ["HTML"],
     "RemoveMe-tags": [

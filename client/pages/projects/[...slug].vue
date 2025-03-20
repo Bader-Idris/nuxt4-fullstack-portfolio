@@ -83,20 +83,28 @@ function slugify(text) {
         </div>
       </header>
 
-      <div class="project-image" v-if="project.img">
+      <div 
+        v-if="project.img">
+        class="project-image" 
         <img :src="project.img" :alt="project.imgAlt || project.title">
       </div>
 
-      <div class="project-description" v-if="project.desc">
+      <div 
+        v-if="project.desc"
+        class="project-description" >
         <p>{{ project.desc }}</p>
       </div>
 
       <div class="project-actions">
-        <a v-if="project.url" 
+        <a 
+          v-if="project.url" 
           :href="project.url" 
           target="_blank"
           class="external-link">Visit Live Project</a>
-        <button @click="goBack" class="back-button">Back to Projects</button>
+        <button
+          class="back-button"
+          @click="goBack" 
+        >Back to Projects</button>
       </div>
 
       <!-- Render the full Markdown content -->

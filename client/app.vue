@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-
+import { useI18n } from 'vue-i18n'
 
 useHead({
   // link: []
@@ -25,16 +25,75 @@ useHead({
   // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
 })
 
+const { t } = useI18n({ useScope: 'global' })
 const isFirstLoad = ref(true);
+const isCapacitorDevice = ref(false)
 const handleBeforeEnter = () => {
   if (isFirstLoad.value) {
     isFirstLoad.value = false;
   }
 };
 
-onMounted(() => {
-  // Initial page load transition handling
+// Initialize Capacitor functionality
+const initCapacitor = async () => {
+  try {
+    // Check if running in Capacitor environment
+    const { Device } = await import('@capacitor/device')
+    const info = await Device.getInfo()
+    isCapacitorDevice.value = info.platform !== 'web'
+
+    if (isCapacitorDevice.value) {
+      // Set up network monitoring
+      const { Network } = await import('@capacitor/network')
+
+      Network.addListener('networkStatusChange', async (status) => {
+        if (!status.connected) {
+          await notifyOffline()
+        }
+      })
+
+      // Initial offline check on startup
+      const status = await Network.getStatus()
+      if (!status.connected) {
+        await notifyOffline()
+      }
+    }
+  } catch (error) {
+    console.error('Error initializing Capacitor:', error)
+    isCapacitorDevice.value = false
+  }
+}
+
+async function notifyOffline() {
+  if (isCapacitorDevice.value) {
+    const { Toast } = await import('@capacitor/toast')
+    await Toast.show({
+      text: t("messages.NetworkStatus.offline"),
+      duration: 'long',
+      position: 'bottom'
+    })
+  }
+}
+
+onMounted(async () => {
+  // Initial page load transition handling, for SEO
   isFirstLoad.value = false;
+
+  if (import.meta.client) {
+    await initCapacitor()
+    if (process.env.NUXT_SSR === 'false') {
+      try {
+        const { StatusBar } = await import('@capacitor/status-bar');
+
+        // Configure StatusBar without overriding it
+        StatusBar.setOverlaysWebView({ overlay: false });
+        StatusBar.setStyle({ style: 'DARK' });
+        StatusBar.show();
+      } catch (error) {
+        console.error('Error initializing StatusBar:', error);
+      }
+    }
+  }
 });
 
 if (import.meta.client) {

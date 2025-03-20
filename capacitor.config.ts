@@ -154,9 +154,9 @@ const config: CapacitorConfig = {
       // can handle copied images to clipboard
       // https://capacitorjs.com/docs/apis/clipboard
     },
-    // CapacitorCookies: {
-    // enabled: true // defaults to false
-    // },
+    CapacitorCookies: {
+      enabled: true // defaults to false
+    },
     // Device: {
     // useful with device info as getBatteryInfo(), getLanguageCode(), platform
     // https://capacitorjs.com/docs/apis/device

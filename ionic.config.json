@@ -1,0 +1,7 @@
+{
+  "name": "nuxt3-fullstack-portfolio",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom"
+}

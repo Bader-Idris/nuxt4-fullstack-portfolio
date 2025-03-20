@@ -62,6 +62,10 @@
     "serverError": "el servidor ha fallado - por favor intenta de nuevo mas tarde"
   },
   "messages": {
-    "emailsLoaded": "los emails se han cargado correctamente"
+    "emailsLoaded": "los emails se han cargado correctamente",
+    "NetworkStatus": {
+      "offline": "El dispositivo no esta conectado a internet",
+      "online": "El dispositivo esta conectado a internet"
+    }
   }
 }

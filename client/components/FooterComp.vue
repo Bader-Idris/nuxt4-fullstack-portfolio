@@ -30,7 +30,8 @@
         @click="navigateToGithub">
         <p>@bader-idris</p>
         <CustomLink aria-label="go to my github profile" :to="githubLink">
-          <Icon name="mdi:github" 
+          <Icon 
+          name="mdi:github" 
           width="30" 
           height="30" 
           mode="svg"
