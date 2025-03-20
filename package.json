@@ -20,10 +20,10 @@
   "dependencies": {
     "@nuxt/content": "^3.3.0",
     "@nuxt/icon": "^1.11.0",
-    "@nuxt/image": "^1.9.0",
+    "@nuxt/image": "^1.10.0",
     "@nuxt/scripts": "^0.11.2",
     "@nuxtjs/device": "^3.2.4",
-    "@nuxtjs/i18n": "^9.3.1",
+    "@nuxtjs/i18n": "^9.3.2",
     "@pinia/nuxt": "^0.10.1",
     "@vite-pwa/nuxt": "^0.10.6",
     "@vueuse/nuxt": "^13.0.0",
@@ -36,7 +36,7 @@
     "lodash-es": "^4.17.21",
     "mongoose": "^7.8.6",
     "nodemailer": "^6.10.0",
-    "nuxt": "3.16.0",
+    "nuxt": "^3.16.1",
     "particles.js": "^2.0.0",
     "pinia": "^3.0.1",
     "vue": "latest",
@@ -84,7 +84,7 @@
     "postcss-nesting": "^13.0.1",
     "postcss-preset-env": "^10.1.5",
     "postcss-pxtorem": "^6.1.0",
-    "sass": "^1.85.1",
+    "sass": "^1.86.0",
     "typescript": "^5.8.2"
   }
 }

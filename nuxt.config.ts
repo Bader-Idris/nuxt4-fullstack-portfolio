@@ -35,6 +35,7 @@ export default defineNuxtConfig({
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       },
+      // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     // experimental: {

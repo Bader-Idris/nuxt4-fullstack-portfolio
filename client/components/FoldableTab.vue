@@ -13,8 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-
 const props = defineProps<{
   initiallyFolded?: boolean // Optional prop to set initial folded state
 }>()

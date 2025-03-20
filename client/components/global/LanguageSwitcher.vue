@@ -17,9 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useHead } from '#imports' // Nuxt 3's useHead composable
 
 const { locale, locales, setLocale } = useI18n()
 
@@ -98,8 +96,10 @@ const handleLocaleChange = () => {
 }
 
 html[lang="ar"] {
-  .language-switcher {
-    right: 125px
+  @media screen and (min-width: 769px) {
+    .language-switcher {
+        right: 125px;
+      }
   }
 }
 </style>

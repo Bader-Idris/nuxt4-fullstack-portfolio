@@ -36,7 +36,8 @@
             button-type="default"
             class="project-link"
           >
-            <CustomLink :to="project.url">
+            <!-- <CustomLink :to="project.url"> -->
+            <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)">
               View Project
             </CustomLink>
           </CustomButtons>
@@ -49,6 +50,7 @@
 <script setup lang="ts">
 import projects from '~/apis/projects_info.json'
 
+const localePath = useLocalePath()
 const props = defineProps({
   activeItems: {
     type: Array,
@@ -63,6 +65,18 @@ const filteredProjects = computed(() => {
     project.tags.some(tag => activeItemsLower.includes(tag.toLowerCase())),
   )
 })
+
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
 </script>
 
 <style lang="scss">

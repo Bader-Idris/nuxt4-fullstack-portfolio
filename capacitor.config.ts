@@ -1,4 +1,5 @@
 /// <reference types="@capacitor/background-runner" />
+/// <reference types="@capacitor/status-bar" />
 
 import type { CapacitorConfig } from '@capacitor/cli'
 
@@ -223,7 +224,8 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: "DARK", // Default style (optional)
       backgroundColor: "#01080E", // Default background color (optional)
-      overlay: true, // Whether the status bar should overlay the webview (optional)
+      // overlay: false, // Whether the status bar should overlay the webview (optional)
+      overlaysWebView: false,
       // can hide top status bar, but not fully implemented as native
       // is there any workaround?
       // https://capacitorjs.com/docs/apis/status-bar

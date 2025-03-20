@@ -1,42 +1,30 @@
 <template>
-  <div
-    class="projects-sidebar"
-    :class="{ hidden: isSidebarHidden }"
-  >
-    <div
-      v-for="item in list"
-      :key="item.title"
-    >
+  <div class="projects-sidebar" :class="{ hidden: isSidebarHidden }">
+    <div v-for="item in list" :key="item.title">
       <label 
-        @click.prevent="toggleActiveItem(item)" 
         tabindex="0" 
-        role="checkbox" 
-        :aria-checked="item.isActive" 
-        :aria-labelledby="`label-${item.title}`"
-      >
+        role="checkbox"
+        :aria-labelledby="`label-${item.title}`" 
+        :aria-checked="item.isActive"
+        @click.prevent="toggleActiveItem(item)">
         <span class="checkbox-icon" aria-hidden="true">
           <Icon 
-            v-if="item.isActive"
+            v-if="item.isActive" 
             name="fluent:checkbox-checked-24-filled"
-            width="35"
-          />
-          <Icon 
-            v-else
-            name="bxs:checkbox"
-            width="35"
-          />
+            width="35" />
+          <Icon v-else name="bxs:checkbox" width="35" />
         </span>
-        <component
-          :is="componentMap[item.title]"
-          :alt="item.imgAlt"
-          :class="item.title"
-          class="project-svg"
-        />
-        <p
+        <Icon
+          :name="getIconName(item.title)" 
+          width="2em" 
+          height="2em"
+          style="color: #607b96" 
+          :alt="item.imgAlt" 
+          class="project-svg" />
+        <p 
+          :id="`label-${item.title}`" 
           class="project-item"
-          :class="{ active: item.isActive }"
-          :id="`label-${item.title}`"
-        >
+          :class="{ active: item.isActive }">
           {{ item.title }}
         </p>
       </label>
@@ -45,14 +33,6 @@
 </template>
 
 <script setup lang="ts">
-import HTML from './svg/SvgHtml.vue'
-import CSS from './svg/SvgCss.vue'
-import SvgVuejs from './svg/SvgVuejs.vue'
-// import SvgDocker from './svg/SvgDocker.vue';
-import Typescript from './svg/TypeScript.vue'
-// import Expressjs from './svg/Expressjs.vue';
-// import SvgShell from './svg/SvgShell.vue';
-
 defineProps({
   list: {
     type: Array as any,
@@ -63,18 +43,30 @@ defineProps({
 })
 
 const emit = defineEmits(['toggle-active'])
+
 // @ts-ignore
 const toggleActiveItem = (item) => {
   emit('toggle-active', item)
 }
-const componentMap = {
-  HTML,
-  CSS,
-  Vue: SvgVuejs,
-  // Docker: SvgDocker
-  Typescript,
-  // Express: Expressjs,
-  // shell scripting: SvgShell
+
+const getIconName = (title: string): string => {
+  const iconMap: Record<string, string> = {
+    'HTML': 'ri:html5-fill',
+    'CSS': 'flowbite:css-solid',
+    'Javascript': 'teenyicons:javascript-solid',
+    'Vue': 'mdi:vuejs',
+    'Typescript': 'akar-icons:typescript-fill',
+    'Android': 'basil:android-solid',
+    'IOS': 'ic:baseline-apple',
+    'Docker': 'mdi:docker',
+    'Sass': 'fa6-brands:sass',
+    'Nginx': 'simple-icons:nginx',
+    'Nuxt': 'lineicons:nuxt',
+    'Electron': 'file-icons:electron',
+    'Bash': 'devicon-plain:bash'
+  }
+
+  return iconMap[title] || 'mdi:code-tags' // Default icon if title not found
 }
 </script>
 
@@ -94,7 +86,7 @@ const componentMap = {
       visibility 0.5s ease;
   }
 
-  > div {
+  >div {
     label {
       display: flex;
       justify-content: flex-start;
@@ -102,7 +94,7 @@ const componentMap = {
       cursor: pointer;
       margin: 20px;
 
-      > * {
+      >* {
         margin: 0 10px;
       }
 
@@ -120,6 +112,7 @@ const componentMap = {
         align-items: center;
         cursor: pointer;
         margin-right: 10px;
+
         span {
           width: 25px;
           height: 25px;
@@ -143,5 +136,4 @@ const componentMap = {
   height: 25px;
   margin-top: 10px;
 }
-
 </style>

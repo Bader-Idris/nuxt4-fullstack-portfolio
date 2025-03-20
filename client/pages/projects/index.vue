@@ -48,11 +48,20 @@ const sidebarDisplay = ref('block')
 const list = ref<Array<{ title: string, imgAlt: string, isActive: boolean }>>([
   { title: 'HTML', imgAlt: 'html icon', isActive: true },
   { title: 'CSS', imgAlt: 'css icon', isActive: true },
+  { title: 'Javascript', imgAlt: 'js icon', isActive: true },
   { title: 'Vue', imgAlt: 'vue icon', isActive: true },
-  // { title: "Docker", imgAlt: "docker icon", isActive: false },
   { title: 'Typescript', imgAlt: 'Typescript icon', isActive: true },
-  // { title: "Express", imgAlt: "Express icon", isActive: false },
-  // { title: "Shell", imgAlt: "shell icon", isActive: false },
+  { title: 'Sass', imgAlt: 'Sass icon', isActive: true },
+
+  // TODO: add more projects to enable them!
+
+  // { title: 'Android', imgAlt: 'Android icon', isActive: true },
+  // { title: 'IOS', imgAlt: 'IOS icon', isActive: true },
+  // { title: 'Docker', imgAlt: 'Docker icon', isActive: true },
+  // { title: 'Nginx', imgAlt: 'Nginx icon', isActive: true },
+  // { title: 'Nuxt', imgAlt: 'Nuxt icon', isActive: true },
+  // { title: 'Electron', imgAlt: 'Electron icon', isActive: true },
+  // { title: 'Bash', imgAlt: 'Bash icon', isActive: true },
 ])
 
 // @ts-ignore
