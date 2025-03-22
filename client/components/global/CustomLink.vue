@@ -1,7 +1,6 @@
 <script lang="ts">
 // Client-side only imports to prevent SSR issues
 import { Capacitor } from '@capacitor/core'
-import { Browser } from '@capacitor/browser'
 
 export default {
   inheritAttrs: false
@@ -25,7 +24,7 @@ export default {
     class="external-link"
     :href="String(to)"
     target="_blank"
-    rel="noopener">
+    rel="noopener noreferrer">
     <slot />
   </a>
 
@@ -63,10 +62,8 @@ const props = defineProps({
   }
 })
 
-// Get the localePath function
 const localePath = useLocalePath()
 
-// Check if the link is an external URL
 const isExternalLink = computed(() => {
   return typeof props.to === 'string' && props.to.startsWith('http')
 })
@@ -79,9 +76,11 @@ const isMobile = computed(() => {
 // Open the link in the in-app browser for mobile devices
 const openInAppBrowser = async () => {
   if (import.meta.client && typeof props.to === 'string') {
+    const { Browser } = await import('@capacitor/browser')
     await Browser.open({
       url: props.to,
-      toolbarColor: '#3A65C2FF'
+      toolbarColor: '#4d5bce',
+      presentationStyle: 'popover' // This keeps the user in your app context
     })
   }
 }

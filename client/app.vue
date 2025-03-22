@@ -24,6 +24,8 @@ useHead({
   // },
   // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
 })
+const route = useRoute()
+const router = useRouter()
 
 const { t } = useI18n({ useScope: 'global' })
 const isFirstLoad = ref(true);
@@ -43,20 +45,49 @@ const initCapacitor = async () => {
     isCapacitorDevice.value = info.platform !== 'web'
 
     if (isCapacitorDevice.value) {
+      // Set up status bar (do NOT hide it initially)
+      const { StatusBar, Style } = await import('@capacitor/status-bar')
+      StatusBar.setStyle({ style: Style.Dark })
+      StatusBar.setBackgroundColor({ color: '#01080E' })
+      StatusBar.hide()
+      StatusBar.setOverlaysWebView({ overlay: true })
+
       // Set up network monitoring
       const { Network } = await import('@capacitor/network')
-
       Network.addListener('networkStatusChange', async (status) => {
         if (!status.connected) {
           await notifyOffline()
         }
       })
 
-      // Initial offline check on startup
       const status = await Network.getStatus()
       if (!status.connected) {
         await notifyOffline()
       }
+
+      // Register back button handler
+      const { App: CapacitorApp } = await import('@capacitor/app')
+      let lastBackPressed = 0
+
+      CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
+        if (!canGoBack && route.fullPath === '/') {
+          const currentTime = new Date().getTime()
+
+          if (currentTime - lastBackPressed < 2000) {
+            CapacitorApp.exitApp()
+          } else {
+            lastBackPressed = currentTime
+            const { Toast } = await import('@capacitor/toast')
+            await Toast.show({
+              text: t('messages.backToExit'),
+              duration: 'short',
+              position: 'bottom'
+            })
+          }
+        } else {
+          router.go(-1)
+        }
+      })
     }
   } catch (error) {
     console.error('Error initializing Capacitor:', error)
@@ -81,18 +112,6 @@ onMounted(async () => {
 
   if (import.meta.client) {
     await initCapacitor()
-    if (process.env.NUXT_SSR === 'false') {
-      try {
-        const { StatusBar } = await import('@capacitor/status-bar');
-
-        // Configure StatusBar without overriding it
-        StatusBar.setOverlaysWebView({ overlay: false });
-        StatusBar.setStyle({ style: 'DARK' });
-        StatusBar.show();
-      } catch (error) {
-        console.error('Error initializing StatusBar:', error);
-      }
-    }
   }
 });
 
@@ -104,7 +123,6 @@ if (import.meta.client) {
     'color: #fb853b; font-weight: bold; font-family: "Fira Code"; font-size: 30px;'
   );
 }
-
 </script>
 
 <style lang="scss">

@@ -66,6 +66,7 @@
     "NetworkStatus": {
       "offline": "You are offline. Check your connection.",
       "online": "You are online."
-    }
+    },
+    "backToExit": "Double click to exit"
   }
 }
