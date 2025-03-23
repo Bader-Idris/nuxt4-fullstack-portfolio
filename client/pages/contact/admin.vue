@@ -106,7 +106,7 @@ const { pending, execute } = useLazyAsyncData<Email[]>(
   async () => {
     if (!checkAdminAccess()) return []
 
-    const { data, error } = await useFetch<{ data: Email[] }>(
+    const { data, error } = await $fetch<{ data: Email[] }>(
       '/api/v1/received_emails',
       {
         credentials: 'include',

@@ -8,7 +8,7 @@
     "build:client": "NUXT_SSR=false nuxt build",
     "build:client-old": "nuxt build --config-file nuxt.config.csr.ts",
     "dev": "nuxt dev",
-    "generate": "NUXT_GZIP=false nuxt generate --dotenv .env.production",
+    "generate": "NUXT_GZIP=false nuxt generate --dotenv .env.capacitor",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -18,12 +18,12 @@
     "test": "bun lint && bun typecheck"
   },
   "dependencies": {
-    "@nuxt/content": "^3.3.0",
+    "@nuxt/content": "^3.4.0",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/image": "^1.10.0",
     "@nuxt/scripts": "^0.11.2",
     "@nuxtjs/device": "^3.2.4",
-    "@nuxtjs/i18n": "^9.3.2",
+    "@nuxtjs/i18n": "^9.3.4",
     "@pinia/nuxt": "^0.10.1",
     "@vite-pwa/nuxt": "^0.10.6",
     "@vueuse/nuxt": "^13.0.0",
@@ -76,7 +76,7 @@
     "@types/bun": "^1.2.5",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
-    "eslint": "^9.22.0",
+    "eslint": "^9.23.0",
     "postcss-custom-media": "^11.0.5",
     "postcss-custom-properties": "^14.0.4",
     "postcss-flexbugs-fixes": "^5.0.2",
@@ -88,3 +88,4 @@
     "typescript": "^5.8.2"
   }
 }
+

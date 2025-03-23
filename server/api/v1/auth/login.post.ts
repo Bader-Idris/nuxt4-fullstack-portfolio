@@ -2,42 +2,42 @@ import crypto from 'node:crypto'
 import { User, Token } from '../../../models/mongo/index'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { email, password } = body
+  const body = await readBody(event);
+  const { email, password } = body;
 
   if (!email || !password) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Please provide email and password',
-    })
+      statusMessage: "Please provide email and password",
+    });
   }
 
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email });
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Invalid Credentials',
-    })
+      statusMessage: "Invalid Credentials",
+    });
   }
 
-  const isPasswordCorrect = await user.comparePassword(password)
+  const isPasswordCorrect = await user.comparePassword(password);
   if (!isPasswordCorrect) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Invalid Credentials',
-    })
+      statusMessage: "Invalid Credentials",
+    });
   }
 
   if (!user.isVerified) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Please verify your email',
-    })
+      statusMessage: "Please verify your email",
+    });
   }
 
-  const tokenUser = createTokenUser(user)
-  let refreshToken = ''
-  const existingToken = await Token.findOne({ user: user._id })
+  const tokenUser = createTokenUser(user);
+  let refreshToken = "";
+  const existingToken = await Token.findOne({ user: user._id });
 
   if (existingToken) {
     const { isValid } = existingToken;
@@ -55,13 +55,10 @@ export default defineEventHandler(async (event) => {
     return { user: tokenUser };
   }
 
-  refreshToken = crypto.randomBytes(40).toString('hex')
-  const userAgent = getRequestHeader(event, 'user-agent') || ''
+  refreshToken = crypto.randomBytes(40).toString("hex");
+  const userAgent = getRequestHeader(event, "user-agent") || "";
   // const userAgent = req.headers['user-agent']; in express
-  const ip =
-    getRequestHeader(event, "x-forwarded-for") ||
-    event.node.req.socket.remoteAddress ||
-    ""; // TODO: test if proper with nginx
+  const ip = getRequestIP(event, { xForwardedFor: true }); // for nginx
 
   await Token.create({
     refreshToken,

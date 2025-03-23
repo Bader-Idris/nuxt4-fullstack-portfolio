@@ -38,14 +38,11 @@ export default defineNuxtConfig({
       // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
-    // experimental: {
-    //   websocket: true
-    // },
+    experimental: {
+      websocket: true,
+    },
   },
-  css: [
-    "~/assets/css/normalize.css",
-    "~/assets/scss/main.scss",
-  ],
+  css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
   vite: {
     css: {
       preprocessorOptions: {
@@ -353,7 +350,6 @@ export default defineNuxtConfig({
     public: {
       originUrl: process.env.DOMAIN_NAME,
     },
-    // ? secretly for server
     mailUser: process.env.MAIL_USER,
     mailPass: process.env.MAIL_PASS,
     mailFrom: "Bader Idris <contact@baderidris.com>",
@@ -363,6 +359,10 @@ export default defineNuxtConfig({
     nodeEnv: process.env.NODE_ENV || "production",
     originUrl: process.env.DOMAIN_NAME,
     // mongoUri: process.env.MONGO_URI,
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    facebookClientId: process.env.FACEBOOK_CLIENT_ID,
+    facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET,
   },
   // content: {}, check content.config.ts
   imports: {
@@ -385,3 +385,4 @@ export default defineNuxtConfig({
     },
   },
 });
+

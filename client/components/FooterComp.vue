@@ -4,7 +4,11 @@
       <p>find me in:</p>
       <div class="social">
         <div class="telegram">
-          <CustomLink aria-label="go to my telegram profile" :to="telegramLink">
+          <CustomLink 
+            aria-label="go to my telegram profile" 
+            class="link"
+            :to="telegramLink"
+          >
             <Icon 
               name="ic:baseline-telegram" 
               width="30" 
@@ -14,7 +18,11 @@
           </CustomLink>
         </div>
         <div class="facebook">
-          <CustomLink aria-label="go to my facebook page" :to="facebookLink">
+          <CustomLink 
+            aria-label="go to my facebook page" 
+            class="link"
+            :to="facebookLink"
+          >
             <Icon 
               name="basil:facebook-solid" 
               width="30" 
@@ -29,7 +37,10 @@
         tabindex="0" 
         @click="navigateToGithub">
         <p>@bader-idris</p>
-        <CustomLink aria-label="go to my github profile" :to="githubLink">
+        <CustomLink
+          aria-label="go to my github profile"
+          :to="githubLink"
+        >
           <Icon 
           name="mdi:github" 
           width="30" 
@@ -166,6 +177,10 @@ footer {
           margin-right: 5px;
         }
       }
+    }
+    .link {
+      position: relative;
+      padding: 15px 10px;
     }
   }
 

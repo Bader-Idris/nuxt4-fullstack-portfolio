@@ -18,19 +18,31 @@
 
     <div class="social-auth">
       <button class="btn social google" @click="socialLogin('google')">
-        <NuxtImg src="/google-icon.svg" alt="Google" />
-        Continue with Google
+        <Icon 
+          name="flat-color-icons:google" 
+          width="30"
+          height="30"
+          mode="svg"
+          class="svg"
+        />
       </button>
       <button class="btn social facebook" @click="socialLogin('facebook')">
-        <svgSocialsFbSvg class="svg" />
-        Continue with Facebook
+        <Icon 
+          name="basil:facebook-solid" 
+          width="30" 
+          height="30" 
+          mode="svg"
+          class="fb"
+        />
       </button>
     </div>
 
     <div v-if="showPrompt" class="prompt">
-      <CustomLink aria-label="login page" to="/login" class="internal-link">
-        login page
-      </CustomLink>
+      <CustomButtons button-type="ghost">
+        <CustomLink aria-label="login page" to="/login" class="internal-link">
+          login page
+        </CustomLink>
+      </CustomButtons>
     </div>
   </div>
 </template>
@@ -39,7 +51,6 @@
 import { useUserStore } from '~/stores/UserNameStore'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
-// import Fb from '~/components/svg/socials/FbSvg.vue'
 
 // Important for disabling layouts
 definePageMeta({
@@ -158,9 +169,12 @@ const socialLogin = (provider: string) => {
 <style lang="scss">
 .register {
   @include mainMiddleSettings;
-
   @media (max-width: 768px) {
     @include phone-borders;
+    height: calc(100vh - 30px);
+  }
+  @media (min-width: 769px) {
+    height: calc(100vh - 60px);
   }
 
   .form {
@@ -168,6 +182,10 @@ const socialLogin = (provider: string) => {
     flex-direction: column;
     max-width: 400px;
     margin: 0 auto;
+
+    @media (max-width: 768px) {
+      width: calc(100% - 30px);
+    }
 
     .input {
       border: 1px solid gray;
@@ -187,12 +205,12 @@ const socialLogin = (provider: string) => {
   }
 }
 
-/* TODO: check them out! */
 .social-auth {
   margin: 2rem auto;
   max-width: 400px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
   gap: 1rem;
 
   @media (max-width: 768px) {
@@ -207,10 +225,12 @@ const socialLogin = (provider: string) => {
   justify-content: center;
   padding: 10px 20px;
   height: 50px;
+  cursor: pointer;
 }
-
-.btn.social img {
-  width: 20px;
-  height: 20px;
+.social .fb {
+  color: #3b5998;
+}
+.prompt {
+  text-align: center;
 }
 </style>

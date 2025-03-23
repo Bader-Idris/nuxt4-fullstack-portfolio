@@ -31,6 +31,27 @@
         <span v-else> Login </span>
       </button>
     </form>
+
+    <div class="social-auth">
+      <button class="btn social google" @click="socialLogin('google')">
+        <Icon 
+          name="flat-color-icons:google" 
+          width="30"
+          height="30"
+          mode="svg"
+          class="svg"
+        />
+      </button>
+      <button class="btn social facebook" @click="socialLogin('facebook')">
+        <Icon 
+          name="basil:facebook-solid" 
+          width="30" 
+          height="30" 
+          mode="svg"
+          class="fb"
+        />
+      </button>
+    </div>
   </div>
 </template>
 
@@ -150,15 +171,24 @@ const login = async (): Promise<void> => {
     loading.value = false;
   }
 };
+
+const socialLogin = (provider: string) => {
+  if (import.meta.client) {
+    window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+  }
+};
 </script>
 
 <style lang="scss">
 
 .login {
   @include mainMiddleSettings;
-
   @media (max-width: 768px) {
     @include phone-borders;
+    height: calc(100vh - 30px);
+  }
+  @media (min-width: 769px) {
+    height: calc(100vh - 60px);
   }
 
   .form {
@@ -171,7 +201,10 @@ const login = async (): Promise<void> => {
     align-items: stretch;
     justify-content: center;
 
-    // @include softForm;
+    @media (max-width: 768px) {
+      width: calc(100% - 30px);
+    }
+
     h1 {
       text-align: center;
       margin-bottom: 50px;
@@ -213,6 +246,19 @@ const login = async (): Promise<void> => {
         height: 100%;
       }
     }
+  }
+}
+
+.social-auth {
+  margin: 0 auto;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    width: calc(100% - 30px);
   }
 }
 </style>

@@ -1,4 +1,3 @@
-// server/api/auth/register.post.ts
 import crypto from 'node:crypto'
 import { User } from '../../../models/mongo/User'
 

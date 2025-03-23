@@ -2,41 +2,48 @@ import { Schema, model } from 'mongoose'
 import bcrypt from 'bcryptjs'
 // TODO: use the predefined bun hashing, check this: https://bun.sh/guides/util/hash-a-password
 
-const UserSchema = new Schema<IUser>({
-  name: {
-    type: String,
-    required: [true, 'Please provide name'],
-    minlength: 3,
-    maxlength: 50,
-  },
-  email: {
-    type: String,
-    unique: true,
-    required: [true, 'Please provide email'],
-    validate: { // todo is it powerful compared to validator.email??
-      validator: (value: string) => /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(value),
-      message: 'Please provide valid email',
+const UserSchema = new Schema<IUser>(
+  {
+    name: {
+      type: String,
+      required: [true, "Please provide name"],
+      minlength: 3,
+      maxlength: 50,
     },
+    email: {
+      type: String,
+      unique: true,
+      required: [true, "Please provide email"],
+      validate: {
+        // todo is it powerful compared to validator.email??
+        validator: (value: string) =>
+          /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(value),
+        message: "Please provide valid email",
+      },
+    },
+    password: {
+      type: String,
+      required: false,
+      minlength: 6,
+    },
+    role: {
+      type: String,
+      enum: ["admin", "user", "premium", "editor" ],
+      default: "user",
+    },
+    verificationToken: String,
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verified: Date,
+    passwordToken: String,
+    passwordTokenExpirationDate: Date,
   },
-  password: {
-    type: String,
-    required: [true, 'Please provide password'],
-    minlength: 6,
-  },
-  role: {
-    type: String,
-    enum: ['admin', 'user'],
-    default: 'user',
-  },
-  verificationToken: String,
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
-  verified: Date,
-  passwordToken: String,
-  passwordTokenExpirationDate: Date,
-})
+  {
+    timestamps: true,
+  }
+);
 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next()

@@ -1,5 +1,3 @@
-// import type { TokenUser } from './auth.types'
-
 export const createTokenUser = (user: any): TokenUser => {
   return {
     name: user.name,
