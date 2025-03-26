@@ -32,7 +32,16 @@
     "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions.",
     "personal": {
       "title": "About my career, being a full-stack developer",
-      "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions."
+      "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions.",
+      "experienceDuration": "{years} years and {months} months",
+      "createdTimeAgo": "created {time}",
+      "bio": "I started my programming journey on June 15, 2022, which means I've been honing my skills for {experience}.\n\nSince then, I've gained solid expertise in:\n✅ **Web Development**: Mastered HTML5, CSS3, and JavaScript to build dynamic, responsive websites. I then expanded into **Vue.js (Composition API and Vue Router 4)**, to create sophisticated front-end applications.\n\n✅ **Backend Development**: I built five back-end projects using **Node.js, Express.js, and MongoDB** as part of the FreeCodeCamp curriculum. This journey helped me gain a strong foundation in creating RESTful APIs and deploying full-stack applications.\n\n✅ **Database Management**: After learning **MongoDB**, I furthered my knowledge with **PostgreSQL (PSQL)**, focusing on scalable and secure data solutions.\n\n✅ **DevOps & Deployment**: I became proficient with **Docker**, deploying containerized applications, and configuring servers with **Nginx**. I've also gained skills in **DevOps** workflows to automate, optimize, and manage deployments efficiently.\n\n✅ **Cross-Platform Development**: I leveraged **Capacitor.js** and **Electron** to build applications that work seamlessly across web, mobile (iOS/Android), and desktop (Windows/Mac/Linux).\n\nAs a versatile full-stack developer, I combine my technical knowledge with creativity to deliver scalable, secure, and efficient solutions for modern digital challenges. Let's collaborate to bring your ideas to life!",
+      "schema": {
+        "name": "About Bader Idris",
+        "description": "Learn more about Bader Idris, a full-stack developer.",
+        "jobTitle": "Full-Stack Developer",
+        "personDescription": "A skilled developer excelling in Nuxt.js, Express.js, and more."
+      }
     },
     "professional": {
       "title": "under development professional nested page",
@@ -54,6 +63,19 @@
     "admin": {
       "title": "Admin Emails | Bader Idris",
       "description": "Exclusive to admins only"
+    },
+    "form": {
+      "name": "_name:",
+      "email": "_email:",
+      "message": "Message:",
+      "submit": "submit-message",
+      "sending": "Sending...",
+      "send_new": "send-new-message",
+      "name_placeholder": "John Doe",
+      "email_placeholder": "JohnDoe﹫gmail.com",
+      "message_placeholder": "Leave your message here",
+      "all_fields": "All fields are required.",
+      "email_format": "Please enter a valid email address."
     }
   },
   "errors": {
@@ -63,10 +85,15 @@
   },
   "messages": {
     "emailsLoaded": "Emails loaded successfully",
+    "emailSent": "Email sent successfully",
     "NetworkStatus": {
       "offline": "You are offline. Check your connection.",
-      "online": "You are online."
+      "online": "You are online.",
+      "unexpected": "Unexpected network error."
     },
-    "backToExit": "Double click to exit"
+    "backToExit": "Double click to exit",
+    "thank_you": {
+      "emailMsg": "Your message has been accepted. You will receive an answer really soon!"
+    }
   }
 }

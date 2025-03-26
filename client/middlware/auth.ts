@@ -1,30 +1,29 @@
-import { useUserStore } from "~/stores/UserNameStore";
 
-export default defineNuxtRouteMiddleware(
-  (to, from) => {
+// const { $i18n } = useNuxtApp();
+// const loginPath = $i18n.localePath('/login');
 
-  console.log("testing");
-
-//     const userStore = useUserStore(); // Use your user store
-//     const localePath = useLocalePath();
-
-//     // Check if the user is logged in using the isLoggedIn getter
-//     if (!userStore.isLoggedIn) {
-//       // Redirect to the login page if not authenticated
-//       return navigateTo(localePath("/login"));
-//     }
-
-//     // Check if the route requires admin access
-//     if (
-//       to.meta.requiresAdmin &&
-//       userStore.user?.role !== "admin"
-//     ) {
-//       // Redirect to the login page if the user is not an admin
-//       return navigateTo(localePath("/login"));
-//     }
-
-//     // If everything is fine, continue to the route
-//     return undefined; // Explicitly return undefined to satisfy TypeScript
+export default defineNuxtRouteMiddleware((to, from) => {
+  // Skip middleware on server during prerendering
+  if (import.meta.server) {
+    return;
   }
-);
 
+  const userStore = useUserStore();
+
+  // Define the protected routes and their required roles
+  const protectedRoutes = {
+    "/dashboard": ["admin", "user"],
+  };
+
+  // Check if the target route is protected
+  const path =
+    to.path.split("/").slice(-1)[0] === "dashboard" ? "/dashboard" : to.path;
+  const requiredRoles = protectedRoutes[path];
+
+  if (requiredRoles) {
+    // If the user is not authenticated or doesn't have the required role, redirect to login
+    if (!userStore.user || !requiredRoles.includes(userStore.user.role)) {
+      return navigateTo('/login');
+    }
+  }
+});

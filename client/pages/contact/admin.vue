@@ -10,7 +10,7 @@
         <p><strong>IP:</strong> {{ email.ip }}</p>
         <p>
           <strong>Created At:</strong> {{ new
-          Date(email.createdAt).toLocaleString() }}
+            Date(email.createdAt).toLocaleString() }}
         </p>
         <p class="message">
           {{ email.message }}
@@ -28,6 +28,12 @@ import 'vue3-toastify/dist/index.css'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '~/stores/UserNameStore'
 const { t } = useI18n()
+
+// For CapacitorJS integration
+const isCapacitor = ref(false)
+onMounted(() => {
+  isCapacitor.value = typeof window !== 'undefined' && window.Capacitor !== undefined
+})
 
 useSeoMeta({
   title: t('contact.admin.title'),
@@ -72,14 +78,14 @@ const showToast = (type: 'success' | 'error', message: string) => {
   }
 }
 
+// Access token from cookie
+const accessToken = useCookie<string | undefined>('accessToken')
 
 // Unified auth check handler
 const checkAdminAccess = () => {
   // Server-side check
   if (import.meta.server) {
-    const nuxtApp = useNuxtApp()
-    const cookies = parseCookies(nuxtApp.ssrContext?.event)
-    if (!cookies.accessToken) {
+    if (!accessToken.value) {
       throw createError({
         statusCode: 403,
         statusMessage: t('errors.adminAccessRequired')
@@ -100,65 +106,118 @@ const checkAdminAccess = () => {
   return true
 }
 
-// Data fetching handler
-const { pending, execute } = useLazyAsyncData<Email[]>(
-  'admin-emails',
-  async () => {
-    if (!checkAdminAccess()) return []
+// Define the fetch function separately for better organization
+const fetchEmails = async (): Promise<Email[]> => {
+  // Check admin access first
+  if (!checkAdminAccess()) return []
 
-    const { data, error } = await $fetch<{ data: Email[] }>(
-      '/api/v1/received_emails',
-      {
-        credentials: 'include',
-        server: false,
-        retry: 0,
-        headers: import.meta.server ? {
-          cookie: useRequestHeaders(['cookie']).cookie || ''
-        } : undefined
-      }
-    )
+  try {
+    const config = useRuntimeConfig()
 
-    if (error.value) {
-      const status = error.value.statusCode
-      const message = status === 403 ? t('errors.adminAccessRequired') :
-        status === 401 ? t('errors.sessionExpired') :
-          t('errors.serverError')
+    // Properly handle cookies for both SSR and CSR
+    const headers = {}
 
-      if (import.meta.client) {
-        showToast('error', message)
-        if ([401, 403].includes(status)) {
-          router.push({
-            path: localePath('/login'),
-            query: { redirect: route.fullPath }
-          })
-        }
-      } else {
-        throw createError({ statusCode: status, statusMessage: message })
-      }
-      return []
+    // For SSR, forward all cookies from the original request
+    if (import.meta.server) {
+      const reqHeaders = useRequestHeaders(['cookie'])
+      Object.assign(headers, reqHeaders)
+    }
+    // For CSR in production, ensure the token is included
+    else if (accessToken.value) {
+      // You might need to adjust this based on how your API expects auth
+      // headers['Authorization'] = `Bearer ${accessToken.value}`
+      headers['Authorization'] = `${accessToken.value}`
     }
 
-    emails.value = data.value?.data || []
-    showToast('success', t('messages.emailsLoaded'))
-    return emails.value
-  },
+    const response = await $fetch('/api/v1/received_emails', {
+      baseURL: config.public.originUrl,
+      headers
+    })
+
+    if (response && response.data) {
+      // Store in local ref for template access
+      emails.value = response.data
+
+      // Show success toast on client only
+      if (import.meta.client) {
+        showToast('success', t('messages.emailsLoaded'))
+      }
+
+      return response.data
+    }
+    return []
+  } catch (error) {
+    const status = error.statusCode || 500
+    const message = status === 403 ? t('errors.adminAccessRequired') :
+      status === 401 ? t('errors.sessionExpired') :
+        t('errors.serverError')
+
+    // Handle client-side errors
+    if (import.meta.client) {
+      showToast('error', message)
+      if ([401, 403].includes(status)) {
+        router.push({
+          path: localePath('/login'),
+          query: { redirect: route.fullPath }
+        })
+      }
+    } else {
+      // Handle server-side errors
+      throw createError({ statusCode: status, statusMessage: message })
+    }
+    return []
+  }
+}
+
+// Use useAsyncData with lazy option for more control
+const { pending, refresh } = useAsyncData<Email[]>(
+  'admin-emails',
+  fetchEmails,
   {
-    server: false,
-    immediate: false
+    // Don't execute immediately - we'll control this based on environment
+    immediate: false,
+    // Handle server errors properly
+    server: true,
+    // Transform function to ensure emails ref is always updated
+    transform: (data) => {
+      emails.value = data || []
+      return data
+    }
   }
 )
+
+// Capacitor cookie handling function
+const handleCapacitorCookies = async () => {
+  if (isCapacitor.value) {
+    try {
+      // Import CapacitorCookies only on client side
+      const { CapacitorCookies } = await import('@capacitor/core')
+      // Get cookies from Capacitor
+      const cookies = await CapacitorCookies.getCookies()
+      // If we have the token in Capacitor cookies, we can proceed
+      if (cookies.accessToken) {
+        accessToken.value = cookies.accessToken
+      }
+    } catch (e) {
+      console.error('Error accessing Capacitor cookies:', e)
+    }
+  }
+}
 
 // Lifecycle handling
 onMounted(async () => {
   if (import.meta.client) {
-    await execute()
+    await handleCapacitorCookies()
+    // Refresh data on client mount
+    refresh()
   }
 })
 
 // Server-side initialization
 if (import.meta.server) {
-  checkAdminAccess() // Will automatically throw error if not authenticated
-  await execute()
+  // On server, we check access and execute immediately
+  checkAdminAccess() // Will throw error if not authenticated
+  refresh()
 }
 </script>
 

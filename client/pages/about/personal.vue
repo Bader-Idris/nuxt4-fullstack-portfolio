@@ -25,6 +25,9 @@
           src="/imgs/meTwentyFour.jpg"
           alt="personal-img"
           class="mi-imagen"
+          :placeholder="[50, 50, 75, 75]"
+          format="webp"
+          loading="lazy"
         />
         <div class="auth-aside">
           <p>@bader-idris</p>
@@ -32,10 +35,10 @@
         </div>
       </div>
       <pre>
-          <code
-ref="codeBlock"
-class="javascript"
->
+        <code
+          ref="codeBlock"
+          class="javascript"
+        >
   const pigIt = (str) => {
     return str.split(' ').map(e => {
       return e.length > 0 && !e.match(/[!?@#$%^&*]/)
@@ -43,8 +46,8 @@ class="javascript"
         : e;
     }).join(' ');
   };
-          </code>
-        </pre>
+        </code>
+      </pre>
     </div>
   </div>
 </template>
@@ -52,23 +55,37 @@ class="javascript"
 <script setup lang="ts">
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css' // You can change the theme here
-const { t } = useI18n()
 
+const { t, locale } = useI18n()
+const { $device } = useNuxtApp()
+
+// SEO optimization using @nuxtjs/seo module
 useSeoMeta({
   title: t('about.personal.title'),
   description: t('about.personal.description'),
+  ogTitle: t('about.personal.title'),
+  ogDescription: t('about.personal.description'),
+  ogImage: '/imgs/meTwentyFour.jpg',
+  twitterCard: 'summary_large_image',
 })
 
+// Schema.org structured data for better SEO
 useSchemaOrg([
   {
     "@type": "AboutPage",
-    name: "About Bader Idris",
-    description: "Learn more about Bader Idris, a full-stack developer.",
+    name: t('about.personal.schema.name'),
+    description: t('about.personal.schema.description'),
     mainEntity: {
       "@type": "Person",
       name: "Bader Idris",
-      jobTitle: "Full-Stack Developer",
-      description: "A skilled developer excelling in Nuxt.js, Express.js, and more."
+      jobTitle: t('about.personal.schema.jobTitle'),
+      description: t('about.personal.schema.personDescription'),
+      image: useRuntimeConfig().public.siteUrl + '/imgs/meTwentyFour.jpg',
+      url: useRuntimeConfig().public.siteUrl + useRoute().path,
+      sameAs: [
+        "https://github.com/bader-idris",
+        "https://linkedin.com/in/bader-idris"
+      ]
     }
   }
 ])
@@ -76,7 +93,7 @@ useSchemaOrg([
 const codeBlock = ref<HTMLElement | null>(null)
 const bioContainer = ref<HTMLElement | null>(null)
 
-// Calculate the duration since June 15, 2022
+// Calculate the duration since June 15, 2022 with i18n support
 const startDate = new Date('2022-06-15')
 const currentDate = new Date()
 const diffInMs = currentDate.getTime() - startDate.getTime()
@@ -85,28 +102,25 @@ const diffInMonths = Math.floor(
   (diffInMs % (1000 * 60 * 60 * 24 * 365.25)) / (1000 * 60 * 60 * 24 * 30.44),
 )
 
+// Format the experience duration based on current locale
+const formattedExperience = computed(() => {
+  return t('about.personal.experienceDuration', {
+    years: diffInYears,
+    months: diffInMonths
+  })
+})
+
 interface Segment {
   text: string
   isBold: boolean
 }
 
-// const bio = ref(t('about.bio'))
-const bio = ref<string>(`
-I started my programming journey on June 15, 2022, which means I've been honing my skills for ${diffInYears} years and ${diffInMonths} months.
-
-Since then, I've gained solid expertise in:
-✅ **Web Development**: Mastered HTML5, CSS3, and JavaScript to build dynamic, responsive websites. I then expanded into **Vue.js (Composition API and Vue Router 4)**, to create sophisticated front-end applications.
-
-✅ **Backend Development**: I built five back-end projects using **Node.js, Express.js, and MongoDB** as part of the FreeCodeCamp curriculum. This journey helped me gain a strong foundation in creating RESTful APIs and deploying full-stack applications.
-
-✅ **Database Management**: After learning **MongoDB**, I furthered my knowledge with **PostgreSQL (PSQL)**, focusing on scalable and secure data solutions.
-
-✅ **DevOps & Deployment**: I became proficient with **Docker**, deploying containerized applications, and configuring servers with **Nginx**. I've also gained skills in **DevOps** workflows to automate, optimize, and manage deployments efficiently.
-
-✅ **Cross-Platform Development**: I leveraged **Capacitor.js** and **Electron** to build applications that work seamlessly across web, mobile (iOS/Android), and desktop (Windows/Mac/Linux).
-
-As a versatile full-stack developer, I combine my technical knowledge with creativity to deliver scalable, secure, and efficient solutions for modern digital challenges. Let's collaborate to bring your ideas to life!
-`)
+// Use i18n for bio text with dynamic values
+const bio = computed(() => {
+  return t('about.personal.bio', {
+    experience: formattedExperience.value
+  })
+})
 
 // Function to process the bio and convert it into a structured format
 function parseBioText(text: string): Segment[][] {
@@ -136,53 +150,58 @@ function parseBioText(text: string): Segment[][] {
 const formattedBio = computed(() => parseBioText(bio.value))
 
 // --- Drag Handling Functions ---
-let isDragging = false
-let startY = 0
-let scrollTop = 0
+let isDragging = ref(false)
+let startY = ref(0)
+let scrollTop = ref(0)
+
+// Use device detection from @nuxtjs/device
+const isMobile = computed(() => {
+  return $device.isMobile
+})
 
 function handleMouseDown(event: MouseEvent | TouchEvent): void {
-  if (window.innerWidth < 768) return // PC only check
-  isDragging = true
+  if (isMobile.value) return // PC only check
+  isDragging.value = true
   bioContainer.value?.classList.add('grabbing')
-  startY = 'touches' in event ? event.touches[0].pageY : event.pageY
-  scrollTop = bioContainer.value?.scrollTop || 0
+  startY.value = 'touches' in event ? event.touches[0].pageY : event.pageY
+  scrollTop.value = bioContainer.value?.scrollTop || 0
 }
 
 function handleMouseMove(event: MouseEvent | TouchEvent): void {
-  if (window.innerWidth < 768 || !isDragging || !bioContainer.value) return // PC only check
+  if (isMobile.value || !isDragging.value || !bioContainer.value) return // PC only check
   const y = 'touches' in event ? event.touches[0].pageY : event.pageY
-  bioContainer.value.scrollTop = scrollTop - (y - startY)
+  bioContainer.value.scrollTop = scrollTop.value - (y - startY.value)
 }
 
 function handleMouseUp(): void {
-  if (window.innerWidth < 768) return // PC only check
-  isDragging = false
+  if (isMobile.value) return // PC only check
+  isDragging.value = false
   bioContainer.value?.classList.remove('grabbing')
 }
 
+// Format date with i18n support
 const createTimeCodeSnippet = computed(() => {
   const now = new Date()
   const then = new Date('2023-05-19T00:00:00.000Z')
+  
+  // Use Intl.RelativeTimeFormat for localized relative time
+  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' })
+  
   const diff = now.getTime() - then.getTime()
   const monthDiff = Math.floor(diff / (1000 * 60 * 60 * 24 * 30))
-  return `created ${monthDiff} months ago`
+  
+  return t('about.personal.createdTimeAgo', { 
+    time: rtf.format(-monthDiff, 'month')
+  })
 })
+
+// Use VueUse for better lifecycle management
+useEventListener(bioContainer, 'mousedown', handleMouseDown)
+useEventListener(bioContainer, 'mousemove', handleMouseMove)
+useEventListener(document, 'mouseup', handleMouseUp)
 
 onMounted(() => {
   if (codeBlock.value) hljs.highlightElement(codeBlock.value)
-  if (bioContainer.value) {
-    bioContainer.value.addEventListener('mousedown', handleMouseDown)
-    bioContainer.value.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }
-})
-
-onUnmounted(() => {
-  if (bioContainer.value) {
-    bioContainer.value.removeEventListener('mousedown', handleMouseDown)
-    bioContainer.value.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
 })
 </script>
 

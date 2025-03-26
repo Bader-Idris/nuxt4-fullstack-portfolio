@@ -94,20 +94,7 @@
 // import { useClipboard } from '@vueuse/core';
 import { useUserStore } from '~/stores/UserNameStore';
 const localePath = useLocalePath()
-const { t } = useI18n()
-
-useSeoMeta({
-  title: t('contact.title'),
-  description: t('contact.description'),
-})
-
-useSchemaOrg([
-  {
-    "@type": "ContactPage",
-    name: t('contact.title'),
-    description: t('contact.description'),
-  }
-])
+// const { t } = useI18n()
 
 const contactDisplay = ref('block');
 const socialsDisplay = ref('block');

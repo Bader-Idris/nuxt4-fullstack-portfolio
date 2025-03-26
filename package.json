@@ -21,9 +21,9 @@
     "@nuxt/content": "^3.4.0",
     "@nuxt/icon": "^1.11.0",
     "@nuxt/image": "^1.10.0",
-    "@nuxt/scripts": "^0.11.2",
+    "@nuxt/scripts": "^0.11.5",
     "@nuxtjs/device": "^3.2.4",
-    "@nuxtjs/i18n": "^9.3.4",
+    "@nuxtjs/i18n": "^9.4.0",
     "@pinia/nuxt": "^0.10.1",
     "@vite-pwa/nuxt": "^0.10.6",
     "@vueuse/nuxt": "^13.0.0",
@@ -73,7 +73,7 @@
     "@capacitor/toast": "^7.0.0",
     "@nuxt/eslint": "^1.2.0",
     "@nuxtjs/seo": "^3.0.1",
-    "@types/bun": "^1.2.5",
+    "@types/bun": "^1.2.6",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
     "eslint": "^9.23.0",
@@ -88,4 +88,3 @@
     "typescript": "^5.8.2"
   }
 }
-

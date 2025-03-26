@@ -2,63 +2,74 @@
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 
-const isSubmitted = ref<boolean>(false)
+const { t, locale } = useI18n();
+const isSubmitted = ref<boolean>(false);
+
+useSeoMeta({
+  title: t('contact.title'),
+  description: t('contact.description'),
+})
+
+useSchemaOrg([
+  {
+    "@type": "ContactPage",
+    name: t('contact.title'),
+    description: t('contact.description'),
+  }
+])
 
 // Form and messaging state
-const name = ref<string>('')
-const email = ref<string>('')
-const message = ref<string>('')
+const name = ref<string>('');
+const email = ref<string>('');
+const message = ref<string>('');
 const isLoading = ref<boolean>(false);
-let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
+async function submitForm() {
+  if (validateForm()) {
+    isLoading.value = true;
+    try {
+      const url = `/api/v1/received_emails`;
+      const { data, error } = await useFetch(url, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: name.value,
+          email: email.value,
+          message: message.value,
+        }),
+        baseURL: useRuntimeConfig().public.originUrl,
+      });
 
-const handleSubmit = async (): Promise<void> => {
-  if (isLoading.value) return;
-
-  if (debounceTimeout) clearTimeout(debounceTimeout);
-  debounceTimeout = setTimeout(async () => {
-    if (validateForm()) {
-      isLoading.value = true;
-      try {
-        const url = `/api/v1/received_emails`;
-        const { data, error } = await useFetch(url, {
-          method: 'POST',
-          body: JSON.stringify({
-            name: name.value,
-            email: email.value,
-            message: message.value,
-          }),
-          baseURL: useRuntimeConfig().public.originUrl,
-        });
-
-        if (error.value) {
-          // Handle API errors
-          toast(error.value.data?.error || 'An error occurred while sending the email.', {
-            theme: 'dark',
-            type: 'error',
-            position: 'top-center',
-          });
-        } else {
-          // Handle success
-          isSubmitted.value = true;
-          toast('Email sent successfully!', {
-            theme: 'auto',
-            type: 'success',
-            position: 'top-center',
-          });
-        }
-      } catch (error) {
-        // Handle network or unexpected errors
-        console.error(error);
-        toast('Network error. Please try again.', {
-          theme: 'dark',
+      if (error.value) {
+        toast(error.value.data?.error || t('errors.serverError'), {
+          theme: 'auto',
           type: 'error',
           position: 'top-center',
         });
-      } finally {
-        isLoading.value = false;
+      } else {
+        isSubmitted.value = true;
+        toast(t('messages.emailSent'), {
+          theme: 'auto',
+          type: 'success',
+          position: 'top-center',
+        });
       }
+    } catch (error) {
+      console.error(error);
+      toast(t('errors.serverError'), {
+        theme: 'auto',
+        type: 'error',
+        position: 'top-center',
+      });
+    } finally {
+      isLoading.value = false;
     }
+  }
+}
+
+const handleSubmit = (): void => {
+  if (isLoading.value) return;
+  setTimeout(() => {
+    submitForm();
   }, 300);
 };
 
@@ -70,21 +81,24 @@ const resetForm = (): void => {
   message.value = '';
 };
 
-
-// Form validation for better security
+// Form validation with i18n messages
 const validateForm = (): boolean => {
   if (!name.value || !email.value || !message.value) {
     console.error('All form fields must be filled out.');
-    toast('All fields are required.', {
-      theme: 'dark',
+    toast(t('contact.form.all_fields'), {
+      theme: 'auto',
       type: 'error',
       position: 'top-center',
-      dangerouslyHTMLString: true,
     });
     return false;
   }
   if (!validateEmail(email.value)) {
     console.error('Invalid email format.');
+    toast(t('contact.form.email_format'), {
+      theme: 'auto',
+      type: 'error',
+      position: 'top-center',
+    });
     return false;
   }
   return true;
@@ -96,142 +110,125 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// Format date function with typing
+// Format date function with i18n support
 function formatDate(inputDate: Date): string {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  const day = days[inputDate.getDay()];
-  const date = inputDate.getDate();
-  const month = months[inputDate.getMonth()];
-
-  return `${day} ${date} ${month}`;
+  return new Intl.DateTimeFormat(locale.value, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(inputDate);
 }
 
-// Update the date periodically
-let dateInterval: ReturnType<typeof setInterval>;
+// Update the date periodically using VueUse's useIntervalFn (SSR-friendly)
+const date = ref<Date>(new Date());
+const formattedDate = ref<string>(formatDate(date.value));
 
-const date = ref<Date>(new Date())
-const formattedDate = ref<string>(formatDate(date.value))
+const { pause } = useIntervalFn(() => {
+  date.value = new Date();
+  formattedDate.value = formatDate(date.value);
+}, 1000, { immediate: false });
 
 onMounted(() => {
   if (import.meta.client) {
-    dateInterval = setInterval(() => {
-      date.value = new Date();
-      formattedDate.value = formatDate(date.value);
-    }, 1000);
+    date.value = new Date();
+    formattedDate.value = formatDate(date.value);
   }
 });
 
 onBeforeUnmount(() => {
   if (import.meta.client) {
-    clearInterval(dateInterval);
+    pause();
   }
 });
 </script>
 
 <template>
-  
-    <main class="cont">
-      <div v-if="!isSubmitted" class="messaging">
-        <label for="name">_name:</label>
-        <input
-id="name"
-          v-model="name"
-          type="text"
-          placeholder="John Doe"
-          required
-        >
+  <main class="cont">
+    <div v-if="!isSubmitted" class="messaging">
+      <label for="name">{{ t('contact.form.name') }}</label>
+      <input 
+        id="name" 
+        v-model="name" 
+        type="text"
+        :placeholder="t('contact.form.name_placeholder')" 
+        required>
 
-        <label for="_email">_email:</label>
-        <input
-id="_email"
-          v-model="email"
-          type="email"
-          placeholder="JohnDoe@gmail.com"
-          required
-        >
+      <label for="_email">{{ t('contact.form.email') }}</label>
+      <input 
+        id="_email" 
+        v-model="email" 
+        type="email"
+        :placeholder="t('contact.form.email_placeholder')" 
+        required>
 
-        <label for="_message">Message:</label>
-        <textarea
-id="_message"
-          v-model="message"
-          rows="5"
-          cols="33"
-          placeholder="Leave your comment here!"
-          style="resize: vertical"
-          required
-        />
-        <CustomButtons
-button-type="default"
-          :disabled="isLoading"
-          @click.prevent.stop="handleSubmit">
-          {{ isLoading ? 'Sending...' : 'submit-message' }}
-        </CustomButtons>
-      </div>
+      <label for="_message">{{ t('contact.form.message') }}</label>
+      <textarea 
+        id="_message" 
+        v-model="message" 
+        rows="5" 
+        cols="33"
+        :placeholder="t('contact.form.message_placeholder')" 
+        style="resize: vertical"
+        required />
+      <CustomButtons 
+        button-type="default" 
+        :disabled="isLoading"
+        @click.prevent.stop="handleSubmit">
+        {{ isLoading ? t('contact.form.sending') : t('contact.form.submit') }}
+      </CustomButtons>
+    </div>
 
-      <div v-else class="thank-you">
-        <NuxtImg src="/imgs/thanks.svg" alt="thank you message icon" />
-        <p>Your message has been accepted. You will receive an answer really
-          soon!</p>
-        <CustomButtons button-type="default" @click="resetForm">send-new-message
-        </CustomButtons>
-      </div>
+    <div v-else class="thank-you">
+      <NuxtImg
+        src="/imgs/thanks.svg"
+        alt="thank you message icon" 
+        loading="lazy"
+      />
+      <p>{{ t('messages.thank_you.emailMsg') }}</p>
+      <CustomButtons button-type="default" @click="resetForm">{{
+        t('contact.form.send_new') }}
+      </CustomButtons>
+    </div>
 
-      <!-- Display the message as code format -->
-      <div class="beautiful-results">
-        <div class="first-query">
-          <span>const</span>
-          <div class="var-name">button</div>
-          <div class="query">
-            <span>document</span><span>.</span><span>querySelector</span><span>'#sendBtn'</span>
-          </div>
-        </div>
-        <div class="message-to-json">
-          <span>const</span>
-          <div class="var-name">message</div>
-          <span> =</span>
-          <span> {</span>
-          <div class="data-object">
-            <div class="set">
-              <span class="options">name</span>
-              <p class="name results">{{ name }}</p>
-            </div>
-            <div class="set">
-              <span class="options">email</span>
-              <p class="email results">{{ email }}</p>
-            </div>
-            <div class="set">
-              <span class="options">message</span>
-              <p class="message results" style="white-space: pre-line">{{
-                message }}</p>
-            </div>
-            <div class="set">
-              <span class="options">date</span>
-              <p class="date results">{{ formattedDate }}</p>
-            </div>
-          </div>
+    <!-- Display the message as code format -->
+    <div class="beautiful-results">
+      <div class="first-query">
+        <span>const</span>
+        <div class="var-name">button</div>
+        <div class="query">
+          <span>document</span><span>.</span><span>querySelector</span><span>'#sendBtn'</span>
         </div>
       </div>
-    </main>
+      <div class="message-to-json">
+        <span>const</span>
+        <div class="var-name">message</div>
+        <span> =</span>
+        <span> {</span>
+        <div class="data-object">
+          <div class="set">
+            <span class="options">name</span>
+            <p class="name results">{{ name }}</p>
+          </div>
+          <div class="set">
+            <span class="options">email</span>
+            <p class="email results">{{ email }}</p>
+          </div>
+          <div class="set">
+            <span class="options">message</span>
+            <p class="message results" style="white-space: pre-line">{{ message
+              }}</p>
+          </div>
+          <div class="set">
+            <span class="options">date</span>
+            <p class="date results">{{ formattedDate }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 </template>
 
-
 <style lang="scss">
-
   main.cont {
     width: calc(100% - 300px);
     display: flex;

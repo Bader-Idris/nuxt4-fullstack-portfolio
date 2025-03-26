@@ -184,6 +184,9 @@ export default defineNuxtConfig({
   //   },
   // },
   i18n: {
+    bundle: {
+      optimizeTranslationDirective: false,
+    },
     lazy: true,
     // seo: true,
     langDir: "../client/i18n/locales/",

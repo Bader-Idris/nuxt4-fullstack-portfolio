@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import { getCookie } from "h3";
-// import type { NitroApp } from "nitropack";
 import { ReceivedEmail, User } from "../../models/mongo/index";
 
 interface DecodedToken {

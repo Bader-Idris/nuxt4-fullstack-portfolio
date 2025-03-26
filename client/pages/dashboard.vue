@@ -24,30 +24,32 @@ const userStore = useUserStore();
 // Create a ref to hold the user data
 const user = ref(null);
 
-// Check localStorage first
-const storedUser = localStorage.getItem('user');
-if (storedUser) {
-  const tokenUser = JSON.parse(storedUser);
-  userStore.setUser(tokenUser);
-  user.value = tokenUser; // Set the user for display
-} else {
-  // If no user in localStorage, check query parameters
-  const tokenUserEncoded = route.query.tokenUser;
-  if (tokenUserEncoded) {
-    const tokenUser = JSON.parse(decodeURIComponent(tokenUserEncoded));
+// Only access localStorage on the client side
+onMounted(() => {
+  // Check localStorage first
+  const storedUser = localStorage.getItem('user');
+  if (storedUser) {
+    const tokenUser = JSON.parse(storedUser);
     userStore.setUser(tokenUser);
     user.value = tokenUser; // Set the user for display
-    // Optionally, you can store it in localStorage for future use
-    localStorage.setItem('tokenUser', JSON.stringify(tokenUser));
+  } else {
+    // If no user in localStorage, check query parameters
+    const tokenUserEncoded = route.query.tokenUser;
+    if (tokenUserEncoded) {
+      const tokenUser = JSON.parse(decodeURIComponent(tokenUserEncoded));
+      userStore.setUser(tokenUser);
+      user.value = tokenUser; // Set the user for display
+      // Optionally, you can store it in localStorage for future use
+      localStorage.setItem('tokenUser', JSON.stringify(tokenUser));
+    }
   }
-}
+});
 
-if (import.meta.client ) {
+if (import.meta.client) {
   watch(() => userStore.user, (newUser) => {
     user.value = newUser;
   });
 }
-
 </script>
 
 <style lang="scss">
