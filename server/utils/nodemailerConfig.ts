@@ -1,9 +1,7 @@
-import { useRuntimeConfig } from "#imports";
-
 export default function getNodemailerConfig() {
   const config = useRuntimeConfig();
   return {
-    host: "mail.baderidris.com",
+    host: config.mailHost,
     port: 587,
     secure: false,
     auth: {
@@ -15,5 +13,3 @@ export default function getNodemailerConfig() {
     },
   };
 }
-
-

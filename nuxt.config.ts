@@ -351,8 +351,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // ? publicly for client
     public: {
-      originUrl: process.env.DOMAIN_NAME,
+      originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
     },
+    mailHost: process.env.MAIL_HOST,
     mailUser: process.env.MAIL_USER,
     mailPass: process.env.MAIL_PASS,
     mailFrom: "Bader Idris <contact@baderidris.com>",

@@ -40,7 +40,7 @@ onMounted(() => {
       userStore.setUser(tokenUser);
       user.value = tokenUser; // Set the user for display
       // Optionally, you can store it in localStorage for future use
-      localStorage.setItem('tokenUser', JSON.stringify(tokenUser));
+      localStorage.setItem('user', JSON.stringify(tokenUser));
     }
   }
 });

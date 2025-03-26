@@ -1,4 +1,3 @@
-import { useRuntimeConfig } from "#imports";
 import sendEmail from "./sendEmail";
 
 export default async function sendVerificationEmail({
