@@ -39,7 +39,6 @@ const handleBeforeEnter = () => {
 // Initialize Capacitor functionality
 const initCapacitor = async () => {
   try {
-    // Check if running in Capacitor environment
     const { Device } = await import('@capacitor/device')
     const info = await Device.getInfo()
     isCapacitorDevice.value = info.platform !== 'web'
