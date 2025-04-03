@@ -1,9 +1,6 @@
 import mongoose from 'mongoose'
-import { defineNitroPlugin } from 'nitropack/runtime/plugin'
 
 export default defineNitroPlugin(async () => {
-  // const config = useRuntimeConfig() // don't use runtime config for this if running on docker
-
   // ? Used To Skip DB Connecting While Building
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
     const MONGO_URI = process.env.MONGO_URI;

@@ -118,6 +118,11 @@ docker compose -f ./a.prod-certbot.yml up -d --build
 
 Afterward, you will need to force Certbot to renew certificates to remove the `--staging` flag. It is recommended to create a separate compose file for this purpose and for future renewals.
 
+> [!IMPORTANT]  
+> replicas and docker swarm concerns
+
+You have to name the root project dir as `portfolio` or change `server/config/nginx/nginx_with_certbot_secured.conf` file => upstream servers based on your container name?s or outer ip address?es
+
 ### Setting Up Cron for Certificate Renewal
 
 To automate certificate renewals, create a cron job by modifying the paths in the `/server/config/nginx/ssl_renew.sh` file, then add this file to your crontab:

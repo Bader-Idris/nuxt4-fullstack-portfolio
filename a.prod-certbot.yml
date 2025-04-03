@@ -50,6 +50,16 @@ services:
         NODE_ENV: production
     image: baderidris/nuxt-portfolio:latest
     restart: always
+    # orchestration for docker swarm
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 15s
+      labels:
+        - "com.docker.swarm.service.name={{.Service.Name}}-{{.Task.Slot}}"
     volumes:
       - ./.data:/app/.data
       - ./.env:/app/.env

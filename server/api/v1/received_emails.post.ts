@@ -1,6 +1,5 @@
 import {  readBody, getRequestIP, createError } from "h3";
 import { ReceivedEmail } from "../../models/mongo/index";
-// import sendEmail from "../../utils/";
 
 export default defineEventHandler(async (event) => {
   // const config = useRuntimeConfig();
@@ -37,7 +36,7 @@ export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event, { xForwardedFor: true }); // for nginx
 
   try {
-    // @ts-ignore Save to MongoDB
+    // @ts-expect-error Getting Saved to MongoDB
     const newEmail = await ReceivedEmail.create({ name, email, message, ip });
 
     let emailSent = false;
