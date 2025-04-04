@@ -216,6 +216,9 @@ const socialLogin = (provider: string) => {
   @media (max-width: 768px) {
     width: calc(100% - 30px);
   }
+  .btn {
+    cursor: pointer;
+  }
 }
 
 .btn.social {

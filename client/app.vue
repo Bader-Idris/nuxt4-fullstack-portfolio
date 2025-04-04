@@ -46,6 +46,7 @@ const initCapacitor = async () => {
     if (isCapacitorDevice.value) {
       // Set up status bar (do NOT hide it initially)
       const { StatusBar, Style } = await import('@capacitor/status-bar')
+      // TODO: try to make it dynamic as a plugin or composable!
       StatusBar.setStyle({ style: Style.Dark })
       StatusBar.setBackgroundColor({ color: '#01080E' })
       StatusBar.hide()
@@ -64,10 +65,28 @@ const initCapacitor = async () => {
         await notifyOffline()
       }
 
+      // Add deep linking listener
+      // TODO: test it out, especially with query params
+      const { App: CapacitorApp, URLOpenListenerEvent } = await import('@capacitor/app')
+      CapacitorApp.addListener('appUrlOpen', async (event: URLOpenListenerEvent) => {
+        try {
+          const url = new URL(event.url);
+          const path = url.pathname;
+          if (path && path !== '/') {
+            await router.push({
+              path: path,
+              query: Object.fromEntries(url.searchParams)
+            });
+          }
+        } catch (error) {
+          console.error('Failed to navigate to deep link:', error);
+        }
+      });
+
       // Register back button handler
-      const { App: CapacitorApp } = await import('@capacitor/app')
       let lastBackPressed = 0
 
+      // TODO: make it more native, it's ugly yet!
       CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
         if (!canGoBack && route.fullPath === '/') {
           const currentTime = new Date().getTime()

@@ -5,7 +5,7 @@
   >
     <slot />
   </button>
-  <!-- use as <CustomButtons buttonType="ghost">txt</CustomButtons>  -->
+  <!-- use as <CustomButtons button-type="ghost">txt</CustomButtons>  -->
 </template>
 
 <script setup lang="ts">

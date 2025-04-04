@@ -84,8 +84,9 @@ function slugify(text) {
       </header>
 
       <div 
-        v-if="project.img">
+        v-if="project.img"
         class="project-image" 
+        >
         <img :src="project.img" :alt="project.imgAlt || project.title">
       </div>
 
@@ -96,15 +97,16 @@ function slugify(text) {
       </div>
 
       <div class="project-actions">
-        <a 
+        <CustomLink 
           v-if="project.url" 
-          :href="project.url" 
+          :to="project.url" 
           target="_blank"
-          class="external-link">Visit Live Project</a>
-        <button
+          class="external-link">Visit Live Project</CustomLink>
+        <CustomButtons
           class="back-button"
+          button-type="ghost"
           @click="goBack" 
-        >Back to Projects</button>
+        >Back to Projects</CustomButtons>
       </div>
 
       <!-- Render the full Markdown content -->
@@ -177,6 +179,7 @@ function slugify(text) {
 
     img {
       width: 100%;
+      max-width: 100%;
       height: auto;
       border-radius: 8px;
     }

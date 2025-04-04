@@ -86,7 +86,7 @@
     "postcss-nesting": "^13.0.1",
     "postcss-preset-env": "^10.1.5",
     "postcss-pxtorem": "^6.1.0",
-    "sass": "^1.86.2",
+    "sass": "^1.86.3",
     "typescript": "^5.8.2"
   }
 }

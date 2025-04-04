@@ -153,8 +153,10 @@ const login = async (): Promise<void> => {
     });
 
     // Redirect after successful login
-    const redirectPath = useRoute().query.redirect as string || '/dashboard';
-    await navigateTo(localePath(redirectPath));
+    // const redirectPath = useRoute().query.redirect as string || '/dashboard';
+    await navigateTo(localePath('/dashboard'), {
+      redirectCode: 302,
+    });
   } catch (error) {
     console.error('Login error: ', error);
 
@@ -259,6 +261,9 @@ const socialLogin = (provider: string) => {
 
   @media (max-width: 768px) {
     width: calc(100% - 30px);
+  }
+  .btn {
+    cursor: pointer;
   }
 }
 </style>

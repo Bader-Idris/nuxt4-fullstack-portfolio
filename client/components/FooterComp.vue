@@ -6,7 +6,7 @@
         <div class="telegram">
           <CustomLink 
             aria-label="go to my telegram profile" 
-            class="link"
+            class="link external-link"
             :to="telegramLink"
           >
             <Icon 
@@ -20,7 +20,7 @@
         <div class="facebook">
           <CustomLink 
             aria-label="go to my facebook page" 
-            class="link"
+            class="link external-link"
             :to="facebookLink"
           >
             <Icon 
@@ -40,6 +40,7 @@
         <CustomLink
           aria-label="go to my github profile"
           :to="githubLink"
+          class="external-link"
         >
           <Icon 
           name="mdi:github" 

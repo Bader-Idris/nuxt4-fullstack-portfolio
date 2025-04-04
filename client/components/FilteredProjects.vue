@@ -21,15 +21,17 @@
           // {{ project.title }}
         </h3>
         <div class="card-content">
-          <a
-            :href="project.url"
-            target="_blank"
+          <!-- test this -->
+          <CustomLink 
+            aria-label="go to ${{ project.title }}"
+            class="link external-link"
+            :to="project.url"
           >
             <img
               :src="project.img"
               :alt="project.title"
             >
-          </a>
+          </CustomLink>
           <p>{{ project.desc }}</p>
 
           <CustomButtons
