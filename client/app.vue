@@ -67,6 +67,8 @@ const initCapacitor = async () => {
 
       // Add deep linking listener
       // TODO: test it out, especially with query params
+      // check these important requirements https://capacitorjs.com/docs/guides/deep-links#android-configuration
+      // it says =======>  keytool -genkey -v -keystore KEY-NAME.keystore -alias ALIAS -keyalg RSA -keysize 2048 -validity 10000
       const { App: CapacitorApp, URLOpenListenerEvent } = await import('@capacitor/app')
       CapacitorApp.addListener('appUrlOpen', async (event: URLOpenListenerEvent) => {
         try {

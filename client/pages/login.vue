@@ -25,7 +25,7 @@
         >
       </div>
       <button class="btn" :disabled="loading">
-        <span v-if="loading">
+        <span v-if="loading" class="loader" >
           <CustomLoader />
         </span>
         <span v-else> Login </span>
@@ -109,7 +109,7 @@ const login = async (): Promise<void> => {
 
   try {
     // Use useAsyncData with $fetch
-    const { data: response, error } = await useAsyncData<LoginResponse>(
+    const { data: response, error } = await useLazyAsyncData<LoginResponse>(
       'login',
       () =>
         $fetch(url, {
@@ -241,7 +241,7 @@ const socialLogin = (provider: string) => {
       text-transform: uppercase;
       margin-top: 50px;
 
-      span {
+      .loader {
         display: flex;
         justify-content: center;
         align-items: center;

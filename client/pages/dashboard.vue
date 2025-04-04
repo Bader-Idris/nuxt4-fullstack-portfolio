@@ -115,10 +115,11 @@ const messages: Ref<Message[]> = ref([]);
 const page: Ref<number> = ref(1);
 const limit: number = 20;
 const isConnected = ref(false);
+const transport = ref("N/A");
 const connectionError = ref<string | null>(null);
 
 const baseUrl = useRuntimeConfig().public.originUrl;
-const isSecure = baseUrl.startsWith("https");
+// const isSecure = baseUrl.startsWith("https");
 const localePath = useLocalePath()
 
 // Socket variable
@@ -160,6 +161,7 @@ async function getCookieStringForCapacitor(): Promise<string> {
 // Lifecycle Hooks
 onMounted(async () => {
   if (import.meta.client) {
+    // @ts-expect-error I think it's unreliable, use isCapacitorDevice instead!
     isCapacitor.value = typeof window !== 'undefined' && window.Capacitor !== undefined;
     const { Device } = await import('@capacitor/device');
     const info = await Device.getInfo();
@@ -168,9 +170,10 @@ onMounted(async () => {
     // Base Socket.IO options
     const options: any = {
       withCredentials: true, // Required for web to include cookies automatically
-      transports: isSecure
-          ? ["websocket", "polling"]
-          : ["polling", "websocket"],
+      // TODO: after testing it with ssl, it stops the whole front side of the app for both mobile and web
+      // transports: isSecure
+      //     ? ["websocket", "polling"]
+      //     : ["polling", "websocket"],
       // TODO: I like telegram approach with this of latency
       reconnection: true, // Enable automatic reconnection
       reconnectionAttempts: 5, // Limit reconnection attempts
@@ -190,9 +193,9 @@ onMounted(async () => {
         console.warn('No cookies found in Capacitor; connection may fail');
       }
       // TODO: Test After Deploying the new version
-      options.transports = isSecure
-        ? ["websocket", "polling"]
-        : ["polling", "websocket"];
+      // options.transports = isSecure
+      //   ? ["websocket", "polling"]
+      //   : ["polling", "websocket"]; // might need to set it to ["websocket"] only https://github.com/ionic-team/capacitor/issues/7568
       options.reconnection = true
       options.reconnectionAttempts = 5
       options.reconnectionDelay =1000
@@ -207,6 +210,11 @@ onMounted(async () => {
       // console.log('Connected to Socket.IO server');
       isConnected.value = true;
       connectionError.value = null;
+      transport.value = socket.io.engine.transport.name; // check https://socket.io/how-to/use-with-nuxt
+      socket.io.engine.on("upgrade", (rawTransport) => {
+        transport.value = rawTransport.name;
+      });
+
       // TODO: limit rating is required! Fetch initial messages
       fetchMessages();
     });
@@ -251,6 +259,7 @@ onMounted(async () => {
 
     socket.on("disconnect", (reason) => {
       isConnected.value = false;
+      transport.value = "N/A";
       console.log('Disconnected:', reason);
       // TODO: test its security consequences out
       if (reason === 'io server disconnect') {
@@ -320,6 +329,13 @@ onUnmounted(() => {
     if (socket) socket.disconnect();
   }
 });
+
+// onBeforeUnmount(() => {
+//   if (import.meta.client) {
+//     socket.off("connect", onConnect);
+//     socket.off("disconnect", onDisconnect);
+//   }
+// });
 
 // Computed Property for Message Filtering
 const filteredMessages = computed(() => {

@@ -9,7 +9,7 @@
       <label for="password">Password</label>
       <input v-model="password" name="password" type="text" class="input" >
       <button class="btn" :disabled="loading">
-        <span v-if="loading">
+        <span v-if="loading" class="loader" >
           <CustomLoader />
         </span>
         <span v-else> Register </span>
@@ -204,7 +204,12 @@ const socialLogin = (provider: string) => {
     }
   }
 }
-
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
 .social-auth {
   margin: 2rem auto;
   max-width: 400px;
