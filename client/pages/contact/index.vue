@@ -29,7 +29,7 @@ async function submitForm() {
     isLoading.value = true;
     try {
       const url = `/api/v1/received_emails`;
-      const { data, error } = await useFetch(url, {
+      const { data: _ , error } = await useFetch(url, {
         method: 'POST',
         body: JSON.stringify({
           name: name.value,

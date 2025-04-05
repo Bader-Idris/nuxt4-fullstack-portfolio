@@ -86,6 +86,8 @@ const playSound = (key: SoundKeys) => {
 const isElectron = Capacitor.getPlatform() === 'electron'
 const { t } = useI18n({ useScope: 'global' })
 
+const isCapacitorDevice = useCapacitorDevice();
+
 // Define props with proper types
 defineProps<{
   foodLeft: { eaten: boolean }[]
@@ -173,7 +175,7 @@ async function showNotification(message: string) {
       })
       setTimeout(() => notification.close(), 3000)
     }
-  } else if (Capacitor.getPlatform() === 'web' || Capacitor.getPlatform() === 'ios' || Capacitor.getPlatform() === 'android') {
+  } else if (await isCapacitorDevice) {
     const granted = await LocalNotifications.requestPermissions()
     if (granted.display === 'granted') {
       await LocalNotifications.schedule({

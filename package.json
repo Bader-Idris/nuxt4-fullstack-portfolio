@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "version": "3.0.0",
+  "main": "dist-electron/main.js # ❌ yet need maintenance",
   "scripts": {
     "build": "nuxt build",
     "build:client": "NUXT_SSR=false nuxt build",
-    "build:client-old": "nuxt build --config-file nuxt.config.csr.ts",
     "dev": "nuxt dev",
+    "dev:electron": "NUXT_SSR=false IS_ELECTRON=true nuxt dev # ❌ yet need maintenance",
     "generate": "NUXT_GZIP=false nuxt generate --dotenv .env.capacitor",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
@@ -23,7 +24,7 @@
     "@nuxt/image": "^1.10.0",
     "@nuxt/scripts": "^0.11.5",
     "@nuxtjs/device": "^3.2.4",
-    "@nuxtjs/i18n": "^9.4.0",
+    "@nuxtjs/i18n": "^9.5.2",
     "@pinia/nuxt": "^0.10.1",
     "@vite-pwa/nuxt": "^0.10.8",
     "@vueuse/nuxt": "^13.0.0",
@@ -39,6 +40,8 @@
     "nuxt": "^3.16.2",
     "particles.js": "^2.0.0",
     "pinia": "^3.0.1",
+    "redis": "^4.7.0",
+    "@socket.io/redis-streams-adapter": "^0.2.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "vue": "latest",
@@ -78,7 +81,10 @@
     "@types/bun": "^1.2.8",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
-    "eslint": "^9.23.0",
+    "electron": "^35.1.4",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.24.0",
+    "nuxt-electron": "^0.7.0",
     "postcss-custom-media": "^11.0.5",
     "postcss-custom-properties": "^14.0.4",
     "postcss-flexbugs-fixes": "^5.0.2",
@@ -87,6 +93,6 @@
     "postcss-preset-env": "^10.1.5",
     "postcss-pxtorem": "^6.1.0",
     "sass": "^1.86.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   }
 }

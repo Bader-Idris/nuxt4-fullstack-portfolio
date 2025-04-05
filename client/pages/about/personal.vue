@@ -150,9 +150,9 @@ function parseBioText(text: string): Segment[][] {
 const formattedBio = computed(() => parseBioText(bio.value))
 
 // --- Drag Handling Functions ---
-let isDragging = ref(false)
-let startY = ref(0)
-let scrollTop = ref(0)
+const isDragging = ref(false)
+const startY = ref(0)
+const scrollTop = ref(0)
 
 // Use device detection from @nuxtjs/device
 const isMobile = computed(() => {

@@ -45,8 +45,8 @@
       <h2>Send Private Message</h2>
       <form @submit.prevent="sendPrivateMessage">
         <input
-          v-model="recipientSocketId" 
-          placeholder="User ID, not socket ID"
+          v-model="recipientUserId" 
+          placeholder="Recipient User ID"
           required
           ></input>
         <input
@@ -54,7 +54,12 @@
           placeholder="Type your message"
           required
           ></input>
-        <button type="submit">Send</button>
+        <CustomButtons 
+          button-type="primary"
+          type="submit"
+        >
+          Send
+        </CustomButtons>
       </form>
     </section>
 
@@ -68,14 +73,15 @@
     <section>
       <h2>Messages</h2>
       <ul>
-        <li v-for="msg in filteredMessages" :key="msg.timestamp">
-          <!-- <strong>From:</strong> {{ msg.fromName }} (Socket ID: {{ msg.fromSocketId }})  -->
-          <strong>From:</strong> {{ msg.from }} (Socket ID: {{ msg.fromSocketId
-          }})
-          <strong>To:</strong> {{ msg.toSocketId }}
-          <span>{{ msg.message }}</span>
-          <em>{{ msg.timestamp }}</em>
-        </li>
+        <ClientOnly>
+          <li v-for="msg in filteredMessages" :key="msg.id">
+            <!-- <strong>From:</strong> {{ msg.fromName }} (Socket ID: {{ msg.fromSocketId }})  -->
+            <strong>From:</strong>{{ msg.fromName }} (User ID: {{ msg.from }})
+            <strong>To:</strong> {{ msg.to }}
+            <span>{{ msg.message }}</span>
+            <em>{{ msg.timestamp }}</em>
+          </li>
+        </ClientOnly>
       </ul>
     </section>
   </div>
@@ -84,6 +90,7 @@
 <script setup lang="ts">
 import { io, type Socket } from 'socket.io-client';
 // import type { Socket } from 'socket.io-client';
+import { debounce } from 'lodash-es';
 
 useSeoMeta({
   title: 'Dashboard - Secure Chat & Video',
@@ -104,18 +111,19 @@ interface Message {
   toSocketId: string;
   message: string;
   timestamp: string;
+  id: string;
 }
 
 // State
-const isCapacitor = ref(false);
+// const isCapacitor = ref(false);
 const currentUser: Ref<User | null> = ref(null);
-const recipientSocketId: Ref<string> = ref('');
+const recipientUserId: Ref<string> = ref('');
 const message: Ref<string> = ref('');
 const messages: Ref<Message[]> = ref([]);
 const page: Ref<number> = ref(1);
 const limit: number = 20;
 const isConnected = ref(false);
-const transport = ref("N/A");
+// const transport = ref("N/A");
 const connectionError = ref<string | null>(null);
 
 const baseUrl = useRuntimeConfig().public.originUrl;
@@ -124,6 +132,9 @@ const localePath = useLocalePath()
 
 // Socket variable
 let socket: Socket;
+
+const isCapacitorDevice = useCapacitorDevice();
+// console.log('isCapacitorDevice', await isCapacitorDevice); // TODO: test its value for proper handling
 
 // const {
 //   socket,
@@ -139,7 +150,7 @@ let socket: Socket;
 
 // Function to get cookie string for Capacitor
 async function getCookieStringForCapacitor(): Promise<string> {
-  if (!isCapacitor.value) return '';
+  if (!await isCapacitorDevice) return ''; // TODO: test this out
   try {
     const { CapacitorCookies } = await import('@capacitor/core');
     const cookies = await CapacitorCookies.getCookies();
@@ -161,12 +172,6 @@ async function getCookieStringForCapacitor(): Promise<string> {
 // Lifecycle Hooks
 onMounted(async () => {
   if (import.meta.client) {
-    // @ts-expect-error I think it's unreliable, use isCapacitorDevice instead!
-    isCapacitor.value = typeof window !== 'undefined' && window.Capacitor !== undefined;
-    const { Device } = await import('@capacitor/device');
-    const info = await Device.getInfo();
-    const isCapacitorDevice = info.platform !== 'web';
-
     // Base Socket.IO options
     const options: any = {
       withCredentials: true, // Required for web to include cookies automatically
@@ -174,6 +179,8 @@ onMounted(async () => {
       // transports: isSecure
       //     ? ["websocket", "polling"]
       //     : ["polling", "websocket"],
+      // TODO: test it after adding the adapter!
+      // transports: ['websocket', 'polling'],
       // TODO: I like telegram approach with this of latency
       reconnection: true, // Enable automatic reconnection
       reconnectionAttempts: 5, // Limit reconnection attempts
@@ -181,16 +188,12 @@ onMounted(async () => {
       reconnectionDelayMax: 5000, // Max delay with exponential backoff
     };
 
-    // Capacitor-specific: Set cookie header manually
-    // if (isCapacitor.value) {
-    if (isCapacitorDevice) {
+    if (await isCapacitorDevice) {
       const cookieString = await getCookieStringForCapacitor();
       if (cookieString) {
         options.extraHeaders = {
-          cookie: cookieString, // e.g., "accessToken=xyz; otherCookie=abc"
+          cookie: cookieString,
         };
-      } else {
-        console.warn('No cookies found in Capacitor; connection may fail');
       }
       // TODO: Test After Deploying the new version
       // options.transports = isSecure
@@ -198,7 +201,7 @@ onMounted(async () => {
       //   : ["polling", "websocket"]; // might need to set it to ["websocket"] only https://github.com/ionic-team/capacitor/issues/7568
       options.reconnection = true
       options.reconnectionAttempts = 5
-      options.reconnectionDelay =1000
+      options.reconnectionDelay = 1000
       options.reconnectionDelayMax = 5000
     }
 
@@ -210,10 +213,10 @@ onMounted(async () => {
       // console.log('Connected to Socket.IO server');
       isConnected.value = true;
       connectionError.value = null;
-      transport.value = socket.io.engine.transport.name; // check https://socket.io/how-to/use-with-nuxt
-      socket.io.engine.on("upgrade", (rawTransport) => {
-        transport.value = rawTransport.name;
-      });
+      // transport.value = socket.io.engine.transport.name; // check https://socket.io/how-to/use-with-nuxt
+      // socket.io.engine.on("upgrade", (rawTransport) => {
+      //   transport.value = rawTransport.name;
+      // });
 
       // TODO: limit rating is required! Fetch initial messages
       fetchMessages();
@@ -237,11 +240,6 @@ onMounted(async () => {
       connectionError.value = 'Failed to reconnect. Please check your network.';
     });
 
-    // Receive Current User Info
-    socket.on('connection-established', (data) => {
-      currentUser.value = data;
-    });
-
     socket.on('connect_error', (error) => {
       console.error('Connection error:', error);
       isConnected.value = false;
@@ -257,9 +255,14 @@ onMounted(async () => {
       }
     });
 
+    // Receive Current User Info
+    socket.on('connection-established', (data) => {
+      currentUser.value = data;
+    });
+
     socket.on("disconnect", (reason) => {
       isConnected.value = false;
-      transport.value = "N/A";
+      // transport.value = "N/A";
       console.log('Disconnected:', reason);
       // TODO: test its security consequences out
       if (reason === 'io server disconnect') {
@@ -268,19 +271,19 @@ onMounted(async () => {
     });
 
     // Receive Private Messages
-    // socket.on('private-message', (data) => {
     //   // TODO: add push notification, when someone sends a message, make the push notification to the other user?s
     //   // TODO: make the push notifications compatible with both browsers and capacitorJs devices, because I use cap in my nuxt application
-    //   messages.value.push({
-    //     fromName: data.fromName,
-    //     fromSocketId: connectedUsers.get(data.from)?.socketId || 'Unknown',
-    //     toSocketId: socket.id,
-    //     message: data.message,
-    //     timestamp: data.timestamp,
-    //   });
-    // });
-    socket.on('private-message', (data: Message) => {
-      messages.value.push(data);// TODO: test it out, I think it'll crash out!
+    // socket.on('private-message', (data: Message) => {
+    socket.on('private-message', (data) => {
+      // messages.value.push(data);// TODO: test it out, I think it'll crash out!
+      messages.value.push({
+        fromName: data.fromName,
+        fromSocketId: connectedUsers.get(data.from)?.socketId || 'Unknown',
+        toSocketId: socket.id,
+        message: data.message,
+        timestamp: data.timestamp,
+        id: data.id
+      });
       triggerPushNotification(`New message from ${data.fromName}`, data.message, '/dashboard');
     });
 
@@ -306,12 +309,12 @@ onMounted(async () => {
       console.error('Server error:', error.message);
     });
 
-    if (isCapacitorDevice) {
+    if (await isCapacitorDevice) {
       // local notification is useless, we need push notifications
       const { LocalNotifications } = await import('@capacitor/local-notifications');
       LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
         const deepLink = notification.notification.extra?.deepLink || '/messages';
-        navigateTo(deepLink);
+        navigateTo(localePath(deepLink));
       });
     } else {
       Notification.requestPermission().then((permission) => {
@@ -339,11 +342,12 @@ onUnmounted(() => {
 
 // Computed Property for Message Filtering
 const filteredMessages = computed(() => {
+  // TODO: this needs to be more professionally handled, when new socket io messages come to fetch them and add them to the dom
   // console.log('messages.value: ', Array.from(toRaw(messages.value))[0]);//           Object.values(toRaw(messages.value))
 
   // if (currentUser.value?.role === 'admin') { // TODO: secure it more!
-    // return messages.value;
-  return Array.from(toRaw(messages.value));
+    return messages.value;
+  // return Array.from(toRaw(messages.value));
   // }
 
   // TODO: filtering is broken, it sends nothing to non admins
@@ -354,9 +358,9 @@ const filteredMessages = computed(() => {
 
 // Methods
 const sendPrivateMessage = () => {
-  if (recipientSocketId.value && message.value) {
+  if (recipientUserId.value && message.value) {
     socket.emit('private-message', {
-      to: recipientSocketId.value, // TODO: is it reliable!
+      to: recipientUserId.value, // TODO: is it reliable!
       message: message.value,
       timestamp: new Date().toISOString(),
     });
@@ -394,12 +398,7 @@ const fetchMessages = debounce(() => {
 
 const triggerPushNotification = async (title: string, body: string, deepLink: string = '/messages') => {
   if (!import.meta.client) return;
-
-  const { Device } = await import('@capacitor/device');
-  const info = await Device.getInfo();
-  const isCapacitorDevice = info.platform !== 'web';
-
-  if (isCapacitorDevice) {
+  if (await isCapacitorDevice) {
     const { LocalNotifications } = await import('@capacitor/local-notifications');
     await LocalNotifications.schedule({
       notifications: [
@@ -414,20 +413,20 @@ const triggerPushNotification = async (title: string, body: string, deepLink: st
   } else if (Notification.permission === 'granted') {
     const notification = new Notification(title, { body });
     notification.onclick = () => {
-      navigateTo(deepLink);
+      navigateTo(localePath(deepLink));
     };
   }
 };
 
 // Debounce Utility
-function debounce(func: Function, wait: number) {
-  // This debounce of 50 ms makes 20 requests per second max
-  let timeout: ReturnType<typeof setTimeout>;
-  return function (...args: any[]) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
+// function debounce(func: Function, wait: number) {
+//   // This debounce of 50 ms makes 20 requests per second max
+//   let timeout: ReturnType<typeof setTimeout>;
+//   return function (...args: any[]) {
+//     clearTimeout(timeout);
+//     timeout = setTimeout(() => func(...args), wait);
+//   };
+// }
 
 </script>
 

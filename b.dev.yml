@@ -19,6 +19,7 @@ services:
       - app
     networks: # TODO: in prod, this would be a network vulnerability, remove all mongonet networks and rely on the dynamic name: "mongo"
       - mongonet
+      - redisnet
   app:
     build:
       context: .
@@ -61,10 +62,14 @@ services:
       - JWT_SECRET=jwtSecret
       - JWT_LIFETIME=3h # 2 weeks for prod!
       - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
+      # TODO: test it
+      - REDIS_URL=redis://redis:6379
     networks:
       - mongonet
+      - redisnet
     depends_on:
       - mongo
+      # - redis
     command: bun start
   mongo:
     image: mongo:4.4
@@ -92,6 +97,9 @@ services:
       # - ./redis-server /usr/local/etc/redis/redis.conf
       # - redis-server AUTH default secretPassword
       # - AUTH default secretPassword
+    networks:
+      redisnet:
+        ipv4_address: 200.200.2.200
     environment:
       - REDIS_USER=default
       - REDIS_PASSWORD=myPassword
@@ -131,6 +139,11 @@ networks:
     ipam:
       config:
         - subnet: 200.200.1.0/24
+  redisnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 200.200.2.0/24
 
 volumes:
   nginx-logs:

@@ -1,6 +1,3 @@
-// plugins/push-notifications.client.ts
-import { defineNuxtPlugin } from "#app";
-
 export default defineNuxtPlugin(async (nuxtApp) => {
   // Only run on client and when in Capacitor environment
   if (import.meta.client) {

@@ -52,6 +52,14 @@ export default defineNuxtConfig({
         },
       },
     },
+    // Add Electron-specific configuration when IS_ELECTRON is true
+    ...(process.env.IS_ELECTRON === "true" && {
+      build: {
+        rollupOptions: {
+          external: ["electron", "fsevents"],
+        },
+      },
+    }),
   },
   typescript: {
     tsConfig: {
@@ -65,6 +73,7 @@ export default defineNuxtConfig({
   },
   modules: [
     // "@vite-pwa/nuxt",
+    ...(process.env.IS_ELECTRON === "true" ? ["nuxt-electron"] : []),
     "@nuxtjs/device",
     "@nuxtjs/seo",
     "@nuxtjs/i18n",
@@ -77,6 +86,32 @@ export default defineNuxtConfig({
     "@nuxt/scripts",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
+  ...(process.env.IS_ELECTRON === "true" && {
+    router: {
+      options: {
+        hashMode: true, // This helps with Electron file path issues
+      },
+    },
+    app: {
+      baseURL: "./", // Needed for proper resource loading in Electron
+    },
+    electron: {
+      build: [
+        {
+          // entry: "electron/main/index.ts",
+          entry: "electron/main.ts",
+        },
+        {
+          // entry: "electron/preload/index.ts",
+          entry: "electron/preload.ts",
+          onstart(options) {
+            options.reload();
+          },
+        },
+      ],
+      renderer: {},
+    },
+  }),
   // pwa: {
   //   // official source: https://github.com/vite-pwa/nuxt/blob/main/playground/nuxt.config.ts
   //   strategies: sw ? "injectManifest" : "generateSW",

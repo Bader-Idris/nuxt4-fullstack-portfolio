@@ -70,7 +70,7 @@ const password = ref<string>('')
 const loading = ref<boolean>(false)
 const showPrompt = ref<boolean>(false)
 
-const router = useRouter();
+// const router = useRouter();
 const route = useRoute();
 
 // Utility type for server response

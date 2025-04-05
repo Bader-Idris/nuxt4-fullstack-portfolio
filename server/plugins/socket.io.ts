@@ -4,23 +4,52 @@ import { Server } from "socket.io";
 import { defineEventHandler } from "h3";
 import { isTokenValid } from "../utils/jwt";
 import { Message } from "../models/mongo";
+// with multi replicas
+import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
+import { createClient } from "redis";
 
-export default defineNitroPlugin((nitroApp: NitroApp) => { 
+export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
+    // If one replica, you can remove these redis related settings!
+    const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+    const redisClient = createClient({ url: redisUrl });
+    // Connect to Redis
+    try {
+      await redisClient.connect();
+      console.log("✅ Connected to Redis");
+    } catch (error) {
+      console.error("❌ Failed to connect to Redis:", error);
+      return; // Prevent Socket.IO from starting if Redis fails
+    }
+    const adapter = createAdapter(redisClient);
+
     const engine = new Engine();
     // const io = new Server();
     const io = new Server({
+      // adapter for multi replicas
+      adapter,
       cors: {
         origin: useRuntimeConfig().public.originUrl,
         // methods: ["GET", "POST"], // defaults to all methods
         credentials: true,
       },
+      // https://socket.io/how-to/deal-with-cookies#cookie-based-sticky-session
+      cookie: {
+        name: "io", // name it based on the nginx one if you're using ip approach! I use the official redis streaming adapter approach
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+      },
+      connectionStateRecovery: {
+        maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+        skipMiddlewares: true, // Skip middlewares on recovery
+      },
     });
+
+    io.bind(engine);
 
     // Store connected users
     const connectedUsers = new Map();
-
-    io.bind(engine);
 
     // Middleware to handle authentication
     io.use(async (socket, next) => {
@@ -55,6 +84,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
     io.on("connection", (socket) => {
       const user = socket.data.user;
+      // TODO: get rid of these logs in prod!
       console.log(`User connected: ${user.name} (${user.userId})`);
 
       // Add user to connected users map
@@ -78,7 +108,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       io.to("admin-room").emit("online-users", { users: onlineUsers });
 
       // Join rooms based on user role
-      socket.join(`user-${user.userId}`); 
+      socket.join(`user-${user.userId}`);
       // TODO: might wanna add more complex rooming
       if (user.role === "admin") {
         socket.join("admin-room");
@@ -86,15 +116,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
       // Handle user call request to admin
       socket.on("call-request-to-admin", () => {
-        if (user.role !== "user") return;
-
+        if (user.role !== "user") return; // TODO: add more roles
         io.to("admin-room").emit("call-request-notification", {
           from: user.userId,
           name: user.name,
         });
       });
 
-      // Handle WebRTC signaling
+      // Handle WebRTC signaling // TODO: do we need udp configs in our dockerized setup?
       socket.on("call-request", (data) => {
         const targetSocketId = connectedUsers.get(data.to)?.socketId;
         if (targetSocketId) {
@@ -151,11 +180,13 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         // Forward to recipient
         const targetSocketId = connectedUsers.get(to)?.socketId;
         if (targetSocketId) {
+          // TODO: make it more professional
           io.to(targetSocketId).emit("private-message", {
             from: fromUser,
             fromName: socket.data.user.name,
             message,
             timestamp,
+            id: newMessage._id, // how to properly get this _id
           });
         }
       });
@@ -168,7 +199,6 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         }
 
         const { page = 1, limit = 20 } = data; // Default to page 1, 20 messages per page
-
         try {
           const messages = await Message.find({
             $or: [
@@ -202,6 +232,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             to: admin.userId,
             message,
             timestamp,
+            // TODO: do we need to store ip address?
           });
           await newMessage.save();
         }
@@ -216,10 +247,11 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       });
 
       socket.on("broadcast", async (data) => {
+        // TODO: how to save video and audio broadcasts, do we need cloudinary?
         const { message, timestamp } = data;
         const fromUser = socket.data.user.userId;
 
-        // Save broadcast message
+        // Save message to database
         const newMessage = new Message({
           from: fromUser,
           message,
@@ -234,6 +266,8 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
           fromName: socket.data.user.name,
           message,
           timestamp,
+          // TODO: test out
+          id: newMessage._id,
         });
       });
 
@@ -245,7 +279,6 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         socket.emit("message-history", messages);
       });
 
-      // Handle disconnect
       socket.on("disconnect", () => {
         console.log(`User disconnected: ${user.name} (${user.userId})`);
         connectedUsers.delete(user.userId);
