@@ -175,7 +175,7 @@ async function showNotification(message: string) {
       })
       setTimeout(() => notification.close(), 3000)
     }
-  } else if (await isCapacitorDevice) {
+  } else if (await isCapacitorDevice || Capacitor.getPlatform() === 'web') {
     const granted = await LocalNotifications.requestPermissions()
     if (granted.display === 'granted') {
       await LocalNotifications.schedule({

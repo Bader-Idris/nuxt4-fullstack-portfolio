@@ -181,7 +181,9 @@ onBeforeUnmount(() => {
     <div v-else class="thank-you">
       <NuxtImg
         src="/imgs/thanks.svg"
-        alt="thank you message icon" 
+        alt="thank you message icon"
+        :placeholder="[50, 50, 75, 75]"
+        format="webp"
         loading="lazy"
       />
       <p>{{ t('messages.thank_you.emailMsg') }}</p>

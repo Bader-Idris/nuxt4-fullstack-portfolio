@@ -103,6 +103,8 @@ services:
     environment:
       - REDIS_USER=default
       - REDIS_PASSWORD=myPassword
+    networks:
+      - app-network
   #   command:
   #     - redis-server --requirepass myPassword
   postgres:
@@ -115,6 +117,8 @@ services:
     volumes:
       - psql-data:/var/lib/postgresql/data:rw  # 🔴chmod +x if (node.length > 1)🔴
       - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - app-network
   # adminer:  # I think it's not important to obtain
   #   image: adminer
   #   restart: always

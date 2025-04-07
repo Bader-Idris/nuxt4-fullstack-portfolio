@@ -37,21 +37,24 @@ const localePath = useLocalePath()
 
 // Define thumbnails for each language
 const thumbnailEn = img('/thumbnail.webp', {
+  format: 'webp',
   width: 1200,
   height: 630,
-  format: 'webp'
+  placeholder: [50, 50, 75, 75]
 })
 
 const thumbnailEs = img('/thumbnail-es.png', {
+  format: 'webp',
   width: 1200,
   height: 630,
-  format: 'webp'
+  placeholder: [50, 50, 75, 75]
 })
 
 const thumbnailAr = img('/thumbnail-ar.png', {
+  format: 'webp',
   width: 1200,
   height: 630,
-  format: 'webp'
+  placeholder: [50, 50, 75, 75]
 })
 
 // Create a computed property to determine which thumbnail to use

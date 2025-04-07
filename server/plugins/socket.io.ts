@@ -1,12 +1,15 @@
 import type { NitroApp } from "nitropack";
 import { Server as Engine } from "engine.io";
 import { Server } from "socket.io";
-import { defineEventHandler } from "h3";
+import { defineEventHandler, createError } from "h3";
 import { isTokenValid } from "../utils/jwt";
 import { Message } from "../models/mongo";
 // with multi replicas
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
 import { createClient } from "redis";
+
+// for future organizing
+// import * from '.././sockets'
 
 export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
@@ -49,7 +52,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     io.bind(engine);
 
     // Store connected users
-    const connectedUsers = new Map();
+    const userSockets = new Map();
 
     // Middleware to handle authentication
     io.use(async (socket, next) => {
@@ -61,7 +64,11 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           ?.split("=")[1];
 
         if (!accessToken) {
-          return next(new Error("Authentication required"));
+          return next( createError({
+              statusCode: 401,
+              statusMessage: "Authentication required",
+            })
+          );
         }
 
         // Verify the token
@@ -78,7 +85,12 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         next();
       } catch (error) {
         console.error("Authentication error:", error);
-        return next(new Error("Invalid authentication"));
+        return next(
+          createError({
+            statusCode: 401,
+            statusMessage: "Invalid authentication",
+          })
+        );
       }
     });
 
@@ -87,8 +99,9 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       // TODO: get rid of these logs in prod!
       console.log(`User connected: ${user.name} (${user.userId})`);
 
+      // if (user && user.userId) {} // TODO: would it be useful to add a check here?
       // Add user to connected users map
-      connectedUsers.set(user.userId, {
+      userSockets.set(user.userId, {
         socketId: socket.id,
         name: user.name,
         role: user.role,
@@ -103,9 +116,27 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         role: user.role,
       });
 
+      const onlineUsers = Array.from(userSockets.entries())
+        // .filter(([userId]) => userId !== socket.data.user.userId) // Exclude current user
+        .map(([userId, data]) => ({
+          userId,
+          socketId: data.socketId,
+          name: data.name,
+          role: data.role,
+        }));
+      socket.emit("online-users", onlineUsers);
+
       // Emit updated online users list to admins
-      const onlineUsers = Array.from(connectedUsers.values());
-      io.to("admin-room").emit("online-users", { users: onlineUsers });
+      // const onlineUsers = Array.from(userSockets.values());
+      // io.to("admin-room").emit("online-users", { users: onlineUsers });
+
+      // Emit updated online users list to all users
+      socket.broadcast.emit("user-joined", {
+        userId: user.userId,
+        socketId: socket.id,
+        name: user.name,
+        role: user.role,
+      });
 
       // Join rooms based on user role
       socket.join(`user-${user.userId}`);
@@ -114,52 +145,73 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         socket.join("admin-room");
       }
 
-      // Handle user call request to admin
-      socket.on("call-request-to-admin", () => {
-        if (user.role !== "user") return; // TODO: add more roles
-        io.to("admin-room").emit("call-request-notification", {
-          from: user.userId,
-          name: user.name,
-        });
+      socket.on("disconnect", () => {
+        if (user && user.userId) {
+          console.log(`User disconnected: ${user.name} (${user.userId})`);
+          userSockets.delete(user.userId);
+
+          io.emit("user-left", user.userId); // TODO: would it be nice to emit this to all users?
+
+          // Emit updated online users list to admins
+          // const onlineUsers = Array.from(userSockets.values());
+          // io.to("admin-room").emit("online-users", { users: onlineUsers });
+        }
       });
 
-      // Handle WebRTC signaling // TODO: do we need udp configs in our dockerized setup?
-      socket.on("call-request", (data) => {
-        const targetSocketId = connectedUsers.get(data.to)?.socketId;
+      socket.on("call-offer", (data) => {
+        const { to, offer } = data;
+        const targetSocketId = userSockets.get(to)?.socketId;
         if (targetSocketId) {
-          io.to(targetSocketId).emit("call-request", {
+          io.to(targetSocketId).emit("call-offer", {
             from: user.userId,
-            name: user.name,
-            sdp: data.sdp,
+            fromName: user.name,
+            offer,
           });
+        } else {
+          socket.emit("error", { message: "User not online" });
         }
       });
 
       socket.on("call-answer", (data) => {
-        const targetSocketId = connectedUsers.get(data.to)?.socketId;
+        const { to, answer } = data;
+        const targetSocketId = userSockets.get(to)?.socketId;
         if (targetSocketId) {
           io.to(targetSocketId).emit("call-answer", {
             from: user.userId,
-            sdp: data.sdp,
+            answer,
           });
         }
       });
 
       socket.on("ice-candidate", (data) => {
-        const targetSocketId = connectedUsers.get(data.to)?.socketId;
+        const { to, candidate } = data;
+        const targetSocketId = userSockets.get(to)?.socketId;
         if (targetSocketId) {
           io.to(targetSocketId).emit("ice-candidate", {
             from: user.userId,
-            candidate: data.candidate,
+            candidate,
           });
         }
       });
 
-      socket.on("end-call", (data) => {
-        const targetSocketId = connectedUsers.get(data.to)?.socketId;
+      socket.on("call-declined", (data) => {
+        const { to } = data;
+        const targetSocketId = userSockets.get(to)?.socketId;
         if (targetSocketId) {
-          io.to(targetSocketId).emit("end-call", {
+          io.to(targetSocketId).emit("call-declined", {
             from: user.userId,
+            fromName: user.name,
+          });
+        }
+      });
+
+      socket.on("call-ended", (data) => {
+        const { to } = data;
+        const targetSocketId = userSockets.get(to)?.socketId;
+        if (targetSocketId) {
+          io.to(targetSocketId).emit("call-ended", {
+            from: user.userId,
+            fromName: user.name,
           });
         }
       });
@@ -167,6 +219,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       socket.on("private-message", async (data) => {
         const { to, message, timestamp } = data;
         const fromUser = socket.data.user.userId;
+        const targetSocketId = userSockets.get(to)?.socketId;
 
         // Save to database
         const newMessage = new Message({
@@ -177,18 +230,20 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         });
         await newMessage.save();
 
+        const messageData = {
+          from: fromUser,
+          fromName: socket.data.user.name,
+          message,
+          timestamp,
+          id: newMessage._id, // how to properly get this _id
+        };
+
         // Forward to recipient
-        const targetSocketId = connectedUsers.get(to)?.socketId;
         if (targetSocketId) {
           // TODO: make it more professional
-          io.to(targetSocketId).emit("private-message", {
-            from: fromUser,
-            fromName: socket.data.user.name,
-            message,
-            timestamp,
-            id: newMessage._id, // how to properly get this _id
-          });
+          io.to(targetSocketId).emit("private-message", messageData);
         }
+        socket.emit("private-message", messageData); // Echo back to sender
       });
 
       // Handle message history retrieval
@@ -207,7 +262,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
               { isBroadcast: true }, // Broadcast messages
             ],
           })
-            .sort({ timestamp: -1 }) // Sort by timestamp, most recent first
+            .sort({ timestamp: 1 }) // Sort by timestamp, most recent last, if first use: -1
             .skip((page - 1) * limit) // Skip messages for previous pages
             .limit(limit); // Limit the number of messages returned
 
@@ -218,33 +273,33 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         }
       });
 
-      socket.on("message-to-admin", async (data) => {
-        const { message, timestamp } = data;
-        const fromUser = socket.data.user.userId;
+      // socket.on("message-to-admin", async (data) => {
+      //   const { message, timestamp } = data;
+      //   const fromUser = socket.data.user.userId;
 
-        // Save message for each admin
-        const admins = Array.from(connectedUsers.values()).filter(
-          (u) => u.role === "admin"
-        );
-        for (const admin of admins) {
-          const newMessage = new Message({
-            from: fromUser,
-            to: admin.userId,
-            message,
-            timestamp,
-            // TODO: do we need to store ip address?
-          });
-          await newMessage.save();
-        }
+      //   // Save message for each admin
+      //   const admins = Array.from(userSockets.values()).filter(
+      //     (u) => u.role === "admin"
+      //   );
+      //   for (const admin of admins) {
+      //     const newMessage = new Message({
+      //       from: fromUser,
+      //       to: admin.userId,
+      //       message,
+      //       timestamp,
+      //       // TODO: do we need to store ip address?
+      //     });
+      //     await newMessage.save();
+      //   }
 
-        // Forward to admin room
-        io.to("admin-room").emit("private-message", {
-          from: fromUser,
-          fromName: socket.data.user.name,
-          message,
-          timestamp,
-        });
-      });
+      //   // Forward to admin room
+      //   io.to("admin-room").emit("private-message", {
+      //     from: fromUser,
+      //     fromName: socket.data.user.name,
+      //     message,
+      //     timestamp,
+      //   });
+      // });
 
       socket.on("broadcast", async (data) => {
         // TODO: how to save video and audio broadcasts, do we need cloudinary?
@@ -271,30 +326,13 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         });
       });
 
-      socket.on("get-message-history", async () => {
-        const userId = socket.data.user.userId;
-        const messages = await Message.find({
-          $or: [{ from: userId }, { to: userId }, { isBroadcast: true }],
-        }).sort({ timestamp: 1 });
-        socket.emit("message-history", messages);
-      });
-
-      socket.on("disconnect", () => {
-        console.log(`User disconnected: ${user.name} (${user.userId})`);
-        connectedUsers.delete(user.userId);
-
-        // Emit updated online users list to admins
-        const onlineUsers = Array.from(connectedUsers.values());
-        io.to("admin-room").emit("online-users", { users: onlineUsers });
-      });
-
       // Handle get-online-users request (for admins)
-      socket.on("get-online-users", () => {
-        if (user.role === "admin") {
-          const onlineUsers = Array.from(connectedUsers.values());
-          socket.emit("online-users", { users: onlineUsers });
-        }
-      });
+      // socket.on("get-online-users", () => {
+      //   if (user.role === "admin") {
+      //     const onlineUsers = Array.from(userSockets.values());
+      //     socket.emit("online-users", { users: onlineUsers });
+      //   }
+      // });
     });
 
     nitroApp.router.use(
