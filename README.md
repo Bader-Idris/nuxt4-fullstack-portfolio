@@ -12,6 +12,7 @@ Welcome to the Nuxt Minimal Starter! This repository provides a foundational set
 - [Mobile Application Setup](#mobile-application-setup)
 - [Required Environment Variables](#required-environment-variables)
 - [Production Setup](#production-setup)
+- [Security](#security)
 
 ## Setup
 
@@ -39,6 +40,9 @@ To build the application for production, run:
 ```bash
 bun run build
 ```
+
+> [!WARNING]  
+> If you're trying to build the app on a weak server with limited resources, please follow the instructions in the [weak_servers.md](./weak_servers.md) file to ensure a successful build process.
 
 To locally preview the production build:
 
@@ -139,6 +143,22 @@ crontab -e
 
 > [!TIP]  
 > Review the `ssl_renew.sh` file for additional useful tips and configurations.
+
+## Security
+
+To enhance the security of your application and prevent common attacks such as DDoS, we have implemented Fail2Ban.
+
+The following files are included in the configuration:
+
+```bash
+ls server/config/fail2ban/
+directory => filter.d
+file => my_custom_jail.local
+```
+
+### Custom Jails and Filters
+
+We have created custom jails and filters to allow users to add their configurations after installing the tool. This flexibility helps you tailor the security settings to your specific needs.
 
 ---
 

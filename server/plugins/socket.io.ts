@@ -6,7 +6,8 @@ import { isTokenValid } from "../utils/jwt";
 import { Message } from "../models/mongo";
 // with multi replicas
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
-import { createClient } from "redis";
+// import { createClient } from "redis";
+import { Redis } from "ioredis"; // ? ioredis is better than redis for promises and clustering
 
 // for future organizing
 // import * from '.././sockets'
@@ -15,10 +16,12 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
     // If one replica, you can remove these redis related settings!
     const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-    const redisClient = createClient({ url: redisUrl });
+    // const redisClient = createClient({ url: redisUrl });
+    const redisClient = new Redis(redisUrl);
     // Connect to Redis
     try {
-      await redisClient.connect();
+      // await redisClient.connect();
+      await redisClient;
       console.log("✅ Connected to Redis");
     } catch (error) {
       console.error("❌ Failed to connect to Redis:", error);

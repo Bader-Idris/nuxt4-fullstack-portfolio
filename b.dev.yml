@@ -70,6 +70,7 @@ services:
       - mongo
       # - redis
     command: bun start
+    # command: npm start
   mongo:
     image: mongo:4.4
     container_name: mongo

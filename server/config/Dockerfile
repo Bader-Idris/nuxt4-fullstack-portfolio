@@ -1,10 +1,13 @@
 FROM node:22.14.0-alpine3.21
 
 # Install Python and build tools for native dependencies
-RUN apt-get update && apt-get install -y \
-  python3 \
-  build-essential \
-  && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y \
+#   python3 \
+#   build-essential \
+#   && rm -rf /var/lib/apt/lists/*
+
+# Install Python and build tools for native dependencies (Alpine version)
+RUN apk add --no-cache python3 make g++ 
 
 # Set the working directory
 WORKDIR /app
