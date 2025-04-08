@@ -387,6 +387,7 @@ export default defineNuxtConfig({
     // ? publicly for client
     public: {
       originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
+      socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
     },
     mailHost: process.env.MAIL_HOST,
     mailUser: process.env.MAIL_USER,

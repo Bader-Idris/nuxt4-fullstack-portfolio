@@ -42,11 +42,16 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         path: "/",
         httpOnly: true,
         sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        // expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
       connectionStateRecovery: {
         maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
         skipMiddlewares: true, // Skip middlewares on recovery
       },
+      maxHttpBufferSize: 1e6, // might need to increase with streaming, DDoS can affect it!
+      // transports: ["polling", "websocket", "webtransport"], // might want to allow webtransport, due to its websocket fixes
+      // transports: ["websocket", "polling"],
     });
 
     io.bind(engine);
@@ -64,6 +69,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           ?.split("=")[1];
 
         if (!accessToken) {
+          // TODO: it does not throw the status code
           return next( createError({
               statusCode: 401,
               statusMessage: "Authentication required",

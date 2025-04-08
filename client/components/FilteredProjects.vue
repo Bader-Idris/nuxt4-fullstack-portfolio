@@ -38,8 +38,8 @@
             button-type="default"
             class="project-link"
           >
-            <!-- <CustomLink :to="project.url"> -->
-            <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)">
+            <CustomLink :to="project.url">
+            <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)"> -->
               View Project
             </CustomLink>
           </CustomButtons>

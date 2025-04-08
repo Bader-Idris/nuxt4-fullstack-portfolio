@@ -42,8 +42,7 @@
 
     <section class="chat-section">
       <h2 v-if="recipientUserId">Chatting with {{ getRecipientName() }}</h2>
-      <!-- <div class="chat-container" ref="chatContainer"> -->
-      <div class="chat-container">
+      <div ref="chatContainer" class="chat-container">
         <div v-for="msg in messagesStore.getFilteredMessages" :key="msg.id" :class="['message', msg.from === currentUserId ? 'sent' : 'received']">
           <div class="message-header">
             <span class="sender-name">{{ msg.fromName }}</span>
@@ -55,21 +54,6 @@
         </div>
       </div>
     </section>
-
-    
-    <!-- Display Received Messages -->
-    <!-- <section>
-      <h2>Messages</h2>
-      <ul>
-          <li v-for="msg in messagesStore.getFilteredMessages" :key="msg.id">
-            <strong>From:</strong> {{ msg.fromName }} (Socket ID: {{ msg.fromSocketId }}) 
-            <strong>From:</strong>{{ msg.fromName }} (User ID: {{ msg.from }})
-            <strong>To:</strong> {{ msg.to }}
-            <span>{{ msg.message }}</span>
-            <em>{{ msg.timestamp }}</em>
-          </li>
-      </ul>
-    </section> -->
 
     <div class="online-users">
       <h3>Online Users</h3>
@@ -196,7 +180,8 @@ const localePath = useLocalePath()
 const isCapacitorDevice = useCapacitorDevice();
 const baseUrl = useRuntimeConfig().public.originUrl;
 const currentUserId = computed(() => socketStore.currentUser?.userId);
-// const transport = ref("N/A");
+const transport = ref("N/A");
+const chatContainer = ref(null);
 
 // Use the WebRTC composable
 const {
@@ -244,17 +229,8 @@ const getRecipientName = () => {
   return recipient ? recipient.name : 'Unknown';
 };
 
-// const formatTimestamp = (timestamp) => {
-//   const date = new Date(timestamp);
-//   const now = new Date();
-//   if (date.toDateString() === now.toDateString()) {
-//     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-//   } else {
-//     return date.toLocaleDateString();
-//   }
-// };
-
 const formatTimestamp = (timestamp) => {
+  // TODO: make it i18n supported
   const date = new Date(timestamp);
   const now = new Date();
   const diffMs = now - date;
@@ -284,6 +260,15 @@ const formatTimestamp = (timestamp) => {
   }
 };
 
+// Auto-scroll to the bottom when messages update
+watch(() => messagesStore.getFilteredMessages, () => {
+  nextTick(() => {
+    if (chatContainer.value) {
+      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    }
+  });
+}, { deep: true });
+
 // Start a chat with a user
 const startChatWith = (userId) => {
   if (isInCall.value) {
@@ -307,6 +292,7 @@ onMounted(async () => {
       reconnectionAttempts: 5, // Limit reconnection attempts
       reconnectionDelay: 1000, // Initial delay between attempts (ms)
       reconnectionDelayMax: 5000, // Max delay with exponential backoff
+      // transports: ["websocket", "polling"],
     };
 
     if (await isCapacitorDevice) {
@@ -332,16 +318,20 @@ onMounted(async () => {
       socketStore.setConnection(true);
       socketStore.setConnectionError(null);
 
-      // transport.value = socket.io.engine.transport.name; // check https://socket.io/how-to/use-with-nuxt
-      // socket.io.engine.on("upgrade", (rawTransport) => {
-      //   transport.value = rawTransport.name;
-      // });
+      transport.value = socket.io.engine.transport.name; // check https://socket.io/how-to/use-with-nuxt
+      socket.io.engine.on("upgrade", (rawTransport) => {
+        transport.value = rawTransport.name;
+      });
 
       // TODO: limit rating is required! Fetch initial messages
       fetchMessages();
     });
 
     socket.on('reconnect', (attempt) => {
+      transport.value = socket.io.engine.transport.name;
+      socket.io.engine.on("upgrade", (rawTransport) => {
+        transport.value = rawTransport.name;
+      });
       console.log(`Reconnected after ${attempt} attempts`);
       socketStore.setConnection(true);
       socketStore.setConnectionError(null);
@@ -349,6 +339,7 @@ onMounted(async () => {
     });
 
     socket.on('connect_error', (error) => {
+      transport.value = "N/A";
       console.error('Connection error:', error);
       socketStore.setConnection(false);
       socketStore.setConnectionError(error.message || 'Failed to connect to server');
@@ -363,19 +354,20 @@ onMounted(async () => {
     });
 
     socket.on('reconnect_error', (error) => {
+      transport.value = "N/A";
       console.error('Reconnection error:', error);
       socketStore.setConnectionError('Reconnection failed');
     });
 
     socket.on('reconnect_failed', () => {
+      transport.value = "N/A";
       console.error('Reconnection failed after maximum attempts');
       socketStore.setConnectionError('Failed to reconnect. Please check your network.');
     });
 
     socket.on("disconnect", (reason) => {
+      transport.value = "N/A";
       socketStore.setConnection(false);
-
-      // transport.value = "N/A";
       console.log('Disconnected:', reason);
       // TODO: test its security consequences out
       if (reason === 'io server disconnect') {
@@ -392,6 +384,10 @@ onMounted(async () => {
 
     // Receive Current User Info
     socket.on('connection-established', (data) => {
+      transport.value = socket.io.engine.transport.name;
+      socket.io.engine.on("upgrade", (rawTransport) => {
+        transport.value = rawTransport.name;
+      });
       socketStore.setCurrentUser(data);
     });
 
@@ -404,26 +400,11 @@ onMounted(async () => {
     socket.on('user-joined', (user) => {
       onlineUsersStore.addUser(user);
       // console.log('onlineUsersStore', onlineUsersStore.getOnlineUsers);
-      /*
-[
-  {
-    "userId": "67e3f8e577863389d585d7e3",
-    "socketId": "NvvHxO4XJ5X6U-kzAAAe",
-    "name": "UserBader",
-    "role": "user"
-  },
-  {
-    "userId": "67c038f44eab6f2ff957ed9b",
-    "socketId": "_xaVOMV7qliaw3eAAAAh",
-    "name": "bader",
-    "role": "admin"
-  }
-]
-       */
     });
 
     // Listen for user left
     socket.on('user-left', (userId) => {
+      // transport.value = "N/A";
       onlineUsersStore.removeUser(userId);
     });
 
@@ -461,6 +442,7 @@ onMounted(async () => {
 
     // Handle errors from the server
     socket.on('error', (error) => {
+      transport.value = "N/A";
       socketStore.setConnection(false);
       console.error('Server error:', error.message);
     });
@@ -487,7 +469,10 @@ onUnmounted(() => {
   if (import.meta.client) {
     // TODO: will this break the mobile capacitor app?
     const socket = socketStore.getSocket;
-    if (socket) socket.disconnect();
+    if (socket) {
+      transport.value = "N/A";
+      socket.disconnect();
+    }
   }
 });
 
@@ -538,16 +523,16 @@ const sendBroadcast = () => {
     });
 
     // Add to local store immediately
-    messagesStore.addMessage({
-      id: `local-broadcast-${Date.now()}`,
-      fromName: currentUser.name,
-      fromSocketId: socket.id,
-      toSocketId: 'broadcast',
-      from: currentUser.userId,
-      to: 'everyone',
-      message: broadcastMessage,
-      timestamp: timestamp
-    });
+    // messagesStore.addMessage({
+    //   id: `local-broadcast-${Date.now()}`,
+    //   fromName: currentUser.name,
+    //   fromSocketId: socket.id,
+    //   toSocketId: 'broadcast',
+    //   from: currentUser.userId,
+    //   to: 'everyone',
+    //   message: broadcastMessage,
+    //   timestamp: timestamp
+    // });
   }
 };
 
