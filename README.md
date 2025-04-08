@@ -1,5 +1,7 @@
 # Nuxt Minimal Starter
 
+[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt3-fullstack-portfolio/26e3f86aaa361639f25b0ce933df59ea982e5e41/client/public/thumbnail.webp)](https://baderidris.com)
+
 Welcome to the Nuxt Minimal Starter! This repository provides a foundational setup for a full-stack application using Nuxt 3, along with various useful Docker containers. For more detailed information, refer to the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction).
 
 ## Table of Contents

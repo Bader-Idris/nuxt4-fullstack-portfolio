@@ -62,8 +62,7 @@ services:
       - JWT_SECRET=jwtSecret
       - JWT_LIFETIME=3h # 2 weeks for prod!
       - MONGO_URI=mongodb://Bader:myPassword@mongo:27017/portfolio?authSource=admin
-      # TODO: test it
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://default:myPassword@redis:6379
     networks:
       - mongonet
       - redisnet
@@ -91,20 +90,24 @@ services:
     restart: always
     volumes:
       - ./server/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-      # - ./config/redis/.overcommit_memory:/proc/sys/vm/overcommit_memory
-    # command:
-      # - sh -c "echo 1 > /proc/sys/vm/overcommit_memory"
-      # - ./redis-server /usr/local/etc/redis/redis.conf
-      # - redis-server AUTH default secretPassword
-      # - AUTH default secretPassword
+      - redis-data:/data:rw
     networks:
       redisnet:
         ipv4_address: 200.200.2.200
     environment:
       - REDIS_USER=default
       - REDIS_PASSWORD=myPassword
-  #   command:
-  #     - redis-server --requirepass myPassword
+    privileged: true
+    command: >
+      sh -c "sysctl vm.overcommit_memory=1 &&
+      redis-server /usr/local/etc/redis/redis.conf --requirepass myPassword && 
+      AUTH default myPassword && 
+      save 60 1"
+  # TODO: with binding the data volume we can do backup services as:
+  # redis-backup:
+  #   image: backup-service
+  #   volumes:
+  #     - redis-data:/backup/redis:ro
   postgres:
     image: postgres:16-alpine3.18
     container_name: psql
@@ -149,3 +152,4 @@ volumes:
   nginx-logs:
   mongo-db:
   psql-data:
+  redis-data:
