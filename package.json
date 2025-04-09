@@ -3,12 +3,14 @@
   "private": true,
   "type": "module",
   "version": "3.0.0",
-  "main": "dist-electron/main.js # ❌ yet need maintenance",
+  "main": "dist-electron/main.js",
+  "appId": "com.baderidris.www",
   "scripts": {
     "build": "nuxt build",
     "build:client": "NUXT_SSR=false nuxt build",
     "dev": "nuxt dev",
-    "dev:electron": "NUXT_SSR=false IS_ELECTRON=true nuxt dev # ❌ yet need maintenance",
+    "dev:electron": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt dev # ❌ yet need maintenance",
+    "build:electron": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt generate && electron-builder --config=electronAssets/builder/config.js",
     "generate": "NUXT_GZIP=false nuxt generate --dotenv .env.capacitor",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
@@ -78,7 +80,7 @@
     "@capacitor/toast": "^7.0.1",
     "@nuxt/eslint": "^1.3.0",
     "@nuxtjs/seo": "^3.0.2",
-    "@types/bun": "^1.2.8",
+    "@types/bun": "^1.2.9",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/nodemailer": "^6.4.17",
     "electron": "^35.1.4",
@@ -93,6 +95,8 @@
     "postcss-preset-env": "^10.1.5",
     "postcss-pxtorem": "^6.1.0",
     "sass": "^1.86.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
   }
 }

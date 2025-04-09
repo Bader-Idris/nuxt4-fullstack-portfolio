@@ -14,19 +14,39 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: process.env.NUXT_GZIP !== "false",
     routeRules: {
-      "/:slug(?!api/**).*": {
+      // "/:slug(?!api/**)(?!socket.io/**).*": { // TODO: fix it, it breaks the generated one
+      // "/:slug(?!api/**).*": {
+      //   cache: {
+      //     maxAge: 28800,
+      //     swr: true,
+      //   },
+      //   headers: {
+      //     "Cache-Control": "public, max-age=28800",
+      //     // ? I added the security headers in nginx
+      //   },
+      //   },
+      // Static assets and public files
+      "/_nuxt/**": {
         cache: {
-          maxAge: 28800,
+          maxAge: 86400 * 30, // 30 days
           swr: true,
+          staleMaxAge: 86400 * 7, // 1 week fallback
         },
+      },
+      "/socket.io/**": {
+        cache: false,
+        prerender: false,
         headers: {
-          "Cache-Control": "public, max-age=28800",
-          // ? I added the security headers in nginx
+          "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       },
       "/api/**": {
         cors: true,
         prerender: false,
+        cache: false,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
         // TODO: create a middleware for cors, this only provides boolean value
       },
       "/contact/admin": {
@@ -348,34 +368,36 @@ export default defineNuxtConfig({
       ],
     },
   },
-  site: {
-    url: process.env.DOMAIN_NAME,
-    name: "Bader Idris", // ! Causes stupid duplicate head.title
-    defaultLocale: "en",
-  },
-  schemaOrg: {
-    // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
-    identity: definePerson({
-      name: "Bader Idris",
-      image: "/imgs/me_2024-03-13.jpg",
-      description: "Full stack developer",
-      url: "baderidris.com",
-      sameAs: [
-        "https://www.facebook.com/Bader.Idris.developer",
-        "https://github.com/bader-idris",
+  // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
+    site: {
+      url: process.env.DOMAIN_NAME,
+      name: "Bader Idris", // ! Causes stupid duplicate head.title
+      defaultLocale: "en",
+    },
+    schemaOrg: {
+      // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
+      identity: definePerson({
+        name: "Bader Idris",
+        image: "/imgs/me_2024-03-13.jpg",
+        description: "Full stack developer",
+        url: "baderidris.com",
+        sameAs: [
+          "https://www.facebook.com/Bader.Idris.developer",
+          "https://github.com/bader-idris",
+        ],
+      }),
+    },
+    robots: {
+      disallow: ["/contact/admin"],
+      sitemap: [
+        "/sitemap.xml",
+        "/sitemap_index.xml",
+        "/__sitemap__/en-US.xml",
+        "/__sitemap__/ar-PS.xml",
+        "/__sitemap__/es-ES.xml",
       ],
-    }),
-  },
-  robots: {
-    disallow: ["/contact/admin"],
-    sitemap: [
-      "/sitemap.xml",
-      "/sitemap_index.xml",
-      "/__sitemap__/en-US.xml",
-      "/__sitemap__/ar-PS.xml",
-      "/__sitemap__/es-ES.xml",
-    ],
-  },
+    },
+  // }),
   // ionic: {},
   // routeRules: {
   //   // here we can separately define ssr or csr for specific routes, that's amazing!

@@ -9,6 +9,8 @@ dist
 ios/
 android/
 dist-electron/
+release/
+tests/results/
 
 # Node dependencies
 node_modules
