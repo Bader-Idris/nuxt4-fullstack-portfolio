@@ -1,4 +1,7 @@
 FROM node:22.14.0-alpine3.21
+# FROM node:22.14.0
+
+# TODO: no need to building process and installing, because we handle that manually in the root level of the droplet itself, read the README.md file for weak servers handling!
 
 # Install Python and build tools for native dependencies
 # RUN apt-get update && apt-get install -y \
@@ -16,10 +19,12 @@ WORKDIR /app
 # Copy package.json and bun.lockb (if it exists)
 COPY ./.output/server/package.json .
 ARG NODE_ENV
-RUN if [ "$NODE_ENV" = "development" ]; \
-  then npm install; \
-  else npm install --only=production; \
-  fi
+# RUN if [ "$NODE_ENV" = "development" ]; \
+#   then npm install; \
+#   else npm install --only=production; \
+#   fi
+# RUN npm install
+# RUN npm rebuild --arch=x64 --platform=linux --libc=musl sharp
 # COPY . ./
 ENV PORT 3000
 EXPOSE $PORT

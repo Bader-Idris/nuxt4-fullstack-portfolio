@@ -1,5 +1,11 @@
 <template>
   <div class="home">
+    <!-- <RiveAnimation 
+      src="/lottieToRive.riv"
+      :width="windowWidth"
+      :height="windowHeight"
+      state-machines="bumpy"
+    /> -->
     <div class="container">
       <section>
         <div class="info">
@@ -34,6 +40,18 @@
 const img = useImage()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+
+const windowWidth = ref(500)
+const windowHeight = ref(500)
+// const riveSource = 'assets/lottieToRive.riv'
+// const riveSource = '/lottieToRive.riv' // Note the leading slash
+
+onMounted(() => {
+  if (import.meta.client) {
+    windowWidth.value = window.innerWidth
+    windowHeight.value = window.innerHeight
+  }
+})
 
 // Define thumbnails for each language
 const thumbnailEn = img('/thumbnail.webp', {

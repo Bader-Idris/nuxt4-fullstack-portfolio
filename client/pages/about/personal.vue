@@ -21,19 +21,29 @@
 
     <div class="code-snippet">
       <div class="code-author">
-        <NuxtImg
+        <!-- ! OMG, nuxtImg is broken in last version -->
+        <!-- <NuxtImg
           src="/imgs/meTwentyFour.jpg"
           alt="personal-img"
           class="mi-imagen"
           :placeholder="[50, 50, 75, 75]"
           format="webp"
           loading="lazy"
-        />
+        /> -->
+        <img
+          src="/imgs/meTwentyFour.jpg"
+          alt="personal-img"
+          class="mi-imagen"
+          loading="lazy"
+        ></img>
         <div class="auth-aside">
           <p>@bader-idris</p>
           <p>{{ createTimeCodeSnippet }}</p>
         </div>
       </div>
+      <!-- <client-only>
+        <tiptap-editor ref="codeBlock" class="javascript" />
+      </client-only> -->
       <pre>
         <code
           ref="codeBlock"

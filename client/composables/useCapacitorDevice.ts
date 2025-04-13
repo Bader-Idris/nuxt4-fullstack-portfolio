@@ -6,4 +6,4 @@ export const useCapacitorDevice = async () => {
 };
 
 // const isCapacitorDevice = useCapacitorDevice()
-// await isCapacitorDevice
+// if (await isCapacitorDevice) 

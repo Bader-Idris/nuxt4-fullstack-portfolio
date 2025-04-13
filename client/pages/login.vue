@@ -154,6 +154,7 @@ const login = async (): Promise<void> => {
 
     // Redirect after successful login
     // const redirectPath = useRoute().query.redirect as string || '/dashboard';
+    // TODO: fix it when having a redirect queryString to somewhere else
     await navigateTo(localePath('/dashboard'), {
       redirectCode: 302,
     });

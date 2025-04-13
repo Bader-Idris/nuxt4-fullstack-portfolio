@@ -179,13 +179,20 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="thank-you">
-      <NuxtImg
+      <!-- TODO: check persona file for reason of not using this comp -->
+      <!-- <NuxtImg
         src="/imgs/thanks.svg"
         alt="thank you message icon"
         :placeholder="[50, 50, 75, 75]"
         format="webp"
         loading="lazy"
-      />
+      /> -->
+      <img
+        src="/imgs/thanks.svg"
+        alt="thank you message icon"
+        format="webp"
+        loading="lazy"
+      ></img>
       <p>{{ t('messages.thank_you.emailMsg') }}</p>
       <CustomButtons button-type="default" @click="resetForm">{{
         t('contact.form.send_new') }}

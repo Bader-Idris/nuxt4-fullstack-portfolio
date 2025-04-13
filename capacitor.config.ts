@@ -83,24 +83,28 @@ const config: CapacitorConfig = {
         }
 
       */
-      launchShowDuration: 2000,
-      launchAutoHide: true,
-      launchFadeOutDuration: 3000,
-      backgroundColor: "#FFFFFF00",
-      androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
-      showSpinner: true,
-      androidSpinnerStyle: "large",
-      iosSpinnerStyle: "small",
-      spinnerColor: "#999999",
-      splashFullScreen: true,
-      splashImmersive: true,
-      layoutName: "launch_screen",
-      useDialog: true,
+      // launchShowDuration: 2000,
+      // launchAutoHide: true,
+      // launchFadeOutDuration: 3000,
+      // backgroundColor: "#FFFFFF00",
+      // androidSplashResourceName: "splash",
+      // androidScaleType: "CENTER_CROP",
+      // showSpinner: true,
+      // androidSpinnerStyle: "large",
+      // iosSpinnerStyle: "small",
+      // spinnerColor: "#999999",
+      // splashFullScreen: true,
+      // splashImmersive: true,
+      // layoutName: "launch_screen",
+      // useDialog: true,
 
       // for lottie instead of above settings:
-      // launchautohide: true,
-      // launchshowduration: 0
+      launchautohide: true,
+      launchshowduration: 0,
+      launchFadeOutDuration: 0,
+      showSpinner: false,
+      splashImmersive: true,
+      backgroundColor: "#FFFFFF00",
     },
     // cordova: {
     //   // we'll override splash screen with our own lottie file
@@ -126,6 +130,14 @@ const config: CapacitorConfig = {
     // BarcodeScanner: {
     // not only barcode but also QR code ⏹️
     // https://capacitorjs.com/docs/apis/barcode-scanner
+    // },
+    // GoogleAuth: {
+    //   scopes: ["openid", "profile", "email"],
+    //   androidClientId:
+    //     "298411705076-ahe6qbh5kut2qrvl089vgu7n6tek24nm.apps.googleusercontent.com",
+    //   iosClientId:
+    //     "298411705076-6lun2nnsrfrk9h2a707t14mrqsr0h0d7.apps.googleusercontent.com",
+    //   forceCodeForRefreshToken: true,
     // },
     ActionSheet: {
       // the card that comes from the bottom of the screen.
@@ -155,7 +167,7 @@ const config: CapacitorConfig = {
       // https://capacitorjs.com/docs/apis/clipboard
     },
     CapacitorCookies: {
-      enabled: true // defaults to false
+      enabled: true, // defaults to false
     },
     // Device: {
     // useful with device info as getBatteryInfo(), getLanguageCode(), platform
@@ -196,6 +208,7 @@ const config: CapacitorConfig = {
       // Can show/hide user keyboard through it
       // https://capacitorjs.com/docs/apis/keyboard
       // TODO: check how to do language switching, Duolingo uses it
+      resizeOnFullScreen: true,
     },
     // Motion: {
     // implemented using Web APIs. try it with buttons

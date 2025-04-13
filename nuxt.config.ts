@@ -14,17 +14,6 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: process.env.NUXT_GZIP !== "false",
     routeRules: {
-      // "/:slug(?!api/**)(?!socket.io/**).*": { // TODO: fix it, it breaks the generated one
-      // "/:slug(?!api/**).*": {
-      //   cache: {
-      //     maxAge: 28800,
-      //     swr: true,
-      //   },
-      //   headers: {
-      //     "Cache-Control": "public, max-age=28800",
-      //     // ? I added the security headers in nginx
-      //   },
-      //   },
       // Static assets and public files
       "/_nuxt/**": {
         cache: {

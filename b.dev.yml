@@ -23,8 +23,8 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./server/config/bun.Dockerfile
-      # dockerfile: ./server/config/Dockerfile
+      # dockerfile: ./server/config/bun.Dockerfile
+      dockerfile: ./server/config/Dockerfile
     image: baderidris/nuxt-portfolio
     restart: always
     # orchestration for docker swarm
@@ -69,8 +69,8 @@ services:
     depends_on:
       - mongo
       # - redis
-    command: bun start
-    # command: npm start
+    # command: bun start
+    command: npm start
   mongo:
     image: mongo:4.4
     container_name: mongo

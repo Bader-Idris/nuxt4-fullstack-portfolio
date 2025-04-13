@@ -1,17 +1,27 @@
 <template>
-  <!-- <NuxtPwaAssets /> or -->
-  <!-- <NuxtPwaManifest /> -->
-  <!-- <NuxtLoadingIndicator> -->
-  <NuxtLayout>
-    <NuxtPage v-slot="{ Component }">
-      <Transition
-        :name="isFirstLoad ? '' : 'fade'"
-        mode="out-in"
-        @before-enter="handleBeforeEnter">
-        <component :is="Component" :key="$route.fullPath" />
-      </Transition>
-    </NuxtPage>
-  </NuxtLayout>
+  <div>
+    <!-- <NuxtPwaAssets /> or -->
+    <!-- <NuxtPwaManifest /> -->
+    <!-- <NuxtLoadingIndicator> -->
+    <RiveSplash
+      v-if="showRiveSplash"
+      src="/lottieToRive.riv"
+      @animation-stopped="hideSplashAndShowApp"
+    />
+    <template v-if="showMainContent">
+      <NuxtLayout>
+        <NuxtPage v-slot="{ Component }">
+          <Transition
+            :name="isFirstLoad ? '' : 'fade'"
+            mode="out-in"
+            @before-enter="handleBeforeEnter"
+          >
+            <component :is="Component" :key="$route.fullPath" />
+          </Transition>
+        </NuxtPage>
+      </NuxtLayout>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -24,53 +34,52 @@ useHead({
   // },
   // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
 })
+
 const route = useRoute()
 const router = useRouter()
-
 const { t } = useI18n({ useScope: 'global' })
 const isFirstLoad = ref(true);
-const isCapacitorDevice = ref(false)
+const showRiveSplash = ref(false)
+const showMainContent = ref(false)
+
+const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
+
 const handleBeforeEnter = () => {
   if (isFirstLoad.value) {
     isFirstLoad.value = false;
   }
 };
 
-// Initialize Capacitor functionality
-const initCapacitor = async () => {
-  try {
-    const { Device } = await import('@capacitor/device')
-    const info = await Device.getInfo()
-    isCapacitorDevice.value = info.platform !== 'web'
+const notifyOffline = async function () {
+  if (await isCapacitorDevice) {
+    const { Toast } = await import('@capacitor/toast')
+    await Toast.show({
+      text: t("messages.NetworkStatus.offline"),
+      duration: 'long',
+      position: 'bottom'
+    })
+  } else return
+}
 
-    if (isCapacitorDevice.value) {
+// Initialize Capacitor functionality
+const initCapacitorPrivileges = async () => {
+  try {
+    if (await isCapacitorDevice) {
       // Set up status bar (do NOT hide it initially)
       const { StatusBar, Style } = await import('@capacitor/status-bar')
       // TODO: try to make it dynamic as a plugin or composable!
       StatusBar.setStyle({ style: Style.Dark })
       StatusBar.setBackgroundColor({ color: '#01080E' })
-      StatusBar.hide()
-      StatusBar.setOverlaysWebView({ overlay: true })
-
-      // Set up network monitoring
-      const { Network } = await import('@capacitor/network')
-      Network.addListener('networkStatusChange', async (status) => {
-        if (!status.connected) {
-          await notifyOffline()
-        }
-      })
-
-      const status = await Network.getStatus()
-      if (!status.connected) {
-        await notifyOffline()
-      }
+      // StatusBar.hide()
+      StatusBar.show() // TODO: we need to add safe-area-inset-top
+      StatusBar.setOverlaysWebView({ overlay: true }) // TODO: check this out, false will hide the content under status bar buttons
 
       // Add deep linking listener
       // TODO: test it out, especially with query params
       // check these important requirements https://capacitorjs.com/docs/guides/deep-links#android-configuration
       // it says =======>  keytool -genkey -v -keystore KEY-NAME.keystore -alias ALIAS -keyalg RSA -keysize 2048 -validity 10000
       const { App: CapacitorApp, URLOpenListenerEvent } = await import('@capacitor/app')
-      CapacitorApp.addListener('appUrlOpen', async (event: URLOpenListenerEvent) => {
+      CapacitorApp.addListener('appUrlOpen', async (event: typeof URLOpenListenerEvent) => {
         try {
           const url = new URL(event.url);
           const path = url.pathname;
@@ -111,18 +120,32 @@ const initCapacitor = async () => {
     }
   } catch (error) {
     console.error('Error initializing Capacitor:', error)
-    isCapacitorDevice.value = false
   }
 }
 
-async function notifyOffline() {
-  if (isCapacitorDevice.value) {
-    const { Toast } = await import('@capacitor/toast')
-    await Toast.show({
-      text: t("messages.NetworkStatus.offline"),
-      duration: 'long',
-      position: 'bottom'
-    })
+const hideSplashAndShowApp = async () => {
+  showRiveSplash.value = false
+  showMainContent.value = true
+  if (await isCapacitorDevice) await initCapacitorPrivileges()
+  await nextTick()
+}
+
+const offlineFn = async function () {
+  // Set up network monitoring
+  const { Network } = await import('@capacitor/network')
+  Network.addListener('networkStatusChange', async (status) => {
+    if (showMainContent.value) {
+      if (!status.connected) {
+        await notifyOffline()
+      }
+    }
+  })
+
+  const status = await Network.getStatus()
+  if (showMainContent.value) {
+    if (!status.connected) {
+      await notifyOffline()
+    }
   }
 }
 
@@ -131,7 +154,20 @@ onMounted(async () => {
   isFirstLoad.value = false;
 
   if (import.meta.client) {
-    await initCapacitor()
+    const isCap = await isCapacitorDevice
+    if (isCap) {
+      showRiveSplash.value = true
+      await nextTick()
+      // await initCapacitorPrivileges()
+    } else {
+      showMainContent.value = true // Skip splash for non-Capacitor
+      await nextTick()
+      // await initCapacitorPrivileges()
+    }
+
+    if (showMainContent.value) {
+      offlineFn() // TODO: test to fix the crashing of offline app! 😠
+    }
   }
 });
 
@@ -143,10 +179,11 @@ if (import.meta.client) {
     'color: #fb853b; font-weight: bold; font-family: "Fira Code"; font-size: 30px;'
   );
 }
+
 </script>
 
 <style lang="scss">
-
+// TODO: we can put them directly to the main.scss file for more organization
 :root {
   height: 100vh;
   width: 100vw;
