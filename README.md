@@ -78,7 +78,7 @@ bunx cap add android ios
 To create your `.env.capacitor` file, rename the existing example file:
 
 ```bash
-mv .env.capacitor.example .env
+mv .env.capacitor.example .env.capacitor
 ```
 
 And add correct environment variables to it!
