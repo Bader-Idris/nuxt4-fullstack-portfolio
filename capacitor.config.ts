@@ -131,14 +131,14 @@ const config: CapacitorConfig = {
     // not only barcode but also QR code ⏹️
     // https://capacitorjs.com/docs/apis/barcode-scanner
     // },
-    // GoogleAuth: {
-    //   scopes: ["openid", "profile", "email"],
-    //   androidClientId:
-    //     "298411705076-ahe6qbh5kut2qrvl089vgu7n6tek24nm.apps.googleusercontent.com",
-    //   iosClientId:
-    //     "298411705076-6lun2nnsrfrk9h2a707t14mrqsr0h0d7.apps.googleusercontent.com",
-    //   forceCodeForRefreshToken: true,
-    // },
+    GoogleAuth: {
+      scopes: ["openid", "profile", "email"],
+      androidClientId:
+        process.env.GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId:
+        process.env.GOOGLE_IOS_CLIENT_ID,
+      forceCodeForRefreshToken: true,
+    },
     ActionSheet: {
       // the card that comes from the bottom of the screen.
       // check out https://ionicframework.com/docs/api/action-sheet

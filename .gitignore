@@ -30,6 +30,7 @@ logs
 .env
 .env.*
 !.env.example
+!.env.capacitor.example
 
 a.prod*
 b.prod*

@@ -24,7 +24,7 @@
           aria-labelledby="password" 
         >
       </div>
-      <button class="btn" :disabled="loading">
+      <button class="btn" :disabled="isAnyLoading">
         <span v-if="loading" class="loader" >
           <CustomLoader />
         </span>
@@ -33,7 +33,7 @@
     </form>
 
     <div class="social-auth">
-      <button class="btn social google" @click="socialLogin('google')">
+      <button class="btn social google" :disabled="isAnyLoading" @click="socialLogin('google')">
         <Icon 
           name="flat-color-icons:google" 
           width="30"
@@ -42,7 +42,7 @@
           class="svg"
         />
       </button>
-      <button class="btn social facebook" @click="socialLogin('facebook')">
+      <button class="btn social facebook" :disabled="isAnyLoading" @click="socialLogin('facebook')">
         <Icon 
           name="basil:facebook-solid" 
           width="30" 
@@ -78,6 +78,13 @@ const localePath = useLocalePath();
 const email = ref<string>('');
 const password = ref<string>('');
 const loading = ref<boolean>(false);
+const googleLoading = ref<boolean>(false); // Specific loading state for Google auth
+// Access token from cookie
+const accessToken = useCookie<string | undefined>('accessToken')
+const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
+
+// Computed property to disable buttons during any login process
+const isAnyLoading = computed(() => loading.value || googleLoading.value);
 
 // UserStore instance
 const userStore = useUserStore();
@@ -108,7 +115,6 @@ const login = async (): Promise<void> => {
   };
 
   try {
-    // Use useAsyncData with $fetch
     const { data: response, error } = await useLazyAsyncData<LoginResponse>(
       'login',
       () =>
@@ -175,9 +181,96 @@ const login = async (): Promise<void> => {
   }
 };
 
-const socialLogin = (provider: string) => {
-  if (import.meta.client) {
-    window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+// const socialLogin = (provider: string) => {
+//   if (import.meta.client) {
+//     window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+//   }
+// };
+
+// Function to handle social login
+const socialLogin = async (provider: string) => {
+  if (provider === 'google') {
+    if (await isCapacitorDevice) {
+      await google(); // Trigger Google auth for Capacitor devices
+    } else {
+      // Fallback for non-Capacitor (e.g., web)
+      if (import.meta.client) {
+        window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/google`;
+      }
+    }
+  } else {
+    // Handle other providers (e.g., Facebook) as needed
+    if (import.meta.client) {
+      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+    }
+  }
+};
+
+// Google authentication function for Capacitor devices
+const google = async () => {
+  googleLoading.value = true;
+
+  try {
+    // Dynamically import GoogleAuth plugin
+    const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+    await GoogleAuth.initialize();
+
+    // Perform Google sign-in and extract access token
+    const {
+      authentication: { accessToken: googleAccessToken },
+    } = await GoogleAuth.signIn();
+
+    // Send Google access token to your server for validation
+    const response = await $fetch('/api/v1/auth/google', {
+      method: 'POST',
+      body: { googleAccessToken },
+      baseURL: useRuntimeConfig().public.originUrl,
+      credentials: 'include',
+    });
+
+    const { user: serverUser } = response
+    if (!serverUser || !serverUser.name || !serverUser.userId || !serverUser.role) {
+      throw new Error('Invalid response format from server')
+    }
+
+    // Set user in store
+    const userData = {
+      username: serverUser.name,
+      userId: serverUser.userId,
+      role: serverUser.role,
+    }
+    userStore.setUser(userData)
+
+    // Handle Capacitor cookies (client-side only)
+    if (import.meta.client && await isCapacitorDevice) {
+      const { CapacitorCookies } = await import('@capacitor/core')
+      const cookies = await CapacitorCookies.getCookies()
+      if (cookies.accessToken) {
+        accessToken.value = cookies.accessToken
+      }
+    }
+
+    // Display success toast message
+    toast('Successfully logged in with Google', {
+      theme: 'auto',
+      type: 'success',
+      position: 'top-center',
+      dangerouslyHTMLString: true,
+    });
+
+    // Navigate to dashboard (no query parameters needed since user is set in store)
+    await navigateTo(localePath('/dashboard'), {
+      redirectCode: 302,
+    });
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    toast('Google sign-in failed, please try again', {
+      theme: 'dark',
+      type: 'error',
+      position: 'top-center',
+    });
+  } finally {
+    googleLoading.value = false;
   }
 };
 </script>

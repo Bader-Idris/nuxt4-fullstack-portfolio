@@ -7,3 +7,5 @@ export const useCapacitorDevice = async () => {
 
 // const isCapacitorDevice = useCapacitorDevice()
 // if (await isCapacitorDevice) 
+
+// TODO: capacitor has: isNativePlatform: () => boolean;

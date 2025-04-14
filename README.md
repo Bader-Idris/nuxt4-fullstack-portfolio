@@ -75,6 +75,14 @@ To add Android and iOS support, create the respective directories in your projec
 bunx cap add android ios
 ```
 
+To create your `.env.capacitor` file, rename the existing example file:
+
+```bash
+mv .env.capacitor.example .env
+```
+
+And add correct environment variables to it!
+
 ### Adding App Icons
 
 To customize your app icons, modify the icons in the `/assets` folder as desired, then run:
