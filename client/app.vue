@@ -191,21 +191,6 @@ if (import.meta.client) {
 :root {
   height: 100vh;
   width: 100vw;
-
-  /* Fallback values for capacitor */
-  --safe-area-inset-top: 25px;
-  // --safe-area-inset-right: 0px;
-  --safe-area-inset-bottom: 0px;
-  // --safe-area-inset-left: 0px;
-  // --safe-area-inset-status-bar: 0px;
-  --viewport-height: 100vh !important;
-  // TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines
-}
-
-.capacitor-safe-area {
-  /* This will now include your extra 10px */
-  padding-top: var(--safe-area-inset-top);
-  padding-bottom: var(--safe-area-inset-bottom);
 }
 
 body {

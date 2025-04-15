@@ -6,6 +6,30 @@ export default defineNuxtPlugin(async () => {
   if (!isCapacitorDevice) return;
 
   const { SafeArea } = await import("capacitor-plugin-safe-area");
+  let styleElement: HTMLStyleElement | null = null;
+
+  const addSafeAreaStyles = () => {
+    styleElement = document.createElement("style");
+    styleElement.innerHTML = `
+      :root {
+        /* Fallback values for capacitor */
+        --safe-area-inset-top: 25px;
+        // --safe-area-inset-right: 0px;
+        --safe-area-inset-bottom: 0px;
+        // --safe-area-inset-left: 0px;
+        // --safe-area-inset-status-bar: 0px;
+        --viewport-height: 100vh !important;
+        // TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines
+      }
+
+      .capacitor-safe-area {
+        /* This will now include your extra 10px */
+        padding-top: var(--safe-area-inset-top);
+        padding-bottom: var(--safe-area-inset-bottom);
+      }
+    `;
+    document.head.appendChild(styleElement);
+  };
 
   try {
     const STATUS_BAR_HEIGHT = 25; // Fixed status bar height
@@ -53,6 +77,8 @@ export default defineNuxtPlugin(async () => {
     await SafeArea.removeAllListeners();
     await initSafeArea();
     setupListeners();
+
+    addSafeAreaStyles();
 
     document.body.classList.add("capacitor-safe-area");
   } catch (error) {
