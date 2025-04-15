@@ -8,6 +8,12 @@ export default defineNuxtPlugin(async () => {
   const { SafeArea } = await import("capacitor-plugin-safe-area");
   let styleElement: HTMLStyleElement | null = null;
 
+  // Cap specific for ios
+  // ! Using this directly forces the option of Desktop site checklist to be true on mobiles!
+  useSeoMeta({
+    viewport: 'viewport-fit=cover'
+  })
+
   const addSafeAreaStyles = () => {
     styleElement = document.createElement("style");
     styleElement.innerHTML = `

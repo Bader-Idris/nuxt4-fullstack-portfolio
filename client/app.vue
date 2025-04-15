@@ -43,10 +43,6 @@ const showRiveSplash = ref(false)
 const showMainContent = ref(false)
 
 const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
-// Cap specific for ios
-useSeoMeta({
-  viewport: 'viewport-fit=cover'
-})
 
 const handleBeforeEnter = () => {
   if (isFirstLoad.value) {
