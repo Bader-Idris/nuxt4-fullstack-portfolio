@@ -1,5 +1,3 @@
-import { Keyboard } from "@capacitor/keyboard";
-// TODO: test it out!
 // https://chat.deepseek.com/a/chat/s/047e1352-014c-4977-ab48-a6ed298bdb22
 
 export default defineNuxtPlugin(async (nuxtApp) => {
@@ -7,6 +5,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   const isCapacitorDevice: Promise<boolean> = useCapacitorDevice();
   if (!(await isCapacitorDevice)) return;
+
+  const { Keyboard } = await import("@capacitor/keyboard");
 
   let styleElement: HTMLStyleElement | null = null;
   let keyboardHeight = 0;

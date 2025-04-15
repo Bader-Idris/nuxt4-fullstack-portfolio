@@ -1,11 +1,11 @@
-import { SafeArea } from "capacitor-plugin-safe-area";
-
 export default defineNuxtPlugin(async () => {
   if (import.meta.server) return;
 
   // Check if running in Capacitor environment
   const isCapacitorDevice = await useCapacitorDevice();
   if (!isCapacitorDevice) return;
+
+  const { SafeArea } = await import("capacitor-plugin-safe-area");
 
   try {
     const STATUS_BAR_HEIGHT = 25; // Fixed status bar height
