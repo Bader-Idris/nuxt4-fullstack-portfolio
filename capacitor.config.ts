@@ -234,12 +234,12 @@ const config: CapacitorConfig = {
       // some android files require it to be cached in. check
       // https://capacitorjs.com/docs/apis/share
     },
-    StatusBar: {
+    // StatusBar: {
       // overlay: false, // Whether the status bar should overlay the webview (optional)
       // can hide top status bar, but not fully implemented as native
       // is there any workaround?
       // https://capacitorjs.com/docs/apis/status-bar
-    },
+    // },
     // TextZoom: {
     // I believe using em instead of px is better than this, but try them
     // https://capacitorjs.com/docs/apis/text-zoom

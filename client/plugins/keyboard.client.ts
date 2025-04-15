@@ -16,12 +16,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     styleElement = document.createElement("style");
     styleElement.innerHTML = `
       #__nuxt {
-        padding-bottom: var(--keyboard-height);
-        transition: padding-bottom 0.3s ease;
+        padding-top: var(--keyboard-height);
+        transition: padding-top 0.3s ease;
       }
       
       input, textarea {
-        scroll-margin-bottom: var(--keyboard-height);
+        scroll-margin-top: var(--keyboard-height);
+        position: sticky;
       }
     `;
     document.head.appendChild(styleElement);

@@ -52,6 +52,8 @@ import { useUserStore } from '~/stores/UserNameStore'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
+// TODO: fix the cap auth mechanisms!
+
 // Important for disabling layouts
 definePageMeta({
   layout: 'default', // Specify the layout

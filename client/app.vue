@@ -43,6 +43,10 @@ const showRiveSplash = ref(false)
 const showMainContent = ref(false)
 
 const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
+// Cap specific for ios
+useSeoMeta({
+  viewport: 'viewport-fit=cover'
+})
 
 const handleBeforeEnter = () => {
   if (isFirstLoad.value) {
@@ -67,7 +71,7 @@ const initCapacitorPrivileges = async () => {
     if (await isCapacitorDevice) {
       // Set up status bar (do NOT hide it initially)
       const { StatusBar, Style } = await import('@capacitor/status-bar')
-      // TODO: try to make it dynamic as a plugin or composable!
+      // // TODO: try to make it dynamic as a plugin or composable!
       StatusBar.setStyle({ style: Style.Dark })
       StatusBar.setBackgroundColor({ color: '#01080E' })
       // StatusBar.hide()
@@ -187,6 +191,21 @@ if (import.meta.client) {
 :root {
   height: 100vh;
   width: 100vw;
+
+  /* Fallback values for capacitor */
+  --safe-area-inset-top: 25px;
+  // --safe-area-inset-right: 0px;
+  --safe-area-inset-bottom: 0px;
+  // --safe-area-inset-left: 0px;
+  // --safe-area-inset-status-bar: 0px;
+  --viewport-height: 100vh !important;
+  // TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines
+}
+
+.capacitor-safe-area {
+  /* This will now include your extra 10px */
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
 }
 
 body {
