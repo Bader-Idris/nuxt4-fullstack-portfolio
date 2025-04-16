@@ -162,6 +162,7 @@ import { useSocketStore } from '~/stores/useSocketStore';
 import { useMessagesStore } from '~/stores/useMessagesStore';
 import { useOnlineUsersStore } from '~/stores/useOnlineUsersStore';
 import { useWebRTC } from '~/components/webRTC'; // TODO: should it be in composables instead?
+const { $push } = useNuxtApp();
 
 useSeoMeta({
   title: 'Dashboard - Secure Chat & Video',
@@ -279,6 +280,11 @@ const startChatWith = (userId) => {
   console.log(`Chat started with user: ${getUserName(userId)}`);
   // Optionally, focus on a message input field if you have one
   // e.g., messageInputRef.value.focus();
+};
+
+// Request permission when needed (e.g., on a button click or on page load)
+const requestPushPermission = async () => {
+  await $push.requestNotificationPermission();
 };
 
 // Lifecycle Hooks
@@ -413,7 +419,7 @@ onMounted(async () => {
     // TODO: add push notification, when someone sends a message, make the push notification to the other user?s
     // TODO: make the push notifications compatible with both browsers and capacitorJs devices, because I use cap in my nuxt application
     // Receive Private Messages
-    socket.on('private-message', (data) => {
+    socket.on('private-message', (data, callback) => {
       const messageData: any =  { // TODO: fix using any type
         fromName: data.fromName,
         fromSocketId: data.fromSocketId || 'Unknown',
@@ -425,6 +431,8 @@ onMounted(async () => {
         to: data.to
       };
       messagesStore.addMessage(messageData);
+      callback(true); // Acknowledge receipt
+      requestPushPermission();
       triggerPushNotification(`New message from ${data.fromName}`, data.message, '/dashboard');
     });
 

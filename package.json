@@ -25,7 +25,7 @@
     "@nuxt/content": "^3.4.0",
     "@nuxt/icon": "^1.12.0",
     "@nuxt/image": "^1.10.0",
-    "@nuxt/scripts": "^0.11.5",
+    "@nuxt/scripts": "^0.11.6",
     "@nuxtjs/device": "^3.2.4",
     "@nuxtjs/i18n": "^9.5.3",
     "@pinia/nuxt": "^0.10.1",

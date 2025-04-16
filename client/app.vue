@@ -84,7 +84,7 @@ const initCapacitorPrivileges = async () => {
           const url = new URL(event.url);
           const path = url.pathname;
           if (path && path !== '/') {
-            await router.push({
+            await navigateTo({
               path: path,
               query: Object.fromEntries(url.searchParams)
             });

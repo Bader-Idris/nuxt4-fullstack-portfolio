@@ -1,12 +1,52 @@
 export default defineNuxtPlugin(async (nuxtApp) => {
-  // Only run on client and when in Capacitor environment
-  if (import.meta.client) {
-    try {
-      const { Device } = await import("@capacitor/device");
-      const info = await Device.getInfo();
+  const isCapacitorDevice: Promise<boolean> = useCapacitorDevice();
+  const publicVapidKey = useRuntimeConfig().public.vapidPublicKey;
+  // Convert base64 to Uint8Array for VAPID key
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+  }
+    // Request notification permission and subscribe
+    const requestNotificationPermission = async () => {
+      if ("Notification" in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          subscribeUser();
+        }
+      }
+      return null;
+    };
 
-      // Only initialize push notifications on native platforms
-      if (info.platform !== "web") {
+    const subscribeUser = async () => {
+      if ("serviceWorker" in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+          });
+
+          // Send subscription to server
+          await $fetch("/api/v1/subscribe", {
+            method: "POST",
+            body: { subscription },
+            baseUrl: config.public.originUrl,
+          });
+
+          return subscription;
+        } catch (err) {
+          console.log("Failed to subscribe:", err);
+          return null;
+        }
+      }
+    };
+
+    if (import.meta.client) {
+      if (await isCapacitorDevice) {
         const { PushNotifications } = await import(
           "@capacitor/push-notifications"
         );
@@ -21,7 +61,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           // Add listeners
           PushNotifications.addListener("registration", (token) => {
             console.log("Push registration success, token:", token.value);
-            // You might want to send this token to your backend
+            // You might want to send this token to your backend using: token.value
           });
 
           PushNotifications.addListener("registrationError", (error) => {
@@ -47,9 +87,29 @@ export default defineNuxtPlugin(async (nuxtApp) => {
             }
           );
         }
+      } else {
+        // Register service worker on load
+        window.addEventListener("load", async () => {
+          if ("serviceWorker" in navigator) {
+            try {
+              await navigator.serviceWorker.register("/sw.js", {
+                scope: "/",
+              });
+              console.log("Service Worker Registered...");
+            } catch (err) {
+              console.error("Service Worker registration failed:", err);
+            }
+          }
+        })
       }
-    } catch (error) {
-      console.error("Error initializing push notifications:", error);
     }
-  }
+
+  return {
+    provide: {
+      push: { 
+        requestNotificationPermission, 
+        subscribeUser 
+      },
+    },
+  };
 });

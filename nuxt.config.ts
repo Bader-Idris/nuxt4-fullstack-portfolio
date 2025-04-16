@@ -358,34 +358,34 @@ export default defineNuxtConfig({
     },
   },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
-    site: {
-      url: process.env.DOMAIN_NAME,
-      name: "Bader Idris", // ! Causes stupid duplicate head.title
-      defaultLocale: "en",
-    },
-    schemaOrg: {
-      // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
-      identity: definePerson({
-        name: "Bader Idris",
-        image: "/imgs/me_2024-03-13.jpg",
-        description: "Full stack developer",
-        url: "baderidris.com",
-        sameAs: [
-          "https://www.facebook.com/Bader.Idris.developer",
-          "https://github.com/bader-idris",
-        ],
-      }),
-    },
-    robots: {
-      disallow: ["/contact/admin"],
-      sitemap: [
-        "/sitemap.xml",
-        "/sitemap_index.xml",
-        "/__sitemap__/en-US.xml",
-        "/__sitemap__/ar-PS.xml",
-        "/__sitemap__/es-ES.xml",
+  site: {
+    url: process.env.DOMAIN_NAME,
+    name: "Bader Idris", // ! Causes stupid duplicate head.title
+    defaultLocale: "en",
+  },
+  schemaOrg: {
+    // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
+    identity: definePerson({
+      name: "Bader Idris",
+      image: "/imgs/me_2024-03-13.jpg",
+      description: "Full stack developer",
+      url: "baderidris.com",
+      sameAs: [
+        "https://www.facebook.com/Bader.Idris.developer",
+        "https://github.com/bader-idris",
       ],
-    },
+    }),
+  },
+  robots: {
+    disallow: ["/contact/admin"],
+    sitemap: [
+      "/sitemap.xml",
+      "/sitemap_index.xml",
+      "/__sitemap__/en-US.xml",
+      "/__sitemap__/ar-PS.xml",
+      "/__sitemap__/es-ES.xml",
+    ],
+  },
   // }),
   // ionic: {},
   // routeRules: {
@@ -399,6 +399,8 @@ export default defineNuxtConfig({
     public: {
       originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
       socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
+      // for web-push pkg
+      vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
     },
     mailHost: process.env.MAIL_HOST,
     mailUser: process.env.MAIL_USER,
@@ -414,6 +416,9 @@ export default defineNuxtConfig({
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     facebookClientId: process.env.FACEBOOK_CLIENT_ID,
     facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+    // for web-push pkg
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+    contactEmail: process.env.CONTACT_EMAIL,
   },
   // content: {}, check content.config.ts
   imports: {

@@ -8,6 +8,17 @@
       <input v-model="email" name="email" type="email" class="input" >
       <label for="password">Password</label>
       <input v-model="password" name="password" type="text" class="input" >
+
+      <div class="policy-checklist">
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="agreePolicies" />
+          I agree to the 
+          <CustomLink to="/legal/terms" target="_blank" aria-label="Terms and Conditions" class="policy-link">Terms and Conditions</CustomLink>
+          and 
+          <CustomLink to="/privacy/policy" target="_blank" aria-label="Privacy Policy" class="policy-link">Privacy Policy</CustomLink>
+        </label>
+      </div>
+
       <button class="btn" :disabled="loading">
         <span v-if="loading" class="loader" >
           <CustomLoader />
@@ -69,6 +80,7 @@ const localePath = useLocalePath()
 const user = ref<string>('')
 const email = ref<string>('')
 const password = ref<string>('')
+const agreePolicies = ref<boolean>(false)
 const loading = ref<boolean>(false)
 const showPrompt = ref<boolean>(false)
 
@@ -91,6 +103,16 @@ const register = async (): Promise<void> => {
       dangerouslyHTMLString: true,
     });
     return;
+  }
+
+  if (!agreePolicies.value) {
+    toast('You must agree to the Terms and Conditions and Privacy Policy.', {
+      theme: 'dark',
+      type: 'error',
+      position: 'top-center',
+      dangerouslyHTMLString: true,
+    })
+    return
   }
 
   loading.value = true;
@@ -194,6 +216,32 @@ const socialLogin = (provider: string) => {
       padding: 10px;
       margin-bottom: 20px;
       border-radius: 5px;
+    }
+
+    .policy-checklist {
+      margin-bottom: 1.5rem;
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #fff;
+        margin-bottom: 0.75rem;
+
+        input {
+          margin-right: 0.5rem;
+        }
+      }
+
+      .policy-link {
+        color: #007bff;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+          color: #0056b3;
+        }
+      }
     }
 
     .btn {

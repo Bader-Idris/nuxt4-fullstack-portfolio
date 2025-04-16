@@ -8,11 +8,15 @@ import { Message } from "../models/mongo";
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
 import { Redis } from "ioredis"; // ? ioredis is better than redis for promises and clustering
 
+import createWebPushInstance from "../utils/webPush";
+import { getSubscription } from "../utils/redis";
+
 // for future organizing
 // import * from '.././sockets'
 
 export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
+    const webpush = createWebPushInstance();
     // If one replica, you can remove these redis related settings!
     const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
     const redisClient = new Redis(redisUrl);
@@ -245,8 +249,32 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
         // Forward to recipient
         if (targetSocketId) {
-          // TODO: make it more professional
-          io.to(targetSocketId).emit("private-message", messageData);
+          // Target is online, send via Socket.IO with ack
+          io.to(targetSocketId).emit("private-message", messageData, (ack) => {
+            if (ack) {
+              console.log(`Message delivered to ${to} via Socket.IO`);
+            } else {
+              console.log(`Message to ${to} not acknowledged`);
+            }
+          });
+        } else {
+          // Target is offline, send push notification
+          const subscription = await getSubscription(to);
+          if (subscription) {
+            try {
+              await webpush.sendNotification(
+                subscription,
+                JSON.stringify({
+                  title: "New Message",
+                  body: `You have a new message from ${socket.data.user.name}`,
+                  url: "/dashboard", // Add URL for click handling
+                })
+              );
+              console.log(`Push notification sent to ${to}`);
+            } catch (err) {
+              console.error(`Failed to send push notification to ${to}:`, err);
+            }
+          }
         }
         socket.emit("private-message", messageData); // Echo back to sender
       });
