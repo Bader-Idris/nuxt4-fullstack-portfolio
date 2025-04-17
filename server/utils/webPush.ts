@@ -7,19 +7,23 @@
 // TODO: how to create a custom hashing!
 import webpush from "web-push";
 
-const vapidKeys = {
-  publicKey: useRuntimeConfig().public.vapidPublicKey,
-  privateKey: useRuntimeConfig().vapidPrivateKey,
-};
-
-const mailTo = `mailto:${useRuntimeConfig().contactEmail}`;
-
 export default function createWebPushInstance() {
+  const config = useRuntimeConfig();
+
+  const vapidKeys = {
+    publicKey: config.public.vapidPublicKey,
+    privateKey: config.vapidPrivateKey,
+  };
+
+  const mailTo = `mailto:${config.contactEmail}`;
+
   webpush.setVapidDetails(
     mailTo,
     vapidKeys.publicKey,
     vapidKeys.privateKey
   );
+
+  return webpush;
 }
 
 // export default webpush;

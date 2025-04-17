@@ -4,9 +4,9 @@ import { Server } from "socket.io";
 import { defineEventHandler, createError } from "h3";
 import { isTokenValid } from "../utils/jwt";
 import { Message } from "../models/mongo";
+import { redisClient } from "./redis";
 // with multi replicas
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
-import { Redis } from "ioredis"; // ? ioredis is better than redis for promises and clustering
 
 import createWebPushInstance from "../utils/webPush";
 import { getSubscription } from "../utils/redis";
@@ -17,17 +17,12 @@ import { getSubscription } from "../utils/redis";
 export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
     const webpush = createWebPushInstance();
-    // If one replica, you can remove these redis related settings!
-    const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-    const redisClient = new Redis(redisUrl);
-    // Connect to Redis
-    try {
-      await redisClient;
-      console.log("✅ Connected to Redis");
-    } catch (error) {
-      console.error("❌ Failed to connect to Redis:", error);
-      return; // Prevent Socket.IO from starting if Redis fails
-    }
+
+    // Access the Redis storage that was mounted in another plugin
+    // const redisStorage = useStorage("redis");
+    // // Example of using redisStorage
+    // await redisStorage.setItem("socket:status", "initialized");
+
     const adapter = createAdapter(redisClient);
 
     const engine = new Engine();
@@ -73,7 +68,8 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
         if (!accessToken) {
           // TODO: it does not throw the status code
-          return next( createError({
+          return next(
+            createError({
               statusCode: 401,
               statusMessage: "Authentication required",
             })

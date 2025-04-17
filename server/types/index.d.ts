@@ -1,5 +1,6 @@
 import type {} from /* types from models */ "./models.d.ts";
 import type {} from "./auth.d.ts";
+import type { Redis } from "ioredis";
 
 declare module "nitropack" {
   interface NitroApp {
@@ -14,5 +15,14 @@ declare module "nitropack" {
     };
     mailer: import("nodemailer").Transporter;
     auth: IAuth;
+    redis?: Redis;
+  }
+}
+
+declare module "h3" {
+  interface H3EventContext {
+    nitro: {
+      redis?: Redis;
+    };
   }
 }
