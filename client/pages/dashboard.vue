@@ -42,7 +42,10 @@
 
     <section class="chat-section">
       <h2 v-if="recipientUserId">Chatting with {{ getRecipientName() }}</h2>
-      <div ref="chatContainer" class="chat-container">
+      <div ref="chatContainer" class="chat-container" @scroll="handleScroll">
+        <div ref="loadingIndicator" v-if="isLoading" class="loading-indicator">
+          Loading older messages...
+        </div>
         <div v-for="msg in messagesStore.getFilteredMessages" :key="msg.id" :class="['message', msg.from === currentUserId ? 'sent' : 'received']">
           <div class="message-header">
             <span class="sender-name">{{ msg.fromName }}</span>
@@ -149,7 +152,7 @@
 
     <!-- Broadcast Message -->
     <section>
-      <h2>Send Broadcast</h2>
+      <h3>Send Broadcast</h3>
       <button @click="sendBroadcast">Send Broadcast Message</button>
     </section>
   </div>
@@ -177,12 +180,14 @@ const onlineUsersStore = useOnlineUsersStore();
 // State
 const recipientUserId: Ref<string> = ref('');
 const message: Ref<string> = ref('');
+const isLoading = ref(false);
 const localePath = useLocalePath()
 const isCapacitorDevice = useCapacitorDevice();
 const baseUrl = useRuntimeConfig().public.originUrl;
 const currentUserId = computed(() => socketStore.currentUser?.userId);
 const transport = ref("N/A");
 const chatContainer = ref(null);
+const loadingIndicator = ref(null);
 
 // Use the WebRTC composable
 const {
@@ -261,10 +266,24 @@ const formatTimestamp = (timestamp) => {
   }
 };
 
-// Auto-scroll to the bottom when messages update
+// Watch recipientUserId to fetch initial messages
+watch(recipientUserId, (newVal) => {
+  if (newVal) {
+    messagesStore.clearMessages();
+    messagesStore.loadFromLocalStorage(newVal);
+    messagesStore.page = 1;
+    fetchMessages();
+  }
+}, { immediate: false });
+
+// Auto-scroll to bottom when new messages are added (only if already at bottom)
+const isAtBottom = () => {
+  return chatContainer.value.scrollTop + chatContainer.value.clientHeight >= chatContainer.value.scrollHeight - 10;
+};
+
 watch(() => messagesStore.getFilteredMessages, () => {
   nextTick(() => {
-    if (chatContainer.value) {
+    if (chatContainer.value && isAtBottom()) {
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
     }
   });
@@ -299,6 +318,7 @@ onMounted(async () => {
       reconnectionDelay: 1000, // Initial delay between attempts (ms)
       reconnectionDelayMax: 5000, // Max delay with exponential backoff
       // transports: ["websocket", "polling"],
+      tryAllTransports: true,
     };
 
     if (await isCapacitorDevice) {
@@ -313,11 +333,17 @@ onMounted(async () => {
       options.reconnectionAttempts = 5
       options.reconnectionDelay = 1000
       options.reconnectionDelayMax = 5000
+      options.tryAllTransports = true
     }
 
     // Initialize Socket.IO connection
     socket = io(baseUrl, options);
     socketStore.setSocket(socket);
+
+    if (chatContainer.value) {
+      const chatContainerEl = chatContainer.value;
+      chatContainerEl.addEventListener('scroll', handleScroll);
+    }
 
     // Handle Connection
     socket.on('connect', () => {
@@ -431,7 +457,10 @@ onMounted(async () => {
         to: data.to
       };
       messagesStore.addMessage(messageData);
-      callback(true); // Acknowledge receipt
+      messagesStore.saveToLocalStorage(messageData.from);
+      if (typeof callback === 'function') {
+        callback(true); // Call the callback function with true as the acknowledgment
+      }
       requestPushPermission();
       triggerPushNotification(`New message from ${data.fromName}`, data.message, '/dashboard');
     });
@@ -547,24 +576,41 @@ const sendBroadcast = () => {
 const fetchMessages = debounce(() => {
   // const socket = socketStore.getSocket;
   if (socket) {
+    isLoading.value = true;
     // TODO: update after changes occur
     // TODO: is this like post method, and can we make it as put if so!
     // TODO: try to add the edit option to test http put for each message
     socket.emit('get-message-history', {
       page: messagesStore.page,
-      limit: messagesStore.limit
+      limit: messagesStore.limit,
+      recipientUserId: recipientUserId.value,
+    }, (ack) => {
+      if (ack && ack.error) {
+        console.error(ack.error);
+        // Handle error (e.g., show toast)
+      } else {
+        const messagesStore = useMessagesStore(); // appears to be useless
+        messagesStore.setMessages(ack.messages);
+        messagesStore.saveToLocalStorage(recipientUserId.value);
+        console.log('ack messages', ack.messages);// TODO: properly handled, but where is it's issue of not showing new messages!
+        // refreshNuxtData(); nuxt docs says it's better, grok says it's useless
+      }
+      isLoading.value = false;
     });
     // 50 ms debounce allows up to 20 fetches per second, but with arrays, that'll be a lot
   }
 }, 150);
 
-// const loadMoreMessages = () => {
-//   page.value += 1;
-//   fetchMessages();
-// };
-
-// Note: For socket ID mapping, we'll assume connectedUsers is accessible or modify server
-// const connectedUsers: Map<string, User> = new Map(); // Ideally, get this from server
+// Scroll event handler for infinite scrolling
+const handleScroll = () => {
+  if (chatContainer?.value?.scrollTop === 0 && !isLoading.value) {
+    isLoading.value = true;
+    messagesStore.incrementPage();
+    fetchMessages();
+    console.log('Fetching more messages...', messagesStore.getFilteredMessages, 'page:', messagesStore.page);
+    
+  }
+};
 
 const triggerPushNotification = async (title: string, body: string, deepLink: string = '/messages') => {
   if (!import.meta.client) return;
@@ -797,6 +843,12 @@ li {
   border-radius: 50%;
   border-top-color: white;
   animation: spin 1s ease-in-out infinite;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 10px;
+  background-color: #f0f0f0;
 }
 
 @keyframes spin {

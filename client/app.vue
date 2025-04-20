@@ -67,12 +67,16 @@ const initCapacitorPrivileges = async () => {
     if (await isCapacitorDevice) {
       // Set up status bar (do NOT hide it initially)
       const { StatusBar, Style } = await import('@capacitor/status-bar')
+      const { SplashScreen } = await import('@capacitor/splash-screen') // wanting to hide splash screen after using rive's one
       // // TODO: try to make it dynamic as a plugin or composable!
       StatusBar.setStyle({ style: Style.Dark })
       StatusBar.setBackgroundColor({ color: '#01080E' })
       // StatusBar.hide()
-      StatusBar.show() // TODO: we need to add safe-area-inset-top
+      StatusBar.show() 
+      // TODO: we need to add safe-area-inset-top
       StatusBar.setOverlaysWebView({ overlay: true }) // TODO: check this out, false will hide the content under status bar buttons
+
+      await SplashScreen.hide(); // hide splash screen. read the docs at: https://capacitorjs.com/docs/apis/splash-screen#hiding-the-splash-screen
 
       // Add deep linking listener
       // TODO: test it out, especially with query params

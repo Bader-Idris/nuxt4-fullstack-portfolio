@@ -20,21 +20,41 @@ export const useMessagesStore = defineStore("messages", {
       // Check for duplicates by ID before adding
       if (!this.messages.some((m) => m.id === message.id)) {
         this.messages.push(message);
+        this.saveToLocalStorage();
       }
     },
     setMessages(newMessages: Message[]) {
-      // Filter out duplicates when setting messages
-      const uniqueMessages = newMessages.filter(
+      const reversedNewMessages = [...newMessages].reverse();
+      const uniqueNewMessages = reversedNewMessages.filter(
         (newMsg) =>
           !this.messages.some((existingMsg) => existingMsg.id === newMsg.id)
       );
-      this.messages = [...this.messages, ...uniqueMessages];
+      this.messages = [...uniqueNewMessages, ...this.messages];
+      console.log("Updated messages length:", this.messages.length);
+      // Persist to localStorage
+      // this.saveToLocalStorage();
     },
     clearMessages() {
       this.messages = [];
+      this.page = 1;
+      // Clear localStorage for this conversation
+      // this.saveToLocalStorage();
     },
     incrementPage() {
       this.page++;
+    },
+    saveToLocalStorage(recipientUserId: string) {
+      const key = `chat_messages_${recipientUserId || "default"}`;
+      // const key = `chat_messages_${this.page}`;
+      localStorage.setItem(key, JSON.stringify(this.messages));
+    },
+    loadFromLocalStorage(recipientUserId: string) {
+      const key = `chat_messages_${recipientUserId || "default"}`;
+      // const key = `chat_messages_${this.page}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        this.messages = JSON.parse(stored);
+      }
     },
   },
   getters: {

@@ -1,37 +1,69 @@
-import redisDriver from "unstorage/drivers/redis";
-import { Redis } from "ioredis";
+import Redis from "ioredis";
 
-// Create a single Redis client instance
+// Create and export a single Redis client instance
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-export const redisClient = new Redis(redisUrl);
+export let redisClient: Redis | null = null;
+
+if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
+  try {
+    redisClient = new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      retryStrategy(times) {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      connectTimeout: 10000,
+    });
+
+    // Verify connection
+    redisClient
+      .ping()
+      .then(() => {
+        console.log("✅ Connected to Redis");
+      })
+      .catch((error) => {
+        console.error("❌ Failed to ping Redis:", error);
+        redisClient = null;
+      });
+
+    // Handle runtime errors
+    redisClient.on("error", (error) => {
+      console.error("❌ Redis connection error:", error);
+    });
+
+    redisClient.on("reconnecting", () => {
+      console.log("🔄 Reconnecting to Redis...");
+    });
+
+    redisClient.on("ready", () => {
+      console.log("✅ Redis client ready");
+    });
+  } catch (error) {
+    console.error("❌ Failed to initialize Redis:", error);
+    redisClient = null;
+  }
+} else {
+  console.log("⚠️ Skipping Redis connection during build phase");
+}
 
 export default defineNitroPlugin(async (nitroApp) => {
-  if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
-    // docs https://unstorage.unjs.io/drivers/redis
-    const storage = useStorage();
-    const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-
-    // Connect to Redis
-    try {
-      // await redisClient; // ai says: // No need to await redisClient here, it's already a client instance
-      console.log("✅ Connected to Redis");
-    } catch (error) {
-      console.error("❌ Failed to connect to Redis:", error);
-      return; // Prevent Socket.IO from starting if Redis fails
-    }
-
-    // Mount redis driver
-    storage.mount(
-      "redis",
-      redisDriver({
-        url: redisUrl,
-        // if you wanna use clustering, check the docs :4
-      })
-    );
-
-    // Make redis client available globally
-    nitroApp.redis = redisClient;
-  } else {
-    console.log("⚠️ Skipping redis connection during build phase");
+  // Skip Redis initialization during prerendering
+  if (import.meta.prerender) {
+    console.log("⚠️ Skipping Redis plugin during prerendering");
+    return;
   }
+
+  if (!redisClient) {
+    console.error("❌ Redis client not available for Nitro plugin");
+    return;
+  }
+
+  // Inject Redis client into Nitro app and H3 event context
+  nitroApp.redis = redisClient;
+  nitroApp.h3App?.stack?.push({
+    route: "/",
+    handle: (event) => {
+      event.context.redis = redisClient;
+    },
+  });
 });

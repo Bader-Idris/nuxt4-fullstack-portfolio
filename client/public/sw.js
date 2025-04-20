@@ -1,12 +1,4 @@
 // service worker, required for push notifications in browsers!
-// self.addEventListener("push", function (event) {
-//   const data = event.data.json();
-//   self.registration.showNotification(data.title, {
-//     body: data.body,
-//     icon: "/favicon-16x16.png",
-//   });
-// });
-
 self.addEventListener("push", function (event) {
   const data = event.data.json();
   event.waitUntil(

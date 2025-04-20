@@ -49,6 +49,7 @@ export default defineNuxtConfig({
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     experimental: {
       websocket: true,
+      // asyncContext: true,
     },
   },
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
@@ -419,6 +420,7 @@ export default defineNuxtConfig({
     // for web-push pkg
     vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
     contactEmail: process.env.CONTACT_EMAIL,
+    redisUrl: process.env.REDIS_URL,
   },
   // content: {}, check content.config.ts
   imports: {

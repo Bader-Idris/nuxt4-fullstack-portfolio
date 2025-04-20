@@ -9,8 +9,7 @@ import { redisClient } from "./redis";
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
 
 import createWebPushInstance from "../utils/webPush";
-import { getSubscription } from "../utils/redis";
-
+import { getSubscription } from "../utils/redisUtils";
 // for future organizing
 // import * from '.././sockets'
 
@@ -23,6 +22,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     // // Example of using redisStorage
     // await redisStorage.setItem("socket:status", "initialized");
 
+    // This is The Way to Use Redis without getting errors from the Adapter!
     const adapter = createAdapter(redisClient);
 
     const engine = new Engine();
@@ -255,7 +255,9 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           });
         } else {
           // Target is offline, send push notification
-          const subscription = await getSubscription(to);
+          // const subscription = await getSubscription(to);
+          const redis = redisClient; // TODO: or event.context.redis 
+          const subscription = await getSubscription(redis, to);
           if (subscription) {
             try {
               await webpush.sendNotification(
@@ -276,13 +278,18 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       });
 
       // Handle message history retrieval
-      socket.on("get-message-history", async (data) => {
+      socket.on("get-message-history", async (data, callback) => {
         if (!user.userId) {
           socket.emit("error", { message: "User not authenticated" });
           return;
         }
+        // TODO: add pagination, rate limiting!
 
         const { page = 1, limit = 20 } = data; // Default to page 1, 20 messages per page
+        if (typeof page !== "number" || page < 1 || !Number.isInteger(page)) {
+          socket.emit("error", { message: "Invalid page number" });
+          return;
+        }
         try {
           const messages = await Message.find({
             $or: [
@@ -291,14 +298,16 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
               { isBroadcast: true }, // Broadcast messages
             ],
           })
-            .sort({ timestamp: 1 }) // Sort by timestamp, most recent last, if first use: -1
+            .sort({ timestamp: -1 }) // Sort by timestamp, most recent first
             .skip((page - 1) * limit) // Skip messages for previous pages
             .limit(limit); // Limit the number of messages returned
+            callback({ messages });
 
           socket.emit("message-history", messages);
         } catch (error) {
           console.error("Error fetching messages:", error);
           socket.emit("error", { message: "Failed to fetch messages" });
+          callback({ error: "Failed to fetch messages" });
         }
       });
 

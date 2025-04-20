@@ -17,12 +17,11 @@ declare module "nitropack" {
     auth: IAuth;
     redis?: Redis;
   }
-}
-
-declare module "h3" {
   interface H3EventContext {
-    nitro: {
-      redis?: Redis;
-    };
+    redis?: Redis;
+    // or
+    // nitro: {
+    //   redis?: Redis;
+    // };
   }
 }
