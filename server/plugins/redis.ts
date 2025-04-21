@@ -2,7 +2,7 @@ import Redis from "ioredis";
 
 // Create and export a single Redis client instance
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-export let redisClient: Redis | null = null;
+let redisClient: Redis | null = null;
 
 if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
   try {
@@ -67,3 +67,5 @@ export default defineNitroPlugin(async (nitroApp) => {
     },
   });
 });
+
+export { redisClient };

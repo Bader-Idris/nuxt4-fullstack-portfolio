@@ -78,6 +78,7 @@ const initCapacitorPrivileges = async () => {
 
       await SplashScreen.hide(); // hide splash screen. read the docs at: https://capacitorjs.com/docs/apis/splash-screen#hiding-the-splash-screen
 
+      const { AppLauncher } = await import('@capacitor/app-launcher');
       // Add deep linking listener
       // TODO: test it out, especially with query params
       // check these important requirements https://capacitorjs.com/docs/guides/deep-links#android-configuration
@@ -97,6 +98,35 @@ const initCapacitorPrivileges = async () => {
           console.error('Failed to navigate to deep link:', error);
         }
       });
+
+      // Handle external links to force them to open in the app when possible
+      // This can be used in combination with NuxtLink to ensure proper handling
+      const handleExternalLinks = () => {
+        document.addEventListener('click', async (e) => {
+          const target = e.target as HTMLElement;
+          const anchor = target.closest('a');
+
+          if (anchor && anchor.href && anchor.href.startsWith(useRuntimeConfig().public.originUrl)) {
+            e.preventDefault();
+
+            // Check if the app can handle this URL
+            const { value } = await AppLauncher.canOpenUrl({
+              url: anchor.href.replace('https://', process.env.BUNDLE_OR_APP_ID + '://')
+            });
+
+            if (value) {
+              // Open in the app
+              await AppLauncher.openUrl({
+                url: anchor.href.replace('https://', process.env.BUNDLE_OR_APP_ID + '://')
+              });
+            } else {
+              // Fallback to browser
+              window.open(anchor.href, '_blank');
+            }
+          }
+        });
+      };
+      handleExternalLinks();
 
       // Register back button handler
       let lastBackPressed = 0
@@ -160,17 +190,18 @@ onMounted(async () => {
   if (import.meta.client) {
     const isCap = await isCapacitorDevice
     if (isCap) {
+      const { SplashScreen } = await import('@capacitor/splash-screen')
+      await SplashScreen.hide();
       showRiveSplash.value = true
       await nextTick()
-      // await initCapacitorPrivileges()
+      // showMainContent.value = true
     } else {
       showMainContent.value = true // Skip splash for non-Capacitor
       await nextTick()
-      // await initCapacitorPrivileges()
     }
 
     if (showMainContent.value) {
-      offlineFn() // TODO: test to fix the crashing of offline app! 😠
+      offlineFn()
     }
   }
 });

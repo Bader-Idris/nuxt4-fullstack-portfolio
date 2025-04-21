@@ -133,10 +133,8 @@ const config: CapacitorConfig = {
     // },
     GoogleAuth: {
       scopes: ["openid", "profile", "email"],
-      androidClientId:
-        process.env.GOOGLE_ANDROID_CLIENT_ID,
-      iosClientId:
-        process.env.GOOGLE_IOS_CLIENT_ID,
+      androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
       forceCodeForRefreshToken: true,
     },
     ActionSheet: {
@@ -172,7 +170,7 @@ const config: CapacitorConfig = {
     // Device: {
     // useful with device info as getBatteryInfo(), getLanguageCode(), platform
     // https://capacitorjs.com/docs/apis/device
-    // I use it in main.ts
+    // I use it in app.vue
     // },
     // Dialog: {
     // for alerts, confirmations, and input prompts
@@ -234,12 +232,14 @@ const config: CapacitorConfig = {
       // some android files require it to be cached in. check
       // https://capacitorjs.com/docs/apis/share
     },
-    // StatusBar: {
+    StatusBar: {
       // overlay: false, // Whether the status bar should overlay the webview (optional)
       // can hide top status bar, but not fully implemented as native
       // is there any workaround?
       // https://capacitorjs.com/docs/apis/status-bar
-    // },
+      style: "DARK",
+      backgroundColor: "#01080E",
+    },
     // TextZoom: {
     // I believe using em instead of px is better than this, but try them
     // https://capacitorjs.com/docs/apis/text-zoom

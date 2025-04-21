@@ -42,7 +42,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     if (elementBottom > availableHeight) {
       const offset = elementBottom - availableHeight;
       window.scrollBy({
-        top: offset + 50, // Add 50px padding
+        top: offset + 40, // Add 40px padding
         behavior: "smooth",
       });
     }

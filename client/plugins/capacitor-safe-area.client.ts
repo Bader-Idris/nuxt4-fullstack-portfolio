@@ -21,10 +21,10 @@ export default defineNuxtPlugin(async () => {
         /* Fallback values for capacitor */
         --safe-area-inset-top: 25px;
         // --safe-area-inset-right: 0px;
-        --safe-area-inset-bottom: 0px;
+        --safe-area-inset-bottom: 25px;
         // --safe-area-inset-left: 0px;
-        // --safe-area-inset-status-bar: 0px;
-        --viewport-height: 100vh !important;
+        // --safe-area-inset-status-bar: 50px;
+        // --viewport-height: 100vh !important;
         // TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines
       }
 
@@ -39,14 +39,15 @@ export default defineNuxtPlugin(async () => {
 
   try {
     const STATUS_BAR_HEIGHT = 25; // Fixed status bar height
-    const BOTTOM_INSET_IGNORE = 50; // Amount to reduce from bottom inset
+    const BOTTOM_INSET_IGNORE = -100; // Amount to reduce from bottom inset
 
     const applySafeArea = ({ insets }) => {
       // Calculate adjusted insets
       const adjustedInsets = {
         top: STATUS_BAR_HEIGHT, // Fixed top value
         right: insets.right,
-        bottom: Math.max(0, insets.bottom - BOTTOM_INSET_IGNORE), // Ensure never negative
+        // bottom: Math.max(0, insets.bottom - BOTTOM_INSET_IGNORE), // Ensure never negative
+        bottom: BOTTOM_INSET_IGNORE, // TODO: it adds basic safety, but changing it does not do anything after that 💢
         left: insets.left,
       };
 
@@ -63,7 +64,7 @@ export default defineNuxtPlugin(async () => {
       // For full viewport elements
       document.documentElement.style.setProperty(
         "--viewport-height",
-        `calc(100vh - ${adjustedInsets.top}px - ${adjustedInsets.bottom}px)`
+        `calc(100vh - ${adjustedInsets.top}px + ${adjustedInsets.bottom}px)`
       );
     };
 
