@@ -194,7 +194,7 @@ onMounted(async () => {
       await SplashScreen.hide();
       showRiveSplash.value = true
       await nextTick()
-      // showMainContent.value = true
+      showMainContent.value = true
     } else {
       showMainContent.value = true // Skip splash for non-Capacitor
       await nextTick()
