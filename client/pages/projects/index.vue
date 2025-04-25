@@ -17,14 +17,15 @@
 </template>
 
 <script setup lang="ts">
-const img = useImage()
+// const img = useImage()
 const { t } = useI18n()
 
-const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
-  width: 1200,
-  height: 630,
-  format: 'webp'
-});
+// const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
+//   width: 1200,
+//   height: 630,
+//   format: 'webp'
+// });
+const optimizedProjectsThumbnail = '/imgs/projects_thumbnail.webp'
 
 useSeoMeta({
   title: t('projects.title'),

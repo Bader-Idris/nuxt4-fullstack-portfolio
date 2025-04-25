@@ -37,9 +37,9 @@
 </template>
 
 <script setup lang="ts">
-const img = useImage()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+// const img = useImage()
 
 const windowWidth = ref(500)
 const windowHeight = ref(500)
@@ -53,27 +53,22 @@ onMounted(() => {
   }
 })
 
-// Define thumbnails for each language
-const thumbnailEn = img('/thumbnail.webp', {
-  format: 'webp',
-  width: 1200,
-  height: 630,
-  placeholder: [50, 50, 75, 75]
-})
+// TODO: the whole nuxt/image locally added package doesn't work!
+// const nuxtImgOptions = {
+//   format: 'webp',
+//   width: 1200,
+//   height: 630,
+//   placeholder: [50, 50, 75, 75]
+// }
 
-const thumbnailEs = img('/thumbnail-es.png', {
-  format: 'webp',
-  width: 1200,
-  height: 630,
-  placeholder: [50, 50, 75, 75]
-})
+// // Define thumbnails for each language
+// const thumbnailEn = img('/thumbnail.webp', nuxtImgOptions)
+// const thumbnailEs = img('/thumbnail-es.png', nuxtImgOptions)
+// const thumbnailAr = img('/thumbnail-ar.png', nuxtImgOptions)
 
-const thumbnailAr = img('/thumbnail-ar.png', {
-  format: 'webp',
-  width: 1200,
-  height: 630,
-  placeholder: [50, 50, 75, 75]
-})
+const thumbnailEn = '/thumbnail.webp'
+const thumbnailEs = '/thumbnail-es.png'
+const thumbnailAr = '/thumbnail-ar.png'
 
 // Create a computed property to determine which thumbnail to use
 const optimizedThumbnail = computed(() => {
