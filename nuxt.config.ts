@@ -3,7 +3,7 @@ import { definePerson } from "nuxt-schema-org/schema";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
-  compatibilityDate: "2025-03-31",
+  compatibilityDate: "2025-04-26",
   devtools: { enabled: true },
   srcDir: "./client",
   alias: {
@@ -114,7 +114,7 @@ export default defineNuxtConfig({
         {
           // entry: "electron/preload/index.ts",
           entry: "electron/preload.ts",
-          onstart(options) {
+          onstart(options: any) {
             options.reload();
           },
         },
@@ -277,7 +277,7 @@ export default defineNuxtConfig({
   },
   image: {
     provider: "ipx",
-    format: ["webp", "jpeg", "png","svg"],
+    format: ["webp", "jpeg", "png", "svg"],
     dir: "public",
   },
   postcss: {
@@ -368,7 +368,7 @@ export default defineNuxtConfig({
     // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
     identity: definePerson({
       name: "Bader Idris",
-      image: "/imgs/me_2024-03-13.jpg",
+      image: "/imgs/meTwentyFour.jpg",
       description: "Full stack developer",
       url: "baderidris.com",
       sameAs: [
@@ -435,10 +435,10 @@ export default defineNuxtConfig({
   scripts: {
     registry: {
       googleAnalytics: {
-        id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+        id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "",
       },
       googleTagManager: {
-        id: process.env.GOOGLE_TAG_MANAGER_ID,
+        id: process.env.GOOGLE_TAG_MANAGER_ID || "",
       },
     },
   },

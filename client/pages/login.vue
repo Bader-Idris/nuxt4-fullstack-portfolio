@@ -181,12 +181,6 @@ const login = async (): Promise<void> => {
   }
 };
 
-// const socialLogin = (provider: string) => {
-//   if (import.meta.client) {
-//     window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
-//   }
-// };
-
 // Function to handle social login
 const socialLogin = async (provider: string) => {
   if (provider === 'google') {
@@ -195,7 +189,7 @@ const socialLogin = async (provider: string) => {
     } else {
       // Fallback for non-Capacitor (e.g., web)
       if (import.meta.client) {
-        window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/google`;
+        window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
       }
     }
   } else {
@@ -215,40 +209,67 @@ const google = async () => {
     const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
     await GoogleAuth.initialize();
 
-    // Perform Google sign-in and extract access token
-    const {
-      authentication: { accessToken: googleAccessToken },
-    } = await GoogleAuth.signIn();
+    // =============================================
+    // TODO: Only for reference!
+    // await GoogleAuth.signIn();
+    // TODO: get the user info from google then set it in the store
+    // =============================================
 
-    // Send Google access token to your server for validation
-    const response = await $fetch('/api/v1/auth/google', {
-      method: 'POST',
-      body: { googleAccessToken },
+    // Perform Google sign-in
+    const googleResponse = await GoogleAuth.signIn();
+    const { serverAuthCode, authentication, email, name } = googleResponse;
+
+    if (!serverAuthCode) {
+      throw new Error('No serverAuthCode received from Google');
+    }
+
+    // Log for debugging
+    console.log('🎈serverAuthCode:🎈', serverAuthCode);
+    console.log('🎈authentication:🎈', authentication);
+    console.log('🎈googleResponse:🎈', googleResponse);
+
+    // Simulate the callback by sending the serverAuthCode to the callback endpoint
+    const response = await $fetch('/api/v1/auth/google/callback', {
+      method: 'GET', // Match the server's expected method
+      query: { code: serverAuthCode }, // Pass as query param like the web flow
       baseURL: useRuntimeConfig().public.originUrl,
-      credentials: 'include',
+      credentials: 'include', // Ensure cookies are sent/received
     });
 
-    const { user: serverUser } = response
-    if (!serverUser || !serverUser.name || !serverUser.userId || !serverUser.role) {
-      throw new Error('Invalid response format from server')
-    }
+    // The server redirects to /dashboard?tokenUser=..., but $fetch follows redirects
+    // and returns the final response. We expect the cookies to be set by the server.
+    console.log('🎈server response:🎈', response);
 
-    // Set user in store
-    const userData = {
-      username: serverUser.name,
-      userId: serverUser.userId,
-      role: serverUser.role,
-    }
-    userStore.setUser(userData)
+    // Extract user data from the redirected URL query if present
+    // Since $fetch follows redirects, we may need to parse the Location header or rely on cookies
+    // For simplicity, assume the server sets cookies and we fetch user data from them
 
-    // Handle Capacitor cookies (client-side only)
-    if (import.meta.client && await isCapacitorDevice) {
-      const { CapacitorCookies } = await import('@capacitor/core')
-      const cookies = await CapacitorCookies.getCookies()
+    // Handle Capacitor cookies
+    let accessTokenFromCookie = null;
+    if (import.meta.client && (await isCapacitorDevice)) {
+      const { CapacitorCookies } = await import('@capacitor/core');
+      const cookies = await CapacitorCookies.getCookies();
+      console.log('🎈cookies:🎈', cookies);
       if (cookies.accessToken) {
-        accessToken.value = cookies.accessToken
+        accessToken.value = cookies.accessToken;
+        accessTokenFromCookie = cookies.accessToken;
       }
     }
+
+    // Since server doesn't return user data in body (it redirects), we can:
+    // 1. Use data from GoogleAuth.signIn() if cookies are set
+    // 2. Or fetch user data separately if needed
+    if (!accessTokenFromCookie) {
+      throw new Error('No access token received in cookies');
+    }
+
+    // Set user in store using Google response data (as a fallback)
+    const userData = {
+      username: name || 'Unknown', // Fallback if name is missing
+      userId: googleResponse.id || authentication.idToken.split('.')[2], // Extract from idToken if needed
+      role: 'user', // Default role, adjust if server provides it
+    };
+    userStore.setUser(userData);
 
     // Display success toast message
     toast('Successfully logged in with Google', {
@@ -269,6 +290,12 @@ const google = async () => {
       type: 'error',
       position: 'top-center',
     });
+
+    // Fallback: If native fails, attempt web flow
+    if (import.meta.client) {
+      console.log('Falling back to web flow');
+      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/google`;
+    }
   } finally {
     googleLoading.value = false;
   }

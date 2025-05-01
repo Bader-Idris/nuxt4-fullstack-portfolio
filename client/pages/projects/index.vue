@@ -25,7 +25,7 @@ const { t } = useI18n()
 //   height: 630,
 //   format: 'webp'
 // });
-const optimizedProjectsThumbnail = '/imgs/projects_thumbnail.webp'
+const optimizedProjectsThumbnail = `${useRuntimeConfig().public.originUrl}/imgs/projects_thumbnail.webp`
 
 useSeoMeta({
   title: t('projects.title'),
@@ -36,6 +36,13 @@ useSeoMeta({
   ogImageWidth: 1200,
   ogImageHeight: 630,
 })
+
+// defineOgImageComponent('projectsThumbnail', {
+//   url: optimizedProjectsThumbnail,
+//   width: 1200,
+//   height: 630,
+//   alt: t('projects.title'),
+// })
 
 useSchemaOrg([
   {

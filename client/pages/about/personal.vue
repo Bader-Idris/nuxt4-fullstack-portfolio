@@ -75,7 +75,7 @@ useSeoMeta({
   description: t('about.personal.description'),
   ogTitle: t('about.personal.title'),
   ogDescription: t('about.personal.description'),
-  ogImage: '/imgs/meTwentyFour.jpg',
+  ogImage: useRuntimeConfig().public.originUrl + '/imgs/meTwentyFour.jpg',
   twitterCard: 'summary_large_image',
 })
 
@@ -90,8 +90,8 @@ useSchemaOrg([
       name: "Bader Idris",
       jobTitle: t('about.personal.schema.jobTitle'),
       description: t('about.personal.schema.personDescription'),
-      image: useRuntimeConfig().public.siteUrl + '/imgs/meTwentyFour.jpg',
-      url: useRuntimeConfig().public.siteUrl + useRoute().path,
+      image: useRuntimeConfig().public.originUrl + '/imgs/meTwentyFour.jpg',
+      url: useRuntimeConfig().public.originUrl + useRoute().path,
       sameAs: [
         "https://github.com/bader-idris",
         "https://linkedin.com/in/bader-idris"

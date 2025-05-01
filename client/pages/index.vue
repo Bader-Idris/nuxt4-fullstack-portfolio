@@ -66,9 +66,9 @@ onMounted(() => {
 // const thumbnailEs = img('/thumbnail-es.png', nuxtImgOptions)
 // const thumbnailAr = img('/thumbnail-ar.png', nuxtImgOptions)
 
-const thumbnailEn = '/thumbnail.webp'
-const thumbnailEs = '/thumbnail-es.png'
-const thumbnailAr = '/thumbnail-ar.png'
+const thumbnailEn = `${useRuntimeConfig().public.originUrl}/thumbnail.webp`
+const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.png`
+const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.png`
 
 // Create a computed property to determine which thumbnail to use
 const optimizedThumbnail = computed(() => {
