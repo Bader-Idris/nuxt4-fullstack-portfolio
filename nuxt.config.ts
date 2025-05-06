@@ -240,6 +240,7 @@ export default defineNuxtConfig({
         code: "en",
         iso: "en-US",
         dir: "ltr",
+        language: 'en',
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
         // https://i18n.nuxtjs.org/docs/guide/lazy-load-translations#basic-usage
         // TODO: 🥊 to be able to fetch from nuxt server 🥊
@@ -250,6 +251,7 @@ export default defineNuxtConfig({
         code: "ar",
         iso: "ar-PS",
         dir: "rtl",
+        language: 'ar',
         file: "ar-PS.json",
         name: "العربية",
       },
@@ -257,6 +259,7 @@ export default defineNuxtConfig({
         code: "es",
         iso: "es-ES",
         dir: "ltr",
+        language: 'es',
         file: "es-ES.json",
         name: "Español",
       },
