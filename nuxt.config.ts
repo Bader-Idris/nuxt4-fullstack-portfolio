@@ -240,7 +240,7 @@ export default defineNuxtConfig({
         code: "en",
         iso: "en-US",
         dir: "ltr",
-        language: 'en',
+        language: "en",
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
         // https://i18n.nuxtjs.org/docs/guide/lazy-load-translations#basic-usage
         // TODO: 🥊 to be able to fetch from nuxt server 🥊
@@ -251,7 +251,7 @@ export default defineNuxtConfig({
         code: "ar",
         iso: "ar-PS",
         dir: "rtl",
-        language: 'ar',
+        language: "ar",
         file: "ar-PS.json",
         name: "العربية",
       },
@@ -259,7 +259,7 @@ export default defineNuxtConfig({
         code: "es",
         iso: "es-ES",
         dir: "ltr",
-        language: 'es',
+        language: "es",
         file: "es-ES.json",
         name: "Español",
       },
@@ -403,6 +403,7 @@ export default defineNuxtConfig({
     public: {
       originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
       socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
+      isCapacitor: process.env.IS_CAPACITOR === "true",
       // for web-push pkg
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
     },
@@ -414,7 +415,7 @@ export default defineNuxtConfig({
     jwtSecret: process.env.JWT_SECRET,
     jwtLifetime: process.env.JWT_LIFETIME || "1h",
     nodeEnv: process.env.NODE_ENV || "production",
-    originUrl: process.env.DOMAIN_NAME,
+    originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
     // mongoUri: process.env.MONGO_URI,
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -446,3 +447,4 @@ export default defineNuxtConfig({
     },
   },
 });
+
