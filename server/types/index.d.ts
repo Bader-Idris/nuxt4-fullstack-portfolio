@@ -1,5 +1,5 @@
-import type {} from /* types from models */ "./models.d.ts";
-import type {} from "./auth.d.ts";
+import type {} from /* types from models */ "./models.d.js";
+import type {} from "./auth.d.js";
 import type { Redis } from "ioredis";
 
 declare module "nitropack" {

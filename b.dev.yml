@@ -10,7 +10,7 @@ services:
     volumes:
       - ./.output/public:/usr/share/nginx/html:ro
       - ./server/config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      # If it doesn't exist; do "openssl dhparam -out dhparam.pem 2048" in server, migth need chmod 600 /etc/nginx/dhparam.pem, default unix path for certs is: /etc/ssl/certs
+      # If it doesn't exist; do "openssl dhparam -out dhparam.pem 2048" in server, might need chmod 600 /etc/nginx/dhparam.pem, default unix path for certs is: /etc/ssl/certs
       - ./server/config/certbot/dhparam.pem:/etc/nginx/dhparam.pem:ro
       - nginx-logs:/var/log/nginx
 

@@ -4,6 +4,8 @@ import { Server } from "socket.io";
 import { defineEventHandler, createError } from "h3";
 import { isTokenValid } from "../utils/jwt";
 import { Message } from "../models/mongo";
+// docs: https://github.com/animir/node-rate-limiter-flexible/wiki/Overall-example#websocket-single-connection-prevent-flooding
+import { RateLimiterRedis } from "rate-limiter-flexible";
 import { redisClient } from "./redis";
 // with multi replicas
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
@@ -15,6 +17,41 @@ import { getSubscription } from "../utils/redisUtils";
 
 export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
+    // --- START: Production-Ready Rate Limiters ---
+    const maxPointsPerSecond = 5; // General limit per IP per second
+    const maxPointsPerMinute = 50; // Stricter limit for expensive actions
+
+    // 1. Connection Rate Limiter (per IP)
+    // Limits how many times a single IP can attempt to connect per second.
+    // This is your first defense against connection floods.
+    const connectionLimiter = new RateLimiterRedis({
+      storeClient: redisClient,
+      keyPrefix: "limit_conn_ip",
+      points: maxPointsPerSecond,
+      duration: 1, // Per 1 second
+      blockDuration: 60 * 10, // Block for 10 minutes if consumed more than points
+    });
+
+    // 2. High-Cost Action Limiter (per User ID)
+    // Stricter limit for resource-intensive events like creating or starting a game.
+    // We use the User ID to prevent one user from spamming these actions.
+    const gameActionLimiter = new RateLimiterRedis({
+      storeClient: redisClient,
+      keyPrefix: "limit_game_action_user",
+      points: 5, // Only 5 expensive actions...
+      duration: 60, // ...per minute
+    });
+
+    // 3. General Event Limiter (per User ID)
+    // A more lenient limiter for frequent events like chat messages or hitting the buzzer.
+    const generalEventLimiter = new RateLimiterRedis({
+      storeClient: redisClient,
+      keyPrefix: "limit_event_user",
+      points: maxPointsPerMinute,
+      duration: 60, // Per 1 minute
+    });
+    // --- END: Production-Ready Rate Limiters ---
+
     const webpush = createWebPushInstance();
 
     // Access the Redis storage that was mounted in another plugin
@@ -256,7 +293,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         } else {
           // Target is offline, send push notification
           // const subscription = await getSubscription(to);
-          const redis = redisClient; // TODO: or event.context.redis 
+          const redis = redisClient; // TODO: or event.context.redis
           const subscription = await getSubscription(redis, to);
           if (subscription) {
             try {
@@ -301,7 +338,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
             .sort({ timestamp: -1 }) // Sort by timestamp, most recent first
             .skip((page - 1) * limit) // Skip messages for previous pages
             .limit(limit); // Limit the number of messages returned
-            callback({ messages });
+          callback({ messages });
 
           socket.emit("message-history", messages);
         } catch (error) {
@@ -385,7 +422,10 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
             // @ts-expect-error private method and property
             engine.prepare(peer._internal.nodeReq);
             // @ts-expect-error private method and property
-            engine.onWebSocket( peer._internal.nodeReq, peer._internal.nodeReq.socket, peer.websocket
+            engine.onWebSocket(
+              peer._internal.nodeReq,
+              peer._internal.nodeReq.socket,
+              peer.websocket
             );
           },
         },

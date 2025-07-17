@@ -26,7 +26,8 @@
 <script setup lang="ts">
 import 'vue3-toastify/dist/index.css'
 import { storeToRefs } from 'pinia'
-import { useUserStore } from '~/stores/UserNameStore'
+// import { useUserStore } from '~/stores/UserNameStore'
+import { useUserStore } from '~/stores/useUserSocket';
 const { t } = useI18n()
 
 // For CapacitorJS integration

@@ -49,17 +49,18 @@
     </div>
 
     <div v-if="showPrompt" class="prompt">
-      <CustomButtons button-type="ghost">
+      <CustomButton button-type="ghost">
         <CustomLink aria-label="login page" to="/login" class="internal-link">
           login page
         </CustomLink>
-      </CustomButtons>
+      </CustomButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '~/stores/UserNameStore'
+// import { useUserStore } from '~/stores/UserNameStore'
+import { useUserStore } from '~/stores/useUserSocket';
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 

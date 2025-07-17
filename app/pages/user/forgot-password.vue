@@ -11,12 +11,12 @@
         class="input"
         aria-labelledby="email"
       >
-      <CustomButtons
+      <CustomButton
         button-type="primary"
         aria-label="Reset Password"
       >
         <span>send email</span>
-      </CustomButtons>
+      </CustomButton>
     </form>
   </div>
 </template>

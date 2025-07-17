@@ -14,12 +14,12 @@
         placeholder="Confirm new password"
         required
       >
-      <CustomButtons
+      <CustomButton
         button-type="primary"
         aria-label="Reset Password"
       >
         <span>Reset Password</span>
-      </CustomButtons>
+      </CustomButton>
     </form>
   </div>
 </template>

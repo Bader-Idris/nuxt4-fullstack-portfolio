@@ -34,7 +34,7 @@
           </CustomLink>
           <p>{{ project.desc }}</p>
 
-          <CustomButtons
+          <CustomButton
             button-type="default"
             class="project-link"
           >
@@ -42,7 +42,7 @@
             <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)"> -->
               View Project
             </CustomLink>
-          </CustomButtons>
+          </CustomButton>
         </div>
       </div>
     </div>

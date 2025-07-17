@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { useColorMode } from '@vueuse/core'
 
 useHead({
   // link: []
@@ -37,9 +38,11 @@ useHead({
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n({ useScope: 'global' })
+
 const config = useRuntimeConfig()
 const isCapacitorBuild = config.public.isCapacitor === true
 const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
+useColorMode()
 
 // This single ref now controls whether the splash or the main app is shown.
 // It defaults to false, so SSR and standard web builds render the app directly.
@@ -93,17 +96,6 @@ const handleBeforeEnter = () => {
     isFirstLoad.value = false
   }
 }
-
-// const notifyOffline = async function () {
-//   if (await isCapacitorDevice) {
-//     const { Toast } = await import('@capacitor/toast')
-//     await Toast.show({
-//       text: t("messages.NetworkStatus.offline"),
-//       duration: 'long',
-//       position: 'bottom'
-//     })
-//   } else return
-// }
 
 // Initialize Capacitor functionality
 const initCapacitorPrivileges = async () => {

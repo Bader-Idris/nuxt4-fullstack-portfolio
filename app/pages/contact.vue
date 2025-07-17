@@ -80,9 +80,9 @@
       <section 
         v-if="authStore.user?.role === 'admin'"
         class="received-to-admin">
-        <CustomButtons button-type="ghost">
+        <CustomButton button-type="ghost">
           <CustomLink :to="localePath('/contact/admin')">fetch-messages</CustomLink>
-        </CustomButtons>
+        </CustomButton>
       </section>
       <span v-else />
       <NuxtPage />
@@ -92,7 +92,8 @@
 
 <script setup lang="ts">
 // import { useClipboard } from '@vueuse/core';
-import { useUserStore } from '~/stores/UserNameStore';
+// import { useUserStore } from '~/stores/UserNameStore';
+import { useUserStore } from '~/stores/useUserSocket';
 const localePath = useLocalePath()
 // const { t } = useI18n()
 

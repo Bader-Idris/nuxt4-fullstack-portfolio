@@ -40,12 +40,12 @@
         :to="localePath('/about')"
         class="internal-link"
       >
-        <CustomButtons
+        <CustomButton
           button-type="ghost"
           class="skip"
         >
           {{ $t('home.skip') }}
-        </CustomButtons>
+        </CustomButton>
       </CustomLink>
     </div>
   </div>

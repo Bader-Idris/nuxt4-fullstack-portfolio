@@ -6,12 +6,12 @@
       </p>
     </div>
     <div v-if="!gameStarted || gameOver" class="outcome-display">
-      <CustomButtons 
+      <CustomButton 
         v-if="!gameStarted && !gameOver" 
         button-type="ghost"
         @click="startGame">
         {{ $t('home.gameCommand') }}
-      </CustomButtons>
+      </CustomButton>
 
       <p v-if="gameOver && congratsMessage" class="outcome">
         {{ isWon }}

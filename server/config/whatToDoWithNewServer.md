@@ -6,7 +6,7 @@
 2. **add a new user**: `sudo useradd -m -s /bin/bash <username>`
 3. **set a password for the new user**: `sudo passwd <username>`
 4. **add the new user to the sudoers file**: `echo "<username> ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers`
-5. **secure ssh**: `sudo nano /etc/ssh/sshd_config` and change `PermitRootLogin yes` to `PermitRootLogin no`
+5. *Don't Do this step*, it freezes digitalOcean's droplets even for consoles!! **secure ssh**: `sudo nano /etc/ssh/sshd_config` and change `PermitRootLogin yes` to `PermitRootLogin no`
 6. **install ufw**: `sudo apt install ufw`
 7. **allow ssh and http**: `sudo ufw allow ssh` and `sudo ufw allow http`
 8. **enable ufw**: `sudo ufw enable`

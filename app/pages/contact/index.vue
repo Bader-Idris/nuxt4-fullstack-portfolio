@@ -170,12 +170,12 @@ onBeforeUnmount(() => {
         :placeholder="t('contact.form.message_placeholder')" 
         style="resize: vertical"
         required />
-      <CustomButtons 
+      <CustomButton 
         button-type="default" 
         :disabled="isLoading"
         @click.prevent.stop="handleSubmit">
         {{ isLoading ? t('contact.form.sending') : t('contact.form.submit') }}
-      </CustomButtons>
+      </CustomButton>
     </div>
 
     <div v-else class="thank-you">
@@ -194,9 +194,9 @@ onBeforeUnmount(() => {
         loading="lazy"
       ></img>
       <p>{{ t('messages.thank_you.emailMsg') }}</p>
-      <CustomButtons button-type="default" @click="resetForm">{{
+      <CustomButton button-type="default" @click="resetForm">{{
         t('contact.form.send_new') }}
-      </CustomButtons>
+      </CustomButton>
     </div>
 
     <!-- Display the message as code format -->

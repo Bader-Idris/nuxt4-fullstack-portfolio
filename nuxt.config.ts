@@ -5,9 +5,9 @@ export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   compatibilityDate: "2025-04-26",
   devtools: { enabled: true },
-  srcDir: "./client",
+  srcDir: "./app",
   alias: {
-    "@": "./client",
+    "@": "./app",
     "@server": "./server",
   },
   serverDir: "./server",
@@ -47,6 +47,9 @@ export default defineNuxtConfig({
       // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
+    future: {
+      compatibilityVersion: 4,
+    },
     experimental: {
       websocket: true,
       // asyncContext: true,
@@ -75,7 +78,7 @@ export default defineNuxtConfig({
     tsConfig: {
       compilerOptions: {
         paths: {
-          "@/*": ["./client/*"],
+          "@/*": ["./app/*"],
           "@server/*": ["./server/*"],
         },
       },
@@ -234,7 +237,7 @@ export default defineNuxtConfig({
     },
     lazy: true,
     // seo: true,
-    langDir: "../client/i18n/locales/",
+    langDir: "../app/i18n/locales/",
     locales: [
       {
         code: "en",
@@ -274,15 +277,15 @@ export default defineNuxtConfig({
   },
   pinia: {
     storesDirs: [
-      "./client/stores/**",
+      "./app/stores/**",
       // "./custom-folder/stores/**",
     ],
   },
-  image: {
-    provider: "ipx",
-    format: ["webp", "jpeg", "png", "svg"],
-    dir: "public",
-  },
+  // image: {
+  //   provider: "ipx",
+  //   format: ["webp", "jpeg", "png", "svg"],
+  //   dir: "./public",
+  // },
   postcss: {
     plugins: {
       "postcss-flexbugs-fixes": {},

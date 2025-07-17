@@ -9,14 +9,14 @@
     </div>
     <div v-else class="warn">
       <p>Please check your email again</p>
-      <CustomButtons
+      <CustomButton
         class="go-back"
         button-type="primary"
         aria-label="go to main page">
         <CustomLink :to="localePath('/')">
           <span> or go back to main page </span>
         </CustomLink>
-      </CustomButtons>
+      </CustomButton>
     </div>
   </div>
 </template>
