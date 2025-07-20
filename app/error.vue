@@ -32,7 +32,7 @@ defineProps({
   align-items: center;
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
   }
 

@@ -194,11 +194,11 @@ onUnmounted(() => {
 .about-me {
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
   }
 
-  @media screen and (max-width: 768px) {
+  @include mobile {
     overflow-y: scroll;
     padding-bottom: 10vh;
   }
@@ -207,7 +207,7 @@ onUnmounted(() => {
     width: 300px;
     display: flex;
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       width: calc(100vw - 30px);
     }
 
@@ -220,7 +220,7 @@ onUnmounted(() => {
       width: 60px;
       border-right: 1px solid $lines;
 
-      @media (max-width: 768px) {
+      @include mobile {
         display: none;
       }
 
@@ -228,11 +228,12 @@ onUnmounted(() => {
         margin: 10px;
         cursor: pointer;
         width: 24px;
-
+        @include transition-ease;
         &:hover,
         &.active {
           filter: brightness(4);
           opacity: 0.9;
+          @include transition-ease;
         }
       }
     }
@@ -243,7 +244,7 @@ onUnmounted(() => {
       position: relative;
       display: inline-block;
 
-      @media (max-width: 768px) {
+      @include mobile {
         left: 0;
       }
 
@@ -264,9 +265,11 @@ onUnmounted(() => {
         }
 
         > p {
+          @include transition-ease;
           &:hover {
             color: $secondary4;
             cursor: pointer;
+            @include transition-ease;
           }
 
           &.active {
@@ -286,7 +289,7 @@ onUnmounted(() => {
       opacity 0.5s ease,
       visibility 0.5s ease;
 
-    @media (max-width: 768px) {
+    @include mobile {
       width: calc(100vw - 57px);
     }
 
@@ -299,15 +302,17 @@ onUnmounted(() => {
     }
 
     p {
+      @include transition-ease;
       margin: 10px;
       cursor: pointer;
       width: fit-content;
 
-      @media screen and (max-width: 768px) {
+      @include mobile {
         width: 100%;
       }
 
       &:hover {
+        @include transition-ease;
         color: $secondary4;
         cursor: pointer;
       }

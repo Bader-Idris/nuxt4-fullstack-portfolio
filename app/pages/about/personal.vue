@@ -222,14 +222,14 @@ onMounted(() => {
   align-items: center;
   width: calc(100% - 300px);
 
-  @media screen and (max-width: 768px) {
+  @include mobile {
     width: 100%;
     position: relative;
     display: flex;
     flex-direction: column;
   }
 
-  @media screen and (min-width: 769px) {
+  @include tablet-to-up {
     left: 300px;
     position: absolute;
     top: 0;
@@ -240,7 +240,7 @@ onMounted(() => {
     width: calc(50% - 20px);
     padding: 0 20px;
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       width: 100%;
       padding: 0 20px;
     }
@@ -252,7 +252,7 @@ onMounted(() => {
     cursor: grab;
     user-select: none;
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       & {
         overflow-y: auto;
       }
@@ -262,7 +262,7 @@ onMounted(() => {
       cursor: grabbing;
     }
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       height: inherit;
 
       & p {
@@ -278,7 +278,7 @@ onMounted(() => {
     max-height: 400px;
     padding: 20px;
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       margin-left: 40px;
       width: calc(100vw - 30px);
     }

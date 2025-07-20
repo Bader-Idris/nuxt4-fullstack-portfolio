@@ -55,6 +55,56 @@
   }
 }
 
+@mixin transition-ease {
+  // transition: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+  transition: all 0.5s ease-in-out;
+}
+
+@mixin mobile {
+  @media screen and (max-width: 768px) {
+    @content; // This allows you to pass in styles
+  }
+}
+
+// Mixin for Tablets
+@mixin tablet {
+  @media screen and (min-width: 769px) and (max-width: 1024px) {
+    @content; // This allows you to pass in styles
+  }
+}
+
+// Mixin for Small PCs / Laptops
+@mixin small-pc {
+  @media screen and (min-width: 1025px) and (max-width: 1440px) {
+    @content; // This allows you to pass in styles
+  }
+}
+
+// Mixin for Large PCs / Desktops
+@mixin large-pc {
+  @media screen and (min-width: 1441px) {
+    @content; // This allows you to pass in styles
+  }
+}
+
+@mixin tablet-to-up {
+  @media screen and (min-width: 769px) {
+    @content; // This allows you to pass in styles
+  }
+}
+
+/* 
+.example {
+  @include mobile {
+    font-size: 14px; // Mobile-specific styles
+  }
+
+  @include tablet {
+    font-size: 18px; // Tablet-specific styles
+  }
+}
+*/
+
 /*
 border-radius: 0 0 5px 5px;
 &:not(.phone-body) {

@@ -116,7 +116,7 @@ useSeoMeta({
   padding: 50px;
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
     overflow: visible !important;
     height: calc(100vh - 95px);
@@ -139,7 +139,7 @@ useSeoMeta({
       position: relative;
     }
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       width: 80%;
       margin: auto;
     }
@@ -158,7 +158,7 @@ useSeoMeta({
         font-size: $headline-size * 1.2 !important;
       }
 
-      @media screen and (max-width: 768px) {
+      @include mobile {
         font-size: $headline-size !important;
         line-height: 1.2;
         font-weight: normal;
@@ -213,7 +213,7 @@ useSeoMeta({
         transform: scale(0.5);
       }
 
-      @media screen and (min-width: 768px) {
+      @include tablet-to-up {
         margin-right: 10%;
       }
 
@@ -231,7 +231,7 @@ useSeoMeta({
           font-size: $sub-headline-size;
           margin-bottom: 100px;
 
-          @media (max-width: 768px) {
+          @include mobile {
             margin-bottom: 10px;
             font-size: $body-text-size * 1.5;
             margin-top: 0;
@@ -250,7 +250,7 @@ useSeoMeta({
           }
         }
 
-        @media (max-width: 768px) {
+        @include mobile {
           span:first-of-type {
             font-size: $sub-headline-size * 0.8;
             letter-spacing: -1px;
@@ -274,7 +274,7 @@ useSeoMeta({
           color: $secondary1;
         }
 
-        @media (max-width: 768px) {
+        @include mobile {
           display: none;
         }
       }
@@ -286,11 +286,11 @@ useSeoMeta({
           width: 300px;
           letter-spacing: -0.7px;
 
-          @media (max-width: 768px) {
+          @include mobile {
             font-size: 18px;
           }
 
-          @media (min-width: 769px) {
+          @include tablet-to-up {
             display: none;
           }
 
@@ -299,7 +299,7 @@ useSeoMeta({
           }
         }
 
-        @media (max-width: 768px) {
+        @include mobile {
           font-size: $sub-headline-size * 0.6;
         }
 
@@ -313,12 +313,12 @@ useSeoMeta({
             font-size: 14px;
           }
 
-          @media screen and (max-width: 768px) {
+          @include mobile {
             display: block;
             margin-top: 5px;
           }
 
-          @media screen and (min-width: 768px) {
+          @include tablet-to-up {
             margin-top: 10px;
           }
         }
@@ -329,12 +329,12 @@ useSeoMeta({
           width: 100%;
           height: 100%;
 
-          @media screen and (max-width: 768px) {
+          @include mobile {
             bottom: -20px;
             left: -10.5em;
           }
 
-          @media screen and (min-width: 768px) {
+          @include tablet-to-up {
             & {
               top: 0;
               left: -10px;
@@ -356,7 +356,7 @@ useSeoMeta({
         }
       }
 
-      @media (max-width: 768px) {
+      @include mobile {
         display: flex;
         flex-direction: column;
         height: 80vh;
@@ -382,7 +382,7 @@ useSeoMeta({
       }
     }
 
-    @media (max-width: 768px) {
+    @include mobile {
       flex-direction: column;
 
       > aside {
@@ -390,7 +390,7 @@ useSeoMeta({
       }
     }
 
-    @media (min-width: 769px) {
+    @include tablet-to-up {
       width: 100% !important;
       justify-content: center;
     }

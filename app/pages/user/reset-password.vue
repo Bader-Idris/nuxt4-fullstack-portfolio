@@ -92,7 +92,7 @@ async function resetPassword() {
 .reset-password-form {
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
   }
 
@@ -120,13 +120,13 @@ async function resetPassword() {
     border-radius: 4px;
     text-align: center;
 
-    @media screen and (min-width: 769px) {
+    @include tablet-to-up {
       margin: auto 50px;
       width: 50%;
       transform: translate(50%, 50%);
     }
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       margin: 20px;
     }
   }

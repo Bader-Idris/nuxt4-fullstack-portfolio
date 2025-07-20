@@ -46,7 +46,7 @@ watch(
   }
 }
 
-@media (min-width: 769px) {
+@include tablet-to-up {
   #line {
     width: 1px;
     top: 30px;
@@ -64,7 +64,7 @@ watch(
   padding-left: 10px;
   user-select: none;
 
-  @media (max-width: 768px) {
+  @include mobile {
     background-color: $lines;
     height: 30px;
     align-items: center;
@@ -76,7 +76,7 @@ watch(
     transition: transform 0.3s ease-in-out;
     padding: 2px;
     margin: 0px 5px 0;
-    @media (min-width: 768px) {
+    @include tablet-to-up {
       position: relative;
       top: 4px;
     }

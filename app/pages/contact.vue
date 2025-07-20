@@ -167,7 +167,7 @@ const copyToClipboard = async (index: number): Promise<void> => {
 .about-me {
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
     overflow-y: scroll !important;
   }
@@ -229,9 +229,11 @@ const copyToClipboard = async (index: number): Promise<void> => {
         }
 
         a {
+          @include transition-ease;
           color: $secondary1;
 
           &:hover {
+            @include transition-ease;
             color: $secondary4;
           }
         }

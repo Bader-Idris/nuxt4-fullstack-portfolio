@@ -3,7 +3,7 @@ import { definePerson } from "nuxt-schema-org/schema";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
-  compatibilityDate: "2025-04-26",
+  compatibilityDate: "2025-07-18",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {
@@ -48,7 +48,7 @@ export default defineNuxtConfig({
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     future: {
-      compatibilityVersion: 4,
+      compatibilityVersion: 5,
     },
     experimental: {
       websocket: true,

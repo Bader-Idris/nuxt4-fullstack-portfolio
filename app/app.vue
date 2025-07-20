@@ -5,7 +5,7 @@
     @animation-stopped="hideSplashAndShowApp"
   />
 
-  <template v-else>
+  <template v-if="showMainContent || !config.public.isCapacitor">
     <NuxtLayout>
       <NuxtPage v-slot="{ Component }">
         <Transition
@@ -38,149 +38,133 @@ useHead({
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n({ useScope: 'global' })
-
 const config = useRuntimeConfig()
-const isCapacitorBuild = config.public.isCapacitor === true
-const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
+
+// --- State ---
+const showRiveSplash = ref(false)
+const showMainContent = ref(false)
+const isFirstLoad = ref(true)
+const isOffline = ref(false)
+
 useColorMode()
 
-// This single ref now controls whether the splash or the main app is shown.
-// It defaults to false, so SSR and standard web builds render the app directly.
-const showRiveSplash = ref(false)
-const isFirstLoad = ref(true)
+// --- Lifecycle & Initialization Flow ---
 
-// --- Lifecycle and Initialization ---
 onMounted(async () => {
-  isFirstLoad.value = false // For page transition logic
+  isFirstLoad.value = false
 
-  if (isCapacitorBuild && import.meta.client) {
-    // For Electron builds, we want to show our custom splash screen.
-    showRiveSplash.value = true
-    // If you are using Capacitor for Electron, hide its native splash.
-    if (await isCapacitorDevice) {
+  if (!import.meta.client) return
+
+  try {
+    const { Capacitor } = await import('@capacitor/core')
+
+    if (config.public.isCapacitor === true && Capacitor.isNativePlatform()) {
+      // For native Capacitor builds, show the Rive splash screen first.
+      showRiveSplash.value = true
       const { SplashScreen } = await import('@capacitor/splash-screen')
       await SplashScreen.hide()
+    } else {
+      // For web builds, show the main content and initialize immediately.
+      showMainContent.value = true
+      await initializeMainApp()
     }
-  } else {
-    // For SSR or regular web builds, initialize the app immediately.
+  } catch (error) {
+    console.error("Error during platform check, falling back to web mode:", error)
+    // Ensure the app is still rendered even if the platform check fails.
+    showMainContent.value = true
     await initializeMainApp()
   }
 })
 
 /**
- * Hides the Rive splash screen and initializes the main application logic.
- * This is triggered by the @animation-stopped event from the RiveSplash component.
+ * Hides the Rive splash screen and shows the main app.
+ * Crucially, it renders the main content BEFORE initializing Capacitor plugins.
  */
 const hideSplashAndShowApp = async () => {
   showRiveSplash.value = false
-  await nextTick() // Wait for the DOM to update before initializing
-  await initializeMainApp()
+  showMainContent.value = true // 1. Show the main app UI to prevent a blank screen.
+  await nextTick() // 2. Wait for the DOM to update.
+  await initializeMainApp() // 3. THEN, initialize the plugins.
 }
 
 /**
  * Groups the main application's client-side initializations.
- * This includes Capacitor-specific features and network status listeners.
+ * This function is now safely called after the main UI is visible.
  */
 const initializeMainApp = async () => {
-  if (import.meta.client) {
-    if (await isCapacitorDevice) {
-      await initCapacitorPrivileges()
-    }
-    await offlineFn()
-  }
-}
+  if (!import.meta.client) return
 
-// --- Event Handlers ---
-const handleBeforeEnter = () => {
-  if (isFirstLoad.value) {
-    isFirstLoad.value = false
-  }
-}
-
-// Initialize Capacitor functionality
-const initCapacitorPrivileges = async () => {
   try {
-    // Set up status bar (do NOT hide it initially)
+    const { Capacitor } = await import('@capacitor/core');
+
+    if (Capacitor.isNativePlatform()) {
+      await Promise.all([
+        initCapacitorPlatform(),
+        initNetworkListener(),
+        initPushNotifications(),
+      ]);
+    } else {
+      await initNetworkListener();
+    }
+  } catch (error) {
+    console.error("A critical error occurred during app initialization:", error);
+  }
+}
+
+// --- Capacitor Plugin Initializers (No changes needed in these functions) ---
+
+const initCapacitorPlatform = async () => {
+  try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
-    const { SplashScreen } = await import('@capacitor/splash-screen') // wanting to hide splash screen after using rive's one
     const { App: CapacitorApp, URLOpenListenerEvent } = await import('@capacitor/app')
     const { AppLauncher } = await import('@capacitor/app-launcher');
 
-    // // TODO: try to make it dynamic as a plugin or composable!
     StatusBar.setStyle({ style: Style.Dark })
     StatusBar.setBackgroundColor({ color: '#01080E' })
-    // StatusBar.hide()
+    StatusBar.setOverlaysWebView({ overlay: true })
     StatusBar.show()
-    // TODO: we need to add safe-area-inset-top
-    StatusBar.setOverlaysWebView({ overlay: true }) // TODO: check this out, false will hide the content under status bar buttons
 
-    await SplashScreen.hide(); // hide splash screen. read the docs at: https://capacitorjs.com/docs/apis/splash-screen#hiding-the-splash-screen
-
-    // Add deep linking listener
-    // TODO: test it out, especially with query params
-    // check these important requirements https://capacitorjs.com/docs/guides/deep-links#android-configuration
-    // it says =======>  keytool -genkey -v -keystore KEY-NAME.keystore -alias ALIAS -keyalg RSA -keysize 2048 -validity 10000
-    CapacitorApp.addListener('appUrlOpen', async (event: typeof URLOpenListenerEvent) => {
-      try {
+    CapacitorApp.addListener('appUrlOpen', (event: typeof URLOpenListenerEvent) => {
         const url = new URL(event.url);
-        const path = url.pathname;
-        if (path && path !== '/') {
-          await navigateTo({
-            path: path,
-            query: Object.fromEntries(url.searchParams)
-          });
-        }
-      } catch (error) {
-        console.error('Failed to navigate to deep link:', error);
-      }
+        router.push({ path: url.pathname, query: Object.fromEntries(url.searchParams) });
     });
 
-    // Handle external links to force them to open in the app when possible
-    // This can be used in combination with NuxtLink to ensure proper handling
-    const handleExternalLinks = () => {
-      document.addEventListener('click', async (e) => {
+    document.addEventListener('click', async (e) => {
         const target = e.target as HTMLElement;
         const anchor = target.closest('a');
-
-        if (anchor && anchor.href && anchor.href.startsWith(useRuntimeConfig().public.originUrl)) {
-          e.preventDefault();
-
-          // Check if the app can handle this URL
-          const { value } = await AppLauncher.canOpenUrl({
-            url: anchor.href.replace('https://', process.env.BUNDLE_OR_APP_ID + '://')
-          });
-
-          if (value) {
-            // Open in the app
-            await AppLauncher.openUrl({
-              url: anchor.href.replace('https://', process.env.BUNDLE_OR_APP_ID + '://')
-            });
-          } else {
-            // Fallback to browser
-            window.open(anchor.href, '_blank');
-          }
+        const originUrl = config.public.originUrl;
+        const appId = config.public.appId;
+        if (anchor && anchor.href && originUrl && appId && anchor.href.startsWith(originUrl)) {
+            e.preventDefault();
+            const appUrl = anchor.href.replace(/^(https?:\/\/)/, `${appId}://`);
+            try {
+                const { value } = await AppLauncher.canOpenUrl({ url: appUrl });
+                if (value) {
+                    await AppLauncher.openUrl({ url: appUrl });
+                } else {
+                    window.open(anchor.href, '_blank');
+                }
+            } catch (error) {
+                console.error("Error handling app link:", error);
+                window.open(anchor.href, '_blank');
+            }
         }
-      });
-    };
-    handleExternalLinks();
+    });
 
-    // Register back button handler
     let lastBackPressed = 0
-
-    // TODO: make it more native, it's ugly yet!
-    CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
+    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
       if (!canGoBack && route.fullPath === '/') {
         const currentTime = new Date().getTime()
-
         if (currentTime - lastBackPressed < 2000) {
           CapacitorApp.exitApp()
         } else {
           lastBackPressed = currentTime
-          const { Toast } = await import('@capacitor/toast')
-          await Toast.show({
-            text: t('messages.backToExit'),
-            duration: 'short',
-            position: 'bottom'
+          import('@capacitor/toast').then(({ Toast }) => {
+            Toast.show({
+              text: t('messages.backToExit'),
+              duration: 'short',
+              position: 'bottom'
+            })
           })
         }
       } else {
@@ -188,34 +172,77 @@ const initCapacitorPrivileges = async () => {
       }
     })
   } catch (error) {
-    console.error('Error initializing Capacitor:', error)
+    console.error('Error initializing Capacitor platform features:', error)
   }
 }
 
-
-const offlineFn = async () => {
-  const { Network } = await import('@capacitor/network')
-  Network.addListener('networkStatusChange', (status) => {
-    if (!status.connected) {
-      notifyOffline()
-    }
-  })
-
-  const status = await Network.getStatus()
-  if (!status.connected) {
-    await notifyOffline()
-  }
-}
-
-const notifyOffline = async () => {
-  if (await isCapacitorDevice) {
-    const { Toast } = await import('@capacitor/toast')
-    await Toast.show({
-      text: t('messages.NetworkStatus.offline'),
-      duration: 'long',
-      position: 'bottom'
+const initNetworkListener = async () => {
+  try {
+    const { Network } = await import('@capacitor/network')
+    Network.addListener('networkStatusChange', (status) => {
+      isOffline.value = !status.connected
+      if (isOffline.value) {
+        notifyUserIsOffline()
+      }
     })
+    const status = await Network.getStatus()
+    if (!status.connected) {
+      isOffline.value = true
+      notifyUserIsOffline()
+    }
+  } catch (error) {
+    console.error('Could not initialize network listener:', error)
   }
+}
+
+const initPushNotifications = async () => {
+  try {
+    const { PushNotifications } = await import('@capacitor/push-notifications')
+    let permStatus = await PushNotifications.checkPermissions()
+    if (permStatus.receive === 'prompt') {
+      permStatus = await PushNotifications.requestPermissions()
+    }
+    if (permStatus.receive !== 'granted') {
+      console.warn('User denied push notification permissions.')
+      return
+    }
+    await PushNotifications.register()
+    PushNotifications.addListener('registration', (token) => {
+      console.info('Push registration success. Token:', token.value)
+    })
+    PushNotifications.addListener('registrationError', (err) => {
+      console.error('Push registration error:', err.error)
+    })
+    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      console.log('Push notification received:', notification)
+    })
+    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+      console.log('Push notification action performed', notification.actionId)
+    })
+  } catch (error) {
+    console.error('Error initializing push notifications:', error)
+  }
+}
+
+// --- Helper Functions ---
+
+const handleBeforeEnter = () => {
+  if (isFirstLoad.value) {
+    isFirstLoad.value = false
+  }
+}
+
+const notifyUserIsOffline = async () => {
+    try {
+        const { Toast } = await import('@capacitor/toast')
+        await Toast.show({
+          text: t('messages.NetworkStatus.offline'),
+          duration: 'long',
+          position: 'bottom'
+        })
+    } catch(e) {
+        console.error("Failed to show offline toast", e);
+    }
 }
 
 // --- Developer Console Message ---
@@ -230,7 +257,6 @@ if (import.meta.client) {
 </script>
 
 <style lang="scss">
-// TODO: we can put them directly to the main.scss file for more organization
 :root {
   height: 100vh;
   width: 100vw;
@@ -241,11 +267,10 @@ body {
   color: $secondary1;
 }
 
-// #app { // if you wanna change it, change app.rootId in the nuxt.config.ts file
 #__nuxt {
   margin: 30px;
 
-  @media (max-width: 768px) {
+  @include mobile {
     margin: 15px;
   }
 }
@@ -259,7 +284,6 @@ body {
   color: white;
 }
 
-/* Transition for router-view */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease-in-out;

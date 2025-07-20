@@ -138,7 +138,7 @@ watch(list, saveActiveItems, { deep: true })
   overflow-y: scroll !important;
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
   }
 }

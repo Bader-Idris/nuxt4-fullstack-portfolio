@@ -87,7 +87,7 @@ const slugify = (text) => {
   border-radius: 25px;
   background: #181818;
 
-  @media screen and (max-width: 768px) {
+  @include mobile {
     box-shadow: 0 0 20px 7px #ffffff12;
     width: calc(100% - 20px);
     margin: auto;
@@ -98,7 +98,7 @@ const slugify = (text) => {
   }
 
   p {
-    @media screen and (min-width: 769px) {
+    @include tablet-to-up {
       // left: 300px;
       position: absolute;
       width: calc(100% - 300px);
@@ -122,7 +122,7 @@ const slugify = (text) => {
   overflow: hidden;
   padding-bottom: 100px;
 
-  @media (max-width: 768px) {
+  @include mobile {
     width: calc(100vw - 30px);
     flex-direction: column;
     left: 0;
@@ -130,7 +130,7 @@ const slugify = (text) => {
     position: relative;
   }
 
-  @media (min-width: 769px) and (max-width: 1024px) {
+  @include tablet {
     display: flex;
     align-content: center;
     justify-content: space-evenly;

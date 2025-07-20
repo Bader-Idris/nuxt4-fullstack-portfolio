@@ -94,7 +94,7 @@ onMounted(() => {
 .verify-comp {
   @include mainMiddleSettings;
 
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
   }
 
@@ -109,19 +109,19 @@ onMounted(() => {
     border-radius: 4px;
     text-align: center;
 
-    @media screen and (min-width: 769px) {
+    @include tablet-to-up {
       margin: auto 50px;
       width: 50%;
       transform: translate(50%, 50%);
     }
 
-    @media screen and (max-width: 768px) {
+    @include mobile {
       margin: 20px;
     }
   }
 
   .warn {
-    @media screen and (max-width: 768px) {
+    @include mobile {
       // width: 100%;
       // left: 0;
     }

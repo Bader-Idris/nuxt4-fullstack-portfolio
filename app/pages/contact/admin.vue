@@ -239,12 +239,12 @@ if (import.meta.server) {
   align-items: center;
   justify-content: flex-start;
 
-  @media (max-width: 768px) {
+  @include mobile {
     width: calc(100% - 10px);
     margin-left: 20px;
   }
 
-  @media (min-width: 769px) {
+  @include tablet-to-up {
     width: 50%;
     margin-left: 350px;
   }

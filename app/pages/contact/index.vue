@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
       padding: 30px 10px;
     }
 
-    @media (max-width: 768px) {
+    @include mobile {
       flex-direction: column;
       width: 100%;
       position: relative;
@@ -270,7 +270,7 @@ onBeforeUnmount(() => {
       }
     }
 
-    @media (min-width: 769px) {
+    @include tablet-to-up {
       left: 300px;
     }
 
@@ -279,7 +279,7 @@ onBeforeUnmount(() => {
       flex-direction: column;
       align-content: flex-end;
 
-      @media screen and (min-width: 768px) {
+      @include tablet-to-up {
         margin-bottom: 60px;
         height: calc(100vh - 260px);
         position: relative;
@@ -309,7 +309,7 @@ onBeforeUnmount(() => {
         line-height: 1.7;
       }
 
-      @media (max-width: 768px) {
+      @include mobile {
         padding-top: 50px;
 
         p {
@@ -350,7 +350,7 @@ onBeforeUnmount(() => {
       padding: 10px;
     }
 
-    @media (min-width: 768px) {
+    @include tablet-to-up {
       >span {
         width: 1px;
         height: calc(100vh - 180px);
@@ -434,7 +434,7 @@ onBeforeUnmount(() => {
       .data-object {
         margin-bottom: 10px;
 
-        @media screen and (min-width: 768px) {
+        @include tablet-to-up {
           margin-bottom: 60px;
           height: calc(100vh - 260px);
           position: relative;
@@ -585,7 +585,7 @@ onBeforeUnmount(() => {
       >button {
         margin-bottom: 20px;
       margin-left: 15px;
-      @media screen and (max-width: 768px) {
+      @include mobile {
           width: calc(100% - 20px);
         }
       }

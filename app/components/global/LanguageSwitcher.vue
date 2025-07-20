@@ -62,11 +62,11 @@ const handleLocaleChange = () => {
 <style lang="scss" scoped>
 .language-switcher {
   z-index: 999;
-  @media screen and (max-width: 768px) {
+  @include mobile {
     right: 60px;
     position: absolute;
   }
-  @media screen and (min-width: 769px) {
+  @include tablet-to-up {
     right: 180px;
     position: absolute;
   }
@@ -96,7 +96,7 @@ const handleLocaleChange = () => {
 }
 
 html[lang="ar"] {
-  @media screen and (min-width: 769px) {
+  @include tablet-to-up {
     .language-switcher {
         right: 125px;
       }

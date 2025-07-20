@@ -36,7 +36,7 @@ const removeItem = (item) => {
   position: absolute;
   user-select: none;
 
-  @media (max-width: 768px) {
+  @include mobile {
     display: none;
   }
 

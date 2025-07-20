@@ -234,7 +234,7 @@ header {
       padding: 15px 0;
       line-height: 1.7;
 
-      @media (max-width: 768px) {
+      @include mobile {
         &::after {
           content: '';
           position: absolute;
@@ -249,7 +249,7 @@ header {
         }
       }
 
-      @media (min-width: 769px) {
+      @include tablet-to-up {
         flex-basis: 280px;
       }
     }
@@ -269,7 +269,7 @@ header {
       right: 0;
     }
 
-    @media (max-width: 768px) {
+    @include mobile {
       .nav,
       .contact {
         display: none;
@@ -277,7 +277,7 @@ header {
     }
   }
 
-  @media (max-width: 768px) {
+  @include mobile {
     .burger-nav {
       z-index: 2;
       width: 40px;
@@ -344,7 +344,7 @@ header {
         padding: 10px;
       }
 
-      @media (max-width: 768px) {
+      @include mobile {
         .phone-body {
           border-radius: 5px 5px 0 0;
           height: calc(100vh - 88px);
@@ -368,7 +368,7 @@ header {
               color: $secondary4;
             }
 
-            @media (min-width: 768px) {
+            @include tablet-to-up {
               &:hover {
                 background-color: $primary1-hovered;
               }

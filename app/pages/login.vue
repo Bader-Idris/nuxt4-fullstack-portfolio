@@ -307,11 +307,11 @@ const google = async () => {
 
 .login {
   @include mainMiddleSettings;
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
     height: calc(100vh - 30px);
   }
-  @media (min-width: 769px) {
+  @include tablet-to-up {
     height: calc(100vh - 60px);
   }
 
@@ -325,7 +325,7 @@ const google = async () => {
     align-items: stretch;
     justify-content: center;
 
-    @media (max-width: 768px) {
+    @include mobile {
       width: calc(100% - 30px);
     }
 
@@ -381,7 +381,7 @@ const google = async () => {
   justify-content: space-evenly;
   gap: 1rem;
 
-  @media (max-width: 768px) {
+  @include mobile {
     width: calc(100% - 30px);
   }
   .btn {

@@ -194,11 +194,11 @@ const socialLogin = (provider: string) => {
 <style lang="scss">
 .register {
   @include mainMiddleSettings;
-  @media (max-width: 768px) {
+  @include mobile {
     @include phone-borders;
     height: calc(100vh - 30px);
   }
-  @media (min-width: 769px) {
+  @include tablet-to-up {
     height: calc(100vh - 60px);
   }
 
@@ -208,7 +208,7 @@ const socialLogin = (provider: string) => {
     max-width: 400px;
     margin: 0 auto;
 
-    @media (max-width: 768px) {
+    @include mobile {
       width: calc(100% - 30px);
     }
 
@@ -269,7 +269,7 @@ const socialLogin = (provider: string) => {
   justify-content: space-evenly;
   gap: 1rem;
 
-  @media (max-width: 768px) {
+  @include mobile {
     width: calc(100% - 30px);
   }
   .btn {

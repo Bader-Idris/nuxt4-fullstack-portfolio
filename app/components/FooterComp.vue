@@ -134,7 +134,7 @@ footer {
       padding-right: 10px;
       align-items: center;
       height: 60px;
-      @media (max-width: 768px) {
+      @include mobile {
         justify-content: center;
       }
 
@@ -152,7 +152,7 @@ footer {
         margin-top: 5px;
       }
 
-      @media (max-width: 768px) {
+      @include mobile {
         & {
           width: 60px;
           border: none;
@@ -165,7 +165,7 @@ footer {
       }
     }
 
-    @media (max-width: 768px) {
+    @include mobile {
       & {
         width: calc(100% - 60px);
         justify-content: flex-end;
@@ -185,7 +185,7 @@ footer {
     }
   }
 
-  @media (max-width: 768px) {
+  @include mobile {
     display: none;
   }
 }
