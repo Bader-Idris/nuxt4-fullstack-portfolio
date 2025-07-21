@@ -1,4 +1,4 @@
-FROM node:22.17.0-alpine3.21
+FROM node:22.17.1-alpine3.21
 # FROM node:22.14.0
 
 # TODO: no need to building process and installing, because we handle that manually in the root level of the droplet itself, read the README.md file for weak servers handling!
