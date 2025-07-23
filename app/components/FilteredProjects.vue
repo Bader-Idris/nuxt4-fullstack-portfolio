@@ -113,14 +113,13 @@ const slugify = (text) => {
 }
 
 .filtered-projects {
-  display: flex;
-  flex-wrap: wrap;
   gap: 20px;
   left: 350px;
   position: absolute;
   top: 100px;
   overflow: hidden;
   padding-bottom: 100px;
+  @include flex-container(unset, wrap, unset, unset);
 
   @include mobile {
     width: calc(100vw - 30px);
@@ -131,13 +130,9 @@ const slugify = (text) => {
   }
 
   @include tablet {
-    display: flex;
-    align-content: center;
-    justify-content: space-evenly;
     width: calc(100vw - 460px);
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
+    @include flex-container(row, wrap, space-evenly, stretch);
+    align-content: center;
   }
 
   @media (min-width: 1024px) and (max-width: 1200px) {

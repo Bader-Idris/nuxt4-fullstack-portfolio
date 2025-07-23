@@ -267,8 +267,7 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 
 <style lang="scss" scoped>
 .dashboard {
-  display: flex;
-  flex-direction: column;
+  @include flex-container(column, nowrap, unset, unset);
   height: calc(100vh - 80px); /* Adjust based on your nav height */
   padding: 1rem;
   gap: 1rem;
@@ -301,9 +300,7 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 }
 
 .user-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  @include flex-container(row, nowrap, space-between, center);
   padding: 0.75rem;
   border-radius: 6px;
   cursor: pointer;
@@ -315,8 +312,7 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 }
 
 .chat-video-area {
-  display: flex;
-  flex-direction: column;
+  @include flex-container(column, nowrap, unset, unset);
   background-color: #ffffff;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
@@ -325,17 +321,14 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 }
 
 .chat-placeholder {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    @include flex-container(row, nowrap, center, center);
     height: 100%;
     color: #888;
     font-size: 1.2rem;
 }
 
 .chat-panel {
-  display: flex;
-  flex-direction: column;
+  @include flex-container(column, nowrap, unset, unset);
   height: 100%;
 }
 
@@ -350,14 +343,12 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   flex-grow: 1;
   overflow-y: auto;
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
+  @include flex-container(column, nowrap, unset, unset);
   gap: 0.75rem;
 }
 
 .message {
-  display: flex;
-  flex-direction: column;
+  @include flex-container(column, nowrap, unset, unset);
   max-width: 75%;
   &.sent { align-self: flex-end; .message-content { background-color: #dcf8c6; } }
   &.received { align-self: flex-start; .message-content { background-color: #f1f1f1; } }
@@ -378,9 +369,8 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
   background-color: #121212;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
+  z-index: z("content");
+  @include flex-container(column, nowrap, unset, unset);
 }
 .video-grid {
   flex: 1;
@@ -399,8 +389,7 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 }
 .local-video { width: 100%; height: 100%; object-fit: cover; }
 .call-controls {
-  display: flex;
-  justify-content: center;
+  @include flex-container(row, nowrap, center, unset);
   gap: 1rem;
   padding: 1rem;
   background-color: rgba(0,0,0,0.5);

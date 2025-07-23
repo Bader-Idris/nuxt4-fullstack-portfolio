@@ -59,8 +59,7 @@ watch(
 }
 
 .foldable-tab {
-  display: flex;
-  align-items: baseline;
+  @include flex-container(row, nowrap, unset, baseline);
   padding-left: 10px;
   user-select: none;
 

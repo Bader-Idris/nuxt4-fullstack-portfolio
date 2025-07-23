@@ -319,11 +319,8 @@ const google = async () => {
     width: 384px;
     height: 520px;
     position: relative;
-    display: flex;
     margin: auto;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: center;
+    @include flex-container(column, nowrap, center, stretch);
 
     @include mobile {
       width: calc(100% - 30px);
@@ -335,8 +332,7 @@ const google = async () => {
     }
 
     .input-container {
-      display: flex;
-      flex-direction: column;
+      @include flex-container(column, nowrap, unset, unset);
       margin-bottom: 20px;
 
       label {
@@ -364,9 +360,7 @@ const google = async () => {
       margin-top: 50px;
 
       .loader {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        @include flex-container(row, nowrap, center, center);
         height: 100%;
       }
     }
@@ -376,9 +370,7 @@ const google = async () => {
 .social-auth {
   margin: 0 auto;
   max-width: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
+  @include flex-container(row, nowrap, space-evenly, center);
   gap: 1rem;
 
   @include mobile {

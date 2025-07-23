@@ -48,8 +48,7 @@ const removeItem = (item) => {
     overflow-y: hidden;
 
     > li {
-      display: flex;
-      align-items: center;
+      @include flex-container(row, nowrap, unset, center);
       padding: 10px 15px;
       position: relative;
       border: solid 1px $lines;

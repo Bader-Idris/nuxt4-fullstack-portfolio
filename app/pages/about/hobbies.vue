@@ -20,8 +20,6 @@ useSchemaOrg({
 
 <style lang="scss" scoped>
 .hobbies-info {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @include flex-container(row, nowrap, center, center);
 }
 </style>

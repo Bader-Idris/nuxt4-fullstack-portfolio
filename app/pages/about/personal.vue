@@ -217,16 +217,13 @@ onMounted(() => {
 
 <style lang="scss">
 .split-in-half {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @include flex-container(row, nowrap, center, center);
   width: calc(100% - 300px);
 
   @include mobile {
     width: 100%;
     position: relative;
-    display: flex;
-    flex-direction: column;
+    @include flex-container(column, nowrap, unset, unset);
   }
 
   @include tablet-to-up {
@@ -284,9 +281,7 @@ onMounted(() => {
     }
 
     .code-author {
-      display: flex;
-      align-items: center;
-
+      @include flex-container(row, nowrap, unset, center);
       .mi-imagen {
         width: 40px;
         height: 40px;

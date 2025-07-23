@@ -61,7 +61,7 @@ const handleLocaleChange = () => {
 
 <style lang="scss" scoped>
 .language-switcher {
-  z-index: 999;
+  z-index: z("modal-backdrop");
   @include mobile {
     right: 60px;
     position: absolute;

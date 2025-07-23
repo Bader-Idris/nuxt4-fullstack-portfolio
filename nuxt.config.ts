@@ -3,7 +3,7 @@ import { definePerson } from "nuxt-schema-org/schema";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
-  compatibilityDate: "2025-07-18",
+  compatibilityDate: "2025-07-23",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {

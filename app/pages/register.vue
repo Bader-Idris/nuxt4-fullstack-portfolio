@@ -203,8 +203,7 @@ const socialLogin = (provider: string) => {
   }
 
   .form {
-    display: flex;
-    flex-direction: column;
+    @include flex-container(column, nowrap, unset, unset);
     max-width: 400px;
     margin: 0 auto;
 
@@ -223,8 +222,7 @@ const socialLogin = (provider: string) => {
       margin-bottom: 1.5rem;
 
       .checkbox-label {
-        display: flex;
-        align-items: center;
+        @include flex-container(row, nowrap, unset, center);
         font-size: 0.9rem;
         color: #fff;
         margin-bottom: 0.75rem;
@@ -256,17 +254,13 @@ const socialLogin = (provider: string) => {
   }
 }
 .loader {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @include flex-container(row, nowrap, center, center);
   height: 100%;
 }
 .social-auth {
   margin: 2rem auto;
   max-width: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
+  @include flex-container(row, nowrap, space-evenly, center);
   gap: 1rem;
 
   @include mobile {
@@ -278,10 +272,8 @@ const socialLogin = (provider: string) => {
 }
 
 .btn.social {
-  display: flex;
-  align-items: center;
+  @include flex-container(row, nowrap, center, center);
   gap: 1rem;
-  justify-content: center;
   padding: 10px 20px;
   height: 50px;
   cursor: pointer;

@@ -105,6 +105,14 @@
 }
 */
 
+@mixin flex-container($direction: row, $wrap: nowrap, $justify: flex-start, $align: stretch) {
+  display: flex;
+  flex-direction: $direction;
+  flex-wrap: $wrap;
+  justify-content: $justify;
+  align-items: $align;
+}
+
 /*
 border-radius: 0 0 5px 5px;
 &:not(.phone-body) {

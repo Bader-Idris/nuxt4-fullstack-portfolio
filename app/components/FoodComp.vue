@@ -48,12 +48,8 @@ defineProps<{
   height: 80px;
   position: absolute;
   top: 50%;
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: column;
+  @include flex-container(column, wrap, space-around, stretch);
   align-content: space-around;
-  align-items: stretch;
-  justify-content: space-around;
 
   &>span {
     width: 8px;

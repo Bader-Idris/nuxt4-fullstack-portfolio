@@ -72,6 +72,6 @@ onMounted(async () => {
   pointer-events: none;
 
   /* Fix it on prod */
-  z-index: 99999;
+  z-index: z("tooltip");
 }
 </style>

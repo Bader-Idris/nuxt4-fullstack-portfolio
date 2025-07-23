@@ -222,11 +222,8 @@ header {
     color: inherit;
     background-color: inherit;
     width: 100%;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    @include flex-container(row, wrap, flex-start, center);
     align-content: center;
-    flex-wrap: wrap;
     padding: 0 20px;
 
     & > .name {
@@ -245,7 +242,7 @@ header {
           border-bottom: 1px solid $lines;
 
           box-shadow: 0 2px 20px 0 #0000008a;
-          z-index: 1;
+          z-index: z("default");
         }
       }
 
@@ -264,7 +261,7 @@ header {
     .contact {
       // align-self: flex-end;
       cursor: pointer;
-      z-index: 1;
+      z-index: z("default");
       position: absolute;
       right: 0;
     }
@@ -279,7 +276,7 @@ header {
 
   @include mobile {
     .burger-nav {
-      z-index: 2;
+      z-index: z("content");
       width: 40px;
       height: 40px;
       position: absolute;
@@ -303,7 +300,7 @@ header {
       width: 100%;
       height: calc(100vh - 30px);
       background-color: $primary2;
-      z-index: 999;
+      z-index: z("modal-backdrop");
       position: relative;
       top: -58px;
       border-radius: 5px;
@@ -331,11 +328,11 @@ header {
         background-color: $primary1;
         left: -15px;
         top: -15px;
-        z-index: -1;
+        z-index: z("below");
       }
 
       .remove-phone-menu {
-        z-index: 2;
+        z-index: z("content");
         top: 15px;
         right: 15px;
         position: absolute;
@@ -381,9 +378,7 @@ header {
           }
 
           > ul {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            @include flex-container(column, nowrap, unset, flex-start);
             position: relative;
 
             & > a {

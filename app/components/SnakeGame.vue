@@ -433,7 +433,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
   margin: 30px 5px 30px 33px;
   box-shadow: inset 1px 5px 11px 0 #02121b;
   background-color: rgb(1, 8, 14, 50%);
-  z-index: 1;
+  z-index: z("default");
   display: grid;
   grid-template-columns: repeat(20, 12px);
   // grid-template-rows: repeat(20, 12px);
@@ -498,7 +498,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
         background: $btn1-clr;
         left: 0;
         top: 0;
-        z-index: -1;
+        z-index: z("below");
       }
     }
 

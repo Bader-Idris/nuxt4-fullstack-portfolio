@@ -26,10 +26,7 @@ defineProps({
 <style lang="scss" scoped>
 
 .not-found {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
+  @include flex-container(column, wrap, center, center);
   @include mainMiddleSettings;
 
   @include mobile {

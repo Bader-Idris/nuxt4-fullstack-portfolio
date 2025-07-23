@@ -88,9 +88,7 @@ const getIconName = (title: string): string => {
 
   >div {
     label {
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
+      @include flex-container(row, nowrap, flex-start, center);
       cursor: pointer;
       margin: 20px;
 

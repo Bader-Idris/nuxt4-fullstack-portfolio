@@ -240,12 +240,10 @@ onBeforeUnmount(() => {
 <style lang="scss">
   main.cont {
     width: calc(100% - 300px);
-    display: flex;
     position: absolute;
     top: 0;
     height: calc(100vh - 180px);
-    justify-content: space-around;
-    align-items: flex-start;
+    @include flex-container(row, nowrap, space-around, flex-start);
     padding: 100px 10px;
 
     @media screen and (max-height: 668px) {
@@ -275,8 +273,7 @@ onBeforeUnmount(() => {
     }
 
     .messaging {
-      display: flex;
-      flex-direction: column;
+      @include flex-container(column, nowrap, unset, unset);
       align-content: flex-end;
 
       @include tablet-to-up {
@@ -293,9 +290,7 @@ onBeforeUnmount(() => {
     }
 
     .thank-you {
-      display: flex;
-      align-items: center;
-      flex-direction: column;
+      @include flex-container(column, nowrap, unset, center);
       flex-basis: 50%;
 
       img {
@@ -442,8 +437,7 @@ onBeforeUnmount(() => {
         }
 
         .set {
-          display: flex;
-          justify-content: flex-start;
+          @include flex-container(row, nowrap, flex-start, unset);
           align-items: baseline;
           margin-left: 20px;
 

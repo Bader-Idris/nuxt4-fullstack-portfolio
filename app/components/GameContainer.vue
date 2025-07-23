@@ -124,7 +124,7 @@ function handleGameOver(): void {
         0 3px 3px 0px $primary2;
       color: $primary1;
       background-color: $secondary2;
-      z-index: 0;
+      z-index: z("zero");
 
       &:first-of-type {
         top: 10px;
@@ -157,7 +157,7 @@ function handleGameOver(): void {
     width: 0;
     height: 200px;
     transform: rotate(135deg);
-    z-index: 1;
+    z-index: z("default");
   }
 
   &::after {
@@ -169,7 +169,7 @@ function handleGameOver(): void {
     left: 70%;
     box-shadow: 0 0 240px 200px rgba(77, 91, 206, 0.4); //40% of $gradients1
     transform: rotate(45deg);
-    z-index: 1;
+    z-index: z("default");
   }
 
   & > *:not(.screws) {
@@ -189,11 +189,9 @@ function handleGameOver(): void {
 
     .board-arrows {
       position: relative;
-      z-index: 1;
+      z-index: z("default");
       height: 110px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
+      @include flex-container(row, wrap, space-around, unset);
       align-content: space-around;
       transform: rotate(180deg);
 
@@ -211,7 +209,7 @@ function handleGameOver(): void {
         width: 50px;
         height: 30px;
         background: black;
-        z-index: 3;
+        z-index: z("content");
 
         &:first-of-type {
           order: 2;

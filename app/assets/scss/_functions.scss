@@ -1,3 +1,28 @@
+@use "sass:map";
+
+// layers map
+$z-layers: (
+  "below": -1,
+  "zero": 0,
+  "default": 1,
+  "content": 10,
+  "header": 100,
+  "dropdown": 200,
+  "modal-backdrop": 900,
+  "modal": 1000,
+  "tooltip": 2000
+);
+
+// layers Fn
+@function z($layer) {
+  @if not map.has-key($z-layers, $layer) {
+    @error "The `#{$layer}` layer does not exist in the $z-layers map.";
+  }
+
+  @return map.get($z-layers, $layer);
+}
+// use as: z-index: z("header");
+
 @function half($size) {
   @return $size / 2;
 }

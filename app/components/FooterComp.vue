@@ -97,8 +97,7 @@ footer {
     }
 
     .social {
-      display: flex;
-      align-items: center;
+      @include flex-container(row, unset, unset, center);
 
       & > * {
         width: 60px;
@@ -127,12 +126,10 @@ footer {
       position: absolute;
       right: 00px;
       width: 170px;
-      display: flex;
-      justify-content: flex-end;
+      @include flex-container(row, unset, flex-end, center);
       border-left: solid 1px $lines;
       color: $secondary1;
       padding-right: 10px;
-      align-items: center;
       height: 60px;
       @include mobile {
         justify-content: center;

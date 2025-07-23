@@ -54,14 +54,13 @@ const selectMode = (mode) => {
   position: relative;
   font-family: $main-font;
   width: 150px;
-  z-index: 99;
+  z-index: z("header");
   position: relative;
   right: -30px;
 }
 
 .theme-toggle-btn {
-  display: flex;
-  align-items: center;
+  @include flex-container(row, nowrap, unset, center);
   gap: 8px;
   padding: 8px 12px;
   width: 100%;
@@ -101,13 +100,12 @@ const selectMode = (mode) => {
   border: 1px solid $lines;
   border-radius: 8px;
   overflow: hidden;
-  z-index: 10;
+  z-index: z("content");
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .dropdown-item {
-  display: flex;
-  align-items: center;
+  @include flex-container(row, nowrap, unset, center);
   gap: 8px;
   width: 100%;
   padding: 10px 12px;

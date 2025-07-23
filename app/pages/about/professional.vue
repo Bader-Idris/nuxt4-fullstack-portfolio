@@ -22,8 +22,6 @@ useSchemaOrg({
 
 <style lang="scss" scoped>
 .professional-info {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @include flex-container(row, nowrap, center, center);
 }
 </style>

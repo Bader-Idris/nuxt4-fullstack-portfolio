@@ -97,10 +97,7 @@ async function resetPassword() {
   }
 
   > form {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    @include flex-container(column, nowrap, center, center);
     margin-top: 20px;
 
     > * {

@@ -128,14 +128,13 @@ useSeoMeta({
   }
 
   .container {
-    display: flex;
+    @include flex-container(row, nowrap, unset, center);
     height: 100%;
-    align-items: center;
     background-color: inherit;
     margin-right: -1px;
 
     @media screen and (max-height: 668px) {
-      z-index: 1;
+      z-index: z("default");
       position: relative;
     }
 
@@ -173,7 +172,7 @@ useSeoMeta({
           width: 0;
           height: 100px;
           transform: rotate(135deg);
-          z-index: 1;
+          z-index: z("default");
         }
 
         &::after {
@@ -185,7 +184,7 @@ useSeoMeta({
           left: 75%;
           box-shadow: 0 0 220px 120px rgba(77, 91, 206, 0.4); //40% of $gradients1
           transform: rotate(45deg);
-          z-index: 1;
+          z-index: z("default");
         }
       }
 
@@ -357,11 +356,8 @@ useSeoMeta({
       }
 
       @include mobile {
-        display: flex;
-        flex-direction: column;
         height: 80vh;
-        align-items: center;
-        justify-content: space-around;
+        @include flex-container(column, nowrap, space-around, center);
       }
 
       @media screen and (max-height: 430px) {

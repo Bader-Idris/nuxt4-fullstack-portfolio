@@ -234,10 +234,7 @@ if (import.meta.server) {
   background: #fea55f;
   padding: 20px 40px;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  @include flex-container(column, nowrap, flex-start, center);
 
   @include mobile {
     width: calc(100% - 10px);
@@ -254,16 +251,12 @@ if (import.meta.server) {
   }
 
   ul {
-    display: flex;
-    flex-direction: column;
+    @include flex-container(column, nowrap, unset, unset);
     gap: 10px;
 
     li {
-      display: flex;
       padding: 20px 0;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
+      @include flex-container(row, wrap, center, center);
       border: 2px solid;
     }
   }

@@ -79,10 +79,7 @@ async function forgotPassword() {
   }
 
   > form {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    @include flex-container(column, nowrap, center, center);
     margin: 20px auto;
     max-width: 600px;
 
