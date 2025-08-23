@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { useApiError } from '~/composables/useApiError';
 
 const { t, locale } = useI18n();
+const { getFriendlyErrorMessage } = useApiError();
 const isSubmitted = ref<boolean>(false);
 
 useSeoMeta({
@@ -25,52 +27,44 @@ const message = ref<string>('');
 const isLoading = ref<boolean>(false);
 
 async function submitForm() {
-  if (validateForm()) {
-    isLoading.value = true;
-    try {
-      const url = `/api/v1/received_emails`;
-      const { data: _ , error } = await useFetch(url, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: name.value,
-          email: email.value,
-          message: message.value,
-        }),
-        baseURL: useRuntimeConfig().public.originUrl,
-      });
+  if (!validateForm()) return;
 
-      if (error.value) {
-        toast(error.value.data?.error || t('errors.serverError'), {
-          theme: 'auto',
-          type: 'error',
-          position: 'top-center',
-        });
-      } else {
-        isSubmitted.value = true;
-        toast(t('messages.emailSent'), {
-          theme: 'auto',
-          type: 'success',
-          position: 'top-center',
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      toast(t('errors.serverError'), {
-        theme: 'auto',
-        type: 'error',
-        position: 'top-center',
-      });
-    } finally {
-      isLoading.value = false;
-    }
+  isLoading.value = true;
+  try {
+    const url = `/api/v1/received_emails`;
+    await $fetch(url, {
+      method: 'POST',
+      body: {
+        name: name.value,
+        email: email.value,
+        message: message.value,
+      },
+      baseURL: useRuntimeConfig().public.originUrl,
+    });
+
+    isSubmitted.value = true;
+    toast(t('messages.emailSent'), {
+      theme: 'auto',
+      type: 'success',
+      position: 'top-center',
+    });
+
+  } catch (error) {
+    console.error('Contact form error:', error);
+    const friendlyMessage = getFriendlyErrorMessage(error);
+    toast(friendlyMessage, {
+      theme: 'auto',
+      type: 'error',
+      position: 'top-center',
+    });
+  } finally {
+    isLoading.value = false;
   }
 }
 
 const handleSubmit = (): void => {
   if (isLoading.value) return;
-  setTimeout(() => {
-    submitForm();
-  }, 300);
+  submitForm();
 };
 
 // Reset form data securely

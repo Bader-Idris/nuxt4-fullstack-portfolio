@@ -97,8 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { debounce } from 'lodash-es'
-import { useTimeoutFn } from '@vueuse/core';
+import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n({ useScope: 'global' })
@@ -113,7 +112,7 @@ const showBurgerNav = ref(false)
 const showPhoneMenu = ref(false)
 const currentPath = ref('')
 
-const handleResize = debounce(() => {
+const handleResize = useDebounceFn(() => {
   showBurgerNav.value = window.outerWidth <= 768
 }, 300) // Debounce with 300ms delay
 

@@ -110,7 +110,8 @@ services:
   #   volumes:
   #     - redis-data:/backup/redis:ro
   postgres:
-    image: postgres:16-alpine3.18
+    # image: postgres:16-alpine3.18
+    image: postgres:17.5-alpine3.22
     container_name: psql
     restart: always
     environment:

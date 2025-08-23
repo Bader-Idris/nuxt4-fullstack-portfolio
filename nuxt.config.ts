@@ -97,6 +97,7 @@ export default defineNuxtConfig({
     "@nuxt/content",
     "@nuxt/eslint",
     "@nuxt/scripts",
+    "v-gsap-nuxt",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
   ...(process.env.IS_ELECTRON === "true" && {
@@ -447,6 +448,10 @@ export default defineNuxtConfig({
       googleTagManager: {
         id: process.env.GOOGLE_TAG_MANAGER_ID || "",
       },
+      // googleAdsense: {
+      //   client: process.env.GOOGLE_ADSENSE_ID || "", // AdSense Publisher ID
+      //   autoAds: true, // Enable Auto Ads
+      // },
     },
   },
 });

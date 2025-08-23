@@ -14,7 +14,7 @@
         <p>Status: <span style="color: green">Connected</span> ({{ socketStore.transport }})</p>
         <p>Welcome, {{ socketStore.currentUser.name }} ({{ socketStore.currentUser.role }})</p>
       </div>
-       <p v-else class="info">
+      <p v-else class="info">
         Disconnected
       </p>
     </aside>
@@ -115,10 +115,10 @@
 </template>
 
 <script setup lang="ts">
-// import { debounce } from 'lodash-es';
 import { useSocketStore } from '~/stores/useSocketStore';
 import { useMessagesStore } from '~/stores/useMessagesStore';
 import { useOnlineUsersStore } from '~/stores/useOnlineUsersStore';
+// import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
 // import { useWebRTC } from '~/composables/useWebRTC'; // Assuming useWebRTC is in composables
 import { useWebRTC } from '~/components/webRTC'; // TODO: should it be in composables instead?
 const { $push } = useNuxtApp();

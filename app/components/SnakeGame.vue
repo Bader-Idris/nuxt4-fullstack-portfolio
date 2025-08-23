@@ -9,7 +9,8 @@
       <CustomButton 
         v-if="!gameStarted && !gameOver" 
         button-type="ghost"
-        @click="startGame">
+        data-game-control="start"
+        @click="handleStartClick">
         {{ $t('home.gameCommand') }}
       </CustomButton>
 
@@ -17,10 +18,11 @@
         {{ isWon }}
       </p>
       <div
-        v-if="congratsMessage" 
-        class="congrats" 
-        @click="startGame"
-        @keydown.space="startGame">
+        v-if="congratsMessage"
+        ref="congratsEl"
+        class="congrats"
+        @click="handleStartClick"
+        @keydown.space="handleStartClick">
         {{ congratsMessage }}
       </div>
     </div>
@@ -39,6 +41,7 @@
 import { Howl } from 'howler'
 import { useI18n } from 'vue-i18n'
 import { useIntervalFn, useEventListener } from '@vueuse/core'
+import { gsap } from 'gsap';
 import eatingSound from '~/assets/sounds/swallow.wav'
 import victorySound from '~/assets/sounds/victory.wav'
 import wallHitSound from '~/assets/sounds/wall-hit.wav'
@@ -56,6 +59,8 @@ type SoundsMap = Record<SoundKeys, Howl | null>
 // Initialize `sounds` as a reactive object
 const sounds = ref<SoundsMap | null>(null)
 const board = ref<HTMLElement | null>(null)
+const startButtonEl = ref<any>(null);
+const congratsEl = ref<HTMLElement | null>(null);
 const isClient = import.meta.client
 
 // Function to initialize sounds (called on user interaction)
@@ -296,6 +301,37 @@ function move(): void {
   checkWinCondition()
 }
 
+function triggerStartAnimation(element: any) {
+  if (!element) return;
+
+  // A ref on a component might be the instance, so we try to get its root element ($el).
+  // We fall back to the element itself if it's a direct DOM ref.
+  const targetEl = element.$el || element;
+
+  // Ensure we have a valid DOM element to animate.
+  if (!targetEl || typeof targetEl.style === 'undefined') {
+    console.warn('GSAP animation target is not a valid DOM element:', element);
+    // If we can't animate, we shouldn't start the game, as it would be immediate.
+    // This respects the user's expectation of an animation delay.
+    return;
+  }
+
+  gsap.to(targetEl, {
+    scale: 0.9,
+    duration: 0.1,
+    yoyo: true,
+    repeat: 1,
+    onComplete: () => {
+      gsap.set(targetEl, { clearProps: 'all' });
+      startGame();
+    }
+  });
+}
+
+function handleStartClick(event: MouseEvent) {
+  triggerStartAnimation(event.currentTarget as HTMLElement);
+}
+
 function startGame(): void {
   if (!isClient) return
 
@@ -407,7 +443,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
   if (!isClient) return
 
   if ((gameOver.value || !gameStarted.value) && (event.code === 'Space' || event.key === ' ')) {
-    startGame()
+    triggerStartAnimation(board.value)
   } else if (gameStarted.value) {
     switch (event.key) {
       case 'ArrowUp':

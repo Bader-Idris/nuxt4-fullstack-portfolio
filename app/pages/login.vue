@@ -58,6 +58,7 @@
 <script setup lang="ts">
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { useApiError } from '~/composables/useApiError';
 // import { useUserStore } from '~/stores/UserNameStore';
 import { useUserStore } from '~/stores/useUserSocket';
 
@@ -74,6 +75,7 @@ useSeoMeta({
 });
 
 const localePath = useLocalePath();
+const { getFriendlyErrorMessage } = useApiError();
 
 // State for email, password, and loading
 const email = ref<string>('');
@@ -116,32 +118,11 @@ const login = async (): Promise<void> => {
   };
 
   try {
-    const { data: response, error } = await useLazyAsyncData<LoginResponse>(
-      'login',
-      () =>
-        $fetch(url, {
-          method: 'POST',
-          body: data,
-          baseURL: useRuntimeConfig().public.originUrl,
-        })
-    );
-
-    // Check for errors
-    if (error.value) {
-      throw new Error(error.value.message || 'Login failed');
-    }
-
-    // Ensure response data is valid
-    if (!response.value) {
-      throw new Error('No response received from the server');
-    }
-
-    const result = response.value;
-
-    // Validate the response structure
-    if (!result.user || !result.user.name || !result.user.userId || !result.user.role) {
-      throw new Error('Invalid response format');
-    }
+    const result = await $fetch<LoginResponse>(url, {
+      method: 'POST',
+      body: data,
+      baseURL: useRuntimeConfig().public.originUrl,
+    });
 
     // Set user in store
     const user: User = {
@@ -160,23 +141,19 @@ const login = async (): Promise<void> => {
     });
 
     // Redirect after successful login
-    // const redirectPath = useRoute().query.redirect as string || '/dashboard';
-    // TODO: fix it when having a redirect queryString to somewhere else
     await navigateTo(localePath('/dashboard'), {
       redirectCode: 302,
     });
+
   } catch (error) {
     console.error('Login error: ', error);
-
-    // Display error toast message only if it's a genuine error
-    if (error instanceof Error) {
-      toast(error.message || 'Login failed, please try again', {
-        theme: 'dark',
-        type: 'error',
-        position: 'top-center',
-        dangerouslyHTMLString: true,
-      });
-    }
+    const friendlyMessage = getFriendlyErrorMessage(error);
+    toast(friendlyMessage, {
+      theme: 'dark',
+      type: 'error',
+      position: 'top-center',
+      dangerouslyHTMLString: true,
+    });
   } finally {
     loading.value = false;
   }

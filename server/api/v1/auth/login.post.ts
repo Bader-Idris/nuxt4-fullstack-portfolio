@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const user = await User.findOne({ email });
-  if (!user) {
+  const user = await User.findOne({ email }).select('+password');
+  if (!user || !user.password) {
     throw createError({
       statusCode: 401,
       statusMessage: "Invalid Credentials",
