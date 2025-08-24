@@ -41,7 +41,6 @@
 import { Howl } from 'howler'
 import { useI18n } from 'vue-i18n'
 import { useIntervalFn, useEventListener } from '@vueuse/core'
-import { gsap } from 'gsap';
 import eatingSound from '~/assets/sounds/swallow.wav'
 import victorySound from '~/assets/sounds/victory.wav'
 import wallHitSound from '~/assets/sounds/wall-hit.wav'
@@ -315,14 +314,13 @@ function triggerStartAnimation(element: any) {
     // This respects the user's expectation of an animation delay.
     return;
   }
-
-  gsap.to(targetEl, {
+  useGSAP().to(targetEl, {
     scale: 0.9,
     duration: 0.1,
     yoyo: true,
     repeat: 1,
     onComplete: () => {
-      gsap.set(targetEl, { clearProps: 'all' });
+      useGSAP().set(targetEl, { clearProps: 'all' });
       startGame();
     }
   });

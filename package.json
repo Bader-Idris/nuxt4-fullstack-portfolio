@@ -2,7 +2,7 @@
   "name": "nuxt4-fullstack-portfolio",
   "private": true,
   "type": "module",
-  "version": "3.1.0",
+  "version": "3.1.5",
   "main": "dist-electron/main.js",
   "appId": "com.baderidris.www",
   "scripts": {
