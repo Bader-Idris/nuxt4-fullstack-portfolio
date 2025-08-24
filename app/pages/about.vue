@@ -216,7 +216,7 @@ onUnmounted(() => {
       display: inline-flex;
       align-items: center;
       flex-direction: column;
-      height: 100vh;
+      height: $full-viewport-height;
       width: 60px;
       border-right: 1px solid $lines;
 

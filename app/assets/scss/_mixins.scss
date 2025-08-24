@@ -40,17 +40,17 @@
   border-top: 1px solid $lines;
   & {
     @media (max-width: 768px) {
-      height: calc(100vh - 90px);
+      height: calc($full-viewport-height - 90px);
     }
   }
   & {
     @media (min-width: 768px) {
-      // height: calc(100vh - 180px);
+      // height: calc($full-viewport-height - 180px);
       // height: calc(100% - 180px);
       overflow: hidden;
     }
     @media (min-width: 769px) {
-      height: calc(100vh - 180px);
+      height: calc($full-viewport-height - 180px);
     }
   }
 }

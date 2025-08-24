@@ -137,7 +137,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     });
 
     io.on("connection", (socket) => {
-      const user = socket.data.user;
+      const user = socket.data?.user;
       // TODO: get rid of these logs in prod!
       console.log(`User connected: ${user.name} (${user.userId})`);
 

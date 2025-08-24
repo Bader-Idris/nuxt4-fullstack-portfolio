@@ -26,7 +26,7 @@ export const useSocketStore = defineStore('socket', () => {
   const isConnecting = ref(false);
   const connectionError = ref<string | null>(null);
   const currentUser = ref<SocketCurrentUser | null>(null); // User data from the socket server
-  const transport = ref<'polling' | 'websocket' | 'N/A'>('N/A');
+  const transport = ref<'polling' | 'websocket' | "webtransport" | 'N/A'>('N/A');
 
   // --- GETTERS ---
   const getConnectionStatus = computed(() => isConnected.value);

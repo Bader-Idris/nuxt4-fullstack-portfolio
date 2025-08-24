@@ -24,7 +24,7 @@ export default defineNuxtPlugin(async () => {
         --safe-area-inset-bottom: 25px;
         // --safe-area-inset-left: 0px;
         // --safe-area-inset-status-bar: 50px;
-        // --viewport-height: 100vh !important;
+        // --viewport-height: $full-viewport-height !important;
         // TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines
       }
 
@@ -64,7 +64,7 @@ export default defineNuxtPlugin(async () => {
       // For full viewport elements
       document.documentElement.style.setProperty(
         "--viewport-height",
-        `calc(100vh - ${adjustedInsets.top}px + ${adjustedInsets.bottom}px)`
+        `calc($full-viewport-height - ${adjustedInsets.top}px + ${adjustedInsets.bottom}px)`
       );
     };
 

@@ -268,7 +268,7 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 <style lang="scss" scoped>
 .dashboard {
   @include flex-container(column, nowrap, unset, unset);
-  height: calc(100vh - 80px); /* Adjust based on your nav height */
+  height: calc($full-viewport-height - 80px); /* Adjust based on your nav height */
   padding: 1rem;
   gap: 1rem;
 }

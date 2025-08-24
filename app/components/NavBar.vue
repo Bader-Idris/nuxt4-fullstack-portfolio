@@ -297,7 +297,7 @@ header {
     .phone-menu {
       font-family: $main-font;
       width: 100%;
-      height: calc(100vh - 30px);
+      height: calc($full-viewport-height - 30px);
       background-color: $primary2;
       z-index: z("modal-backdrop");
       position: relative;
@@ -323,7 +323,7 @@ header {
         content: '';
         position: absolute;
         width: 100%;
-        height: 100vh;
+        height: $full-viewport-height;
         background-color: $primary1;
         left: -15px;
         top: -15px;
@@ -343,7 +343,7 @@ header {
       @include mobile {
         .phone-body {
           border-radius: 5px 5px 0 0;
-          height: calc(100vh - 88px);
+          height: calc($full-viewport-height - 88px);
           align-content: flex-start;
           @include mainMiddleSettings;
 

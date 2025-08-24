@@ -258,7 +258,7 @@ if (import.meta.client) {
 
 <style lang="scss">
 :root {
-  height: 100vh;
+  height: $full-viewport-height;
   width: 100vw;
 }
 

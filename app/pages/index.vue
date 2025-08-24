@@ -119,7 +119,7 @@ useSeoMeta({
   @include mobile {
     @include phone-borders;
     overflow: visible !important;
-    height: calc(100vh - 95px);
+    height: calc($full-viewport-height - 95px);
   }
 
   @media screen and (max-height: 668px) {
@@ -373,7 +373,7 @@ useSeoMeta({
       }
 
       @media screen and (max-height: 500px) {
-        height: calc(100vh - 30px);
+        height: calc($full-viewport-height - 30px);
         margin-top: -40px;
       }
     }

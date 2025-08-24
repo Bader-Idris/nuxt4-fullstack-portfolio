@@ -54,7 +54,7 @@ watch(
     position: fixed;
     display: inline-block;
     background: $lines;
-    height: calc(100vh - 80px);
+    height: calc($full-viewport-height - 80px);
   }
 }
 

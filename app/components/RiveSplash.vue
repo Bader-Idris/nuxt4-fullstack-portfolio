@@ -68,7 +68,7 @@ onMounted(async () => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: $full-viewport-height;
   pointer-events: none;
 
   /* Fix it on prod */

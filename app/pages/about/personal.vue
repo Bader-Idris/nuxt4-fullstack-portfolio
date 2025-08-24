@@ -230,7 +230,7 @@ onMounted(() => {
     left: 300px;
     position: absolute;
     top: 0;
-    height: calc(100vh - 180px);
+    height: calc($full-viewport-height - 180px);
   }
 
   > * {

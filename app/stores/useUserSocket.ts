@@ -2,7 +2,7 @@
 export interface User {
   userId: string;
   username: string; // Changed from 'name' to 'username' to match your store
-  role: "admin" | "user";
+  role: "admin" | "user" | "guest";
 }
 
 // Define the state interface

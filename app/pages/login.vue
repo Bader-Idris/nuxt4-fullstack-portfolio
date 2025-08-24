@@ -286,10 +286,10 @@ const google = async () => {
   @include mainMiddleSettings;
   @include mobile {
     @include phone-borders;
-    height: calc(100vh - 30px);
+    height: calc($full-viewport-height - 30px);
   }
   @include tablet-to-up {
-    height: calc(100vh - 60px);
+    height: calc($full-viewport-height - 60px);
   }
 
   .form {

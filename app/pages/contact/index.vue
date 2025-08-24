@@ -236,7 +236,7 @@ onBeforeUnmount(() => {
     width: calc(100% - 300px);
     position: absolute;
     top: 0;
-    height: calc(100vh - 180px);
+    height: calc($full-viewport-height - 180px);
     @include flex-container(row, nowrap, space-around, flex-start);
     padding: 100px 10px;
 
@@ -272,7 +272,7 @@ onBeforeUnmount(() => {
 
       @include tablet-to-up {
         margin-bottom: 60px;
-        height: calc(100vh - 260px);
+        height: calc($full-viewport-height - 260px);
         position: relative;
         overflow-y: scroll;
       }
@@ -342,7 +342,7 @@ onBeforeUnmount(() => {
     @include tablet-to-up {
       >span {
         width: 1px;
-        height: calc(100vh - 180px);
+        height: calc($full-viewport-height - 180px);
         background: $lines;
         margin: 0 10px;
         position: relative;
@@ -425,7 +425,7 @@ onBeforeUnmount(() => {
 
         @include tablet-to-up {
           margin-bottom: 60px;
-          height: calc(100vh - 260px);
+          height: calc($full-viewport-height - 260px);
           position: relative;
           overflow-y: scroll;
         }
