@@ -54,7 +54,8 @@
     "v-gsap-nuxt": "^1.4.4",
     "vue": "latest",
     "vue-router": "latest",
-    "vue3-toastify": "^0.2.8"
+    "vue3-toastify": "^0.2.8",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@capacitor-community/app-icon": "^6.0.0",
@@ -107,6 +108,7 @@
     "@types/howler": "^2.2.12",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/nodemailer": "^7.0.1",
+    "@types/web-push": "^3.6.4",
     "capacitor-plugin-safe-area": "^4.0.0",
     "electron": "^37.3.1",
     "electron-builder": "^26.0.12",
@@ -122,7 +124,6 @@
     "sass": "^1.90.0",
     "typescript": "^5.9.2",
     "vite-plugin-electron": "^0.29.0",
-    "vite-plugin-electron-renderer": "^0.14.6",
-    "web-push": "^3.6.7"
+    "vite-plugin-electron-renderer": "^0.14.6"
   }
 }

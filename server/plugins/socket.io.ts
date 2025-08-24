@@ -94,7 +94,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     // Store connected users
     const userSockets = new Map();
 
-    // Middleware to handle authentication
+    // Middleware to handle authentication for users and assign guest identities
     io.use(async (socket, next) => {
       try {
         // socket.handshake.headers.cookie, // ✅ string!
@@ -103,34 +103,29 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           .find((cookie) => cookie.startsWith("accessToken="))
           ?.split("=")[1];
 
-        if (!accessToken) {
-          // TODO: it does not throw the status code
-          return next(
-            createError({
-              statusCode: 401,
-              statusMessage: "Authentication required",
-            })
-          );
+        if (accessToken) {
+          // Authenticated user flow
+          const decoded = isTokenValid(accessToken);
+          if (!decoded || !decoded.user) {
+            return next(new Error("Token validation failed"));
+          }
+          socket.data.user = decoded.user;
+        } else {
+          // Guest user flow
+          const { randomUUID } = await import('crypto');
+          socket.data.user = {
+            userId: `guest-${randomUUID()}`,
+            name: 'Guest',
+            role: 'guest',
+          };
         }
-
-        // Verify the token
-        const decoded = isTokenValid(accessToken);
-
-        if (!decoded) {
-          return next(new Error("Token validation failed"));
-        }
-
-        // Store user info in socket
-        socket.data.user = decoded.user;
-
-        // Proceed with connection
         next();
       } catch (error) {
-        console.error("Authentication error:", error);
+        console.error("Authentication middleware error:", error);
         return next(
           createError({
-            statusCode: 401,
-            statusMessage: "Invalid authentication",
+            statusCode: 500,
+            statusMessage: "Internal server error during authentication",
           })
         );
       }
@@ -260,12 +255,16 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
       socket.on("private-message", async (data) => {
         const { to, message, timestamp } = data;
-        const fromUser = socket.data.user.userId;
-        const targetSocketId = userSockets.get(to)?.socketId;
+        const fromUser = socket.data.user;
 
-        // Save to database
+        if (!fromUser || !fromUser.userId) {
+          // Handle unauthenticated user trying to send a message
+          return;
+        }
+
+        // Save to database first
         const newMessage = new Message({
-          from: fromUser,
+          from: fromUser.userId,
           to,
           message,
           timestamp,
@@ -273,78 +272,90 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         await newMessage.save();
 
         const messageData = {
-          from: fromUser,
-          fromName: socket.data.user.name,
+          from: fromUser.userId,
+          fromName: fromUser.name,
+          to,
           message,
           timestamp,
-          id: newMessage._id, // how to properly get this _id
+          id: newMessage._id.toString(),
         };
 
-        // Forward to recipient
-        if (targetSocketId) {
-          // Target is online, send via Socket.IO with ack
-          io.to(targetSocketId).emit("private-message", messageData, (ack) => {
-            if (ack) {
-              console.log(`Message delivered to ${to} via Socket.IO`);
-            } else {
-              console.log(`Message to ${to} not acknowledged`);
-            }
-          });
+        // Echo the message back to the sender immediately
+        socket.emit("private-message", messageData);
+
+        // Check if the recipient is online in any instance
+        const recipientSockets = await io.in(`user-${to}`).fetchSockets();
+
+        if (recipientSockets && recipientSockets.length > 0) {
+          // User is online, send the message via Socket.IO to their room
+          io.to(`user-${to}`).emit("private-message", messageData);
+          console.log(`Message delivered to ${to} via Socket.IO`);
         } else {
-          // Target is offline, send push notification
-          // const subscription = await getSubscription(to);
-          const redis = redisClient; // TODO: or event.context.redis
-          const subscription = await getSubscription(redis, to);
-          if (subscription) {
-            try {
+          // User is offline, send a push notification
+          console.log(`User ${to} is offline, attempting to send push notification.`);
+          try {
+            const subscription = await getSubscription(redisClient, to);
+            if (subscription) {
               await webpush.sendNotification(
                 subscription,
                 JSON.stringify({
-                  title: "New Message",
-                  body: `You have a new message from ${socket.data.user.name}`,
-                  url: "/dashboard", // Add URL for click handling
+                  title: `New message from ${fromUser.name}`,
+                  body: message,
+                  url: `/dashboard?chatWith=${fromUser.userId}`, // Direct link to the chat
                 })
               );
-              console.log(`Push notification sent to ${to}`);
-            } catch (err) {
-              console.error(`Failed to send push notification to ${to}:`, err);
+              console.log(`Push notification sent successfully to ${to}`);
+            } else {
+              console.log(`No push subscription found for user ${to}`);
             }
+          } catch (err) {
+            console.error(`Failed to send push notification to ${to}:`, err);
           }
         }
-        socket.emit("private-message", messageData); // Echo back to sender
       });
 
       // Handle message history retrieval
       socket.on("get-message-history", async (data, callback) => {
-        if (!user.userId) {
-          socket.emit("error", { message: "User not authenticated" });
-          return;
+        const user = socket.data.user;
+        if (!user || !user.userId) {
+          return callback({ error: "User not authenticated" });
         }
-        // TODO: add pagination, rate limiting!
 
-        const { page = 1, limit = 20 } = data; // Default to page 1, 20 messages per page
-        if (typeof page !== "number" || page < 1 || !Number.isInteger(page)) {
-          socket.emit("error", { message: "Invalid page number" });
-          return;
+        const { recipientId, page = 1, limit = 20 } = data;
+        if (!recipientId) {
+          return callback({ error: "Recipient ID is required" });
         }
+
+        if (typeof page !== "number" || page < 1 || !Number.isInteger(page)) {
+          return callback({ error: "Invalid page number" });
+        }
+
         try {
           const messages = await Message.find({
             $or: [
-              { from: user.userId }, // Messages sent by the user
-              { to: user.userId }, // Messages received by the user
-              { isBroadcast: true }, // Broadcast messages
+              { from: user.userId, to: recipientId },
+              { from: recipientId, to: user.userId },
             ],
           })
-            .sort({ timestamp: -1 }) // Sort by timestamp, most recent first
-            .skip((page - 1) * limit) // Skip messages for previous pages
-            .limit(limit); // Limit the number of messages returned
-          callback({ messages });
+            .sort({ timestamp: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .populate("from", "name") // Populate sender's name
+            .lean(); // Use lean for better performance
 
-          socket.emit("message-history", messages);
+          // Reverse the messages to show the latest at the bottom
+          const formattedMessages = messages.reverse().map(msg => ({
+            ...msg,
+            fromName: (msg.from as any).name, // Extract populated name
+            id: msg._id.toString(),
+          }));
+
+          socket.emit("message-history", { recipientId, messages: formattedMessages });
+          if (callback) callback({ messages: formattedMessages });
+
         } catch (error) {
           console.error("Error fetching messages:", error);
-          socket.emit("error", { message: "Failed to fetch messages" });
-          callback({ error: "Failed to fetch messages" });
+          if (callback) callback({ error: "Failed to fetch messages" });
         }
       });
 

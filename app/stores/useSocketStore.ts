@@ -10,7 +10,7 @@ export interface SocketCurrentUser {
   userId: string;
   name: string;
   socketId: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'guest';
 }
 
 export const useSocketStore = defineStore('socket', () => {
@@ -51,14 +51,10 @@ export const useSocketStore = defineStore('socket', () => {
   /**
    * Initializes the socket connection.
    * This function is now idempotent and safe to call multiple times.
-   * It will only proceed if a user is logged in and a connection isn't already active.
+   * It will connect as a guest if the user is not authenticated.
    */
   async function initializeSocket() {
-    // 1. Guard Clauses: Don't connect if not logged in or already connected/connecting.
-    if (!userStore.isLoggedIn) {
-      console.warn('Socket connection aborted: User is not logged in.');
-      return;
-    }
+    // 1. Guard Clause: Don't reconnect if already connected or connecting.
     if (socket.value?.connected || isConnecting.value) {
       console.log('Socket connection already active or in progress.');
       return;
@@ -77,19 +73,16 @@ export const useSocketStore = defineStore('socket', () => {
 
     // 2. Connection Options
     const options: any = {
-      withCredentials: true, // Crucial for sending HTTP-only cookies
-      autoConnect: false, // We explicitly call .connect()
-      // Add connection state recovery options from your server config
+      withCredentials: true,
+      autoConnect: false,
       connectionStateRecovery: {
         maxDisconnectionDuration: 2 * 60 * 1000,
         skipMiddlewares: true,
       },
-      // reconnection: true, // Enable automatic reconnection
-      // reconnectionAttempts: 5, // Limit reconnection attempts
-      // reconnectionDelay: 1000, // Initial delay between attempts (ms)
-      // reconnectionDelayMax: 5000, // Max delay with exponential backoff
-      // // transports: ["websocket", "polling"],
-      // tryAllTransports: true,
+      // Add auth object for the server to identify the user
+      auth: {
+        token: userStore.isAuthenticated ? localStorage.getItem('auth_token') : undefined
+      }
     };
 
     // For Capacitor, we might need to manually attach cookies if `withCredentials` isn't enough.
@@ -175,6 +168,21 @@ export const useSocketStore = defineStore('socket', () => {
     socket.value.on('user-left', (userId) => {
       onlineUsersStore.removeUser(userId);
     });
+
+    // --- Custom Application Events ---
+    const messagesStore = useMessagesStore();
+    socket.value.on('private-message', (message) => {
+      messagesStore.addMessage(message);
+      // Only play sound if the message is from another user
+      if (message.from !== userStore.user.userId) {
+        sound.playSound('newMessage');
+      }
+    });
+
+    socket.value.on('message-history', ({ recipientId, messages }) => {
+      messagesStore.setMessages(recipientId, messages);
+    });
+
   }
 
   /**
@@ -193,6 +201,23 @@ export const useSocketStore = defineStore('socket', () => {
     socket.value = null;
   }
 
+  function sendPrivateMessage(recipientId: string, message: string) {
+    if (!socket.value || !isConnected.value) {
+      console.error('Cannot send message: socket is not connected.');
+      return;
+    }
+    socket.value.emit('private-message', { to: recipientId, message, timestamp: new Date().toISOString() });
+  }
+
+  function fetchMessageHistory(recipientId: string, page: number, limit: number) {
+    if (!socket.value || !isConnected.value) {
+      console.error('Cannot fetch history: socket is not connected.');
+      return;
+    }
+    socket.value.emit('get-message-history', { recipientId, page, limit });
+  }
+
+
   // --- Return Public API ---
   return {
     // State & Getters
@@ -204,6 +229,8 @@ export const useSocketStore = defineStore('socket', () => {
     // Actions
     initializeSocket,
     disconnectSocket,
+    sendPrivateMessage,
+    fetchMessageHistory,
     // You can add `bindChatEvents`, `bindGameEvents` etc. here as your app grows
   };
 });

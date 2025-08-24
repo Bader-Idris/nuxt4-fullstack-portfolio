@@ -11,56 +11,52 @@ interface Message {
 
 export const useMessagesStore = defineStore("messages", {
   state: () => ({
-    messages: [] as Message[],
+    // A map to hold messages for each conversation (recipient)
+    conversations: new Map<string, Message[]>(),
     page: 1,
     limit: 20,
+    isLoading: false,
   }),
   actions: {
+    setLoading(isLoading: boolean) {
+      this.isLoading = isLoading;
+    },
     addMessage(message: Message) {
+      const recipientId = message.from === useUserStore().user.userId ? message.to : message.from;
+      if (!recipientId) return;
+
+      const conversation = this.conversations.get(recipientId) || [];
       // Check for duplicates by ID before adding
-      if (!this.messages.some((m) => m.id === message.id)) {
-        this.messages.push(message);
-        this.saveToLocalStorage();
+      if (!conversation.some((m) => m.id === message.id)) {
+        conversation.push(message);
+        this.conversations.set(recipientId, conversation);
       }
     },
-    setMessages(newMessages: Message[]) {
-      const reversedNewMessages = [...newMessages].reverse();
-      const uniqueNewMessages = reversedNewMessages.filter(
-        (newMsg) =>
-          !this.messages.some((existingMsg) => existingMsg.id === newMsg.id)
+    setMessages(recipientId: string, newMessages: Message[]) {
+      const existingMessages = this.conversations.get(recipientId) || [];
+      const uniqueNewMessages = newMessages.filter(
+        (newMsg) => !existingMessages.some((existingMsg) => existingMsg.id === newMsg.id)
       );
-      this.messages = [...uniqueNewMessages, ...this.messages];
-      console.log("Updated messages length:", this.messages.length);
-      // Persist to localStorage
-      // this.saveToLocalStorage();
+      this.conversations.set(recipientId, [...uniqueNewMessages, ...existingMessages]);
+      this.isLoading = false;
     },
-    clearMessages() {
-      this.messages = [];
+    clearAllData() {
+      this.conversations.clear();
       this.page = 1;
-      // Clear localStorage for this conversation
-      // this.saveToLocalStorage();
     },
     incrementPage() {
       this.page++;
     },
-    saveToLocalStorage(recipientUserId: string) {
-      const key = `chat_messages_${recipientUserId || "default"}`;
-      // const key = `chat_messages_${this.page}`;
-      localStorage.setItem(key, JSON.stringify(this.messages));
-    },
-    loadFromLocalStorage(recipientUserId: string) {
-      const key = `chat_messages_${recipientUserId || "default"}`;
-      // const key = `chat_messages_${this.page}`;
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        this.messages = JSON.parse(stored);
-      }
-    },
   },
   getters: {
-    getFilteredMessages: (state) => {
-      // You can add filtering logic here based on user role
-      return state.messages;
+    getMessagesForRecipient: (state) => (recipientId: string): Message[] => {
+      return state.conversations.get(recipientId) || [];
+    },
+    isEndOfHistory: (state) => (recipientId: string): boolean => {
+        const conversation = state.conversations.get(recipientId);
+        // This is a simplification. A more robust solution would involve the server
+        // indicating if there are more messages to load.
+        return conversation ? conversation.length < state.page * state.limit : false;
     },
   },
 });

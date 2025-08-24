@@ -7,7 +7,7 @@ const sounds = {
   // reconnect: new Howl({ src: ["/sounds/reconnect.mp3"], volume: 0.3 }),
   // userJoin: new Howl({ src: ["/sounds/user-join.mp3"], volume: 0.2 }),
   // userLeave: new Howl({ src: ["/sounds/user-leave.mp3"], volume: 0.2 }),
-  // newMessage: new Howl({ src: ["/sounds/new-message.mp3"], volume: 0.4 }),
+  newMessage: new Howl({ src: ["/sounds/new-message.mp3"], volume: 0.4 }),
   // sendMessage: new Howl({ src: ["/sounds/send-message.mp3"], volume: 0.2 }), // More subtle sound for sending
   // kicked: new Howl({ src: ["/sounds/kicked.mp3"], volume: 0.5 }),
   // error: new Howl({ src: ["/sounds/error.mp3"], volume: 0.5 }),

@@ -21,6 +21,9 @@ export const useOnlineUsersStore = defineStore("onlineUsers", {
     removeUser(userId: string) {
       this.users = this.users.filter((u) => u.userId !== userId);
     },
+    clearUsers() {
+      this.users = [];
+    },
   },
   getters: {
     getOnlineUsers: (state) => state.users,

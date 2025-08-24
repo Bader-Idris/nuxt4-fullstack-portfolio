@@ -20,97 +20,107 @@
     </aside>
 
     <!-- Main Content Grid -->
-    <div class="dashboard-grid">
-      <!-- Online Users List -->
-      <div class="online-users-panel">
-        <h3>Online Users</h3>
-        <div v-if="onlineUsersStore.users.length === 0" class="no-users">
-          No other users online.
+    <ClientOnly>
+      <div class="dashboard-grid">
+        <!-- Online Users List -->
+        <div class="online-users-panel">
+          <h3>Online Users</h3>
+          <div v-if="onlineUsersStore.users.length === 0" class="no-users">
+            No other users online.
+          </div>
+          <ul v-else>
+            <li v-for="onlineUser in onlineUsersStore.users.filter(u => u.userId !== socketStore.currentUser?.userId)"
+              :key="onlineUser.userId" 
+              class="user-item"
+              @click="startChatWith(onlineUser.userId)"
+              :class="{ 'active-chat': recipientUserId === onlineUser.userId, 'disabled': userStore.isGuest }"
+            >
+              <div class="user-info">
+                <span class="user-name">{{ onlineUser.name }}</span>
+                <span class="user-status">Online</span>
+              </div>
+              <div class="user-actions">
+                <button 
+                  @click.stop="initiateCall(onlineUser.userId)" 
+                  class="call-btn"
+                  :disabled="isInCall || userStore.isGuest">
+                  <Icon v-if="!userStore.isGuest" name="heroicons:video-camera-solid" width="16" />
+                  <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
+                </button>
+              </div>
+            </li>
+          </ul>
         </div>
-        <ul v-else>
-          <li v-for="onlineUser in onlineUsersStore.users.filter(u => u.userId !== socketStore.currentUser?.userId)"
-            :key="onlineUser.userId" 
-            class="user-item"
-            @click="startChatWith(onlineUser.userId)"
-            :class="{ 'active-chat': recipientUserId === onlineUser.userId }"
-          >
-            <div class="user-info">
-              <span class="user-name">{{ onlineUser.name }}</span>
-              <span class="user-status">Online</span>
+
+        <!-- Chat and Video Area -->
+        <div class="chat-video-area">
+          <!-- Video Call UI (Overlay) -->
+          <div v-if="isInCall" class="video-call-container">
+            <div class="call-info">
+              <p>In call with: {{ getUserName(currentCallPartner) }}</p>
             </div>
-            <div class="user-actions">
-              <button 
-                @click.stop="initiateCall(onlineUser.userId)" 
-                class="call-btn"
-                :disabled="isInCall">
-                <Icon name="heroicons:video-camera-solid" width="16" />
+            <div class="video-grid">
+              <div class="remote-video-container">
+                <video ref="remoteVideoRef" autoplay playsinline class="remote-video" />
+                <div v-if="!remoteStream" class="connecting-overlay">
+                  <span>Connecting...</span>
+                  <div class="spinner"></div>
+                </div>
+              </div>
+              <div class="local-video-container">
+                <video ref="localVideoRef" autoplay playsinline muted class="local-video" />
+              </div>
+            </div>
+            <div class="call-controls">
+              <button @click="toggleMute" class="control-btn" :class="{ 'active': isMuted }">
+                <Icon :name="isMuted ? 'heroicons:microphone-slash' : 'heroicons:microphone'" width="24" />
+              </button>
+              <button @click="toggleVideo" class="control-btn" :class="{ 'active': isVideoOff }">
+                <Icon :name="isVideoOff ? 'heroicons:video-camera-slash' : 'heroicons:video-camera'" width="24" />
+              </button>
+              <button @click="endCall" class="control-btn end-call">
+                <Icon name="heroicons:phone-x-mark" width="24" />
               </button>
             </div>
-          </li>
-        </ul>
-      </div>
+          </div>
 
-      <!-- Chat and Video Area -->
-      <div class="chat-video-area">
-        <!-- Video Call UI (Overlay) -->
-        <div v-if="isInCall" class="video-call-container">
-          <div class="call-info">
-            <p>In call with: {{ getUserName(currentCallPartner) }}</p>
-          </div>
-          <div class="video-grid">
-            <div class="remote-video-container">
-              <video ref="remoteVideoRef" autoplay playsinline class="remote-video" />
-              <div v-if="!remoteStream" class="connecting-overlay">
-                <span>Connecting...</span>
-                <div class="spinner"></div>
+          <!-- Chat UI -->
+          <div v-else-if="recipientUserId && !userStore.isGuest" class="chat-panel">
+            <header class="chat-header">
+              <h2>Chat with {{ getRecipientName() }}</h2>
+            </header>
+            <div ref="chatContainer" class="chat-container" @scroll="handleScroll">
+              <div v-if="messagesStore.isLoading" class="loading-indicator">
+                Loading older messages...
+              </div>
+              <div v-for="msg in messagesStore.getMessagesForRecipient(recipientUserId)" :key="msg.id" :class="['message', msg.from === socketStore.currentUser?.userId ? 'sent' : 'received']">
+                <div class="message-header">
+                  <span class="sender-name">{{ msg.fromName }}</span>
+                </div>
+                <div class="message-content">
+                  <span>{{ msg.message }}</span>
+                </div>
+                <div class="message-timestamp">{{ formatTimestamp(msg.timestamp) }}</div>
               </div>
             </div>
-            <div class="local-video-container">
-              <video ref="localVideoRef" autoplay playsinline muted class="local-video" />
+            <div v-if="showNewMessageIndicator" class="new-message-indicator" @click="scrollToBottom">
+              ↓ New Messages
             </div>
+            <form @submit.prevent="sendPrivateMessage" class="chat-input-form">
+              <input v-model="message" placeholder="Type your message" required />
+              <CustomButton button-type="primary" type="submit">Send</CustomButton>
+            </form>
           </div>
-          <div class="call-controls">
-            <button @click="toggleMute" class="control-btn" :class="{ 'active': isMuted }">
-              <Icon :name="isMuted ? 'heroicons:microphone-slash' : 'heroicons:microphone'" width="24" />
-            </button>
-            <button @click="toggleVideo" class="control-btn" :class="{ 'active': isVideoOff }">
-              <Icon :name="isVideoOff ? 'heroicons:video-camera-slash' : 'heroicons:video-camera'" width="24" />
-            </button>
-            <button @click="endCall" class="control-btn end-call">
-              <Icon name="heroicons:phone-x-mark" width="24" />
-            </button>
-          </div>
-        </div>
-
-        <!-- Chat UI -->
-        <div v-else-if="recipientUserId" class="chat-panel">
-          <header class="chat-header">
-            <h2>Chat with {{ getRecipientName() }}</h2>
-          </header>
-          <div ref="chatContainer" class="chat-container" @scroll="handleScroll">
-            <div v-if="isLoadingHistory" class="loading-indicator">
-              Loading older messages...
-            </div>
-            <!-- <div v-for="msg in messagesStore.getMessagesForRecipient(recipientUserId)" :key="msg.id" :class="['message', msg.from === socketStore.currentUser?.userId ? 'sent' : 'received']">
-              <div class="message-header">
-                <span class="sender-name">{{ msg.fromName }}</span>
+           <div v-else class="chat-placeholder">
+              <div v-if="userStore.isGuest">
+                <Icon name="ion:locked" width="50" height="50" mode="svg" />
+                <p>Please <NuxtLink :to="localePath('/login')">sign in</NuxtLink> to chat with other users.</p>
               </div>
-              <div class="message-content">
-                <span>{{ msg.message }}</span>
-              </div>
-              <div class="message-timestamp">{{ formatTimestamp(msg.timestamp) }}</div>
-            </div> -->
+              <p v-else>Select a user to start a conversation.</p>
           </div>
-          <form @submit.prevent="sendPrivateMessage" class="chat-input-form">
-            <input v-model="message" placeholder="Type your message" required />
-            <CustomButton button-type="primary" type="submit">Send</CustomButton>
-          </form>
-        </div>
-         <div v-else class="chat-placeholder">
-            <p>Select a user to start a conversation.</p>
         </div>
       </div>
-    </div>
+    </ClientOnly>
   </div>
 </template>
 
@@ -118,6 +128,8 @@
 import { useSocketStore } from '~/stores/useSocketStore';
 import { useMessagesStore } from '~/stores/useMessagesStore';
 import { useOnlineUsersStore } from '~/stores/useOnlineUsersStore';
+import { useUserStore } from '~/stores/useUserSocket';
+import { usePushNotifications } from '~/composables/usePushNotifications';
 // import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
 // import { useWebRTC } from '~/composables/useWebRTC'; // Assuming useWebRTC is in composables
 import { useWebRTC } from '~/components/webRTC'; // TODO: should it be in composables instead?
@@ -132,12 +144,16 @@ useSeoMeta({
 const socketStore = useSocketStore();
 const messagesStore = useMessagesStore();
 const onlineUsersStore = useOnlineUsersStore();
+const userStore = useUserStore();
 const localePath = useLocalePath()
+
+// --- Push Notifications ---
+const { isSupported: isPushSupported, subscribeToPushNotifications } = usePushNotifications();
 
 // --- Component State ---
 const recipientUserId = ref('');
 const message = ref('');
-const isLoadingHistory = ref(false);
+const showNewMessageIndicator = ref(false);
 const chatContainer = ref<HTMLElement | null>(null);
 
 // --- WebRTC Composables ---
@@ -153,65 +169,80 @@ const {
   remoteVideoRef,
   toggleMute,
   toggleVideo,
-  setupWebRTCSocketListeners, // Renamed for clarity
-} = useWebRTC(socketStore.socket); // Pass the socket ref to the composable
+  setupSocketListeners,
+  cleanup, // Get the cleanup function
+} = useWebRTC(); // No argument needed as the composable accesses the store directly
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
   if (import.meta.client) {
     // The single point of entry to connect the socket for the whole app
     socketStore.initializeSocket();
-
-    // Bind the event listeners specific to chat functionality
-    // socketStore.bindChatEvents();
   }
 });
 
 onUnmounted(() => {
   if (import.meta.client) {
-    // Clean up chat-specific listeners when the component is destroyed
-    // to prevent duplicate handlers if the user navigates back.
-    // socketStore.unbindChatEvents();
-    
-    // Note: We DO NOT call disconnectSocket() here because we want the 
-    // connection to persist across the application.
+    // Fallback cleanup on component unmount
+    cleanup();
   }
 });
 
 // --- Watchers ---
 
-// When the socket connection is established, set up WebRTC listeners
-watch(() => socketStore.socket, (newSocket) => {
+// When the socket connection state changes, manage WebRTC listeners
+watch(() => socketStore.socket, (newSocket, oldSocket) => {
+  // Cleanup listeners on the old socket instance if it existed
+  if (oldSocket) {
+    cleanup();
+  }
+  // Setup listeners on the new socket instance if it exists
   if (newSocket) {
-    setupWebRTCSocketListeners(newSocket);
+    setupSocketListeners();
   }
 }, { immediate: true });
 
 
 // When a new chat is selected, fetch its history
 watch(recipientUserId, (newRecipientId) => {
-  if (newRecipientId) {
+  if (newRecipientId && userStore.isAuthenticated) {
+    messagesStore.setLoading(true);
     messagesStore.page = 1; // Reset page
-    isLoadingHistory.value = true;
     socketStore.fetchMessageHistory(newRecipientId, messagesStore.page, messagesStore.limit);
   }
 });
 
-// When new messages are added, scroll to the bottom
-// watch(() => messagesStore.getMessagesForRecipient(recipientUserId.value), () => {
-//   scrollToBottom();
-// }, { deep: true });
+// When new messages are added, scroll to the bottom or show an indicator
+watch(
+  () => messagesStore.getMessagesForRecipient(recipientUserId.value),
+  (messages, oldMessages) => {
+    if (!messages || !oldMessages || messages.length <= oldMessages.length) return;
 
-// When history is loaded, stop the loading indicator
-watch(() => messagesStore.isLoading, (loading) => {
-    if (!loading) {
-        isLoadingHistory.value = false;
+    const container = chatContainer.value;
+    if (!container) return;
+
+    const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100; // 100px tolerance
+    const lastMessage = messages[messages.length - 1];
+
+    // If the new message is from the current user, always scroll to bottom
+    if (lastMessage.from === userStore.user.userId) {
+      scrollToBottom();
+    } else {
+      // If from another user, check if we should auto-scroll or show indicator
+      if (isScrolledToBottom) {
+        scrollToBottom();
+      } else {
+        showNewMessageIndicator.value = true;
+      }
     }
-});
+  },
+  { deep: true }
+);
 
 
 // --- Methods ---
 function sendPrivateMessage() {
+  if (userStore.isGuest) return;
   if (recipientUserId.value && message.value.trim()) {
     socketStore.sendPrivateMessage(recipientUserId.value, message.value.trim());
     message.value = '';
@@ -220,6 +251,10 @@ function sendPrivateMessage() {
 }
 
 function startChatWith(userId: string) {
+  if (userStore.isGuest) {
+    // Optionally, show a notification prompting to log in
+    return;
+  }
   if (isInCall.value) {
     alert('You cannot start a new chat while in a call.');
     return;
@@ -228,10 +263,19 @@ function startChatWith(userId: string) {
 }
 
 const handleScroll = () => {
-  if (chatContainer.value?.scrollTop === 0 && !isLoadingHistory.value && !messagesStore.isEndOfHistory(recipientUserId.value)) {
-    isLoadingHistory.value = true;
+  const container = chatContainer.value;
+  if (!container) return;
+
+  // If user scrolls to the top, fetch more history
+  if (container.scrollTop === 0 && !messagesStore.isLoading && !messagesStore.isEndOfHistory(recipientUserId.value)) {
+    messagesStore.setLoading(true);
     messagesStore.incrementPage();
     socketStore.fetchMessageHistory(recipientUserId.value, messagesStore.page, messagesStore.limit);
+  }
+
+  // If user scrolls back to the bottom, hide the new message indicator
+  if (container.scrollHeight - container.scrollTop <= container.clientHeight + 1) { // +1 for pixel-perfect tolerance
+    showNewMessageIndicator.value = false;
   }
 };
 
@@ -307,7 +351,18 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   transition: background-color 0.2s;
   &:hover { background-color: #e9eef5; }
   &.active-chat { background-color: #d1e0f3; }
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    &:hover {
+      background-color: #f7f9fc;
+    }
+  }
   .user-name { font-weight: 500; }
+  .user-status.guest {
+    color: #999;
+    font-style: italic;
+  }
   .call-btn { background: none; border: none; cursor: pointer; }
 }
 
@@ -321,10 +376,14 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 }
 
 .chat-placeholder {
-    @include flex-container(row, nowrap, center, center);
+    @include flex-container(column, nowrap, center, center);
     height: 100%;
     color: #888;
     font-size: 1.2rem;
+    text-align: center;
+    p {
+      margin-top: 1rem;
+    }
 }
 
 .chat-panel {
@@ -362,6 +421,21 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   border-top: 1px solid #e0e0e0;
   gap: 0.5rem;
   input { flex-grow: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+}
+
+.new-message-indicator {
+  position: absolute;
+  bottom: 4.5rem; // Adjust to be above the input form
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #3498db;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: opacity 0.3s;
 }
 
 /* Video Call Styles */
@@ -403,5 +477,18 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   background-color: #333; color: white;
   border: none; cursor: pointer;
   &.end-call { background-color: #e53935; }
+}
+
+.notifications-btn {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 </style>
