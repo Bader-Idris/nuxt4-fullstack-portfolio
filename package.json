@@ -89,7 +89,7 @@
     "@iconify-json/bxs": "^1.2.2",
     "@iconify-json/grommet-icons": "^1.2.3",
     "@iconify-json/heroicons": "^1.2.2",
-    "@iconify-json/hugeicons": "^1.2.13",
+    "@iconify-json/hugeicons": "^1.2.14",
     "@iconify-json/ic": "^1.2.4",
     "@iconify-json/mdi": "^1.2.3",
     "@nuxt/eslint": "^1.9.0",

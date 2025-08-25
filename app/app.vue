@@ -60,6 +60,7 @@ onMounted(async () => {
 
     if (config.public.isCapacitor === true && Capacitor.isNativePlatform()) {
       // For native Capacitor builds, show the Rive splash screen first.
+      document.documentElement.style.setProperty('--full-viewport-height', '95vh');
       showRiveSplash.value = true
       const { SplashScreen } = await import('@capacitor/splash-screen')
       await SplashScreen.hide()
@@ -258,8 +259,9 @@ if (import.meta.client) {
 
 <style lang="scss">
 :root {
-  height: $full-viewport-height;
-  width: 100vw;
+  --full-viewport-height: 100vh;
+  height: var(--full-viewport-height);
+  width: $full-viewport-width;
 }
 
 body {

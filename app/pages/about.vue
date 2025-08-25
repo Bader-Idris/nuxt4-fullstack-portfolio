@@ -208,7 +208,7 @@ onUnmounted(() => {
     display: flex;
 
     @include mobile {
-      width: calc(100vw - 30px);
+      width: calc($full-viewport-width - 30px);
     }
 
     .tab {
@@ -290,7 +290,7 @@ onUnmounted(() => {
       visibility 0.5s ease;
 
     @include mobile {
-      width: calc(100vw - 57px);
+      width: calc($full-viewport-width - 57px);
     }
 
     &.hidden {

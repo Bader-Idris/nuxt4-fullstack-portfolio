@@ -62,16 +62,15 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .rive-container {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: $full-viewport-width;
   height: $full-viewport-height;
   pointer-events: none;
 
-  /* Fix it on prod */
   z-index: z("tooltip");
 }
 </style>

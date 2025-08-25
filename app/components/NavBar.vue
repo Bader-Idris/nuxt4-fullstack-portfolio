@@ -234,7 +234,7 @@ header {
         &::after {
           content: '';
           position: absolute;
-          width: calc(100vw - 32px);
+          width: calc($full-viewport-width - 32px);
           height: 100%;
           left: -20px;
           top: 2px;
@@ -385,7 +385,7 @@ header {
                 content: '';
                 position: absolute;
                 border-bottom: 1px solid $lines;
-                width: calc(100vw - 33px);
+                width: calc($full-viewport-width - 33px);
                 left: 0;
                 height: 0px;
                 padding: 17px 0;

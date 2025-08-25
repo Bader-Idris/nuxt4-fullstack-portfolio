@@ -122,7 +122,7 @@ const slugify = (text) => {
   @include flex-container(unset, wrap, unset, unset);
 
   @include mobile {
-    width: calc(100vw - 30px);
+    width: calc($full-viewport-width - 30px);
     flex-direction: column;
     left: 0;
     top: 0;
@@ -130,13 +130,13 @@ const slugify = (text) => {
   }
 
   @include tablet {
-    width: calc(100vw - 460px);
+    width: calc($full-viewport-width - 460px);
     @include flex-container(row, wrap, space-evenly, stretch);
     align-content: center;
   }
 
   @media (min-width: 1024px) and (max-width: 1200px) {
-    width: calc(100vw - 430px);
+    width: calc($full-viewport-width - 430px);
   }
 
   @media (min-width: 1200px) {

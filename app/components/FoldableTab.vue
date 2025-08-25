@@ -67,7 +67,7 @@ watch(
     background-color: $lines;
     height: 30px;
     align-items: center;
-    width: calc(100vw - 30px);
+    width: calc($full-viewport-width - 30px);
   }
 
   > svg {

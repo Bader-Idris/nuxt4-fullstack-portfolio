@@ -276,8 +276,8 @@ onMounted(() => {
     padding: 20px;
 
     @include mobile {
-      margin-left: 40px;
-      width: calc(100vw - 30px);
+      margin-left: 10px;
+      width: calc($full-viewport-width - 30px);
     }
 
     .code-author {
