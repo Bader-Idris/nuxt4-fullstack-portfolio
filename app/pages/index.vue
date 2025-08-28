@@ -20,7 +20,7 @@
         </div>
         <div class="github-repo">
           <p>{{ $t('home.pageMobile') }}</p>
-          <span>const</span> <span>githubLink</span> =
+          <span>const</span> <span>githubLink</span> <em>= </em>
           <CustomLink
             aria-label="go to my github page"
             :to="localePath('https://github.com/bader-idris')"
@@ -88,6 +88,8 @@ onMounted( () => {
     windowWidth.value = window.innerWidth
     windowHeight.value = window.innerHeight
 
+    const isMobileWidth = useMobile()
+    
     const splitGreeting = SplitText.create(".info .greeting",
       {
         type: "words",
@@ -130,7 +132,10 @@ onMounted( () => {
         duration: 0.8,
         ease: "power3",
         stagger: 0.25,
-        delay: 0.4
+        delay: 0.4,
+        // onComplete: () => {// if we animate arabic letters as flowing down we can add chars type above then do this
+        //   splitName.revert()
+        // }
       })
       // .to(splitName.words, {
       //   yPercent: "random([-50, 50])",
@@ -152,7 +157,8 @@ onMounted( () => {
       {type: "lines,words",}
     );
 
-    useGSAP().timeline()
+    // separating mobiles from desktop
+    const tl = useGSAP().timeline()
       .from(splitRole.lines, {
         rotationX: -100,
         transformOrigin: "50% 50% -160px",
@@ -162,6 +168,50 @@ onMounted( () => {
         stagger: 0.25,
         delay: 0.4
       })
+
+      if (!isMobileWidth.value) {
+        tl.from('.task > p:first-of-type', {
+          rotationX: -100,
+          transformOrigin: "50% 50% -160px",
+          opacity: 0,
+          duration: 1,
+          ease: "power3",
+          stagger: 0.25,
+        })
+        .from('.task > p:nth-of-type(2)', {
+          rotationX: -100,
+          transformOrigin: "50% 50% -160px",
+          opacity: 0,
+          duration: 1,
+          ease: "power3",
+          stagger: 0.25,
+        })
+      }
+
+      
+
+      // tl.from('.github-repo p:first-of-type', {
+      if (!isMobileWidth.value) {
+        tl.from('.github-repo', {
+          rotationX: -100,
+          transformOrigin: "50% 50% -160px",
+          opacity: 0,
+          duration: 1,
+          ease: "power3",
+          stagger: 0.25,
+          // delay: 0.4
+        })
+      } else {
+        tl.from('.github-repo > *', {
+          rotationX: -100,
+          transformOrigin: "50% 50% -160px",
+          opacity: 0,
+          duration: 1,
+          ease: "power3",
+          stagger: 0.25,
+          // delay: 0.4
+        })
+      }
 
     setInfoDirection();
   }
