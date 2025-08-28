@@ -9,9 +9,10 @@
     <div class="container">
       <section>
         <div class="info">
-          <span>{{ $t('home.greeting') }}</span>
-          <h1>{{ $t('home.name') }}</h1>
-          <p>{{ $t('home.role') }}</p>
+          <span class="greeting" >{{ $t('home.greeting') }}</span>
+          <!-- :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" -->
+          <h1 class="name">{{ $t('home.name') }}</h1>
+          <p class="role">{{ $t('home.role') }}</p>
         </div>
         <div class="task">
           <p>{{ $t('home.task') }}</p>
@@ -37,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import { SplitText } from 'gsap/all';
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 // const img = useImage()
@@ -46,10 +48,122 @@ const windowHeight = ref(500)
 // const riveSource = 'assets/lottieToRive.riv'
 // const riveSource = '/lottieToRive.riv' // Note the leading slash
 
-onMounted(() => {
+// Function to set the dir attribute for child elements
+const setInfoDirection = () => {
+  const infoEl = document.querySelector('.info') as HTMLElement | null;
+
+  if (infoEl) {
+    const children = infoEl.children; // Get all children of .info
+
+    // Loop through each child element and set the dir attribute
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement; // Type assertion to HTMLElement
+
+      // Set the dir attribute based on the current locale
+      if (locale.value === 'ar') {
+        child.setAttribute('dir', 'rtl');
+      } else {
+        child.setAttribute('dir', 'ltr');
+      }
+    }
+  }
+};
+
+watch(locale, () => {
+  setInfoDirection();
+});
+
+
+onBeforeMount(() => {
+  if (import.meta.client) {
+    // Register SplitText plugin with GSAP
+    // Check the docs: https://v-gsap-nuxt.vercel.app/information/gsap-plugins
+    // how to use it after the fonts get loaded?
+    useGSAP().registerPlugin(SplitText);
+  }
+})
+
+onMounted( () => {
   if (import.meta.client) {
     windowWidth.value = window.innerWidth
     windowHeight.value = window.innerHeight
+
+    const splitGreeting = SplitText.create(".info .greeting",
+      {
+        type: "words",
+        // revertOnLoad: true
+        // you can do this instead of separating them:
+        // onSplit: (self) => {
+        //   useGSAP().to(self.words, {/* settings */})
+        // }
+      });
+
+    // const greetingEl = document.querySelector('.greeting') as HTMLElement | null
+    setInfoDirection();
+
+    // useGSAP().to(".info .greeting", {
+    useGSAP().to(splitGreeting.words, {
+      yPercent: "random([-50, 50])",
+      rotation: "random(-30, 30)",
+      repeat: -1,
+      yoyo: true,
+      autoAlpha: 1,
+      stagger: 0.05,
+      // stagger: {
+      //   each: 0.05,
+      //   from: 'start'
+      // },
+      delay: 0.6,
+      ease: 'sine.inOut',
+    })
+
+    const splitName = SplitText.create(".info .name",
+      {type: "lines,words",}
+    );
+
+    // check: https://gsap.com/docs/v3/GSAP/Timeline
+    useGSAP().timeline()
+      .from(splitName.lines, {
+        rotationX: 100,
+        transformOrigin: "-50% -50% -160px",
+        opacity: 0,
+        duration: 0.8,
+        ease: "power3",
+        stagger: 0.25,
+        delay: 0.4
+      })
+      // .to(splitName.words, {
+      //   yPercent: "random([-50, 50])",
+      //   rotation: "random(-30, 30)",
+      //   repeat: -1,
+      //   yoyo: true,
+      //   autoAlpha: 1,
+      //   stagger: 0.05,
+      //   // stagger: {
+      //   //   each: 0.05,
+      //   //   from: 'start'
+      //   // },
+      //   delay: 0.6,
+      //   // repeat: -1
+      //   ease: 'power1.in'
+      // })
+
+    const splitRole = SplitText.create(".info .role",
+      {type: "lines,words",}
+    );
+
+    useGSAP().timeline()
+      .from(splitRole.lines, {
+        rotationX: -100,
+        transformOrigin: "50% 50% -160px",
+        opacity: 0,
+        duration: 1,
+        ease: "power3",
+        stagger: 0.25,
+        delay: 0.4
+      })
+
+    setInfoDirection();
   }
 })
 
@@ -403,6 +517,10 @@ html[lang="es"] {
 
 html[lang="ar"] {
   .info {
+    direction: rtl;
+    .greeting {
+      // add dir="rtl"
+    }
     h1 {
       font-size: calc($headline-size - 80%) !important;
     }
