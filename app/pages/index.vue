@@ -128,7 +128,8 @@ onMounted( () => {
       .from(splitName.lines, {
         rotationX: 100,
         transformOrigin: "-50% -50% -160px",
-        opacity: 0,
+        autoAlpha: 0,
+        visibility: 'hidden',
         duration: 0.8,
         ease: "power3",
         stagger: 0.25,
@@ -162,7 +163,8 @@ onMounted( () => {
       .from(splitRole.lines, {
         rotationX: -100,
         transformOrigin: "50% 50% -160px",
-        opacity: 0,
+        autoAlpha: 0,
+        visibility: 'hidden',
         duration: 1,
         ease: "power3",
         stagger: 0.25,
@@ -173,7 +175,8 @@ onMounted( () => {
         tl.from('.task > p:first-of-type', {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
-          opacity: 0,
+          autoAlpha: 0,
+          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -181,7 +184,8 @@ onMounted( () => {
         .from('.task > p:nth-of-type(2)', {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
-          opacity: 0,
+          autoAlpha: 0,
+          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -195,7 +199,8 @@ onMounted( () => {
         tl.from('.github-repo', {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
-          opacity: 0,
+          autoAlpha: 0,
+          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -205,7 +210,8 @@ onMounted( () => {
         tl.from('.github-repo > *', {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
-          opacity: 0,
+          autoAlpha: 0,
+          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
