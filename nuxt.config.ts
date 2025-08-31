@@ -421,6 +421,7 @@ export default defineNuxtConfig({
     nodeEnv: process.env.NODE_ENV || "production",
     originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
     // mongoUri: process.env.MONGO_URI,
+    // check https://console.cloud.google.com/auth/clients
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     facebookClientId: process.env.FACEBOOK_CLIENT_ID,

@@ -24,7 +24,6 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
 import { useColorMode } from '@vueuse/core'
 
 useHead({
@@ -52,8 +51,6 @@ useColorMode()
 
 onMounted(async () => {
   isFirstLoad.value = false
-
-  if (!import.meta.client) return
 
   try {
     const { Capacitor } = await import('@capacitor/core')
@@ -93,7 +90,6 @@ const hideSplashAndShowApp = async () => {
  * This function is now safely called after the main UI is visible.
  */
 const initializeMainApp = async () => {
-  if (!import.meta.client) return
 
   try {
     const { Capacitor } = await import('@capacitor/core');

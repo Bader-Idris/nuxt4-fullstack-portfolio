@@ -93,6 +93,13 @@ bunx capacitor-assets generate --assetPath "./assets" --ios --android
 
 > You can review the configuration requirements in the `assets/requirements.md` file.
 
+### firebase notifications
+
+> [!WARNING]  
+> Do this to not crash the app when using push notifications.
+
+To run properly without crashing the mobile app, you have to have this file `android/app/google-services.json`, check the [docs:](https://capacitorjs.com/docs/apis/push-notifications) and [firebase docs](https://firebase.google.com/docs/android/setup#add-config-file)
+
 ### Building the Android App
 
 To build the Android app, ensure you have [Android Studio](https://developer.android.com/studio/install) installed on your machine and set the required environment variables.
