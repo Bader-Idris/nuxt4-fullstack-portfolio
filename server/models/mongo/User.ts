@@ -23,8 +23,13 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: false,
+      required: false, // Not required for OAuth providers
       minlength: 6,
+    },
+    provider: {
+      type: String,
+      enum: ['email', 'google', 'facebook'],
+      default: 'email',
     },
     role: {
       type: String,
@@ -46,7 +51,8 @@ const UserSchema = new Schema<IUser>(
 );
 
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next()
+  // Only hash the password if it has been modified (or is new) and the provider is email
+  if (!this.isModified('password') || this.provider !== 'email') return next()
   const salt = await bcrypt.genSalt(10)
   this.password = await bcrypt.hash(this.password, salt)
   next()
@@ -55,6 +61,7 @@ UserSchema.pre('save', async function (next) {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ) {
+  if (this.provider !== 'email') return false;
   return await bcrypt.compare(candidatePassword, this.password)
 }
 

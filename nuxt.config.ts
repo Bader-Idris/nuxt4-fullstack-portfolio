@@ -1,4 +1,10 @@
 import { definePerson } from "nuxt-schema-org/schema";
+// for electron
+import path, { dirname } from 'path';
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -65,14 +71,6 @@ export default defineNuxtConfig({
         },
       },
     },
-    // Add Electron-specific configuration when IS_ELECTRON is true
-    ...(process.env.IS_ELECTRON === "true" && {
-      build: {
-        rollupOptions: {
-          external: ["electron", "fsevents"],
-        },
-      },
-    }),
   },
   typescript: {
     tsConfig: {
@@ -85,7 +83,7 @@ export default defineNuxtConfig({
     },
   },
   modules: [
-    // "@vite-pwa/nuxt",
+    // "@vite-pwa/nuxt", // TODO: test if they fixed the security bug of not handling status codes anymore!!
     ...(process.env.IS_ELECTRON === "true" ? ["nuxt-electron"] : []),
     "@nuxtjs/device",
     "@nuxtjs/seo",
@@ -107,22 +105,93 @@ export default defineNuxtConfig({
       },
     },
     app: {
-      baseURL: "./", // Needed for proper resource loading in Electron
+      // TODO: check if it was a bun error or something!!
+      // baseURL: "./", // Needed for proper resource loading in Electron
     },
     electron: {
       build: [
         {
-          // entry: "electron/main/index.ts",
-          entry: "electron/main.ts",
+          // Main-Process entry file of the Electron App.
+
+          // entry: "app/electron/main/index.ts",
+          entry: "app/electron/main.ts",
+          vite: {
+            build: {
+              //
+              //  example 'externalize' node.js modules.
+              //
+              //  suppose you want to use node:sqlite.
+              //  you write your repository class and import the class into main.ts like:
+              //    import { SomethingRepository } from '~/repositories/SomethingRepository.ts';
+              //
+              //  in the repository class,
+              //  you might import node:sqlite like:
+              //    import { DatabaseSync, type SQLOutputValue } from 'node:sqlite';
+              //
+              //  now build fails:
+              //    app/repositories/SomethingRepository.ts (1:9): "DatabaseSync" is not exported by "__vite-browser-external", imported by "app/repositories/SomethingRepository.ts".
+              //
+              //  one of the solutions is 'externalize' such modules.
+              //
+              rollupOptions: {
+                external: [
+                  "node:sqlite",
+                  "electron",
+                  "fsevents"
+                ],
+              },
+            },
+            //
+            //  typescript eliminates 'import type', but output 'import' as is,
+            //  e.g.
+            //    import type SomeInterface from '~/InterfaceFolder/SomeInterface'
+            //  is eliminated, where as
+            //    import SomeEnum from '~/EnumFolder/SomeEnum',
+            //    import SomeFunc from '~/FuncFolder/SomeFunc'
+            //  appear in javascript.
+            //
+            //  rollup does not know how to resolve those paths.
+            //    [vite]: Rollup failed to resolve import "~/EnumFolder/SomeEnum" from "/home/user/projects/nuxt4-electron-minimum-sample/app/electron/main.ts".
+            //  so we tell rollup that ~/ means {__dirname}/app/
+            //
+            //  NOTE that path.join(__dirname, 'app') does NOT work.
+            //  beware trailing '/'
+            //
+            resolve: {
+              alias: { '~/': path.join(__dirname, 'app/') },
+            },
+          },
         },
         {
           // entry: "electron/preload/index.ts",
-          entry: "electron/preload.ts",
+          entry: 'app/electron/preload.ts',
           onstart(options: any) {
+            // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete,
+            // instead of restarting the entire Electron App.
             options.reload();
           },
         },
       ],
+
+      //  it seems that
+      //  - npm run dev requires disableDefaultOptions: true
+      //    c.f. https://github.com/caoxiemeihao/nuxt-electron/issues/86 etc
+      //  - npm run electron:build requires disableDefaultOptions: false
+      //    otherwise built program does not work(in my experience) Mia said
+      //    heres at: https://github.com/mia-san/nuxt4-electron-minimum-sample.git
+      //
+      //  so we need to switch disableDefaultOptions.
+      //
+      //  following assumes
+      //    process.env.NODE_ENV === 'development' on npm run dev
+      //    process.env.NODE_ENV === 'production' on npm run electron:build
+      //
+      // disableDefaultOptions: process.env.NODE_ENV === 'development',
+      disableDefaultOptions: true,
+
+      // Polyfill the Electron and Node.js API for Renderer process.
+      // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
+      // See 👉 https://github.com/electron-vite/vite-plugin-electron-renderer
       renderer: {},
     },
   }),
@@ -367,7 +436,7 @@ export default defineNuxtConfig({
   },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
-    url: process.env.DOMAIN_NAME,
+    url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
     name: "Bader Idris", // ! Causes stupid duplicate head.title
     defaultLocale: "en",
   },
@@ -389,10 +458,11 @@ export default defineNuxtConfig({
     sitemap: [
       "/sitemap.xml",
       "/sitemap_index.xml",
-      "/__sitemap__/en-US.xml",
-      "/__sitemap__/ar-PS.xml",
-      "/__sitemap__/es-ES.xml",
+      "/__sitemap__/en.xml",
+      "/__sitemap__/ar.xml",
+      "/__sitemap__/es.xml",
     ],
+    // robotsTxt: false
   },
   // }),
   // ionic: {},

@@ -118,16 +118,11 @@ const fetchEmails = async (): Promise<Email[]> => {
     // Properly handle cookies for both SSR and CSR
     const headers = {}
 
-    // For SSR, forward all cookies from the original request
+    // For SSR, forward cookies from the original request.
+    // For CSR, Nuxt's $fetch will automatically handle sending cookies for same-origin requests.
     if (import.meta.server) {
       const reqHeaders = useRequestHeaders(['cookie'])
       Object.assign(headers, reqHeaders)
-    }
-    // For CSR in production, ensure the token is included
-    else if (accessToken.value) {
-      // You might need to adjust this based on how your API expects auth
-      // headers['Authorization'] = `Bearer ${accessToken.value}`
-      headers['Authorization'] = `${accessToken.value}`
     }
 
     const response = await $fetch('/api/v1/received_emails', {

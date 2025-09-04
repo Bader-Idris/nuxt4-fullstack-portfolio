@@ -176,7 +176,6 @@ onMounted( () => {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
           autoAlpha: 0,
-          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -185,7 +184,6 @@ onMounted( () => {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
           autoAlpha: 0,
-          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -200,7 +198,6 @@ onMounted( () => {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
           autoAlpha: 0,
-          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -211,7 +208,6 @@ onMounted( () => {
           rotationX: -100,
           transformOrigin: "50% 50% -160px",
           autoAlpha: 0,
-          visibility: 'hidden',
           duration: 1,
           ease: "power3",
           stagger: 0.25,
@@ -388,14 +384,14 @@ useSeoMeta({
 
       .info {
         @media screen and (max-height: 668px) {
-          h1 {
+          .name {
             font-size: 35px;
             margin: 0;
             padding: 10px 0;
           }
         }
 
-        & > p {
+        .role {
           color: $secondary3;
           font-size: $sub-headline-size;
           margin-bottom: 100px;
@@ -420,7 +416,7 @@ useSeoMeta({
         }
 
         @include mobile {
-          span:first-of-type {
+          .greeting {
             font-size: $sub-headline-size * 0.8;
             letter-spacing: -1px;
             margin-left: 7px;
@@ -428,7 +424,7 @@ useSeoMeta({
         }
 
         @media screen and (max-width: 1024px) {
-          span:first-of-type {
+          .greeting {
             font-size: $sub-headline-size * 0.7;
           }
         }
@@ -524,6 +520,12 @@ useSeoMeta({
           color: $accent2;
         }
       }
+
+      // .info > *,
+      // .task > p,
+      // .github-repo {
+      //   visibility: hidden;
+      // }
 
       @include mobile {
         height: 80vh;

@@ -111,7 +111,7 @@
               <CustomButton button-type="primary" type="submit">Send</CustomButton>
             </form>
           </div>
-           <div v-else class="chat-placeholder">
+          <div v-else class="chat-placeholder">
               <div v-if="userStore.isGuest">
                 <Icon name="ion:locked" width="50" height="50" mode="svg" />
                 <p>Please <NuxtLink :to="localePath('/login')">sign in</NuxtLink> to chat with other users.</p>
@@ -174,13 +174,6 @@ const {
 } = useWebRTC(); // No argument needed as the composable accesses the store directly
 
 // --- Lifecycle Hooks ---
-onMounted(() => {
-  if (import.meta.client) {
-    // The single point of entry to connect the socket for the whole app
-    socketStore.initializeSocket();
-  }
-});
-
 onUnmounted(() => {
   if (import.meta.client) {
     // Fallback cleanup on component unmount
@@ -312,9 +305,15 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 <style lang="scss" scoped>
 .dashboard {
   @include flex-container(column, nowrap, unset, unset);
-  height: calc($full-viewport-height - 80px); /* Adjust based on your nav height */
   padding: 1rem;
   gap: 1rem;
+
+  @include mobile {
+    height: calc($full-viewport-height - 30px);
+  }
+  @include tablet-to-up {
+    height: calc($full-viewport-height - 160px);
+  }
 }
 
 .connection-status-bar {

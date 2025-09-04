@@ -94,40 +94,30 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     // Store connected users
     const userSockets = new Map();
 
-    // Middleware to handle authentication for users and assign guest identities
     io.use(async (socket, next) => {
       try {
-        // socket.handshake.headers.cookie, // ✅ string!
         const accessToken = socket.handshake.headers.cookie
           ?.split("; ")
           .find((cookie) => cookie.startsWith("accessToken="))
           ?.split("=")[1];
 
         if (accessToken) {
-          // Authenticated user flow
           const decoded = isTokenValid(accessToken);
           if (!decoded || !decoded.user) {
-            return next(new Error("Token validation failed"));
+            // Send a specific error for invalid tokens
+            return next(new Error("Authentication error"));
           }
           socket.data.user = decoded.user;
         } else {
-          // Guest user flow
-          const { randomUUID } = await import('crypto');
-          socket.data.user = {
-            userId: `guest-${randomUUID()}`,
-            name: 'Guest',
-            role: 'guest',
-          };
+          // A protected route like dashboard should not allow guests to connect.
+          // This will also be treated as an authentication error.
+          return next(new Error("Authentication error"));
         }
         next();
       } catch (error) {
         console.error("Authentication middleware error:", error);
-        return next(
-          createError({
-            statusCode: 500,
-            statusMessage: "Internal server error during authentication",
-          })
-        );
+        // Send a specific error for expired tokens or other exceptions
+        return next(new Error("Authentication error"));
       }
     });
 

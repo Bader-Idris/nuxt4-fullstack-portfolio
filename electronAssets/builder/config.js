@@ -1,20 +1,20 @@
 /* eslint-disable no-template-curly-in-string */
 
 // TODO: check this out https://www.electron.build/configuration.html
-// const path = require('path')
-import path, { dirname } from 'path'
-// const dotenv = require('dotenv')
+const path = require('path')
+// import path, { dirname } from 'path'
+const dotenv = require('dotenv')
 // import * as dotenv from "dotenv";
-import dotenv from "dotenv";
-// const packageJson = require('../../package.json')
-import packageJson from "../../package.json";
+// import dotenv from "dotenv";
+const packageJson = require('../../package.json')
+// import packageJson from "../../package.json";
 // import packageJson from '../../package.json' assert { type: 'json' };
 
-import { fileURLToPath } from "url";
+// import { fileURLToPath } from "url";
 // import { dirname } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
 dotenv.config({
   path: path.resolve(__dirname, './envs/.env'),
@@ -61,7 +61,7 @@ const baseConfig = {
   productName: packageJson.name,
   // afterSign: './createMD5List.js',
   appId: packageJson.appId,
-  asar: true,
+  asar: true, // set true for securing the source code and some performances
   // extends: null,
   compression: 'maximum',
   artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${platform}_${arch}.${ext}', // ! can't read them with template strings!
@@ -123,8 +123,8 @@ const baseConfig = {
   deb: {
     depends: [
       // Great, this fixed the running issue
-      'gconf2',
-      'gconf-service',
+      // 'gconf2',
+      // 'gconf-service',
       'libgtk-3-0',
       'libnotify4',
       'libnss3',
@@ -132,7 +132,8 @@ const baseConfig = {
       'xdg-utils',
       'libatspi2.0-0', // Accessibility support
       'libappindicator3-1', // For app indicator support
-      'libxtst6' // X11 Testing support
+      'libxtst6', // X11 Testing support
+      // "xapp-gtk3-module"
     ]
   },
   snap: {
@@ -178,11 +179,10 @@ if (process.env.MAC_NOTARIZE === 'true') {
   baseConfig.afterSign = './electronAssets/builder/notarize.ts'
 }
 
-// module.exports = {
-//   ...baseConfig
-// }
+module.exports = {
+  ...baseConfig
+}
 
-export default {
-  ...baseConfig,
-};
-
+// export default {
+//   ...baseConfig,
+// };

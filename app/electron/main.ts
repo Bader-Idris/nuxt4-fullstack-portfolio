@@ -1,5 +1,3 @@
-// TODO: We have to fix electron, and add electron-build, and make main and preload as a dirs with many specified features
-
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 
@@ -12,14 +10,14 @@ import path from "node:path";
 // │ │ └── index.js
 // │ ├─┬ renderer
 // │ │ └── index.html
-process.env.APP_ROOT = path.join(__dirname, "..");
+process.env.APP_ROOT = path.join(import.meta.dirname, '..')
 
-export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, ".output/public");
+export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
+export const RENDERER_DIST = path.join(process.env.APP_ROOT, '.output/public')
 
 process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
-  ? path.join(process.env.APP_ROOT, "public")
-  : RENDERER_DIST;
+  ? path.join(process.env.APP_ROOT, 'public')
+  : RENDERER_DIST
 
 let win: BrowserWindow | null;
 

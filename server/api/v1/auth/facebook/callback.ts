@@ -1,6 +1,8 @@
 import { defineEventHandler, getQuery, sendRedirect } from "h3";
 import { User, Token } from "../../../../models/mongo";
-import crypto from 'node:crypto'
+import crypto from 'node:crypto';
+
+// Assuming createTokenUser and attachCookiesToResponse are auto-imported or available in the context
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -30,7 +32,7 @@ export default defineEventHandler(async (event) => {
     if (!tokenResponse.ok) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Failed to obtain access token",
+        statusMessage: `Failed to obtain access token: ${tokenData.error?.message || 'Unknown error'}`,
       });
     }
 
@@ -48,19 +50,27 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find or create user
+    // Find or create user with the 'facebook' provider
     let user = await User.findOne({ email: profile.email });
     if (!user) {
       user = new User({
         name: profile.name,
         email: profile.email,
-        role: "user", // Default role
-        isVerified: true,
+        provider: 'facebook', // Set the provider
+        role: "user",
+        isVerified: true, // OAuth users are considered verified
       });
       await user.save();
+    } else {
+      // If user exists but logs in with Facebook for the first time, update provider
+      if (user.provider !== 'facebook') {
+        user.provider = 'facebook';
+        user.password = undefined; // Clear password if they switch to OAuth
+        await user.save();
+      }
     }
 
-    // Generate tokens
+    // --- UNIFIED TOKEN AND COOKIE LOGIC ---
     const tokenUser = createTokenUser(user);
     let refreshToken = "";
     const existingToken = await Token.findOne({ user: user._id });
@@ -68,6 +78,9 @@ export default defineEventHandler(async (event) => {
     if (existingToken && existingToken.isValid) {
       refreshToken = existingToken.refreshToken;
     } else {
+      if (existingToken) {
+        await Token.deleteOne({ _id: existingToken._id });
+      }
       refreshToken = crypto.randomBytes(40).toString("hex");
       const userAgent = getRequestHeader(event, "user-agent") || "";
       const ip = getRequestIP(event, { xForwardedFor: true });
@@ -75,17 +88,13 @@ export default defineEventHandler(async (event) => {
     }
 
     attachCookiesToResponse(event, tokenUser, refreshToken);
+    // --- END OF UNIFIED LOGIC ---
 
-    const modifiedTokenUser = {
-      username: tokenUser.name,
-      userId: tokenUser.userId,
-      role: tokenUser.role,
-    };
+    // Secure, clean redirect to the auth callback page on the client.
+    return sendRedirect(event, '/auth/callback');
 
-    const tokenUserEncoded = encodeURIComponent(JSON.stringify(modifiedTokenUser));
-    return sendRedirect(event, `/dashboard?tokenUser=${tokenUserEncoded}`);
   } catch (error) {
-    console.error(error);
-    return sendRedirect(event, "/login?error=auth_failed");
+    console.error("Facebook auth callback error:", error);
+    return sendRedirect(event, '/login?error=facebook_auth_failed');
   }
 });

@@ -8,6 +8,7 @@ const config: CapacitorConfig = {
   appName: "Portfolio",
   webDir: "./.output/public",
   loggingBehavior: "production",
+  appVersion: "3.2.0", // TODO: make this custom property read the package.json version manually 
   // server: {
   //   hostname: 'localhost', // Default hostname used by Capacitor
   //   androidScheme: 'https', // Ensures HTTPS for Android WebView

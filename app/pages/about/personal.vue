@@ -35,7 +35,9 @@
           alt="personal-img"
           class="mi-imagen"
           loading="lazy"
-        ></img>
+          data-flip-id="profile-pic"
+          @click="toggleLightbox"
+        />
         <div class="auth-aside">
           <p>@bader-idris</p>
           <p>{{ createTimeCodeSnippet }}</p>
@@ -65,6 +67,7 @@
 <script setup lang="ts">
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css' // You can change the theme here
+import { Flip } from 'gsap/all'
 
 const { t, locale } = useI18n()
 const { $device } = useNuxtApp()
@@ -205,10 +208,56 @@ const createTimeCodeSnippet = computed(() => {
   })
 })
 
+// --- GSAP Flip Animation Logic ---
+const imageRef = ref<HTMLImageElement | null>(null)
+const lightboxImageRef = ref<HTMLImageElement | null>(null)
+const isLightboxOpen = ref(false)
+
+const toggleLightbox = () => {
+  isLightboxOpen.value = !isLightboxOpen.value 
+}
+
+// 2. This `watch` automatically runs when the state changes
+watch(isLightboxOpen, async (isOpen) => { 
+  
+  // 3. This ensures the DOM is ready (critical in Vue)
+  await nextTick() 
+
+  const startEl = isOpen ? imageRef.value : lightboxImageRef.value
+  const endEl = isOpen ? lightboxImageRef.value : imageRef.value
+
+  if (!startEl || !endEl) return
+
+  // 4. The core Flip logic, identical to the example
+  const state = Flip.getState(startEl, { props: "borderRadius" });
+
+  // This is the "LAST" state change
+  startEl.style.visibility = 'hidden';
+  endEl.style.visibility = 'visible';
+  
+  // Animate from FIRST to LAST
+  Flip.from(state, { 
+    duration: 0.5,
+    ease: 'power3.inOut',
+    scale: true,
+    onComplete: () => {
+      if (!isOpen) {
+         endEl.style.visibility = 'visible';
+      }
+    }
+  });
+})
+
 // Use VueUse for better lifecycle management
 useEventListener(bioContainer, 'mousedown', handleMouseDown)
 useEventListener(bioContainer, 'mousemove', handleMouseMove)
 useEventListener(document, 'mouseup', handleMouseUp)
+
+onBeforeMount(() => {
+  if (import.meta.client) {
+    useGSAP().registerPlugin(Flip)
+  }
+})
 
 onMounted(() => {
   if (codeBlock.value) hljs.highlightElement(codeBlock.value)
@@ -288,6 +337,18 @@ onMounted(() => {
         border-radius: 12em;
         border: 2px solid $lines;
         margin-right: 15px;
+        cursor: pointer; // Add cursor pointer to indicate it's clickable
+        &.swelled {
+          // position: absolute;
+          // top: 50%;
+          // left: 50%;
+          // transform: scale(15) translate(-50%, -50%);
+
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: scale(15) translate(0%, 0);
+        }
       }
 
       & p:first-of-type {

@@ -24,7 +24,8 @@ declare global {
     name: string
     email: string
     password: string
-    role: 'admin' | 'user'
+    role: 'admin' | 'user' | 'guest'
+    provider: 'email' | 'google' | 'facebook'
     verificationToken?: string
     isVerified: boolean
     verified?: Date

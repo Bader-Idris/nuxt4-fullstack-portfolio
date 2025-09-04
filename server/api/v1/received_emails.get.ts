@@ -1,13 +1,4 @@
-import jwt from "jsonwebtoken";
-import { getCookie } from "h3";
-import { ReceivedEmail, User } from "../../models/mongo/index";
-
-interface DecodedToken {
-  user: {
-    userId: string;
-    role: string;
-  };
-}
+import { ReceivedEmail } from "../../models/mongo/index";
 
 interface EmailDocument {
   _id: any;
@@ -17,36 +8,23 @@ interface EmailDocument {
   ip: string;
   createdAt: Date;
 }
+// check the new middleware protection here: server/middleware/auth.ts
 
 export default defineEventHandler(async (event) => {
+  // The server middleware (server/middleware/auth.ts) has already run and validated the user.
+  // It attaches the user to the event context if they are valid.
+  const user = event.context.user;
+
+  // 1. Check for authenticated user and admin role
+  if (!user || user.role !== "admin") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Forbidden: Access is restricted to administrators.",
+    });
+  }
+
   try {
-    // 1. Get JWT from cookies
-    const accessToken = getCookie(event, "accessToken");
-    if (!accessToken) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Authentication required",
-        data: { message: "Missing authentication token" },
-      });
-    }
-
-    // 2. Verify JWT with proper type assertion
-    const decoded = jwt.verify(
-      accessToken,
-      process.env.JWT_SECRET!
-    ) as unknown as DecodedToken;
-
-    // 3. Verify user exists and has admin role
-    const user = await User.findById(decoded.user.userId);
-    if (!user || user.role !== "admin") {
-      throw createError({
-        statusCode: 403,
-        statusMessage: "Forbidden",
-        data: { message: "Insufficient permissions" },
-      });
-    }
-
-    // 4. Fetch emails with proper typing
+    // 2. Fetch emails
     const emails = await ReceivedEmail.find({})
       .sort({ createdAt: -1 })
       .lean<EmailDocument[]>()
@@ -54,12 +32,13 @@ export default defineEventHandler(async (event) => {
 
     if (!emails || emails.length === 0) {
       return {
-        statusCode: 204,
+        // No Content - still a success
+        statusCode: 204, 
         data: [],
       };
     }
 
-    // 5. Return properly typed response
+    // 3. Return properly typed response
     return {
       statusCode: 200,
       data: emails.map((email) => ({
@@ -72,36 +51,11 @@ export default defineEventHandler(async (event) => {
       })),
     };
   } catch (error) {
-    // Handle JWT errors specifically
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Invalid token",
-        data: { message: "Authentication token is invalid" },
-      });
-    }
-
-    // Handle MongoDB errors
-    if (error.name === "MongoError") {
-      console.error("Database error:", error);
-      throw createError({
-        statusCode: 503,
-        statusMessage: "Service unavailable",
-        data: { message: "Database operation failed" },
-      });
-    }
-
-    // Propagate existing errors
-    if (error.statusCode) {
-      throw error;
-    }
-
-    // Generic error fallback
-    console.error("Unexpected error:", error);
+    console.error("Error fetching received emails:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: "Internal server error",
-      data: { message: "An unexpected error occurred" },
+      statusMessage: "Internal Server Error",
+      data: { message: "An unexpected error occurred while fetching emails." },
     });
   }
 });

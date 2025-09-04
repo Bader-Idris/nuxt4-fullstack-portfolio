@@ -154,22 +154,29 @@ const slugify = (text) => {
   .project-card {
     padding: 20px;
     border-radius: 8px;
-    width: calc(33% - 40px);
     width: 100%;
+    perspective: 1000px;
 
     .card-title {
       font-size: $body-text-size;
+      transition: all 0.5s ease-in-out;
+      transform: translate3d(0, 0, 0);
     }
 
     .card-content {
       background-color: $code-snippets-bg;
       border-radius: 25px;
       border: 1px solid $lines;
+      transform-style: preserve-3d;
+      transition: all 0.5s ease-in-out;
+      overflow: hidden;
 
       p {
         text-align: left;
         padding: 20px 20px 0 20px;
         margin-bottom: 40px;
+        transition: all 0.5s ease-in-out;
+        transform: translate3d(0, 0, 20px) scale(1);
       }
 
       img {
@@ -179,11 +186,12 @@ const slugify = (text) => {
         display: block;
         margin-bottom: 10px;
         border-radius: 10px 10px 0 0;
-
         min-width: 200px;
         min-height: 200px;
         background: $primary3;
         position: relative;
+        transition: all 0.5s ease-in-out;
+        transform: translate3d(0, 0, 40px);
 
         &::before {
           content: 'broken image';
@@ -208,6 +216,28 @@ const slugify = (text) => {
         left: 20px;
         position: relative;
         margin: 20px 0;
+        transition: all 0.5s ease-in-out;
+        transform: translate3d(0, 0, 10px);
+      }
+
+      &:hover {
+        transform: rotate3d(0.5, 1, 0, 30deg);
+
+        img {
+          transform: translate3d(0px, 0px, 60px) scale(1.1);
+        }
+        p {
+          transform: translate3d(0px, 0px, 10px) scale(0.9);
+        }
+        .project-link {
+          transform: translate3d(0px, 0px, 40px);
+        }
+      }
+    }
+
+    &:hover {
+      .card-title {
+        transform: translate3d(0px, 0px, 50px);
       }
     }
   }

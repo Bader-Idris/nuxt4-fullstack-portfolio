@@ -569,7 +569,11 @@ onBeforeUnmount(() => {
     .received-to-admin {
       margin-top: 50px;
 
-      
+      @include tablet-to-up {
+        width: fit-content;
+        padding-left: 20px;
+        margin-top: 50px;
+      }
       >button {
         margin-bottom: 20px;
       margin-left: 15px;
