@@ -189,9 +189,6 @@ onMounted( () => {
           stagger: 0.25,
         })
       }
-
-      
-
       // tl.from('.github-repo p:first-of-type', {
       if (!isMobileWidth.value) {
         tl.from('.github-repo', {

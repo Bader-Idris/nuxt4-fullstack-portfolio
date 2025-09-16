@@ -1,12 +1,26 @@
 import { defineStore } from 'pinia';
 import { useSocketStore } from './useSocketStore';
 
-// Define the structure of the User object, TODO: organize them in /types
 export interface User {
   userId: string;
   username: string;
   role: "admin" | "user" | "guest";
   provider?: 'email' | 'google' | 'facebook'; 
+}
+
+function getInitialUser(): User | null {
+  if (import.meta.server) {
+    return null;
+  }
+  try {
+    const stored = localStorage.getItem("user");
+    if (!stored) return null;
+    return JSON.parse(stored);
+  } catch (e) {
+    console.error("Corrupted user data in localStorage, clearing.", e);
+    localStorage.removeItem("user");
+    return null;
+  }
 }
 
 export const useUserStore = defineStore("user", () => {
@@ -31,50 +45,43 @@ export const useUserStore = defineStore("user", () => {
   //   };
   // });
 
-  const user = ref<User | null>(null);
+  const user = ref<User | null>(getInitialUser());
 
-  // --- GETTERS ---
   const isAuthenticated = computed(() => !!user.value && user.value.role !== 'guest');
   const isGuest = computed(() => !isAuthenticated.value);
   const getUsername = computed(() => user.value?.username || 'Guest');
   const getUserId = computed(() => user.value?.userId);
   const getUserRole = computed(() => user.value?.role);
 
-  // --- ACTIONS ---
-
-  /**
-   * The single, unified function to set the application's user state.
-   * This is the central point for logging a user in.
-   */
   function setUser(newUser: User | null) {
     if (!newUser) {
-      // If called with null, treat it as a logout.
       clearUser();
       return;
     }
-
     user.value = newUser;
-
     if (import.meta.client) {
-      // Persist to localStorage
       localStorage.setItem("user", JSON.stringify(newUser));
-      // Initialize the socket connection for the authenticated user.
-      const socketStore = useSocketStore();
-      socketStore.initializeSocket();
+    }
+    init();
+  }
+
+  function clearUser(): void {
+    const socketStore = useSocketStore();
+    socketStore.disconnectSocket();
+    user.value = null;
+    if (import.meta.client) {
+      localStorage.removeItem("user");
+      const accessToken = useCookie('accessToken');
+      const refreshToken = useCookie('refreshToken');
+      accessToken.value = null;
+      refreshToken.value = null;
     }
   }
 
-  /**
-   * The single, unified function to clear the user's session.
-   */
-  function clearUser(): void {
-    user.value = null;
-    if (import.meta.client) {
-      // Clear persisted state
-      localStorage.removeItem("user");
-      // Disconnect the socket.
+  function init() {
+    if (import.meta.client && isAuthenticated.value) {
       const socketStore = useSocketStore();
-      socketStore.disconnectSocket();
+      socketStore.initializeSocket();
     }
   }
 
@@ -87,5 +94,6 @@ export const useUserStore = defineStore("user", () => {
     getUserRole,
     setUser,
     clearUser,
+    init,
   };
 });

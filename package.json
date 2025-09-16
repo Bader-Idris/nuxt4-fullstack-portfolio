@@ -10,7 +10,7 @@
     "prebuild": "bunx prisma generate --schema ./server/prisma/schema.prisma",
     "build": "nuxt build",
     "build:client": "NUXT_SSR=false nuxt build",
-    "dev": "nuxt dev",
+    "dev": "bun prebuild && nuxt dev",
     "dev:electron": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt dev",
     "build:electron": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt generate && electron-builder --config=./electronAssets/builder/config.js",
     "build:electron:all": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt generate && electron-builder --config=./electronAssets/builder/config.js -wml",
@@ -143,8 +143,5 @@
     "typescript": "^5.9.2",
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6"
-  },
-  "overrides": {
-    "@parcel/watcher": "2.4.1"
   }
 }

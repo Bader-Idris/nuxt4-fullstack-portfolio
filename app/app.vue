@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import { Capacitor } from '@capacitor/core'
 import { useColorMode } from '@vueuse/core'
 
 useHead({
@@ -53,8 +54,6 @@ onMounted(async () => {
   isFirstLoad.value = false
 
   try {
-    const { Capacitor } = await import('@capacitor/core')
-
     if (config.public.isCapacitor === true && Capacitor.isNativePlatform()) {
       // For native Capacitor builds, show the Rive splash screen first.
       document.documentElement.style.setProperty('--full-viewport-height', '95vh');
@@ -92,8 +91,6 @@ const hideSplashAndShowApp = async () => {
 const initializeMainApp = async () => {
 
   try {
-    const { Capacitor } = await import('@capacitor/core');
-
     if (Capacitor.isNativePlatform()) {
       await Promise.all([
         initCapacitorPlatform(),

@@ -1,4 +1,4 @@
-// export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
 //   const router = useRouter();
 
 //   // Add a global beforeEnter guard
@@ -23,4 +23,4 @@
 //     // Continue to the next middleware or route
 //     next();
 //   });
-// });
+});

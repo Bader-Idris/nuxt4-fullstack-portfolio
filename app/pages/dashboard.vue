@@ -112,7 +112,7 @@
             </form>
           </div>
           <div v-else class="chat-placeholder">
-              <div v-if="userStore.isGuest">
+              <div v-if="userStore.isGuest" class="guest-placeholder">
                 <Icon name="ion:locked" width="50" height="50" mode="svg" />
                 <p>Please <NuxtLink :to="localePath('/login')">sign in</NuxtLink> to chat with other users.</p>
               </div>
@@ -174,10 +174,17 @@ const {
 } = useWebRTC(); // No argument needed as the composable accesses the store directly
 
 // --- Lifecycle Hooks ---
+
 onUnmounted(() => {
   if (import.meta.client) {
     // Fallback cleanup on component unmount
     cleanup();
+  }
+});
+
+onMounted(() => {
+  if (import.meta.client) {
+    setupSocketListeners();
   }
 });
 
@@ -382,6 +389,15 @@ const formatTimestamp = (timestamp: string | number | Date) => {
     text-align: center;
     p {
       margin-top: 1rem;
+    }
+    .guest-placeholder {
+      a {
+        color: #3498db;
+        text-decoration: none;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     }
 }
 

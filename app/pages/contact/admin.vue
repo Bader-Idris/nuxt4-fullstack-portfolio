@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import 'vue3-toastify/dist/index.css'
 import { storeToRefs } from 'pinia'
+import { CapacitorCookies } from '@capacitor/core'
 // import { useUserStore } from '~/stores/UserNameStore'
 import { useUserStore } from '~/stores/useUserSocket';
 const { t } = useI18n()
@@ -186,8 +187,6 @@ const { pending, refresh } = useAsyncData<Email[]>(
 const handleCapacitorCookies = async () => {
   if (isCapacitor.value) {
     try {
-      // Import CapacitorCookies only on client side
-      const { CapacitorCookies } = await import('@capacitor/core')
       // Get cookies from Capacitor
       const cookies = await CapacitorCookies.getCookies()
       // If we have the token in Capacitor cookies, we can proceed

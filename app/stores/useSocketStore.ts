@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { io, type Socket } from 'socket.io-client';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorCookies } from '@capacitor/core';
 import { useOnlineUsersStore } from './useOnlineUsersStore';
 import { useMessagesStore } from './useMessagesStore';
 import { useSound } from '~/composables/useSound';
@@ -34,7 +34,6 @@ export const useSocketStore = defineStore('socket', () => {
   async function getCookieStringForCapacitor(): Promise<string> {
     if (!Capacitor.isNativePlatform()) return '';
     try {
-      const { CapacitorCookies } = await import('@capacitor/core');
       const cookies = await CapacitorCookies.getCookies();
       return Object.entries(cookies)
         .map(([key, value]) => `${key}=${value}`)
@@ -113,6 +112,8 @@ export const useSocketStore = defineStore('socket', () => {
       isConnecting.value = false;
       connectionError.value = error.message;
       sound.playSound('error');
+      // A failed socket connection should not automatically log the user out.
+      // The UI should display the connection error, and socket.io will handle reconnection attempts.
     });
 
     socket.value.on('connection-established', (data: SocketCurrentUser) => {

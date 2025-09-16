@@ -84,7 +84,7 @@ export default defineNuxtConfig({
       },
     },
   },
-  typescript: {
+    typescript: {
     tsConfig: {
       compilerOptions: {
         paths: {
@@ -94,6 +94,10 @@ export default defineNuxtConfig({
       },
     },
   },
+  // components: { // TODO: is it a good solution for the warning on building process
+  //   global: true,
+  //   dirs: ['~/components']
+  // },
   modules: [
     // "@vite-pwa/nuxt", // TODO: test if they fixed the security bug of not handling status codes anymore!!
     ...(process.env.IS_ELECTRON === "true" ? ["nuxt-electron"] : []),

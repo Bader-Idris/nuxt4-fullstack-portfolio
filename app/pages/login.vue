@@ -59,6 +59,7 @@
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import { useApiError } from '~/composables/useApiError';
+import { CapacitorCookies } from '@capacitor/core';
 // import { useUserStore } from '~/stores/UserNameStore';
 import { useUserStore } from '~/stores/useUserSocket';
 
@@ -225,7 +226,6 @@ const google = async () => {
     // Handle Capacitor cookies
     let accessTokenFromCookie = null;
     if (import.meta.client && (await isCapacitorDevice)) {
-      const { CapacitorCookies } = await import('@capacitor/core');
       const cookies = await CapacitorCookies.getCookies();
       console.log('🎈cookies:🎈', cookies);
       if (cookies.accessToken) {
