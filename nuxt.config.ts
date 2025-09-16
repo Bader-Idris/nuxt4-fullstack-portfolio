@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
-  compatibilityDate: "2025-07-23",
+  compatibilityDate: "2025-09-16",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {
@@ -50,6 +50,12 @@ export default defineNuxtConfig({
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       },
+      "/dashboard": {
+        cache: false,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
       // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
@@ -69,6 +75,12 @@ export default defineNuxtConfig({
           additionalData: `@use "~/assets/scss/index.scss" as *;`,
           silenceDeprecations: ["legacy-js-api"],
         },
+      },
+    },
+    resolve: {
+      alias: {
+        ".prisma/client/index-browser":
+          "./node_modules/.prisma/client/index-browser.js",
       },
     },
   },
@@ -96,6 +108,7 @@ export default defineNuxtConfig({
     "@nuxt/eslint",
     "@nuxt/scripts",
     "v-gsap-nuxt",
+    "@prisma/nuxt",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
   ...(process.env.IS_ELECTRON === "true" && {
@@ -136,7 +149,6 @@ export default defineNuxtConfig({
               rollupOptions: {
                 external: [
                   "node:sqlite",
-                  "electron",
                   "fsevents"
                 ],
               },
@@ -302,10 +314,12 @@ export default defineNuxtConfig({
   //   },
   // },
   i18n: {
-    bundle: {
-      optimizeTranslationDirective: false,
-    },
-    lazy: true,
+    // TODO: these two are removed, check: https://i18n.nuxtjs.org/docs/guide/migrating
+    // bundle: {
+    //   optimizeTranslationDirective: false,
+    // },
+    // lazy: true,
+
     // seo: true,
     langDir: "../app/i18n/locales/",
     locales: [
@@ -434,6 +448,9 @@ export default defineNuxtConfig({
       ],
     },
   },
+  ogImage: {
+    enabled: process.env.NUXT_SSR !== "false"
+  },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
     url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
@@ -501,7 +518,20 @@ export default defineNuxtConfig({
     contactEmail: process.env.CONTACT_EMAIL,
     redisUrl: process.env.REDIS_URL,
   },
-  // content: {}, check content.config.ts
+  content: { // check out content.config.ts file
+    //   database: {
+    //     type: "postgres",
+    //     url: String(process.env.PSQL_URL),
+    //     /* Other options for `pg` */
+    //     // can we use prisma instead of pg??
+    //   },
+    // experimental: {
+    //   // enable awesome search, see: https://content.nuxt.com/get-started/configuration#search
+    //   search: {
+    //     indexed: true,
+    //   },
+    // },
+  },
   imports: {
     // ? to have auto-import from third party packages, modules do it already in often
     // presets: [
@@ -510,6 +540,12 @@ export default defineNuxtConfig({
     //     imports: ["useI18n"],
     //   },
     // ],
+  },
+  prisma: {
+    // https://www.prisma.io/docs/orm/more/help-and-troubleshooting/prisma-nuxt-module#configuration
+    prismaRoot: './server',
+    prismaSchemaPath: "./server/prisma/schema.prisma",
+    generateClient: false,
   },
   scripts: {
     registry: {

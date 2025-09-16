@@ -1,4 +1,3 @@
-// content.config.ts
 import { defineCollection, z } from "@nuxt/content";
 import { asSeoCollection } from "@nuxtjs/seo/content";
 

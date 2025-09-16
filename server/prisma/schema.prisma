@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // provider = "prisma-client"
+  // output   = "../lib/generated/prisma" // required with prisma-client
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // make it production exclusive
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PSQL_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+
+  @@map("users")
+}
+
+model Post {
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean @default(false)
+  author    User    @relation(fields: [authorId], references: [id])
+  authorId  Int
+
+  @@map("posts")
+}
+
+// for nuxt content
+model Content {
+  path     String @id
+  body     String // Full markdown content (including YAML frontmatter)
+  updatedAt DateTime @updatedAt
+
+  @@map("contents")
+}
+
+model Storage {
+  key   String @id
+  value Json? // For search index data (MiniSearch JSON)
+
+  @@map("storages")
+}

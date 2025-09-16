@@ -111,6 +111,12 @@ const baseConfig = {
     },
     target: windowsTargets
   },
+  // nsis: {
+  //   oneClick: false,
+  //   perMachine: false,
+  //   allowToChangeInstallationDirectory: true,
+  //   deleteAppDataOnUninstall: false
+  // },
   linux: {
     executableName: packageJson.name.toLowerCase(),
     icon: 'electronAssets/resources',
@@ -133,7 +139,7 @@ const baseConfig = {
       'libatspi2.0-0', // Accessibility support
       'libappindicator3-1', // For app indicator support
       'libxtst6', // X11 Testing support
-      // "xapp-gtk3-module"
+      "xapp-gtk3-module"
     ]
   },
   snap: {
@@ -145,6 +151,7 @@ const baseConfig = {
   },
   files: [
     'dist-electron/**/*',
+    ".output/**/*",
     '!dist-electron/main/index.dev.js',
     '!electronAssets/builder/envs', // important security to hide our certs from third parties, or in the app bundle
     '!docs/**/*',

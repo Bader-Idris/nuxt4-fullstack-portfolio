@@ -37,3 +37,6 @@ b.prod*
 a.comp.prod.yaml
 b.comp.prod.yaml
 !a.prod-certbot.yml
+
+/lib/generated/prisma
+server/lib/generated/prisma
