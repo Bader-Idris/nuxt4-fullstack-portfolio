@@ -6,8 +6,12 @@
   "appId": "com.baderidris.www",
   "author": "Bader Idris <contact@baderidris.com> (http://baderidris.com/)",
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",
+  "prisma": {
+    "schema": "./server/prisma/schema.prisma"
+  },
   "scripts": {
-    "prebuild": "bunx prisma generate --schema ./server/prisma/schema.prisma",
+    "old:prebuild": "bunx prisma migrate deploy && bunx prisma generate --schema ./server/prisma/schema.prisma",
+    "prebuild": "npx prisma generate",
     "build": "nuxt build",
     "build:client": "NUXT_SSR=false nuxt build",
     "dev": "bun prebuild && nuxt dev",
@@ -18,7 +22,7 @@
     "build:electron:mac": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt generate && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --config=./electronAssets/builder/config.js  --mac",
     "build:electron:linux": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt generate && electron-builder --config=./electronAssets/builder/config.js --linux",
     "build:electron:dir": "NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt generate && electron-builder --config=./electronAssets/builder/config.js --dir",
-    "generate": "NUXT_GZIP=false IS_CAPACITOR=true nuxt generate --dotenv .env.capacitor",
+    "generate": "bun prebuild && NUXT_GZIP=false IS_CAPACITOR=true nuxt generate --dotenv .env.capacitor",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare && patch-package",

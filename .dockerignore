@@ -14,15 +14,16 @@ docker-compose*
 
 
 # Ignore everything by default
-*
+# *
 
 # Allow specific files and folders
 !.data
-!.env
-!.env.development
-!.env.production
+.env
+.env.development
+.env.production
 !.nuxt
 !.output
 !package.json
 !tsconfig.json
 !server/config/bun.Dockerfile
+!server/prisma/
