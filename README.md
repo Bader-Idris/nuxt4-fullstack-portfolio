@@ -35,6 +35,12 @@ bun run dev
 
 ## Production
 
+> [!TIP]  
+> ### Run with Docker
+> A pre-built Docker image is available on [Docker Hub](https://hub.docker.com/repository/docker/baderidris/nuxt-portfolio/general). You can find instructions on how to pull the image and run it with Docker Compose in the repository's documentation.
+
+---
+
 To build the application for production, run:
 
 ```bash

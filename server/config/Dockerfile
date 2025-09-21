@@ -1,4 +1,3 @@
-# 19/09 version 3rd newer
 # Stage 1: Base image with bun
 # FROM oven/bun:latest AS base
 FROM node:22.19.0-alpine3.21 AS base
@@ -47,10 +46,10 @@ COPY --from=builder /app/package.json ./package.json
 # COPY --from=builder /app/ ./
 
 # are tsconfig.json .nuxt .data IMPORTANT TODO: test
+COPY --from=builder /app/nuxt.config.ts ./nuxt.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/.nuxt ./.nuxt
 COPY --from=builder /app/.data ./.data
-COPY --from=builder /app/nuxt.config.ts ./nuxt.config.ts
 
 # Expose the port and define the command to run the app
 ENV PORT 3000
