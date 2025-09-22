@@ -146,12 +146,52 @@ const handleTripleClick = () => {
 };
 
 onMounted(() => {
-  // Set initial value for showBurgerNav
-  showBurgerNav.value = window.outerWidth <= 768
+  if (import.meta.client) {
+    // --------------------------------------------
+    // START gsap underneath indicator for active nav
+    const navContainer = document.querySelector('header > .container');
+    if (!navContainer) return;
+    const indicator = document.createElement('div');
+    indicator.classList.add('indicator');
+    navContainer.appendChild(indicator);
 
-  // Set up resize event listener
-  window.addEventListener('resize', handleResize)
-})
+    const updateIndicator = (target: HTMLElement) => {
+      if (!target) return;
+      const containerBounds = navContainer.getBoundingClientRect();
+      const targetBounds = target.getBoundingClientRect();
+      const width = targetBounds.width;
+      const offset = targetBounds.left - containerBounds.left;
+
+      useGSAP().to(indicator, {
+        width: width,
+        x: offset - 20,
+        duration: 0.4,
+        ease: 'back.out(1.7)',
+      });
+    };
+
+    // Watch for route changes to update the indicator
+    watch(
+      () => route.path,
+      () => {
+        nextTick(() => {
+          const activeTab = document.querySelector<HTMLElement>(
+            '.sub-navs.active',
+          );
+          if (activeTab) {
+            updateIndicator(activeTab);
+          }
+        });
+      },
+      { immediate: true },
+    ); // immediate: true runs the watcher on mount
+    // END gsap underneath indicator
+    // --------------------------------------------
+
+    showBurgerNav.value = window.outerWidth <= 768;
+    window.addEventListener('resize', handleResize);
+  }
+});
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
@@ -160,23 +200,20 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
+.indicator {
+  position: absolute;
+  top: 57px; // Position it at the bottom of the header
+  height: 3px;
+  background-color: $accent1;
+  border-radius: 3px;
+}
+
 .sub-navs {
-  //! TODO: Add hover effect
   padding: 21px 30px;
   cursor: pointer;
   color: $secondary1;
   text-decoration: none;
   position: relative;
-
-  &.active::before {
-    content: '';
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: -3px;
-    left: 0;
-    border-bottom: 3px solid $accent1;
-  }
 
   &:hover {
     background-color: $primary1-hovered;

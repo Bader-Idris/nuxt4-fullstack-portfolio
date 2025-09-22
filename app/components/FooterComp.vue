@@ -3,7 +3,9 @@
     <div class="container">
       <p>find me in:</p>
       <div class="social">
-        <div class="telegram">
+        <div
+          class="telegram"
+          @click="navigateToChild(telegramLink)">
           <CustomLink 
             aria-label="go to my telegram profile" 
             class="link external-link"
@@ -17,7 +19,9 @@
               class="svg" />
           </CustomLink>
         </div>
-        <div class="facebook">
+        <div
+          class="facebook"
+          @click="navigateToChild(facebookLink)">
           <CustomLink 
             aria-label="go to my facebook page" 
             class="link external-link"
@@ -67,6 +71,11 @@ const navigateToGithub = () => {
     window.open(githubLink, '_blank') // Opens in a new tab
   }
 }
+const navigateToChild = (child : string) => {
+  if (import.meta.client) { // Ensure this runs only on the client side
+    window.open(child, '_blank') // Opens in a new tab
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -108,6 +117,9 @@ footer {
 
         &:hover {
           background-color: $primary1-hovered;
+          svg {
+            color: $light-primary3;
+          }
         }
       }
 
@@ -137,6 +149,12 @@ footer {
 
       &:hover {
         background-color: $primary1-hovered;
+        > p {
+          color: $light-primary3;
+        }
+        svg {
+          color: $light-primary3;
+        }
       }
 
       p {
