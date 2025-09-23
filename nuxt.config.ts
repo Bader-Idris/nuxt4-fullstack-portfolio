@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
-  compatibilityDate: "2025-09-16",
+  compatibilityDate: "2025-09-23",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {
@@ -18,7 +18,11 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
-    compressPublicAssets: process.env.NUXT_GZIP !== "false",
+    compressPublicAssets: {
+      gzip: process.env.NUXT_GZIP !== 'false',
+      // brotli: process.env.NUXT_BROTLI !== 'false'
+      brotli: process.env.NUXT_GZIP !== 'false'
+    },
     routeRules: {
       // Static assets and public files
       "/_nuxt/**": {

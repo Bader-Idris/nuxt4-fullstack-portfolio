@@ -1,6 +1,6 @@
 # Stage 1: Base image with bun
 # FROM oven/bun:latest AS base
-FROM node:22.19.0-alpine3.21 AS base
+FROM node:22.19.0-alpine AS base
 
 # Install Python and build tools for native dependencies
 # RUN apt-get update && apt-get install -y \
@@ -31,7 +31,8 @@ RUN npm run build
 
 # FROM base AS runner
 # FROM node:22.19.0-alpine3.21 AS runner
-FROM base AS runner
+# FROM base AS runner TODO: required for stability
+FROM node:22.19.0-alpine AS runner
 
 # Install Python and build tools for native dependencies (Alpine version)
 # RUN apk add --no-cache python3 make g++
@@ -42,14 +43,6 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
-
-# COPY --from=builder /app/ ./
-
-# are tsconfig.json .nuxt .data IMPORTANT TODO: test
-COPY --from=builder /app/nuxt.config.ts ./nuxt.config.ts
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/.nuxt ./.nuxt
-COPY --from=builder /app/.data ./.data
 
 # Expose the port and define the command to run the app
 ENV PORT 3000
