@@ -39,8 +39,10 @@
 
 <script setup lang="ts">
 import { SplitText } from 'gsap/all';
+
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const { fontReadyPromise } = useFontLoader();
 // const img = useImage()
 
 const windowWidth = ref(500)
@@ -83,10 +85,13 @@ onBeforeMount(() => {
   }
 })
 
-onMounted( () => {
+onMounted(async () => {
   if (import.meta.client) {
     windowWidth.value = window.innerWidth
     windowHeight.value = window.innerHeight
+    
+    await fontReadyPromise;
+    setInfoDirection();
 
     const isMobileWidth = useMobile()
     
@@ -101,7 +106,6 @@ onMounted( () => {
       });
 
     // const greetingEl = document.querySelector('.greeting') as HTMLElement | null
-    setInfoDirection();
 
     // useGSAP().to(".info .greeting", {
     useGSAP().to(splitGreeting.words, {
@@ -211,8 +215,6 @@ onMounted( () => {
           // delay: 0.4
         })
       }
-
-    setInfoDirection();
   }
 })
 
