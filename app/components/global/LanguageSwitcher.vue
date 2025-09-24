@@ -102,4 +102,11 @@ html[lang="ar"] {
       }
   }
 }
+html[lang="es"] {
+  @include tablet-to-up {
+    .language-switcher {
+        right: 160px;
+      }
+  }
+}
 </style>

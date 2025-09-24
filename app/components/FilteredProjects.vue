@@ -79,6 +79,20 @@ const slugify = (text) => {
     .replace(/-+$/, '');
 }
 
+onMounted(() => {
+  if (import.meta.client) {
+    useGSAP().from('.project-card', {
+      y: 50,
+      opacity: 0,
+      delay: 0.3,
+      duration: 0.5,
+      scale: 0.9,
+      ease: 'back.out(1.7)',
+      stagger: 0.3,
+    })
+  }
+})
+
 </script>
 
 <style lang="scss">
