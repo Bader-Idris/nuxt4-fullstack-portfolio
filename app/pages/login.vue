@@ -75,6 +75,9 @@ useSeoMeta({
   description: "Log in to Bader Idris's portfolio platform to explore projects, insights, and opportunities. Your gateway to cutting-edge web and multi-platform solutions.",
 });
 
+const route = useRoute()
+const router = useRouter()
+
 const localePath = useLocalePath();
 const { getFriendlyErrorMessage } = useApiError();
 
@@ -142,9 +145,13 @@ const login = async (): Promise<void> => {
     });
 
     // Redirect after successful login
-    await navigateTo(localePath('/dashboard'), {
-      redirectCode: 302,
-    });
+    router.push({
+      path: localePath('/dashboard'),
+      query: { redirect: route.fullPath }
+    })
+    // await navigateTo(localePath('/dashboard'), {
+    //   redirectCode: 302,
+    // });
 
   } catch (error) {
     console.error('Login error: ', error);

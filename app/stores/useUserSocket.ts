@@ -8,20 +8,7 @@ export interface User {
   provider?: 'email' | 'google' | 'facebook'; 
 }
 
-function getInitialUser(): User | null {
-  if (import.meta.server) {
-    return null;
-  }
-  try {
-    const stored = localStorage.getItem("user");
-    if (!stored) return null;
-    return JSON.parse(stored);
-  } catch (e) {
-    console.error("Corrupted user data in localStorage, clearing.", e);
-    localStorage.removeItem("user");
-    return null;
-  }
-}
+
 
 export const useUserStore = defineStore("user", () => {
   // --- STATE ---
@@ -45,7 +32,7 @@ export const useUserStore = defineStore("user", () => {
   //   };
   // });
 
-  const user = ref<User | null>(getInitialUser());
+  const user = ref<User | null>(null);
 
   const isAuthenticated = computed(() => !!user.value && user.value.role !== 'guest');
   const isGuest = computed(() => !isAuthenticated.value);

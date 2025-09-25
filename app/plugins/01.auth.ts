@@ -2,28 +2,35 @@
 import { useUserStore } from '~/stores/useUserSocket';
 
 export default defineNuxtPlugin(async (nuxtApp) => {
+  // This plugin runs once on app startup.
+  // Its purpose is to initialize the user's session from the server.
+
+  if (import.meta.server) {
+    // On the server, we don't need to do anything here.
+    // The user state will be fetched if needed during the rendering process.
+    return;
+  }
+
+  // On the client, try to fetch the user to restore the session.
   const userStore = useUserStore();
 
-  // On the server, the user state is unknown. We try to initialize it from the cookie.
-  if (import.meta.server) {
-    // `useCookie` is the recommended way to access cookies in Nuxt 3.
-    const accessToken = useCookie('accessToken');
+  // If the user is already authenticated (e.g., from a previous login in the same session),
+  // we don't need to fetch them again.
+  if (userStore.isAuthenticated) {
+    return;
+  }
 
-    if (accessToken.value) {
-      try {
-        // `isTokenValid` is auto-imported from `server/utils`.
-        // It will throw an error if the token is invalid or expired.
-        const payload = isTokenValid(accessToken.value);
-        if (payload && payload.user) {
-          // If the token is valid, set the user in the store.
-          // This is the single source of truth for the server-side render.
-          userStore.setUser(payload.user);
-        }
-      } catch (e) {
-        // This block runs if the token is expired or invalid.
-        // We don't need to do anything; the user remains unauthenticated.
-        console.log('Auth plugin: Invalid or expired token found on server.');
-      }
+  try {
+    console.log('Attempting to restore user session...');
+    const data = await $fetch('/api/v1/auth/me');
+    
+    if (data && data.user) {
+      userStore.setUser(data.user);
+      console.log('User session restored successfully.');
     }
+  } catch (error) {
+    // This will fail if the user is not logged in (401 Unauthorized), which is expected.
+    // We can safely ignore the error. The user remains unauthenticated.
+    console.log('No active user session found.');
   }
 });

@@ -94,7 +94,8 @@ onMounted(async () => {
     setInfoDirection();
 
     const isMobileWidth = useMobile()
-    
+
+    if (import.meta.dev) console.log('THIS IS EXCLUSIVE TO DEV MODE, ON PROD IT FUNCTIONS PROPERLY');
     const splitGreeting = SplitText.create(".info .greeting",
       {
         type: "words",

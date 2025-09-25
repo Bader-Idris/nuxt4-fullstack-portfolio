@@ -1,7 +1,5 @@
 <template>
   <div class="dashboard">
-    <h1>Socket.IO Dashboard</h1>
-
     <!-- Connection Status Bar -->
     <aside class="connection-status-bar">
       <p v-if="socketStore.connectionError" class="error">
@@ -13,6 +11,12 @@
       <div v-else-if="socketStore.isConnected && socketStore.currentUser">
         <p>Status: <span style="color: green">Connected</span> ({{ socketStore.transport }})</p>
         <p>Welcome, {{ socketStore.currentUser.name }} ({{ socketStore.currentUser.role }})</p>
+        <button 
+          v-if="isPushSupported" 
+          class="notifications-btn"
+          @click="subscribeForNotifications" >
+          Enable Notifications
+        </button>
       </div>
       <p v-else class="info">
         Disconnected
@@ -130,6 +134,8 @@ import { useMessagesStore } from '~/stores/useMessagesStore';
 import { useOnlineUsersStore } from '~/stores/useOnlineUsersStore';
 import { useUserStore } from '~/stores/useUserSocket';
 import { usePushNotifications } from '~/composables/usePushNotifications';
+import { usePendingActions } from '~/composables/usePendingActions';
+
 // import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
 // import { useWebRTC } from '~/composables/useWebRTC'; // Assuming useWebRTC is in composables
 import { useWebRTC } from '~/components/webRTC'; // TODO: should it be in composables instead?
@@ -147,8 +153,16 @@ const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
 const localePath = useLocalePath()
 
-// --- Push Notifications ---
-const { isSupported: isPushSupported, subscribeToPushNotifications } = usePushNotifications();
+const isPushSupported = computed(() => $push.isCapacitor || (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window));
+
+function subscribeForNotifications() {
+  if ($push.isCapacitor) {
+    $push.subscribeToCapacitorPush();
+  } else {
+    $push.subscribeToWebPush();
+  }
+}
+
 
 // --- Component State ---
 const recipientUserId = ref('');
@@ -182,9 +196,19 @@ onUnmounted(() => {
   }
 });
 
-onMounted(() => {
+// --- Pending Actions ---
+const { getAndClearPendingAction } = usePendingActions();
+
+// --- Lifecycle Hooks ---
+onMounted(async () => {
   if (import.meta.client) {
     setupSocketListeners();
+
+    const pendingAction = await getAndClearPendingAction();
+    if (pendingAction && pendingAction.action === 'open_chat' && pendingAction.fromUserId) {
+      console.log('Handling pending action:', pendingAction);
+      startChatWith(pendingAction.fromUserId);
+    }
   }
 });
 
@@ -282,7 +306,7 @@ const handleScroll = () => {
 function scrollToBottom() {
     nextTick(() => {
         if (chatContainer.value) {
-            chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+            chatContainer.value.scrollTop = chatContainer.value.scrollHeight; // should do pseudo margin bottom 30px
         }
     });
 }
@@ -316,10 +340,10 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   gap: 1rem;
 
   @include mobile {
-    height: calc($full-viewport-height - 30px);
+    height: calc($full-viewport-height - 90px);
   }
   @include tablet-to-up {
-    height: calc($full-viewport-height - 160px);
+    height: calc($full-viewport-height - 180px);
   }
 }
 
@@ -338,6 +362,11 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   gap: 1rem;
   flex-grow: 1;
   overflow: hidden;
+  @include mobile {
+    display: flex;
+    flex-direction: column;
+  }
+
 }
 
 .online-users-panel {
@@ -347,6 +376,14 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   overflow-y: auto;
   h3 { margin-top: 0; }
   ul { list-style: none; padding: 0; margin: 0; }
+  @include mobile {
+    min-height: 120px;
+    overflow-y: scroll;
+    margin: 20px 0;
+    ul {
+      margin: 10px 0;
+    }
+  }
 }
 
 .user-item {

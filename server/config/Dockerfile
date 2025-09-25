@@ -1,6 +1,7 @@
 # Stage 1: Base image with bun
 # FROM oven/bun:latest AS base
 FROM node:22.19.0-alpine AS base
+# FROM oven/bun:alpine AS base
 
 # Install Python and build tools for native dependencies
 # RUN apt-get update && apt-get install -y \

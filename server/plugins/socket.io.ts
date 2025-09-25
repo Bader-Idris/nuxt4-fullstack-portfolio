@@ -11,7 +11,8 @@ import { redisClient } from "./redis";
 import { createAdapter } from "@socket.io/redis-streams-adapter"; // official says: better than @socket.io/redis-adapter
 
 import createWebPushInstance from "../utils/webPush";
-import { getSubscription } from "../utils/redisUtils";
+import { getSubscription, getCapacitorSubscription } from "../utils/redisUtils";
+import { sendAPN, sendFCM } from "../utils/push";
 // for future organizing
 // import * from '.././sockets'
 
@@ -284,6 +285,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           // User is offline, send a push notification
           console.log(`User ${to} is offline, attempting to send push notification.`);
           try {
+            // Web push
             const subscription = await getSubscription(redisClient, to);
             if (subscription) {
               await webpush.sendNotification(
@@ -291,12 +293,32 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
                 JSON.stringify({
                   title: `New message from ${fromUser.name}`,
                   body: message,
-                  url: `/dashboard?chatWith=${fromUser.userId}`, // Direct link to the chat
+                  url: '/dashboard',
+                  data: { action: 'open_chat', fromUserId: fromUser.userId },
                 })
               );
               console.log(`Push notification sent successfully to ${to}`);
             } else {
-              console.log(`No push subscription found for user ${to}`);
+              console.log(`No web push subscription found for user ${to}`);
+            }
+
+            // Capacitor push
+            const capacitorSubscription = await getCapacitorSubscription(redisClient, to);
+            if (capacitorSubscription) {
+              const { token, platform } = capacitorSubscription;
+              const payload = {
+                title: `New message from ${fromUser.name}`,
+                body: message,
+                from: fromUser.userId,
+              };
+              if (platform === 'ios') {
+                await sendAPN(token, payload);
+              } else if (platform === 'android') {
+                await sendFCM(token, payload);
+              }
+              console.log(`Capacitor push notification sent successfully to ${to}`);
+            } else {
+              console.log(`No Capacitor push subscription found for user ${to}`);
             }
           } catch (err) {
             console.error(`Failed to send push notification to ${to}:`, err);

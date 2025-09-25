@@ -68,3 +68,43 @@ export async function getSubscription(
     return null;
   }
 }
+
+export async function saveCapacitorSubscription(
+  redis: Redis,
+  userId: string,
+  subscription: { token: string; platform: string }
+): Promise<void> {
+  if (import.meta.prerender) {
+    console.log("⚠️ Skipping Redis during prerendering");
+    return;
+  }
+
+  try {
+    await redis.set(
+      `capacitor:subscription:${userId}`,
+      JSON.stringify(subscription)
+    );
+    console.log(`✅ Saved Capacitor subscription for user: ${userId}`);
+  } catch (error) {
+    console.error(`❌ Failed to save Capacitor subscription for user ${userId}:`, error);
+    throw new Error("Failed to save Capacitor subscription");
+  }
+}
+
+export async function getCapacitorSubscription(
+  redis: Redis,
+  userId: string
+): Promise<{ token: string; platform: string } | null> {
+  if (import.meta.prerender) {
+    console.log("⚠️ Skipping Redis during prerendering");
+    return null;
+  }
+
+  try {
+    const subscriptionJson = await redis.get(`capacitor:subscription:${userId}`);
+    return subscriptionJson ? JSON.parse(subscriptionJson) : null;
+  } catch (error) {
+    console.error(`❌ Failed to get Capacitor subscription for user ${userId}:`, error);
+    return null;
+  }
+}

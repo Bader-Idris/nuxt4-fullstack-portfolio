@@ -1,7 +1,8 @@
-import { isTokenValid } from '../utils/jwt';
+import { isTokenValid, attachCookiesToResponse } from '../utils/jwt';
+import { Token } from '../models/mongo';
 
 export default defineEventHandler(async (event) => {
-  const protectedRoutes = ['/api/v1/auth/me', '/api/v1/received_emails'];
+  const protectedRoutes = ['/api/v1/auth/me', '/api/v1/received_emails', '/api/v1/push/subscribe', '/api/v1/push/subscribe-capacitor'];
   const isProtectedRoute = protectedRoutes.some(route => event.path.startsWith(route));
 
   if (!isProtectedRoute) {
@@ -9,20 +10,48 @@ export default defineEventHandler(async (event) => {
   }
 
   const accessToken = getCookie(event, 'accessToken');
+  const refreshTokenJWT = getCookie(event, 'refreshToken');
 
-  if (!accessToken) {
-    // No need to throw an error here, the endpoint itself will handle the case
-    // where event.context.user is not defined.
-    return;
+  if (accessToken) {
+    try {
+      const payload = isTokenValid(accessToken);
+      if (payload && payload.user) {
+        event.context.user = payload.user;
+        return;
+      }
+    } catch (error) {
+      // Access token is invalid or expired, proceed to refresh token logic
+      console.log('Access Token invalid, attempting refresh...');
+    }
+  }
+
+  if (!refreshTokenJWT) {
+    return; // No refresh token, user is unauthenticated
   }
 
   try {
-    const payload = isTokenValid(accessToken);
-    if (payload && payload.user) {
-      event.context.user = payload.user;
+    const payload = isTokenValid(refreshTokenJWT);
+    if (!payload || !payload.user || !payload.refreshToken) {
+      return; // Invalid refresh token payload
     }
+
+    const existingToken = await Token.findOne({
+      user: payload.user.userId,
+      refreshToken: payload.refreshToken,
+    });
+
+    if (!existingToken || !existingToken.isValid) {
+      return; // Refresh token not found in DB or is invalidated
+    }
+
+    // Issue new tokens
+    attachCookiesToResponse(event, payload.user, existingToken.refreshToken);
+    event.context.user = payload.user;
+    console.log('Token refreshed successfully');
+
   } catch (error) {
-    // Invalid token, do nothing. The user will be considered unauthenticated.
-    console.log('Server auth middleware: Invalid token provided.');
+    // Refresh token is invalid or expired
+    console.log('Refresh token invalid.');
+    return;
   }
 });
