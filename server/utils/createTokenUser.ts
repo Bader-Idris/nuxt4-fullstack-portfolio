@@ -1,7 +1,7 @@
 export const createTokenUser = (user: any): TokenUser => {
   return {
     name: user.name,
-    userId: user._id, // TODO: vs user._id.toString(), // is it more secure?
+    userId: user._id.toString(),
     role: user.role,
   };
 };

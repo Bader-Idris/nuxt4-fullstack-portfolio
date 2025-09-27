@@ -1,63 +1,87 @@
-# Building on Weak Servers
+# Building on Resource-Constrained Servers
 
-If you are attempting to build the application on a server with limited resources (1GB of RAM, 1GB of CPU, and 25GB SSD), follow the instructions below to successfully complete the build process.
+> [!WARNING]
+> **Disclaimer:** Building this application on a server, especially one with limited resources, is strongly discouraged as it can lead to instability and performance issues. For a more reliable and efficient deployment, we highly recommend pulling the pre-built Docker image from Docker Hub.
+>
+> **Official Docker Image:** [https://hub.docker.com/r/baderidris/nuxt-portfolio](https://hub.docker.com/r/baderidris/nuxt-portfolio)
 
-## Configuring Swap Space
+---
 
-To enhance the server's memory capacity, you can create a swap file. Execute the following commands:
+If you must build on a server with limited resources (e.g., 1GB RAM, 1 vCPU, 25GB SSD), these instructions will guide you through the process.
 
-```bash
-# Create a swap file of 4GB
-sudo fallocate -l 4G /swapfile
+## Prerequisites
 
-# If fallocate fails, use the following command instead:
-# sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+- A server with `sudo` privileges.
 
-# Set the correct permissions for the swap file
-sudo chmod 600 /swapfile
+## Step 1: Configure Swap Space
 
-# Format the swap file
-sudo mkswap /swapfile
+A swap file can provide the additional memory needed for the build process.
 
-# Activate the swap file
-sudo swapon /swapfile
-```
+1.  **Allocate a 4GB swap file:**
+    ```bash
+    # Use fallocate to create the swap file
+    sudo fallocate -l 4G /swapfile
 
-### Verify Active Swap
+    # If fallocate is not available or fails, use dd instead
+    # sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+    ```
 
-To confirm that the swap is active, run:
+2.  **Set the correct permissions:**
+    ```bash
+    sudo chmod 600 /swapfile
+    ```
+
+3.  **Set up the swap area:**
+    ```bash
+    sudo mkswap /swapfile
+    ```
+
+4.  **Activate the swap file:**
+    ```bash
+    sudo swapon /swapfile
+    ```
+
+## Step 2: Verify Swap Activation
+
+Confirm that the swap space is active and recognized by the system.
 
 ```bash
 free -h
 ```
 
-You should see an output indicating "Swap" with approximately 4GB.
+The output should display a "Swap" line with a total size of approximately 4.0G.
 
-## Making Swap Permanent
+## Step 3: Ensure Swap Persistence (Permanent Swap)
 
-To ensure that the swap file persists across reboots, add it to your `/etc/fstab`:
+To ensure the swap file is automatically mounted after a system reboot, add it to the `/etc/fstab` file.
 
 ```bash
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
-## Adjusting Swappiness
+## Step 4: Adjust Swappiness (Optional)
 
-You can optionally adjust the **swappiness** setting, which determines how aggressively the system uses swap space. For servers, it is recommended to set it to `10` (favoring RAM) or keep it at the default value of `60`.
+Swappiness is a kernel parameter that controls how aggressively the system uses swap space. The value ranges from 0 to 100.
 
-To set swappiness to `10`, run:
+-   **`10`**: Recommended for servers. The kernel will favor keeping data in RAM.
+-   **`60`**: Default value.
+
+To set swappiness to `10`:
 
 ```bash
+# Set the new value
 echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+
+# Apply the changes without rebooting
 sudo sysctl -p
 ```
 
-## Running the Build Command
+## Step 5: Run the Build Command
 
-To optimize the build process, it is advisable to run the build command with the following environment variable:
+Finally, run the build command with an increased memory limit for the Node.js process.
 
 ```bash
 NODE_OPTIONS=--max-old-space-size=4096 bun run build
 ```
 
-> **Note:** This configuration helps prevent the build process from being terminated due to memory limitations. 🎆🎇
+> **Note:** This configuration helps prevent the build from failing due to out-of-memory errors. 🎆🎇

@@ -42,3 +42,5 @@ compose.prod.test.yaml
 
 /lib/generated/prisma
 server/lib/generated/prisma
+
+**/service-accounts*.json

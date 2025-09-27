@@ -14,8 +14,10 @@ if (apnConfig.token.key && apnConfig.token.keyId && apnConfig.token.teamId) {
 
 if (fcmConfig.serviceAccount) {
   try {
+    // const serviceAccount = await import(fcmConfig.serviceAccount);
     const serviceAccount = require(fcmConfig.serviceAccount);
     admin.initializeApp({
+      // credential: admin.credential.cert(serviceAccount.default || serviceAccount),
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (error) {
