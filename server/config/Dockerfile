@@ -9,6 +9,9 @@ FROM node:22.20-alpine AS base
 #   build-essential \
 #   && rm -rf /var/lib/apt/lists/*
 
+# Update npm to the latest version for performance and security benefits
+RUN npm install -g npm@latest
+
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app

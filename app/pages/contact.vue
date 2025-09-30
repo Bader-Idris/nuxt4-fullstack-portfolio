@@ -170,6 +170,7 @@ const copyToClipboard = async (index: number): Promise<void> => {
   @include mobile {
     @include phone-borders;
     overflow-y: scroll !important;
+    padding-right: 0;
   }
 
   aside {

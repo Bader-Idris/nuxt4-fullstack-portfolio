@@ -87,6 +87,20 @@ function handleFoodEaten(score: number): void {
 function handleGameOver(): void {
   resetFoodLeft()
 }
+
+onMounted(() => {
+  if (import.meta.client) {
+    useGSAP().set('.game-container', { x: 1500 });
+    useGSAP().to('.game-container', {
+      delay: 0.5,
+      x: 0,
+      duration: 0.5,
+      zIndex: 1,
+      ease: 'back.out(1.7)'
+    });
+  }
+})
+
 </script>
 
 <style lang="scss">

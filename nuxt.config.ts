@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
-  compatibilityDate: "2025-09-23",
+  compatibilityDate: "2025-09-30",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {
