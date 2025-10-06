@@ -2,6 +2,7 @@ import { definePerson } from "nuxt-schema-org/schema";
 // for electron
 import path, { dirname } from 'path';
 import { fileURLToPath } from "url";
+// import { writeFileSync } from 'node:fs'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,6 +19,28 @@ export default defineNuxtConfig({
   },
   serverDir: "./server",
   nitro: {
+    // ...(process.env.IS_ELECTRON === "true" && {
+      // hooks: {
+      //   'prerender:generate'(route) {
+      //     if (route.route === '/index.html') {
+      //       route.skip = true
+      //     }
+      //   },
+      // },
+
+      // hooks: {
+      //   'prerender:generate'(route, nitro) {
+      //     // This hook triggers when the 200.html is generated.
+      //     if (route?.route === '/200.html') {
+      //       // Create a redirect in index.html to your default locale or entry point.
+      //       // The following example redirects to the 'en' locale. Change if needed.
+      //       const redirectHtml = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/en"></head></html>`
+      //       const outputPath = path.join(nitro.options.output.publicDir, 'index.html')
+      //       writeFileSync(outputPath, redirectHtml)
+      //     }
+      //   },
+      // },
+    // }),
     compressPublicAssets: {
       gzip: process.env.NUXT_GZIP !== 'false',
       // brotli: process.env.NUXT_BROTLI !== 'false'
@@ -71,6 +94,7 @@ export default defineNuxtConfig({
       // asyncContext: true,
     },
   },
+
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
   vite: {
     css: {
@@ -127,7 +151,8 @@ export default defineNuxtConfig({
     },
     app: {
       // TODO: check if it was a bun error or something!!
-      // baseURL: "./", // Needed for proper resource loading in Electron
+      baseURL: "./", // Needed for proper resource loading in Electron
+      // buildAssetsDir: '/_nuxt/', // Ensures asset paths are correct
     },
     electron: {
       build: [
@@ -157,7 +182,8 @@ export default defineNuxtConfig({
               rollupOptions: {
                 external: [
                   "node:sqlite",
-                  "fsevents"
+                  "fsevents",
+                  "@prisma/client"
                 ],
               },
             },
@@ -178,7 +204,10 @@ export default defineNuxtConfig({
             //  beware trailing '/'
             //
             resolve: {
-              alias: { '~/': path.join(__dirname, 'app/') },
+              alias: {
+                '~/': path.join(__dirname, 'app/'),
+                '@server/': path.join(__dirname, 'server/'),
+              },
             },
           },
         },
@@ -206,8 +235,8 @@ export default defineNuxtConfig({
       //    process.env.NODE_ENV === 'development' on npm run dev
       //    process.env.NODE_ENV === 'production' on npm run electron:build
       //
-      // disableDefaultOptions: process.env.NODE_ENV === 'development',
-      disableDefaultOptions: true,
+      disableDefaultOptions: process.env.NODE_ENV === 'development',
+      // disableDefaultOptions: true,
 
       // Polyfill the Electron and Node.js API for Renderer process.
       // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
@@ -365,7 +394,6 @@ export default defineNuxtConfig({
     strategy: "prefix_except_default",
     // strategy: "no_prefix",
     // vueI18n: "~/i18n/i18n.config.ts", // using custom path, default
-    baseUrl: process.env.DOMAIN_NAME, // todo: check out, https://v8.i18n.nuxtjs.org/options/routing#baseurl
   },
   pinia: {
     storesDirs: [
@@ -457,26 +485,35 @@ export default defineNuxtConfig({
     },
   },
   ogImage: {
-    enabled: process.env.NUXT_SSR !== "false"
+    // enabled: process.env.NUXT_SSR !== "false" && process.env.IS_ELECTRON !== "true",
+    enabled: process.env.NUXT_SSR !== "false",
   },
+  // ...(process.env.IS_ELECTRON === "false") && {
+    sitemap: {
+      enabled: process.env.IS_ELECTRON !== "true",
+    },
+  // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
     url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
     name: "Bader Idris", // ! Causes stupid duplicate head.title
     defaultLocale: "en",
+    indexable: process.env.IS_ELECTRON !== "true"
   },
-  schemaOrg: {
-    // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
-    identity: definePerson({
-      name: "Bader Idris",
-      image: "/imgs/meTwentyFour.jpg",
-      description: "Full stack developer",
-      url: "baderidris.com",
-      sameAs: [
-        "https://www.facebook.com/Bader.Idris.developer",
-        "https://github.com/bader-idris",
-      ],
-    }),
+  ...(process.env.IS_ELECTRON === "false") && {
+    schemaOrg: {
+      // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
+      identity: definePerson({
+        name: "Bader Idris",
+        image: "/imgs/meTwentyFour.jpg",
+        description: "Full stack developer",
+        url: "baderidris.com",
+        sameAs: [
+          "https://www.facebook.com/Bader.Idris.developer",
+          "https://github.com/bader-idris",
+        ],
+      }),
+    },
   },
   robots: {
     disallow: ["/contact/admin"],
@@ -487,8 +524,9 @@ export default defineNuxtConfig({
       "/__sitemap__/ar.xml",
       "/__sitemap__/es.xml",
     ],
-    // robotsTxt: false
+    robotsTxt: process.env.IS_ELECTRON !== "true"
   },
+
   // }),
   // ionic: {},
   // routeRules: {
@@ -505,6 +543,16 @@ export default defineNuxtConfig({
       isCapacitor: process.env.IS_CAPACITOR === "true",
       // for web-push pkg
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+      // if not electron
+      // ...(process.env.IS_ELECTRON === "false") && {
+        i18n: {
+          // ssr: process.env.NUXT_SSR !== "false",
+          // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+          // do if electron ./ else process.env.DOMAIN_NAME
+          baseUrl: process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
+          // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+        }
+      // }
     },
     mailHost: process.env.MAIL_HOST,
     mailUser: process.env.MAIL_USER,
@@ -527,6 +575,7 @@ export default defineNuxtConfig({
     redisUrl: process.env.REDIS_URL,
   },
   content: { // check out content.config.ts file
+    experimental: { nativeSqlite: true },
     //   database: {
     //     type: "postgres",
     //     url: String(process.env.PSQL_URL),

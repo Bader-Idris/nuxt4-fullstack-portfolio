@@ -10,8 +10,8 @@ import path from "node:path";
 // │ │ └── index.js
 // │ ├─┬ renderer
 // │ │ └── index.html
-process.env.APP_ROOT = path.join(import.meta.dirname, '..')
-// process.env.APP_ROOT = path.join(__dirname, '..') // check out prod version, especially the ugly default nuxt config
+// process.env.APP_ROOT = path.join(import.meta.dirname, '..')
+process.env.APP_ROOT = path.join(__dirname, '..') // check out prod version, especially the ugly default nuxt config
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, '.output/public')
@@ -20,41 +20,48 @@ process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
 
-let win: BrowserWindow | null;
+let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
+    width: 1200,
+    height: 800,
     webPreferences: {
-      preload: path.join(MAIN_DIST, "preload.js"),
+      preload: path.join(MAIN_DIST, 'preload.js'),
     },
-  });
+  })
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools();
+    win.loadURL(`http://localhost:${process.env.PORT}`);
+    // win.loadURL(process.env.VITE_DEV_SERVER_URL)
+    win.webContents.openDevTools()
+
+    console.log("[Electron Main] VITE_DEV_SERVER_URL:", process.env.VITE_DEV_SERVER_URL);
   } else {
-    win.loadFile(path.join(process.env.VITE_PUBLIC!, "index.html"));
+
+    console.log("[Electron Main] Loading file:", path.join(process.env.VITE_PUBLIC!, "index.html"));
+    win.loadFile(path.join(process.env.VITE_PUBLIC!, 'index.html'))
   }
 }
 
 function initIpc() {
-  ipcMain.handle("app-start-time", () => new Date().toLocaleString());
+  ipcMain.handle('app-start-time', () => (new Date).toLocaleString())
 }
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+    win = null
   }
-});
+})
 
-app.on("activate", () => {
+app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    createWindow()
   }
-});
+})
 
 app.whenReady().then(() => {
-  initIpc();
-  createWindow();
-});
+  initIpc()
+  createWindow()
+})

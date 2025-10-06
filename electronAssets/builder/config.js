@@ -150,9 +150,11 @@ const baseConfig = {
       "A multi-platform portfolio application built with Vite, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information."
   },
   files: [
+    // 'dist-electron',
     'dist-electron/**/*',
     ".output/**/*",
     '!dist-electron/main/index.dev.js',
+    '!dist',
     '!electronAssets/builder/envs', // important security to hide our certs from third parties, or in the app bundle
     '!docs/**/*',
     '!tests/**/*',
