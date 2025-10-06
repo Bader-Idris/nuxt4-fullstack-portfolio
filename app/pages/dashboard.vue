@@ -26,35 +26,38 @@
     <!-- Main Content Grid -->
     <ClientOnly>
       <div class="dashboard-grid">
-        <!-- Online Users List -->
-        <div class="online-users-panel">
-          <h3>Online Users</h3>
-          <div v-if="onlineUsersStore.users.length === 0" class="no-users">
-            No other users online.
+        <!-- Contacts List -->
+        <div ref="contactsPanel" class="online-users-panel">
+          <h3>Contacts</h3>
+          <div v-if="messagesStore.contacts.length === 0 && !messagesStore.isLoadingContacts" class="no-users">
+            No contacts yet.
           </div>
-          <ul v-else>
+          <ul>
             <li 
-              v-for="onlineUser in onlineUsersStore.users.filter(u => u.userId !== socketStore.currentUser?.userId)"
-              :key="onlineUser.userId" 
+              v-for="contact in messagesStore.contacts"
+              :key="contact.userId" 
               class="user-item"
-              :class="{ 'active-chat': recipientUserId === onlineUser.userId, 'disabled': userStore.isGuest }"
-              @click="startChatWith(onlineUser.userId)"
+              :class="{ 'active-chat': recipientUserId === contact.userId, 'disabled': userStore.isGuest }"
+              @click="startChatWith(contact.userId)"
             >
               <div class="user-info">
-                <span class="user-name">{{ onlineUser.name }}</span>
-                <span class="user-status" />
+                <span class="user-name">{{ contact.name }}</span>
+                <span class="user-status" :class="isOnline(contact.userId) ? 'online' : 'offline'" />
               </div>
               <div class="user-actions">
                 <button 
                   class="call-btn"
                   :disabled="isInCall || userStore.isGuest"
-                  @click.stop="initiateCall(onlineUser.userId)">
+                  @click.stop="initiateCall(contact.userId)">
                   <Icon v-if="!userStore.isGuest" name="heroicons:video-camera-solid" width="16" />
                   <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
                 </button>
               </div>
             </li>
           </ul>
+          <div v-if="messagesStore.isLoadingContacts" class="loading-indicator">
+            Loading...
+          </div>
         </div>
 
         <!-- Chat and Video Area -->
@@ -134,12 +137,10 @@ import { useSocketStore } from '~/stores/useSocketStore';
 import { useMessagesStore } from '~/stores/useMessagesStore';
 import { useOnlineUsersStore } from '~/stores/useOnlineUsersStore';
 import { useUserStore } from '~/stores/useUserSocket';
-// import { usePushNotifications } from '~/composables/usePushNotifications';
+// import { useContactsStore } from '~/stores/useContactsStore';
 import { usePendingActions } from '~/composables/usePendingActions';
+import { useWebRTC } from '~/components/webRTC';
 
-// import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
-// import { useWebRTC } from '~/composables/useWebRTC'; // Assuming useWebRTC is in composables
-import { useWebRTC } from '~/components/webRTC'; // TODO: should it be in composables instead?
 const { $push } = useNuxtApp();
 
 useSeoMeta({
@@ -152,7 +153,8 @@ const socketStore = useSocketStore();
 const messagesStore = useMessagesStore();
 const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
-const localePath = useLocalePath()
+// const contactsStore = useContactsStore();
+const localePath = useLocalePath();
 
 const isPushSupported = computed(() => $push.isCapacitor || (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window));
 
@@ -164,12 +166,12 @@ function subscribeForNotifications() {
   }
 }
 
-
 // --- Component State ---
 const recipientUserId = ref('');
 const message = ref('');
 const showNewMessageIndicator = ref(false);
 const chatContainer = ref<HTMLElement | null>(null);
+const contactsPanel = ref<HTMLElement | null>(null);
 
 // --- WebRTC Composables ---
 const {
@@ -185,20 +187,23 @@ const {
   toggleMute,
   toggleVideo,
   setupSocketListeners,
-  cleanup, // Get the cleanup function
-} = useWebRTC(); // No argument needed as the composable accesses the store directly
+  cleanup,
+} = useWebRTC();
 
-// --- Lifecycle Hooks ---
-
-onUnmounted(() => {
-  if (import.meta.client) {
-    // Fallback cleanup on component unmount
-    cleanup();
+// --- Infinite Scroll ---
+const { arrivedState } = useScroll(contactsPanel);
+watch(arrivedState, (newState) => {
+  if (newState.bottom) {
+    messagesStore.fetchContacts();
   }
 });
 
-// --- Pending Actions ---
-const { getAndClearPendingAction } = usePendingActions();
+watch(() => socketStore.currentUser, (newUser) => {
+  if (newUser) {
+    messagesStore.clearContacts();
+    messagesStore.fetchContacts();
+  }
+}, { immediate: true });
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
@@ -213,31 +218,33 @@ onMounted(async () => {
   }
 });
 
-// --- Watchers ---
+onUnmounted(() => {
+  if (import.meta.client) {
+    cleanup();
+  }
+});
 
-// When the socket connection state changes, manage WebRTC listeners
+// --- Pending Actions ---
+const { getAndClearPendingAction } = usePendingActions();
+
+// --- Watchers ---
 watch(() => socketStore.socket, (newSocket, oldSocket) => {
-  // Cleanup listeners on the old socket instance if it existed
   if (oldSocket) {
     cleanup();
   }
-  // Setup listeners on the new socket instance if it exists
   if (newSocket) {
     setupSocketListeners();
   }
 }, { immediate: true });
 
-
-// When a new chat is selected, fetch its history
 watch(recipientUserId, (newRecipientId) => {
   if (newRecipientId && userStore.isAuthenticated) {
     messagesStore.setLoading(true);
-    messagesStore.page = 1; // Reset page
+    messagesStore.page = 1;
     socketStore.fetchMessageHistory(newRecipientId, messagesStore.page, messagesStore.limit);
   }
 });
 
-// When new messages are added, scroll to the bottom or show an indicator
 watch(
   () => messagesStore.getMessagesForRecipient(recipientUserId.value),
   (messages, oldMessages) => {
@@ -246,14 +253,12 @@ watch(
     const container = chatContainer.value;
     if (!container) return;
 
-    const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100; // 100px tolerance
+    const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
     const lastMessage = messages[messages.length - 1];
 
-    // If the new message is from the current user, always scroll to bottom
     if (lastMessage.from === userStore.user.userId) {
       scrollToBottom();
     } else {
-      // If from another user, check if we should auto-scroll or show indicator
       if (isScrolledToBottom) {
         scrollToBottom();
       } else {
@@ -263,7 +268,6 @@ watch(
   },
   { deep: true }
 );
-
 
 // --- Methods ---
 function sendPrivateMessage() {
@@ -277,7 +281,6 @@ function sendPrivateMessage() {
 
 function startChatWith(userId: string) {
   if (userStore.isGuest) {
-    // Optionally, show a notification prompting to log in
     return;
   }
   if (isInCall.value) {
@@ -291,15 +294,13 @@ const handleScroll = () => {
   const container = chatContainer.value;
   if (!container) return;
 
-  // If user scrolls to the top, fetch more history
   if (container.scrollTop === 0 && !messagesStore.isLoading && !messagesStore.isEndOfHistory(recipientUserId.value)) {
     messagesStore.setLoading(true);
     messagesStore.incrementPage();
     socketStore.fetchMessageHistory(recipientUserId.value, messagesStore.page, messagesStore.limit);
   }
 
-  // If user scrolls back to the bottom, hide the new message indicator
-  if (container.scrollHeight - container.scrollTop <= container.clientHeight + 1) { // +1 for pixel-perfect tolerance
+  if (container.scrollHeight - container.scrollTop <= container.clientHeight + 1) {
     showNewMessageIndicator.value = false;
   }
 };
@@ -307,25 +308,24 @@ const handleScroll = () => {
 function scrollToBottom() {
     nextTick(() => {
         if (chatContainer.value) {
-            chatContainer.value.scrollTop = chatContainer.value.scrollHeight; // should do pseudo margin bottom 30px
+            chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
         }
     });
 }
 
 // --- Helpers ---
-const getUserName = (userId: string | null) => {
-  if (!userId) return 'Unknown';
-  const user = onlineUsersStore.users.find((u) => u.userId === userId);
-  // return user ? user.name : 'Unknown';
-  return user ? user.name : 'Unknown User';
+const isOnline = (userId: string) => {
+  return onlineUsersStore.users.some(user => user.userId === userId);
 };
 
-/* 
-const getRecipientName = () => {
-  const recipient = onlineUsersStore.users.find(u => u.userId === recipientUserId.value);
-  return recipient ? recipient.name : 'Unknown';
+const getUserName = (userId: string | null) => {
+  if (!userId) return 'Unknown';
+  const user = messagesStore.contacts.find((u) => u.userId === userId);
+  if (user) return user.name;
+  const onlineUser = onlineUsersStore.users.find((u) => u.userId === userId);
+  return onlineUser ? onlineUser.name : 'Unknown User';
 };
-*/
+
 const getRecipientName = () => getUserName(recipientUserId.value);
 
 const formatTimestamp = (timestamp: string | number | Date) => {
@@ -404,17 +404,16 @@ const formatTimestamp = (timestamp: string | number | Date) => {
   }
   .user-name { font-weight: 500; }
   .user-status {
-    &.guest {
-      color: #999;
-      font-style: italic;
-    }
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 8px;
     &.online {
-      color: #4CAF50;
-      font-weight: 600;
+      background-color: #4CAF50;
     }
     &.offline {
-      color: #999;
-      font-weight: 600;
+      background-color: #999;
     }
   }
   .call-btn { background: none; border: none; cursor: pointer; }
@@ -472,9 +471,9 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 .message {
   @include flex-container(column, nowrap, unset, unset);
   max-width: 75%;
-  &.sent { align-self: flex-end; .message-content { background-color: #dcf8c6; } }
+  &.sent { align-self: flex-end; .message-content { background-color: #dcf8c6; } } 
   &.received { align-self: flex-start; .message-content { background-color: #f1f1f1; } }
-  .message-content { padding: 0.5rem 0.75rem; border-radius: 12px; }
+  .message-content { padding: 0.5rem 0.75rem; border-radius: 12px; } 
   .message-timestamp { font-size: 0.75rem; color: #999; margin-top: 4px; }
 }
 

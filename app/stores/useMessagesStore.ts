@@ -9,6 +9,18 @@ interface Message {
   to?: string;
 }
 
+interface Contact {
+  userId: string;
+  name: string;
+  lastMessage: {
+    id: string;
+    message: string;
+    timestamp: string;
+    from: string;
+    to: string;
+  };
+}
+
 export const useMessagesStore = defineStore("messages", {
   state: () => ({
     // A map to hold messages for each conversation (recipient)
@@ -16,6 +28,13 @@ export const useMessagesStore = defineStore("messages", {
     page: 1,
     limit: 20,
     isLoading: false,
+
+    // Contacts related state
+    contacts: [] as Contact[],
+    contactsPage: 1,
+    contactsLimit: 20,
+    isLoadingContacts: false,
+    hasMoreContacts: true,
   }),
   actions: {
     setLoading(isLoading: boolean) {
@@ -43,9 +62,39 @@ export const useMessagesStore = defineStore("messages", {
     clearAllData() {
       this.conversations.clear();
       this.page = 1;
+      this.clearContacts(); // Also clear contacts when clearing all data
     },
     incrementPage() {
       this.page++;
+    },
+
+    // Contacts related actions
+    async fetchContacts() {
+      if (this.isLoadingContacts || !this.hasMoreContacts) return;
+
+      this.isLoadingContacts = true;
+      const socketStore = useSocketStore();
+      
+      socketStore.socket?.emit('get-contacts', { page: this.contactsPage, limit: this.contactsLimit }, (response: { contacts: Contact[], error?: string }) => {
+        if (response.error) {
+          console.error('Error fetching contacts:', response.error);
+          this.isLoadingContacts = false;
+          return;
+        }
+
+        if (response.contacts.length > 0) {
+          this.contacts.push(...response.contacts);
+          this.contactsPage++;
+        } else {
+          this.hasMoreContacts = false;
+        }
+        this.isLoadingContacts = false;
+      });
+    },
+    clearContacts() {
+      this.contacts = [];
+      this.contactsPage = 1;
+      this.hasMoreContacts = true;
     },
   },
   getters: {
@@ -54,8 +103,6 @@ export const useMessagesStore = defineStore("messages", {
     },
     isEndOfHistory: (state) => (recipientId: string): boolean => {
         const conversation = state.conversations.get(recipientId);
-        // This is a simplification. A more robust solution would involve the server
-        // indicating if there are more messages to load.
         return conversation ? conversation.length < state.page * state.limit : false;
     },
   },

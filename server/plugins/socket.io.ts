@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { defineEventHandler, createError } from "h3";
 import { isTokenValid } from "../utils/jwt";
 import { Message } from "../models/mongo";
+import { getContacts } from "../utils/getContacts";
 // docs: https://github.com/animir/node-rate-limiter-flexible/wiki/Overall-example#websocket-single-connection-prevent-flooding
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { redisClient } from "./redis";
@@ -127,14 +128,28 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       // TODO: get rid of these logs in prod!
       console.log(`User connected: ${user.name} (${user.userId})`);
 
-      // if (user && user.userId) {} // TODO: would it be useful to add a check here?
-      // Add user to connected users map
-      userSockets.set(user.userId, {
-        socketId: socket.id,
-        name: user.name,
-        role: user.role,
-        userId: user.userId,
-      });
+      // Check if user is already connected, if so disconnect the old connection
+      if (user && user.userId) {
+        const existingUserSocket = userSockets.get(user.userId);
+        if (existingUserSocket) {
+          console.log(`User ${user.userId} is already connected with socket ${existingUserSocket.socketId}, disconnecting old connection`);
+          // Remove the old user entry from the map immediately to avoid conflicts
+          userSockets.delete(user.userId);
+          // Find and disconnect the old socket connection
+          const oldSocket = io.sockets.sockets.get(existingUserSocket.socketId);
+          if (oldSocket) {
+            oldSocket.disconnect(true); // Force disconnect the old socket
+          }
+        }
+        
+        // Add user to connected users map
+        userSockets.set(user.userId, {
+          socketId: socket.id,
+          name: user.name,
+          role: user.role,
+          userId: user.userId,
+        });
+      }
 
       // Send socket ID and user info to the client
       socket.emit("connection-established", {
@@ -174,15 +189,17 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       }
 
       socket.on("disconnect", () => {
-        if (user && user.userId) {
-          console.log(`User disconnected: ${user.name} (${user.userId})`);
-          userSockets.delete(user.userId);
-
-          io.emit("user-left", user.userId); // TODO: would it be nice to emit this to all users?
-
-          // Emit updated online users list to admins
-          // const onlineUsers = Array.from(userSockets.values());
-          // io.to("admin-room").emit("online-users", { users: onlineUsers });
+        const disconnectedUser = socket.data?.user;
+        if (disconnectedUser && disconnectedUser.userId) {
+          // Only remove from userSockets if this socket is still registered as the user's socket
+          const currentUserSocket = userSockets.get(disconnectedUser.userId);
+          if (currentUserSocket && currentUserSocket.socketId === socket.id) {
+            console.log(`User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId})`);
+            userSockets.delete(disconnectedUser.userId);
+            io.emit("user-left", disconnectedUser.userId);
+          } else {
+            console.log(`Socket ${socket.id} for user ${disconnectedUser.userId} disconnected but was not the current socket for this user`);
+          }
         }
       });
 
@@ -368,6 +385,23 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         } catch (error) {
           console.error("Error fetching messages:", error);
           if (callback) callback({ error: "Failed to fetch messages" });
+        }
+      });
+
+      socket.on("get-contacts", async (data, callback) => {
+        const user = socket.data.user;
+        if (!user || !user.userId) {
+          if (callback) callback({ error: "User not authenticated" });
+          return;
+        }
+
+        const { page = 1, limit = 20 } = data || {};
+
+        try {
+          const contacts = await getContacts(user.userId, page, limit);
+          if (callback) callback({ contacts });
+        } catch (error) {
+          if (callback) callback({ error: "Failed to fetch contacts" });
         }
       });
 
