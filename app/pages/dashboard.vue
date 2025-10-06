@@ -33,21 +33,22 @@
             No other users online.
           </div>
           <ul v-else>
-            <li v-for="onlineUser in onlineUsersStore.users.filter(u => u.userId !== socketStore.currentUser?.userId)"
+            <li 
+              v-for="onlineUser in onlineUsersStore.users.filter(u => u.userId !== socketStore.currentUser?.userId)"
               :key="onlineUser.userId" 
               class="user-item"
-              @click="startChatWith(onlineUser.userId)"
               :class="{ 'active-chat': recipientUserId === onlineUser.userId, 'disabled': userStore.isGuest }"
+              @click="startChatWith(onlineUser.userId)"
             >
               <div class="user-info">
                 <span class="user-name">{{ onlineUser.name }}</span>
-                <span class="user-status">Online</span>
+                <span class="user-status" />
               </div>
               <div class="user-actions">
                 <button 
-                  @click.stop="initiateCall(onlineUser.userId)" 
                   class="call-btn"
-                  :disabled="isInCall || userStore.isGuest">
+                  :disabled="isInCall || userStore.isGuest"
+                  @click.stop="initiateCall(onlineUser.userId)">
                   <Icon v-if="!userStore.isGuest" name="heroicons:video-camera-solid" width="16" />
                   <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
                 </button>
@@ -68,7 +69,7 @@
                 <video ref="remoteVideoRef" autoplay playsinline class="remote-video" />
                 <div v-if="!remoteStream" class="connecting-overlay">
                   <span>Connecting...</span>
-                  <div class="spinner"></div>
+                  <div class="spinner"/>
                 </div>
               </div>
               <div class="local-video-container">
@@ -76,13 +77,13 @@
               </div>
             </div>
             <div class="call-controls">
-              <button @click="toggleMute" class="control-btn" :class="{ 'active': isMuted }">
+              <button class="control-btn" :class="{ 'active': isMuted }" @click="toggleMute">
                 <Icon :name="isMuted ? 'heroicons:microphone-slash' : 'heroicons:microphone'" width="24" />
               </button>
-              <button @click="toggleVideo" class="control-btn" :class="{ 'active': isVideoOff }">
+              <button class="control-btn" :class="{ 'active': isVideoOff }" @click="toggleVideo">
                 <Icon :name="isVideoOff ? 'heroicons:video-camera-slash' : 'heroicons:video-camera'" width="24" />
               </button>
-              <button @click="endCall" class="control-btn end-call">
+              <button class="control-btn end-call" @click="endCall">
                 <Icon name="heroicons:phone-x-mark" width="24" />
               </button>
             </div>
@@ -110,8 +111,8 @@
             <div v-if="showNewMessageIndicator" class="new-message-indicator" @click="scrollToBottom">
               ↓ New Messages
             </div>
-            <form @submit.prevent="sendPrivateMessage" class="chat-input-form">
-              <input v-model="message" placeholder="Type your message" required />
+            <form class="chat-input-form" @submit.prevent="sendPrivateMessage">
+              <input v-model="message" placeholder="Type your message" required>
               <CustomButton button-type="primary" type="submit">Send</CustomButton>
             </form>
           </div>
@@ -133,7 +134,7 @@ import { useSocketStore } from '~/stores/useSocketStore';
 import { useMessagesStore } from '~/stores/useMessagesStore';
 import { useOnlineUsersStore } from '~/stores/useOnlineUsersStore';
 import { useUserStore } from '~/stores/useUserSocket';
-import { usePushNotifications } from '~/composables/usePushNotifications';
+// import { usePushNotifications } from '~/composables/usePushNotifications';
 import { usePendingActions } from '~/composables/usePendingActions';
 
 // import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
@@ -402,9 +403,19 @@ const formatTimestamp = (timestamp: string | number | Date) => {
     }
   }
   .user-name { font-weight: 500; }
-  .user-status.guest {
-    color: #999;
-    font-style: italic;
+  .user-status {
+    &.guest {
+      color: #999;
+      font-style: italic;
+    }
+    &.online {
+      color: #4CAF50;
+      font-weight: 600;
+    }
+    &.offline {
+      color: #999;
+      font-weight: 600;
+    }
   }
   .call-btn { background: none; border: none; cursor: pointer; }
 }

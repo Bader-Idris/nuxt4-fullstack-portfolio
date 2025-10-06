@@ -1,6 +1,6 @@
 <template>
   <div class="auth-callback-container">
-    <div class="spinner"></div>
+    <div class="spinner" />
     <p>Finalizing authentication, please wait...</p>
   </div>
 </template>

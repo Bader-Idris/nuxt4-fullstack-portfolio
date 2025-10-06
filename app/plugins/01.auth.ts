@@ -1,7 +1,7 @@
 // app/plugins/01.auth.ts
 import { useUserStore } from '~/stores/useUserSocket';
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async (_nuxtApp) => {
   // This plugin runs once on app startup.
   // Its purpose is to initialize the user's session from the server.
 
@@ -28,7 +28,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       userStore.setUser(data.user);
       console.log('User session restored successfully.');
     }
-  } catch (error) {
+  } catch {
     // This will fail if the user is not logged in (401 Unauthorized), which is expected.
     // We can safely ignore the error. The user remains unauthenticated.
     console.log('No active user session found.');

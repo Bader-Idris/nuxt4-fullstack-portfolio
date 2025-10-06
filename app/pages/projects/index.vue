@@ -73,7 +73,7 @@ const list = ref<Array<{ title: string, imgAlt: string, isActive: boolean }>>([
   // { title: 'NestJs', imgAlt: 'NestJs icon', isActive: true },
 ])
 
-// @ts-ignore
+// @ts-expect-error: item has an implicit any type
 const toggleActive = (item) => {
   item.isActive = !item.isActive
   saveActiveItems()
@@ -90,7 +90,7 @@ const saveActiveItems = () => {
 
 const loadActiveItems = () => {
   try {
-    // @ts-ignore
+    // @ts-expect-error: localStorage.getItem can return null
     const storedActiveItems = JSON.parse(localStorage.getItem('activeItems'))
     if (storedActiveItems) {
       list.value.forEach((item) => {
@@ -103,7 +103,7 @@ const loadActiveItems = () => {
   }
 }
 
-// @ts-ignore
+// @ts-expect-error: itemTitle has an implicit any type
 const removeItem = (itemTitle) => {
   const item = list.value.find(item => item.title === itemTitle)
   if (item) {

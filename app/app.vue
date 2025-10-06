@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { Capacitor } from '@capacitor/core'
+import type { URLOpenListenerEvent } from '@capacitor/app'
 import { useColorMode } from '@vueuse/core'
 
 useHead({
@@ -110,7 +111,7 @@ const initializeMainApp = async () => {
 const initCapacitorPlatform = async () => {
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
-    const { App: CapacitorApp, URLOpenListenerEvent } = await import('@capacitor/app')
+    const { App: CapacitorApp } = await import('@capacitor/app')
     const { AppLauncher } = await import('@capacitor/app-launcher');
 
     StatusBar.setStyle({ style: Style.Dark })
@@ -118,7 +119,7 @@ const initCapacitorPlatform = async () => {
     StatusBar.setOverlaysWebView({ overlay: true })
     StatusBar.show()
 
-    CapacitorApp.addListener('appUrlOpen', (event: typeof URLOpenListenerEvent) => {
+    CapacitorApp.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
         const url = new URL(event.url);
         router.push({ path: url.pathname, query: Object.fromEntries(url.searchParams) });
     });

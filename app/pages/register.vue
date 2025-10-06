@@ -11,7 +11,7 @@
 
       <div class="policy-checklist">
         <label class="checkbox-label">
-          <input type="checkbox" v-model="agreePolicies" />
+          <input v-model="agreePolicies" type="checkbox">
           I agree to the 
           <CustomLink to="/legal/terms" target="_blank" aria-label="Terms and Conditions" class="policy-link">Terms and Conditions</CustomLink>
           and 
@@ -158,7 +158,7 @@ const register = async (): Promise<void> => {
           });
       }
     } else if (response.value) {
-      // @ts-ignore Handle successful registration
+      // @ts-expect-error: setUser expects a user object, not a string
       useUserStore().setUser(user.value);
 
       toast('Successfully Registered', {

@@ -1,6 +1,6 @@
 import { usePushNotifications } from '~/composables/usePushNotifications';
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async (_nuxtApp) => {
   const { 
     isCapacitor, 
     initialize, 

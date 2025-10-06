@@ -186,7 +186,7 @@ onBeforeUnmount(() => {
         alt="thank you message icon"
         format="webp"
         loading="lazy"
-      ></img>
+      >
       <p>{{ t('messages.thank_you.emailMsg') }}</p>
       <CustomButton button-type="default" @click="resetForm">{{
         t('contact.form.send_new') }}

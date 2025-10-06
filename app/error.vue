@@ -3,7 +3,10 @@ import type { NuxtError } from '#app'
 const localePath = useLocalePath()
 
 defineProps({
-  error: Object as () => NuxtError
+  error: {
+    type: Object as () => NuxtError,
+    default: () => ({ statusCode: 404 })
+  }
 })
 </script>
 

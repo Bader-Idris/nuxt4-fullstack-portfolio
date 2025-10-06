@@ -29,9 +29,11 @@ export default {
   </a>
 
   <!-- Internal link using NuxtLink -->
+  <!-- was having 
+    v-slot="{ href, navigate, isExactActive }" -->
   <NuxtLink
     v-else
-    v-slot="{ href, navigate, isExactActive }"
+    v-slot="{ navigate, isExactActive }"
     v-bind="$props"
     custom>
     <a

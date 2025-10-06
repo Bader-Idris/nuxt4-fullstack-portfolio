@@ -551,8 +551,20 @@ export default defineNuxtConfig({
           // do if electron ./ else process.env.DOMAIN_NAME
           baseUrl: process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
           // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-        }
+        },
       // }
+      scripts: {
+        googleTagManager: {
+          // .env
+          // NUXT_PUBLIC_SCRIPTS_GOOGLE_TAG_MANAGER_ID=<your-id>
+          id: process.env.GOOGLE_TAG_MANAGER_ID,
+        },
+        googleAnalytics: {
+          // .env
+          // NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID=<your-id>
+          id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+        }
+      }
     },
     mailHost: process.env.MAIL_HOST,
     mailUser: process.env.MAIL_USER,
@@ -606,12 +618,9 @@ export default defineNuxtConfig({
   },
   scripts: {
     registry: {
-      googleAnalytics: {
-        id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "",
-      },
-      googleTagManager: {
-        id: process.env.GOOGLE_TAG_MANAGER_ID || "",
-      },
+      googleAnalytics: true,
+      googleTagManager: true, // more robust with var for docker image building
+      // ? check https://scripts.nuxt.com/scripts/tracking/google-tag-manager#loading-globally
       // googleAdsense: {
       //   client: process.env.GOOGLE_ADSENSE_ID || "", // AdSense Publisher ID
       //   autoAds: true, // Enable Auto Ads

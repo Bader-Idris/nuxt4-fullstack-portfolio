@@ -37,7 +37,7 @@
           loading="lazy"
           data-flip-id="profile-pic"
           @click="toggleLightbox"
-        />
+        >
         <div class="auth-aside">
           <p>@bader-idris</p>
           <p>{{ createTimeCodeSnippet }}</p>

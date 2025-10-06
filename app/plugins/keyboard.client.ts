@@ -1,6 +1,6 @@
 // https://chat.deepseek.com/a/chat/s/047e1352-014c-4977-ab48-a6ed298bdb22
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async (_nuxtApp) => {
   if (!import.meta.client) return; // TODO: do we need this after making the file .client.ts ??
 
   const isCapacitorDevice: Promise<boolean> = useCapacitorDevice();

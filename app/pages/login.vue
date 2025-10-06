@@ -203,7 +203,8 @@ const google = async () => {
 
     // Perform Google sign-in
     const googleResponse = await GoogleAuth.signIn();
-    const { serverAuthCode, authentication, email, name } = googleResponse;
+    // const { serverAuthCode, authentication, email, name } = googleResponse;
+    const { serverAuthCode, authentication, name } = googleResponse;
 
     if (!serverAuthCode) {
       throw new Error('No serverAuthCode received from Google');

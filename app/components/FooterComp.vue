@@ -62,7 +62,7 @@
 import socialData from '~/apis/random-data.json'
 
 const [{ socialLinks }] = socialData
-// @ts-ignore
+// @ts-expect-error: socialLinks is not properly typed
 const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => url)
 
 // Handle client-side navigation

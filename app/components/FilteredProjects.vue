@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import projects from '~/apis/projects_info.json'
 
-const localePath = useLocalePath()
+// const localePath = useLocalePath()
 const props = defineProps({
   activeItems: {
     type: Array,
@@ -61,23 +61,23 @@ const props = defineProps({
 })
 
 const filteredProjects = computed(() => {
-  // @ts-ignore
+  // @ts-expect-error: props.activeItems is not properly typed
   const activeItemsLower = props.activeItems.map(item => item.toLowerCase())
   return projects.filter(project =>
     project.tags.some(tag => activeItemsLower.includes(tag.toLowerCase())),
   )
 })
 
-const slugify = (text) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-}
+// const slugify = (text) => {
+//   return text
+//     .toString()
+//     .toLowerCase()
+//     .replace(/\s+/g, '-')
+//     .replace(/[^\w-]+/g, '')
+//     .replace(/--+/g, '-')
+//     .replace(/^-+/, '')
+//     .replace(/-+$/, '');
+// }
 
 onMounted(() => {
   if (import.meta.client) {

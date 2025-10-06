@@ -58,7 +58,7 @@ type SoundsMap = Record<SoundKeys, Howl | null>
 // Initialize `sounds` as a reactive object
 const sounds = ref<SoundsMap | null>(null)
 const board = ref<HTMLElement | null>(null)
-const startButtonEl = ref<any>(null);
+// const startButtonEl = ref<any>(null);
 const congratsEl = ref<HTMLElement | null>(null);
 const isClient = import.meta.client
 

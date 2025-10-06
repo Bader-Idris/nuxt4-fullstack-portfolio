@@ -44,7 +44,7 @@ defineProps({
 
 const emit = defineEmits(['toggle-active'])
 
-// @ts-ignore
+// @ts-expect-error: item has an implicit any type
 const toggleActiveItem = (item) => {
   emit('toggle-active', item)
 }

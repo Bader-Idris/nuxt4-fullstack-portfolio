@@ -6,11 +6,11 @@
       @change="handleLocaleChange"
     >
       <option
-        v-for="locale in locales"
-        :key="locale.code"
-        :value="locale.code"
+        v-for="localeItem in locales"
+        :key="localeItem.code"
+        :value="localeItem.code"
       >
-        {{ getFlagEmoji(locale.iso) }} {{ locale.name }}
+        {{ getFlagEmoji(localeItem.iso) }} {{ localeItem.name }}
       </option>
     </select>
   </div>
