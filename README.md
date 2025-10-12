@@ -69,6 +69,27 @@ docker compose -f b.dev.yml up -d --build
 
 Congratulations! 🎉👏 You are now running your own full-stack production-ready initial version of the project!
 
+### Building for Electron
+
+To create a production build for Electron, you will need to configure a specific set of environment variables.
+
+1.  Create your `.env.electron` file by copying the example file:
+
+    ```bash
+    cp .env.electron.example .env.electron
+    ```
+
+2.  Fill in the required environment variables in the newly created `.env.electron` file.
+
+Once your environment is configured, you can use the following commands to build the Electron application for different targets:
+
+-   `bun run build:electron`: Build for the current platform.
+-   `bun run build:electron:all`: Build for Windows, macOS, and Linux.
+-   `bun run build:electron:win`: Build for Windows only.
+--   `bun run build:electron:mac`: Build for macOS only.
+-   `bun run build:electron:linux`: Build for Linux only.
+-   `bun run build:electron:dir`: Build in an unpackaged directory for testing.
+
 ### Domain Configuration
 
 Make sure to update the domain name `baderidris.com` in the `b.dev.yml` file and its associated configuration files to your own domain name.

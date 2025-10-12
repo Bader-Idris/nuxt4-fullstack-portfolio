@@ -11,7 +11,7 @@
  * probably typescript eliminates 'import type' on transpile.
  */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, IpcRendererEvent } = require('electron');
 
 // --------- Expose some API to the Renderer process ---------
 //

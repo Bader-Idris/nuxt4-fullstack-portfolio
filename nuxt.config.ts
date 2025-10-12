@@ -47,6 +47,7 @@ export default defineNuxtConfig({
       brotli: process.env.NUXT_GZIP !== 'false'
     },
     routeRules: {
+      // this is critical for production version of electron, otherwise you'll lose index.html file
       "/": {
         prerender: true,
       },

@@ -139,7 +139,7 @@ const baseConfig = {
       'libatspi2.0-0', // Accessibility support
       'libappindicator3-1', // For app indicator support
       'libxtst6', // X11 Testing support
-      "xapp-gtk3-module"
+      // "xapp-gtk3-module"
     ]
   },
   snap: {
@@ -150,7 +150,6 @@ const baseConfig = {
       "A multi-platform portfolio application built with Vite, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information."
   },
   files: [
-    // 'dist-electron',
     'dist-electron/**/*',
     ".output/**/*",
     '!dist-electron/main/index.dev.js',

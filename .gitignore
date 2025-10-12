@@ -31,6 +31,7 @@ logs
 .env.*
 !.env.example
 !.env.capacitor.example
+!.env.electron.example
 
 a.prod*
 b.prod*
