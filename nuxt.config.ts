@@ -20,26 +20,26 @@ export default defineNuxtConfig({
   serverDir: "./server",
   nitro: {
     // ...(process.env.IS_ELECTRON === "true" && {
-      // hooks: {
-      //   'prerender:generate'(route) {
-      //     if (route.route === '/index.html') {
-      //       route.skip = true
-      //     }
-      //   },
-      // },
+    // hooks: {
+    //   'prerender:generate'(route) {
+    //     if (route.route === '/index.html') {
+    //       route.skip = true
+    //     }
+    //   },
+    // },
 
-      // hooks: {
-      //   'prerender:generate'(route, nitro) {
-      //     // This hook triggers when the 200.html is generated.
-      //     if (route?.route === '/200.html') {
-      //       // Create a redirect in index.html to your default locale or entry point.
-      //       // The following example redirects to the 'en' locale. Change if needed.
-      //       const redirectHtml = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/en"></head></html>`
-      //       const outputPath = path.join(nitro.options.output.publicDir, 'index.html')
-      //       writeFileSync(outputPath, redirectHtml)
-      //     }
-      //   },
-      // },
+    // hooks: {
+    //   'prerender:generate'(route, nitro) {
+    //     // This hook triggers when the 200.html is generated.
+    //     if (route?.route === '/200.html') {
+    //       // Create a redirect in index.html to your default locale or entry point.
+    //       // The following example redirects to the 'en' locale. Change if needed.
+    //       const redirectHtml = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/en"></head></html>`
+    //       const outputPath = path.join(nitro.options.output.publicDir, 'index.html')
+    //       writeFileSync(outputPath, redirectHtml)
+    //     }
+    //   },
+    // },
     // }),
     compressPublicAssets: {
       gzip: process.env.NUXT_GZIP !== 'false',
@@ -47,6 +47,9 @@ export default defineNuxtConfig({
       brotli: process.env.NUXT_GZIP !== 'false'
     },
     routeRules: {
+      "/": {
+        prerender: true,
+      },
       // Static assets and public files
       "/_nuxt/**": {
         cache: {
@@ -112,7 +115,7 @@ export default defineNuxtConfig({
       },
     },
   },
-    typescript: {
+  typescript: {
     tsConfig: {
       compilerOptions: {
         paths: {
@@ -489,9 +492,9 @@ export default defineNuxtConfig({
     enabled: process.env.NUXT_SSR !== "false",
   },
   // ...(process.env.IS_ELECTRON === "false") && {
-    sitemap: {
-      enabled: process.env.IS_ELECTRON !== "true",
-    },
+  sitemap: {
+    enabled: process.env.IS_ELECTRON !== "true",
+  },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
@@ -545,13 +548,13 @@ export default defineNuxtConfig({
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
       // if not electron
       // ...(process.env.IS_ELECTRON === "false") && {
-        i18n: {
-          // ssr: process.env.NUXT_SSR !== "false",
-          // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-          // do if electron ./ else process.env.DOMAIN_NAME
-          baseUrl: process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
-          // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-        },
+      i18n: {
+        // ssr: process.env.NUXT_SSR !== "false",
+        // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+        // do if electron ./ else process.env.DOMAIN_NAME
+        baseUrl: process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
+        // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+      },
       // }
       scripts: {
         googleTagManager: {
