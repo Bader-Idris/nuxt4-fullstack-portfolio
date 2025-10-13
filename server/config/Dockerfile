@@ -36,7 +36,7 @@ RUN npm run build
 # FROM base AS runner
 # FROM node:22.19.0-alpine3.21 AS runner
 # FROM base AS runner TODO: required for stability
-FROM node:22.19.0-alpine AS runner
+FROM node:22.20.0-alpine AS runner
 
 # Install Python and build tools for native dependencies (Alpine version)
 # RUN apk add --no-cache python3 make g++
