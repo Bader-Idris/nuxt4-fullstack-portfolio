@@ -2,13 +2,12 @@
   <div class="about-me">
     <aside>
       <div class="tab">
-        <NuxtImg
+        <img
           v-for="(icon, index) in icons"
           :key="icon.iconAlt"
           :src="icon.iconSrc"
           :alt="icon.iconAlt"
           :class="{ active: activeIconIndex === index }"
-          preload
           loading="lazy"
           @click="setActiveIcon(index)"
         />
@@ -30,7 +29,7 @@
             :class="{ active: activeHobbyIndex === index }"
             @click="setActiveHobby(index)"
           >
-            <NuxtImg
+            <img
               :src="hobby.icon"
               :alt="hobby.iconAlt"
               width="20"

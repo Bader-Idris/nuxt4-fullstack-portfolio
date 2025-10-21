@@ -48,9 +48,9 @@ export default defineNuxtConfig({
     },
     routeRules: {
       // this is critical for production version of electron, otherwise you'll lose index.html file
-      "/": {
-        prerender: true,
-      },
+        "/": {
+          prerender: true,
+        },
       // Static assets and public files
       "/_nuxt/**": {
         cache: {

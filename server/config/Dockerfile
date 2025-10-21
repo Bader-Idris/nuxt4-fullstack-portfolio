@@ -21,7 +21,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package*.json bun.lock* ./
 # RUN bun install
-RUN npm install --force
+RUN --mount=type=cache,target=/root/.npm npm install --force
 
 
 # Stage 3: Build the Nuxt application
