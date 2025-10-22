@@ -6,7 +6,7 @@
       "dependencies": {
         "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
         "@nuxt/content": "^3.7.1",
-        "@nuxt/icon": "^2.0.0",
+        "@nuxt/icon": "^2.1.0",
         "@nuxt/image": "^1.11.0",
         "@nuxt/scripts": "^0.13.0",
         "@nuxt/test-utils": "^3.19.2",
@@ -104,7 +104,7 @@
         "@types/nodemailer": "^7.0.2",
         "@types/web-push": "^3.6.4",
         "capacitor-plugin-safe-area": "^4.0.2",
-        "electron": "^38.3.0",
+        "electron": "^38.4.0",
         "electron-builder": "^26.0.12",
         "eslint": "^9.38.0",
         "nuxt-electron": "^0.7.0",
