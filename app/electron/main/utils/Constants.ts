@@ -1,8 +1,17 @@
-import { join, dirname } from 'path'
+import path from "node:path";
 import { name, version } from '../../../../package.json'
-import { fileURLToPath } from 'url'
+// import { fileURLToPath } from 'url'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+// process.env.APP_ROOT = path.join(import.meta.dirname, '..')
+process.env.APP_ROOT = path.join(__dirname, '../../../..') // check out prod version, especially the ugly default nuxt config
+
+export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
+export const RENDERER_DIST = path.join(process.env.APP_ROOT, '.output/public')
+
+process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
+  ? path.join(process.env.APP_ROOT, 'public')
+  : RENDERER_DIST
+
 
 export default class Constants {
   // Display app name (uppercase first letter)
@@ -18,9 +27,9 @@ export default class Constants {
     nodeIntegration: false,
     contextIsolation: true,
     enableRemoteModule: false,
-    preload: join(__dirname, '../preload/index.js')
+    preload: path.join(MAIN_DIST, 'preload/index.js'),
   }
 
-  static APP_INDEX_URL_DEV = 'http://localhost:5173/index.html'
-  static APP_INDEX_URL_PROD = join(__dirname, '../index.html')
+  static APP_INDEX_URL_DEV = `http://localhost:${process.env.PORT}`
+  static APP_INDEX_URL_PROD = path.join(process.env.VITE_PUBLIC!, 'index.html')
 }

@@ -18,8 +18,10 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
   mainWindow = new BrowserWindow({
     title: Constants.APP_NAME,
     show: false,
-    width: Constants.IS_DEV_ENV ? 1500 : 1200, // Different window size based on environment
-    height: 650,
+    // width: Constants.IS_DEV_ENV ? 1500 : 1200, // Different window size based on environment
+    // height: 650,
+    width: 1200,
+    height: 800,
     useContentSize: true,
     // titleBarStyle: 'hidden',
     // frame: false, // disable default title bar || frame
@@ -93,6 +95,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
   if (Constants.IS_DEV_ENV) {
     await mainWindow.loadURL(Constants.APP_INDEX_URL_DEV)
   } else {
+    console.log("[Electron Main] Loading file:",  Constants.APP_INDEX_URL_PROD);
     await mainWindow.loadFile(Constants.APP_INDEX_URL_PROD)
   }
 
@@ -143,7 +146,7 @@ const createErrorWindow = async (
 }
 
 const createTray = () => {
-  tray = new Tray('../../../buildAssets/resources/icon.png')
+  tray = new Tray('../../../electronAssets/resources/icon.png')
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open',

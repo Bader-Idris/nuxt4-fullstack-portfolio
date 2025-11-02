@@ -1,4 +1,4 @@
-import { ipcMain, shell, dialog, IpcMainInvokeEvent, FileFilter } from 'electron'
+import { ipcMain, shell, dialog, type IpcMainInvokeEvent, type FileFilter } from 'electron'
 import Constants from './utils/Constants'
 
 /**
