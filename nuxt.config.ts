@@ -165,8 +165,7 @@ export default defineNuxtConfig({
         {
           // Main-Process entry file of the Electron App.
 
-          // entry: "app/electron/main/index.ts",
-          entry: "app/electron/main.ts",
+          entry: "app/electron/main/index.ts",
           vite: {
             build: {
               //
@@ -192,6 +191,7 @@ export default defineNuxtConfig({
                   "@prisma/client"
                 ],
               },
+              outDir: 'dist-electron/main',
             },
             //
             //  typescript eliminates 'import type', but output 'import' as is,
@@ -218,8 +218,12 @@ export default defineNuxtConfig({
           },
         },
         {
-          // entry: "electron/preload/index.ts",
-          entry: 'app/electron/preload.ts',
+          entry: 'app/electron/preload/index.ts',
+          vite: {
+            build: {
+              outDir: 'dist-electron/preload'
+            }
+          },
           onstart(options: any) {
             // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete,
             // instead of restarting the entire Electron App.

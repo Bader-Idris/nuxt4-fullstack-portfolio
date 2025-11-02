@@ -2,7 +2,7 @@
   "name": "nuxt4-fullstack-portfolio",
   "private": true,
   "version": "3.2.4",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/main/index.js",
   "appId": "com.baderidris.www",
   "author": "Bader Idris <contact@baderidris.com> (http://baderidris.com/)",
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",

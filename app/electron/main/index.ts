@@ -11,7 +11,7 @@ import path from "node:path";
 // │ ├─┬ renderer
 // │ │ └── index.html
 // process.env.APP_ROOT = path.join(import.meta.dirname, '..')
-process.env.APP_ROOT = path.join(__dirname, '..') // check out prod version, especially the ugly default nuxt config
+process.env.APP_ROOT = path.join(__dirname, '../..') // check out prod version, especially the ugly default nuxt config
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, '.output/public')
