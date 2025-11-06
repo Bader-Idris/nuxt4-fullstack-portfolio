@@ -626,6 +626,14 @@ export default defineNuxtConfig({
     prismaSchemaPath: "./server/prisma/schema.prisma",
     generateClient: false,
   },
+  // for nuxt 4.2.0 with prisma new error:
+  hooks: {
+  'app:resolve'(app) {
+      app.plugins = app.plugins.filter(
+        (plugin) => !plugin.src?.includes('@prisma/nuxt/dist/runtime/plugin')
+      )
+    }
+  },
   scripts: {
     registry: {
       googleAnalytics: true,
