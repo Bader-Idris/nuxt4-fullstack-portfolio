@@ -1,3 +1,5 @@
+import { useUserStore } from '~/stores/useUserSocket';
+
 interface Message {
   fromName: string;
   fromSocketId: string;
@@ -73,8 +75,9 @@ export const useMessagesStore = defineStore("messages", {
       if (this.isLoadingContacts || !this.hasMoreContacts) return;
 
       this.isLoadingContacts = true;
+      const { useSocketStore } = await import('~/stores/useSocketStore');
       const socketStore = useSocketStore();
-      
+
       socketStore.socket?.emit('get-contacts', { page: this.contactsPage, limit: this.contactsLimit }, (response: { contacts: Contact[], error?: string }) => {
         if (response.error) {
           console.error('Error fetching contacts:', response.error);

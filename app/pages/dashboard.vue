@@ -2,25 +2,30 @@
   <div class="dashboard">
     <!-- Connection Status Bar -->
     <aside class="connection-status-bar">
-      <p v-if="socketStore.connectionError" class="error">
-        Connection Error: {{ socketStore.connectionError }}
-      </p>
-      <p v-else-if="socketStore.isConnecting" class="info">
-        Connecting...
-      </p>
-      <div v-else-if="socketStore.isConnected && socketStore.currentUser">
-        <p>Status: <span style="color: green">Connected</span> ({{ socketStore.transport }})</p>
-        <p>Welcome, {{ socketStore.currentUser.name }} ({{ socketStore.currentUser.role }})</p>
-        <button 
-          v-if="isPushSupported" 
-          class="notifications-btn"
-          @click="subscribeForNotifications" >
-          Enable Notifications
-        </button>
-      </div>
-      <p v-else class="info">
-        Disconnected
-      </p>
+      <ClientOnly>
+        <p v-if="socketStore.connectionError" class="error">
+          Connection Error: {{ socketStore.connectionError }}
+        </p>
+        <p v-else-if="socketStore.isConnecting" class="info">
+          Connecting...
+        </p>
+        <div v-else-if="socketStore.isConnected && socketStore.currentUser">
+          <p>Status: <span style="color: green">Connected</span> ({{ socketStore.transport }})</p>
+          <p>Welcome, {{ socketStore.currentUser.name }} ({{ socketStore.currentUser.role }})</p>
+          <button
+            v-if="isPushSupported"
+            class="notifications-btn"
+            @click="subscribeForNotifications" >
+            Enable Notifications
+          </button>
+        </div>
+        <p v-else class="info">
+          Disconnected
+        </p>
+        <template #fallback>
+          <p class="info">Loading...</p>
+        </template>
+      </ClientOnly>
     </aside>
 
     <!-- Main Content Grid -->
@@ -33,9 +38,9 @@
             No contacts yet.
           </div>
           <ul>
-            <li 
+            <li
               v-for="contact in messagesStore.contacts"
-              :key="contact.userId" 
+              :key="contact.userId"
               class="user-item"
               :class="{ 'active-chat': recipientUserId === contact.userId, 'disabled': userStore.isGuest }"
               @click="startChatWith(contact.userId)"
@@ -45,11 +50,18 @@
                 <span class="user-status" :class="isOnline(contact.userId) ? 'online' : 'offline'" />
               </div>
               <div class="user-actions">
-                <button 
+                <button
+                  class="vid-call-btn"
+                  :disabled="isInCall || userStore.isGuest"
+                  @click.stop="initiateCall(contact.userId, 'video')">
+                  <Icon v-if="!userStore.isGuest" name="heroicons:video-camera-solid" width="16" />
+                  <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
+                </button>
+                <button
                   class="call-btn"
                   :disabled="isInCall || userStore.isGuest"
-                  @click.stop="initiateCall(contact.userId)">
-                  <Icon v-if="!userStore.isGuest" name="heroicons:video-camera-solid" width="16" />
+                  @click.stop="initiateCall(contact.userId, 'audio')">
+                  <Icon v-if="!userStore.isGuest" name="material-symbols:call" width="16" />
                   <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
                 </button>
               </div>
@@ -198,17 +210,24 @@ watch(arrivedState, (newState) => {
   }
 });
 
-watch(() => socketStore.currentUser, (newUser) => {
-  if (newUser) {
-    messagesStore.clearContacts();
-    messagesStore.fetchContacts();
-  }
-}, { immediate: true });
-
 // --- Lifecycle Hooks ---
 onMounted(async () => {
   if (import.meta.client) {
     setupSocketListeners();
+
+    // Only fetch contacts after component is mounted on the client
+    if (socketStore.currentUser) {
+      messagesStore.clearContacts();
+      messagesStore.fetchContacts();
+    }
+
+    // Watch for changes after initialization
+    watch(() => socketStore.currentUser, (newUser) => {
+      if (newUser) {
+        messagesStore.clearContacts();
+        messagesStore.fetchContacts();
+      }
+    });
 
     const pendingAction = await getAndClearPendingAction();
     if (pendingAction && pendingAction.action === 'open_chat' && pendingAction.fromUserId) {
@@ -262,7 +281,7 @@ watch(
       if (isScrolledToBottom) {
         scrollToBottom();
       } else {
-        showNewMessageIndicator.value = true;
+        showNewMessageIndicator.value = false;
       }
     }
   },
@@ -416,7 +435,8 @@ const formatTimestamp = (timestamp: string | number | Date) => {
       background-color: #999;
     }
   }
-  .call-btn { background: none; border: none; cursor: pointer; }
+  .call-btn,
+  .video-call-btn { background: none; border: none; cursor: pointer; }
 }
 
 .chat-video-area {
@@ -471,9 +491,9 @@ const formatTimestamp = (timestamp: string | number | Date) => {
 .message {
   @include flex-container(column, nowrap, unset, unset);
   max-width: 75%;
-  &.sent { align-self: flex-end; .message-content { background-color: #dcf8c6; } } 
+  &.sent { align-self: flex-end; .message-content { background-color: #dcf8c6; } }
   &.received { align-self: flex-start; .message-content { background-color: #f1f1f1; } }
-  .message-content { padding: 0.5rem 0.75rem; border-radius: 12px; } 
+  .message-content { padding: 0.5rem 0.75rem; border-radius: 12px; }
   .message-timestamp { font-size: 0.75rem; color: #999; margin-top: 4px; }
 }
 

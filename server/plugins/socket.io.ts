@@ -188,15 +188,16 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         socket.join("admin-room");
       }
 
-      socket.on("disconnect", () => {
+      socket.on("disconnect", (reason) => {
         const disconnectedUser = socket.data?.user;
         if (disconnectedUser && disconnectedUser.userId) {
           // Only remove from userSockets if this socket is still registered as the user's socket
           const currentUserSocket = userSockets.get(disconnectedUser.userId);
           if (currentUserSocket && currentUserSocket.socketId === socket.id) {
-            console.log(`User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId})`);
+            console.log(`User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId}) - Reason: ${reason}`);
             userSockets.delete(disconnectedUser.userId);
-            io.emit("user-left", disconnectedUser.userId);
+            // Notify all other users that this user has left
+            socket.broadcast.emit("user-left", disconnectedUser.userId);
           } else {
             console.log(`Socket ${socket.id} for user ${disconnectedUser.userId} disconnected but was not the current socket for this user`);
           }
@@ -204,13 +205,14 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       });
 
       socket.on("call-offer", (data) => {
-        const { to, offer } = data;
+        const { to, offer, callType } = data;
         const targetSocketId = userSockets.get(to)?.socketId;
         if (targetSocketId) {
           io.to(targetSocketId).emit("call-offer", {
             from: user.userId,
             fromName: user.name,
             offer,
+            callType,
           });
         } else {
           socket.emit("error", { message: "User not online" });
@@ -218,12 +220,13 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       });
 
       socket.on("call-answer", (data) => {
-        const { to, answer } = data;
+        const { to, answer, callType } = data;
         const targetSocketId = userSockets.get(to)?.socketId;
         if (targetSocketId) {
           io.to(targetSocketId).emit("call-answer", {
             from: user.userId,
             answer,
+            callType,
           });
         }
       });
@@ -401,7 +404,26 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           const contacts = await getContacts(user.userId, page, limit);
           if (callback) callback({ contacts });
         } catch (error) {
+          console.error("Error fetching contacts:", error);
           if (callback) callback({ error: "Failed to fetch contacts" });
+        }
+      });
+
+      // Handle online users request
+      socket.on("get-online-users", (data, callback) => {
+        try {
+          const onlineUsers = Array.from(userSockets.entries())
+            .map(([userId, userData]) => ({
+              userId,
+              socketId: userData.socketId,
+              name: userData.name,
+              role: userData.role,
+            }));
+          
+          if (callback) callback({ users: onlineUsers });
+        } catch (error) {
+          console.error("Error fetching online users:", error);
+          if (callback) callback({ error: "Failed to fetch online users" });
         }
       });
 
