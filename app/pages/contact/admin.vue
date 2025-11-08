@@ -132,9 +132,6 @@ const fetchEmails = async (): Promise<Email[]> => {
     })
 
     if (response && response.data) {
-      // Store in local ref for template access
-      emails.value = response.data
-
       // Show success toast on client only
       if (import.meta.client) {
         showToast('success', t('messages.emailsLoaded'))
@@ -166,22 +163,26 @@ const fetchEmails = async (): Promise<Email[]> => {
   }
 }
 
-// Use useAsyncData with lazy option for more control
-const { pending, refresh } = useAsyncData<Email[]>(
+// Initialize data fetching only once per component instance
+const hasInitialized = ref(false);
+
+// Use useAsyncData to handle server/client data fetching
+const { pending, data, refresh } = useAsyncData<Email[]>(
   'admin-emails',
-  fetchEmails,
+  () => fetchEmails(),
   {
-    // Don't execute immediately - we'll control this based on environment
-    immediate: false,
-    // Handle server errors properly
     server: true,
-    // Transform function to ensure emails ref is always updated
-    transform: (data) => {
-      emails.value = data || []
-      return data
-    }
+    // Don't execute immediately to control when it runs
+    immediate: false,
   }
 )
+
+// Watch the data to update local emails ref when server data is available
+watch(data, (newData) => {
+  if (newData !== undefined && newData !== null) {
+    emails.value = newData
+  }
+}, { immediate: true })
 
 // Capacitor cookie handling function
 const handleCapacitorCookies = async () => {
@@ -199,20 +200,34 @@ const handleCapacitorCookies = async () => {
   }
 }
 
-// Lifecycle handling
-onMounted(async () => {
+// Add a manual refresh function for when needed (e.g., pull to refresh)
+const refreshEmails = async () => {
   if (import.meta.client) {
     await handleCapacitorCookies()
-    // Refresh data on client mount
-    refresh()
+    await refresh()
   }
-})
+}
 
-// Server-side initialization
+// Initialize data fetching once when component mounts
+onMounted(async () => {
+  if (hasInitialized.value) return; // Prevent duplicate initialization
+  
+  hasInitialized.value = true;
+  
+  if (import.meta.client) {
+    await handleCapacitorCookies();
+  }
+  
+  // Fetch data - this will either come from server cache (if hydrated) or make a new request
+  await refresh();
+});
+
+// Server-side initialization 
 if (import.meta.server) {
   // On server, we check access and execute immediately
   checkAdminAccess() // Will throw error if not authenticated
-  refresh()
+  // Execute the fetch on the server
+  refresh();
 }
 </script>
 
