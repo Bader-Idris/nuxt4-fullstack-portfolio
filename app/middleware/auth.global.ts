@@ -1,12 +1,14 @@
 import { useUserStore } from '~/stores/useUserSocket';
 
 export default defineNuxtRouteMiddleware((to) => {
+  // TODO: this defineNuxtRouteMiddleware() Fn is the recommended way, but we have to add jwt and cookie&&localStorage to it before applying it
+  // ! this file is ignored in .nuxtignore for now until we finish implementing it properly
   // The user store should be initialized by our plugins before this middleware runs.
   const userStore = useUserStore();
   const localePath = useLocalePath();
 
   // Define protected routes that require authentication.
-  const protectedRoutes = ['/dashboard'];
+  const protectedRoutes = ['/dashboard', '/contact/admin'];
 
   // Check if the route the user is navigating to is a protected route.
   const isNavigatingToProtectedRoute = protectedRoutes.some(route => to.path.includes(route));

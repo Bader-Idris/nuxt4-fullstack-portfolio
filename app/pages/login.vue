@@ -86,12 +86,13 @@ const email = ref<string>('');
 const password = ref<string>('');
 const loading = ref<boolean>(false);
 const googleLoading = ref<boolean>(false); // Specific loading state for Google auth
+const facebookLoading = ref<boolean>(false); // Specific loading state for Facebook auth
 // Access token from cookie
 const accessToken = useCookie<string | undefined>('accessToken')
 const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
 
 // Computed property to disable buttons during any login process
-const isAnyLoading = computed(() => loading.value || googleLoading.value);
+const isAnyLoading = computed(() => loading.value || googleLoading.value || facebookLoading.value);
 
 // UserStore instance
 const userStore = useUserStore();
@@ -178,97 +179,108 @@ const socialLogin = async (provider: string) => {
         window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
       }
     }
+  } else if (provider === 'facebook') {
+    if (await isCapacitorDevice) {
+      await facebook(); // Trigger Facebook auth for Capacitor devices
+    } else {
+      // Fallback for non-Capacitor (e.g., web)
+      if (import.meta.client) {
+        window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+      }
+    }
   } else {
-    // Handle other providers (e.g., Facebook) as needed
+    // Handle other providers as needed
     if (import.meta.client) {
       window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
     }
   }
 };
 
-// Google authentication function for Capacitor devices
+// Google authentication function for Capacitor devices using @capgo/capacitor-social-login
 const google = async () => {
   googleLoading.value = true;
 
   try {
-    // Dynamically import GoogleAuth plugin
-    const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
-    await GoogleAuth.initialize();
-
-    // =============================================
-    // TODO: Only for reference!
-    // await GoogleAuth.signIn();
-    // TODO: get the user info from google then set it in the store
-    // =============================================
-
+    // Dynamically import the social login plugin
+    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+    
     // Perform Google sign-in
-    const googleResponse = await GoogleAuth.signIn();
-    // const { serverAuthCode, authentication, email, name } = googleResponse;
-    const { serverAuthCode, authentication, name } = googleResponse;
-
-    if (!serverAuthCode) {
-      throw new Error('No serverAuthCode received from Google');
-    }
-
-    // Log for debugging
-    console.log('🎈serverAuthCode:🎈', serverAuthCode);
-    console.log('🎈authentication:🎈', authentication);
-    console.log('🎈googleResponse:🎈', googleResponse);
-
-    // Simulate the callback by sending the serverAuthCode to the callback endpoint
-    const response = await $fetch('/api/v1/auth/google/callback', {
-      method: 'GET', // Match the server's expected method
-      query: { code: serverAuthCode }, // Pass as query param like the web flow
-      baseURL: useRuntimeConfig().public.originUrl,
-      credentials: 'include', // Ensure cookies are sent/received
+    const result = await SocialLogin.signIn({
+      provider: 'google',
+      googleOptions: {
+        // Add any specific Google options here
+      }
     });
 
-    // The server redirects to /dashboard?tokenUser=..., but $fetch follows redirects
-    // and returns the final response. We expect the cookies to be set by the server.
-    console.log('🎈server response:🎈', response);
+    if (!result.idToken) {
+      throw new Error('No ID token received from Google');
+    }
 
-    // Extract user data from the redirected URL query if present
-    // Since $fetch follows redirects, we may need to parse the Location header or rely on cookies
-    // For simplicity, assume the server sets cookies and we fetch user data from them
+    // The backend expects an OAuth code, but the plugin returns an access token
+    // We can still use the existing callback endpoint by passing the access token
+    // However, since our backend expects an authorization code, we need to simulate
+    // the existing flow by using the callback endpoint approach
+    
+    // For Google, we might need to pass the idToken instead of serverAuthCode
+    // Our current backend expects the code parameter in the callback
+    // Since SocialLogin.signIn() returns profile data directly, we can bypass the callback
+    // and directly handle the user creation/login in the backend via a new API endpoint
+    
+    // For now, let's use the callback flow by sending the data to a custom endpoint
+    // that processes social login results
+    const response = await $fetch('/api/v1/auth/social/callback', {
+      method: 'POST',
+      body: {
+        provider: 'google',
+        idToken: result.idToken,
+        profile: {
+          name: result.profile?.name || result.profile?.displayName,
+          email: result.profile?.email,
+          id: result.profile?.id
+        }
+      },
+      baseURL: useRuntimeConfig().public.originUrl,
+      credentials: 'include',
+    });
 
-    // Handle Capacitor cookies
+    // The server sets cookies, but for Capacitor we need to sync them
     let accessTokenFromCookie = null;
     if (import.meta.client && (await isCapacitorDevice)) {
+      // Wait a bit for cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const cookies = await CapacitorCookies.getCookies();
-      console.log('🎈cookies:🎈', cookies);
+      console.log('🎈Google cookies:🎈', cookies);
       if (cookies.accessToken) {
         accessToken.value = cookies.accessToken;
         accessTokenFromCookie = cookies.accessToken;
       }
     }
 
-    // Since server doesn't return user data in body (it redirects), we can:
-    // 1. Use data from GoogleAuth.signIn() if cookies are set
-    // 2. Or fetch user data separately if needed
-    if (!accessTokenFromCookie) {
-      throw new Error('No access token received in cookies');
+    // Set user in store using response data
+    if (response && response.user) {
+      const userData = {
+        username: response.user.name,
+        userId: response.user.userId,
+        role: response.user.role,
+      };
+      userStore.setUser(userData);
+
+      // Display success toast message
+      toast('Successfully logged in with Google', {
+        theme: 'auto',
+        type: 'success',
+        position: 'top-center',
+        dangerouslyHTMLString: true,
+      });
+
+      // Navigate to dashboard
+      await navigateTo(localePath('/dashboard'), {
+        redirectCode: 302,
+      });
+    } else {
+      throw new Error('User data not received from server');
     }
-
-    // Set user in store using Google response data (as a fallback)
-    const userData = {
-      username: name || 'Unknown', // Fallback if name is missing
-      userId: googleResponse.id || authentication.idToken.split('.')[2], // Extract from idToken if needed
-      role: 'user', // Default role, adjust if server provides it
-    };
-    userStore.setUser(userData);
-
-    // Display success toast message
-    toast('Successfully logged in with Google', {
-      theme: 'auto',
-      type: 'success',
-      position: 'top-center',
-      dangerouslyHTMLString: true,
-    });
-
-    // Navigate to dashboard (no query parameters needed since user is set in store)
-    await navigateTo(localePath('/dashboard'), {
-      redirectCode: 302,
-    });
   } catch (error) {
     console.error('Google authentication error:', error);
     toast('Google sign-in failed, please try again', {
@@ -284,6 +296,99 @@ const google = async () => {
     }
   } finally {
     googleLoading.value = false;
+  }
+};
+
+// Facebook authentication function for Capacitor devices using @capgo/capacitor-social-login
+const facebook = async () => {
+  facebookLoading.value = true;
+
+  try {
+    // Dynamically import the social login plugin
+    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+    
+    // Perform Facebook sign-in
+    const result = await SocialLogin.signIn({
+      provider: 'facebook',
+      facebookOptions: {
+        // Add any specific Facebook permissions here if needed
+        permissions: ['public_profile', 'user_friends', 'email'],
+      }
+    });
+
+    if (!result.accessToken) {
+      throw new Error('No access token received from Facebook');
+    }
+
+    // Use the social callback endpoint to process the token from the plugin
+    const response = await $fetch('/api/v1/auth/social/callback', {
+      method: 'POST',
+      body: {
+        provider: 'facebook',
+        accessToken: result.accessToken,
+        profile: {
+          name: result.profile?.name || result.profile?.displayName,
+          email: result.profile?.email,
+          id: result.profile?.id
+        }
+      },
+      baseURL: useRuntimeConfig().public.originUrl,
+      credentials: 'include',
+    });
+
+    // The server sets cookies, but for Capacitor we need to sync them
+    let accessTokenFromCookie = null;
+    if (import.meta.client && (await isCapacitorDevice)) {
+      // Wait a bit for cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const cookies = await CapacitorCookies.getCookies();
+      console.log('🎈Facebook cookies:🎈', cookies);
+      if (cookies.accessToken) {
+        accessToken.value = cookies.accessToken;
+        accessTokenFromCookie = cookies.accessToken;
+      }
+    }
+
+    // Set user in store using response data
+    if (response && response.user) {
+      const userData = {
+        username: response.user.name,
+        userId: response.user.userId,
+        role: response.user.role,
+      };
+      userStore.setUser(userData);
+
+      // Display success toast message
+      toast('Successfully logged in with Facebook', {
+        theme: 'auto',
+        type: 'success',
+        position: 'top-center',
+        dangerouslyHTMLString: true,
+      });
+
+      // Navigate to dashboard
+      await navigateTo(localePath('/dashboard'), {
+        redirectCode: 302,
+      });
+    } else {
+      throw new Error('User data not received from server');
+    }
+  } catch (error) {
+    console.error('Facebook authentication error:', error);
+    toast('Facebook sign-in failed, please try again', {
+      theme: 'dark',
+      type: 'error',
+      position: 'top-center',
+    });
+
+    // Fallback: If native fails, attempt web flow
+    if (import.meta.client) {
+      console.log('Falling back to web flow');
+      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/facebook`;
+    }
+  } finally {
+    facebookLoading.value = false;
   }
 };
 </script>

@@ -2,9 +2,17 @@ import { isTokenValid, attachCookiesToResponse } from '../utils/jwt';
 import { Token } from '../models/mongo';
 
 export default defineEventHandler(async (event) => {
-  const protectedRoutes = ['/api/v1/auth/me', '/api/v1/received_emails', '/api/v1/push/subscribe', '/api/v1/push/subscribe-capacitor'];
+  // Define protected API routes that require authentication
+  const protectedRoutes = [
+    '/api/v1/auth/me',
+    '/api/v1/received_emails',
+    '/api/v1/push/subscribe',
+    '/api/v1/push/subscribe-capacitor'
+  ];
+
   const isProtectedRoute = protectedRoutes.some(route => event.path.startsWith(route));
 
+  // Only run authentication logic for protected routes
   if (!isProtectedRoute) {
     return;
   }

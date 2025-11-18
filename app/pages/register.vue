@@ -63,6 +63,7 @@
 import { useUserStore } from '~/stores/useUserSocket';
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
+import { CapacitorCookies } from '@capacitor/core';
 
 // TODO: fix the cap auth mechanisms!
 
@@ -93,6 +94,9 @@ interface RegisterResponse {
   msg: string
   [key: string]: any
 }
+
+// Access token from cookie
+const accessToken = useCookie<string | undefined>('accessToken')
 
 const register = async (): Promise<void> => {
   // Input validation to avoid unnecessary API calls
@@ -184,9 +188,199 @@ const register = async (): Promise<void> => {
   }
 };
 
-const socialLogin = (provider: string) => {
-  if (import.meta.client) {
-    window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+const socialLogin = async (provider: string) => {
+  const isCapacitorDevice = await useCapacitorDevice();
+  
+  if (provider === 'google') {
+    if (isCapacitorDevice) {
+      await googleRegister(); // Use a register-specific Google auth function
+    } else {
+      // Fallback for non-Capacitor (e.g., web)
+      if (import.meta.client) {
+        window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+      }
+    }
+  } else if (provider === 'facebook') {
+    if (isCapacitorDevice) {
+      await facebookRegister(); // Use a register-specific Facebook auth function
+    } else {
+      // Fallback for non-Capacitor (e.g., web)
+      if (import.meta.client) {
+        window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+      }
+    }
+  } else {
+    // Handle other providers as needed
+    if (import.meta.client) {
+      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
+    }
+  }
+};
+
+// Google authentication function for Capacitor devices during registration using @capgo/capacitor-social-login
+const googleRegister = async () => {
+  loading.value = true;
+
+  try {
+    // Dynamically import the social login plugin
+    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+    
+    // Perform Google sign-in
+    const result = await SocialLogin.signIn({
+      provider: 'google',
+      googleOptions: {
+        // Add any specific Google options here
+      }
+    });
+
+    if (!result.idToken) {
+      throw new Error('No ID token received from Google');
+    }
+
+    // Use the social callback endpoint to process the token from the plugin
+    const response = await $fetch('/api/v1/auth/social/callback', {
+      method: 'POST',
+      body: {
+        provider: 'google',
+        idToken: result.idToken,
+        profile: {
+          name: result.profile?.name || result.profile?.displayName,
+          email: result.profile?.email,
+          id: result.profile?.id
+        }
+      },
+      baseURL: useRuntimeConfig().public.originUrl,
+      credentials: 'include',
+    });
+
+    // The server sets cookies, but for Capacitor we need to sync them
+    let accessTokenFromCookie = null;
+    if (import.meta.client && (await useCapacitorDevice())) {
+      // Wait a bit for cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const cookies = await CapacitorCookies.getCookies();
+      console.log('🎈Google register cookies:🎈', cookies);
+      if (cookies.accessToken) {
+        accessTokenFromCookie = cookies.accessToken;
+      }
+    }
+
+    // Get user info from the response
+    if (response && response.user) {
+      useUserStore().setUser(response.user);
+
+      toast('Successfully registered/logged in with Google', {
+        theme: 'auto',
+        type: 'success',
+        position: 'top-center',
+        dangerouslyHTMLString: true,
+      });
+
+      const redirectPath = (route.query.redirect as string) || '/dashboard';
+      await navigateTo(localePath(redirectPath));
+    } else {
+      throw new Error('User data not received from server');
+    }
+  } catch (error) {
+    console.error('Google registration error:', error);
+    toast('Google sign-up failed, please try again', {
+      theme: 'dark',
+      type: 'error',
+      position: 'top-center',
+    });
+
+    // Fallback: If native fails, attempt web flow
+    if (import.meta.client) {
+      console.log('Falling back to web flow');
+      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/google`;
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Facebook authentication function for Capacitor devices during registration using @capgo/capacitor-social-login
+const facebookRegister = async () => {
+  loading.value = true;
+
+  try {
+    // Dynamically import the social login plugin
+    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+    
+    // Perform Facebook sign-in
+    const result = await SocialLogin.signIn({
+      provider: 'facebook',
+      facebookOptions: {
+        // Add any specific Facebook permissions here if needed
+        permissions: ['public_profile', 'user_friends', 'email'],
+      }
+    });
+
+    if (!result.accessToken) {
+      throw new Error('No access token received from Facebook');
+    }
+
+    // Process the Facebook registration using the social callback endpoint
+    const response = await $fetch('/api/v1/auth/social/callback', {
+      method: 'POST',
+      body: {
+        provider: 'facebook',
+        accessToken: result.accessToken,
+        profile: {
+          name: result.profile?.name || result.profile?.displayName,
+          email: result.profile?.email,
+          id: result.profile?.id
+        }
+      },
+      baseURL: useRuntimeConfig().public.originUrl,
+      credentials: 'include',
+    });
+
+    // The server sets cookies, but for Capacitor we need to sync them
+    let accessTokenFromCookie = null;
+    if (import.meta.client && (await useCapacitorDevice())) {
+      // Wait a bit for cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const cookies = await CapacitorCookies.getCookies();
+      console.log('🎈Facebook register cookies:🎈', cookies);
+      if (cookies.accessToken) {
+        accessTokenFromCookie = cookies.accessToken;
+      }
+    }
+
+    // Get user info from the response
+    if (response && response.user) {
+      useUserStore().setUser(response.user);
+
+      toast('Successfully registered/logged in with Facebook', {
+        theme: 'auto',
+        type: 'success',
+        position: 'top-center',
+        dangerouslyHTMLString: true,
+      });
+
+      const redirectPath = (route.query.redirect as string) || '/dashboard';
+      await navigateTo(localePath(redirectPath));
+    } else {
+      throw new Error('User data not received from server');
+    }
+  } catch (error) {
+    console.error('Facebook registration error:', error);
+    toast('Facebook sign-up failed, please try again', {
+      theme: 'dark',
+      type: 'error',
+      position: 'top-center',
+    });
+
+    // Fallback: If native fails, attempt web flow
+    if (import.meta.client) {
+      console.log('Falling back to web flow');
+      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/facebook`;
+    }
+  } finally {
+    loading.value = false;
   }
 };
 </script>

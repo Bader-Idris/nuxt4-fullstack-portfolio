@@ -1,0 +1,22 @@
+# Development Dockerfile for Nuxt.js app
+FROM node:24.11-alpine
+
+# Install Python and build tools for native dependencies
+RUN npm install -g npm@latest
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# We'll install base dependencies here, but Docker Compose watch will handle
+# updates to package.json and node_modules synchronization
+COPY package*.json ./
+RUN --mount=type=cache,target=/root/.npm npm install --force
+
+# Set environment for development
+ENV NODE_ENV=development
+ENV PORT=3000
+
+EXPOSE 3000
+
+# Use the development command
+CMD ["npm", "run", "dev"]

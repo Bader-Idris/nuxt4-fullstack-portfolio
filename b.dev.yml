@@ -38,6 +38,9 @@ services:
         delay: 15s
       labels:
         - "com.docker.swarm.service.name={{.Service.Name}}-{{.Task.Slot}}"
+    # watch:
+    #   - package.json
+    # TODO: check how to properly do watch instead of building each time
     volumes:
       - ./.data:/app/.data
       - ./.env:/app/.env

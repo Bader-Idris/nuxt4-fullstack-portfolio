@@ -8,8 +8,6 @@ export interface User {
   provider?: 'email' | 'google' | 'facebook'; 
 }
 
-
-
 export const useUserStore = defineStore("user", () => {
   // --- STATE ---
   //   const storedUser = ref<User | null>(

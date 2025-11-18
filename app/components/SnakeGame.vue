@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { Howl } from 'howler'
 import { useI18n } from 'vue-i18n'
-import { useIntervalFn, useEventListener } from '@vueuse/core'
+import { useIntervalFn, useEventListener, useTimeoutFn } from '@vueuse/core'
 import eatingSound from '~/assets/sounds/swallow.wav'
 import victorySound from '~/assets/sounds/victory.wav'
 import wallHitSound from '~/assets/sounds/wall-hit.wav'
@@ -156,12 +156,14 @@ onMounted(() => {
   })
 })
 
+const foodEatenRecentlyTimeout = useTimeoutFn(() => {
+  foodEatenRecently.value = false
+}, 300, { immediate: false })
+
 // Watch for recent food eaten to reset animation after a delay
 watch(foodEatenRecently, (newVal) => {
   if (newVal && isClient) {
-    setTimeout(() => {
-      foodEatenRecently.value = false
-    }, 300)
+    foodEatenRecentlyTimeout.start()
   }
 })
 
@@ -177,6 +179,7 @@ async function showNotification(message: string) {
         icon: '../../assets/icon-only.png',
         tag: 'victory',
       })
+      // this is not a reactive one, so we don't have to use vueUse composable for it as in food one!
       setTimeout(() => notification.close(), 3000)
     }
   } else if (await isCapacitorDevice || Capacitor.getPlatform() === 'web') {
@@ -440,25 +443,30 @@ function stopGame(message: string): void {
 useEventListener(document, 'keydown', (event: KeyboardEvent) => {
   if (!isClient) return
 
-  if ((gameOver.value || !gameStarted.value) && (event.code === 'Space' || event.key === ' ')) {
+  if ((gameOver.value || !gameStarted.value) && event.code === 'Space') {
     triggerStartAnimation(board.value)
   } else if (gameStarted.value) {
-    switch (event.key) {
+    switch (event.code) {// event.key is too specific and bad with i18n, requires you to use these two for one keyCode
+    //  ["س ", "s"]
       case 'ArrowUp':
+      case 'KeyW':
         if (lastDirection.value !== 'down') direction.value = 'up'
         break
       case 'ArrowDown':
+      case 'KeyS':
         if (lastDirection.value !== 'up') direction.value = 'down'
         break
       case 'ArrowLeft':
+      case 'KeyA':
         if (lastDirection.value !== 'right') direction.value = 'left'
         break
       case 'ArrowRight':
+      case 'KeyD':
         if (lastDirection.value !== 'left') direction.value = 'right'
         break
     }
   }
-})
+});
 </script>
 
 
