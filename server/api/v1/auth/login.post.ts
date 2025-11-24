@@ -13,10 +13,20 @@ export default defineEventHandler(async (event) => {
   }
 
   const user = await User.findOne({ email }).select('+password');
-  if (!user || !user.password) {
+  
+  if (!user) {
     throw createError({
       statusCode: 401,
       statusMessage: "Invalid Credentials",
+    });
+  }
+
+  // If user exists but has no password, they are likely a social login user
+  if (!user.password || user.provider !== 'email') {
+    throw createError({
+      statusCode: 401,
+      // Capitalize the provider name for display
+      statusMessage: `Please log in using ${user.provider.charAt(0).toUpperCase() + user.provider.slice(1)}.`,
     });
   }
 
