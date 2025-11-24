@@ -83,6 +83,18 @@ cd portfolio
 bun install
 ```
 
+### Database Migrations
+
+> [!IMPORTANT]
+> **Database migration is critical for the first build!** It's intentionally separated from the main build process to give you control.
+
+Before running the application, ensure your database schema is up-to-date by running the Prisma migrations:
+
+```bash
+bunx prisma migrate deploy --schema ./server/prisma/schema.prisma
+bunx prisma generate --schema ./server/prisma/schema.prisma
+```
+
 ## Development
 
 ### Starting the Development Server

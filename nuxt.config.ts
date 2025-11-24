@@ -146,7 +146,6 @@ export default defineNuxtConfig({
     "@nuxt/eslint",
     "@nuxt/scripts",
     "v-gsap-nuxt",
-    "@prisma/nuxt",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
   ...(process.env.IS_ELECTRON === "true" && {
@@ -619,20 +618,6 @@ export default defineNuxtConfig({
     //     imports: ["useI18n"],
     //   },
     // ],
-  },
-  prisma: {
-    // https://www.prisma.io/docs/orm/more/help-and-troubleshooting/prisma-nuxt-module#configuration
-    prismaRoot: './server',
-    prismaSchemaPath: "./server/prisma/schema.prisma",
-    generateClient: false,
-  },
-  // for nuxt 4.2.0 with prisma new error:
-  hooks: {
-  'app:resolve'(app) {
-      app.plugins = app.plugins.filter(
-        (plugin) => !plugin.src?.includes('@prisma/nuxt/dist/runtime/plugin')
-      )
-    }
   },
   scripts: {
     registry: {

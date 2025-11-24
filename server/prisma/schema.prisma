@@ -5,14 +5,14 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  // provider = "prisma-client"
-  // output   = "../lib/generated/prisma" // required with prisma-client
+  provider = "prisma-client-js" // "prisma-client" required in v7+
+  // output   = "./generated/prisma" // required with prisma-client
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // make it production exclusive
 }
 
 datasource db {
   provider = "postgresql"
+  // deprecated: check this out https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7#prisma-schema-changes
   url      = env("PSQL_URL")
 }
 
