@@ -21,6 +21,15 @@ dotenv.config({
   debug: true
 })
 
+// // Print the App ID for debugging purposes, as requested.
+// const appxAppId = 'BaderIdrisPortfolio'
+// console.log('--- Electron Builder App ID ---')
+// console.log('Original appId from package.json:', packageJson.appId)
+// console.log('Using new appId for AppX build:', appxAppId)
+// console.log('This is to fix the AppX build error due to invalid characters in the default appId.')
+// console.log('---------------------------------')
+
+
 // Get formatted current date
 function getLocalTimestamp() {
   const date = new Date()
@@ -33,10 +42,11 @@ function getLocalTimestamp() {
 }
 
 const windowsTargets = [
-  { target: 'appx', arch: 'x64' },
-  { target: 'zip', arch: 'x64' },
-  { target: 'portable', arch: 'x64' },
-  { target: 'nsis', arch: 'x64' }
+  { target: 'nsis', arch: 'x64' },
+  { target: 'msi', arch: 'x64' },     // Professional MSI installer
+  // { target: 'appx', arch: 'x64' },
+  // { target: 'zip', arch: 'x64' }, // not worthy!
+  { target: 'portable', arch: 'x64' }
 ]
 
 const linuxTargets = [
@@ -100,22 +110,61 @@ const baseConfig = {
     // "rfc3161TimeStampServer": "http://timestamp.comodoca.com/rfc3161",
     // timeStampServer: 'http://timestamp.comodoca.com',
 
-    signtoolOptions: {
-      sign: true,
-      // sign: './signatures/winSign.js',
-      //   certificateFile: process.env.WIN_CSC_LINK,
-      certificateFile: path.join(__dirname, 'envs', 'Cert.pfx'),
-      certificatePassword: process.env.WIN_CSC_KEY_PASSWORD
-      // signingHashAlgorithms: ['sha256'],
-      //   publisherName: 'Bader-Idris'
-    },
+    // Use correct property names for electron-builder Windows configuration
+    cscLink: process.env.WIN_CSC_LINK || path.join(__dirname, 'envs', 'Cert.pfx'),
+    cscKeyPassword: process.env.WIN_CSC_KEY_PASSWORD,
+    // signingHashAlgorithms: ['sha256'], // used from gemini web not cli, invalid config!
+    // publisherName: 'Bader-Idris',
+
+    // For compatibility with older Windows SDKs and avoid "A required function is not present" error,
+    // we'll handle timestamp at the appx level if needed
     target: windowsTargets
   },
-  // nsis: {
-  //   oneClick: false,
-  //   perMachine: false,
-  //   allowToChangeInstallationDirectory: true,
-  //   deleteAppDataOnUninstall: false
+  nsis: {
+    oneClick: false,                    // Assisted installer for professional experience
+    perMachine: true,                   // Install per machine to Program Files (requires admin)
+    allowElevation: true,               // Allow requesting elevation if needed
+    selectPerMachineByDefault: true,    // Default to per-machine installation
+    allowToChangeInstallationDirectory: true, // Allow users to modify installation site
+    deleteAppDataOnUninstall: false,    // Preserve user data on uninstall
+    createDesktopShortcut: 'always',        // Always recreate desktop shortcut even on reinstall
+    createStartMenuShortcut: true,      // Create start menu shortcut
+    shortcutName: 'Bader Idris Portfolio', // Custom shortcut name
+    uninstallDisplayName: 'Bader Idris Portfolio', // Professional uninstall display name
+    license: 'LICENSE',                 // Include license in installer
+    // Branding and visual customization
+    installerIcon: 'electronAssets/resources/icon.ico',    // Custom installer icon
+    uninstallerIcon: 'electronAssets/resources/icon.ico',  // Custom uninstaller icon
+    // installerSidebar: 'electronAssets/resources/installerSidebar.bmp', // Uncomment when sidebar image is ready (164x314px recommended)
+    // installerHeader: 'electronAssets/resources/installerHeader.bmp',   // Uncomment when header image is ready (150x57px recommended)
+    // Language settings
+    displayLanguageSelector: false,     // Auto-detect OS language
+    // Additional professional settings
+    menuCategory: true,                 // Use company name for start menu folder
+    runAfterFinish: true,               // Run application after installation
+    // Advanced options
+    packElevateHelper: true,            // Pack elevate helper for elevation
+    useZip: false,                      // Use 7z for compression instead of zip
+    // Custom NSIS script for advanced features
+    include: 'electronAssets/builder/customNSIS.nsh',  // Include custom NSIS script with registry functions
+    installerLanguages: 'en_US',              // Set installer language
+  },
+  msi: {
+    // MSI-specific configuration for professional Windows installation
+    upgradeCode: 'A3C81A20-2152-4B60-B31B-2C618E641234',  // Unique GUID for upgrade tracking
+    // Advanced MSI options
+    oneClick: false,                                        // Traditional installer behavior
+    perMachine: true,                                       // Install per machine by default
+    // User experience options
+    runAfterFinish: true,                                   // Run application after install
+    createDesktopShortcut: true,                            // Create desktop shortcut
+    createStartMenuShortcut: true,                          // Create start menu shortcut
+  },
+  // appx: {
+  //   applicationId: appxAppId,
+  //   displayName: 'Bader Idris Portfolio',
+  //   publisherDisplayName: packageJson.author.split(' <')[0],
+  //   publisher: `CN=${packageJson.author.split(' <')[0]}`
   // },
   linux: {
     executableName: packageJson.name.toLowerCase(),
