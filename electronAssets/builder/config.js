@@ -159,6 +159,15 @@ const baseConfig = {
     runAfterFinish: true,                                   // Run application after install
     createDesktopShortcut: true,                            // Create desktop shortcut
     createStartMenuShortcut: true,                          // Create start menu shortcut
+    // Additional professional options
+    menuCategory: true,                                     // Use company name for start menu folder
+    shortcutName: 'Bader Idris Portfolio',                  // Custom shortcut name for MSI
+    // Enhanced branding options
+    // Note: MSI branding is more limited than NSIS but we can use these options for better appearance
+    // Additional WiX arguments for advanced customization (requires WiX files in the project)
+    // additionalWixArgs: [
+    //   '-dWixUILicenseRtf=build/license.rtf',  // Custom license file in RTF format
+    // ],
   },
   // appx: {
   //   applicationId: appxAppId,
