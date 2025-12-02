@@ -14,6 +14,7 @@ export const useOnlineUsersStore = defineStore("onlineUsers", {
       this.users = users;
     },
     addUser(user: OnlineUser) {
+      // Avoid duplicates
       if (!this.users.some((u) => u.userId === user.userId)) {
         this.users.push(user);
       }

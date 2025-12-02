@@ -54,21 +54,21 @@ useColorMode()
 onMounted(async () => {
   isFirstLoad.value = false
 
-  try {
-    if (config.public.isCapacitor === true && Capacitor.isNativePlatform()) {
-      // For native Capacitor builds, show the Rive splash screen first.
-      document.documentElement.style.setProperty('--full-viewport-height', '95vh');
-      showRiveSplash.value = true
+  // First, show the Rive splash if on Capacitor, without waiting for any Capacitor APIs that might need network
+  if (config.public.isCapacitor === true && Capacitor.isNativePlatform()) {
+    // For native Capacitor builds, show the Rive splash screen first immediately
+    showRiveSplash.value = true
+
+    // Hide the native splash screen in the background (don't wait for it to complete)
+    try {
       const { SplashScreen } = await import('@capacitor/splash-screen')
       await SplashScreen.hide()
-    } else {
-      // For web builds, show the main content and initialize immediately.
-      showMainContent.value = true
-      await initializeMainApp()
+    } catch (error) {
+      console.error("Error hiding native splash screen:", error)
+      // Proceed anyway, don't let splash screen errors block the app
     }
-  } catch (error) {
-    console.error("Error during platform check, falling back to web mode:", error)
-    // Ensure the app is still rendered even if the platform check fails.
+  } else {
+    // For web builds, show the main content and initialize immediately.
     showMainContent.value = true
     await initializeMainApp()
   }
@@ -82,7 +82,14 @@ const hideSplashAndShowApp = async () => {
   showRiveSplash.value = false
   showMainContent.value = true // 1. Show the main app UI to prevent a blank screen.
   await nextTick() // 2. Wait for the DOM to update.
-  await initializeMainApp() // 3. THEN, initialize the plugins.
+
+  // Initialize main app, but ensure the UI is already visible even if plugins fail
+  try {
+    await initializeMainApp() // 3. THEN, initialize the plugins.
+  } catch (error) {
+    console.error("Error initializing main app, but UI is still available:", error)
+    // The app should continue working even if some plugins fail to initialize
+  }
 }
 
 /**
@@ -90,19 +97,31 @@ const hideSplashAndShowApp = async () => {
  * This function is now safely called after the main UI is visible.
  */
 const initializeMainApp = async () => {
-
-  try {
-    if (Capacitor.isNativePlatform()) {
-      await Promise.all([
-        initCapacitorPlatform(),
-        initNetworkListener(),
-        initPushNotifications(),
-      ]);
-    } else {
-      await initNetworkListener();
+  if (Capacitor.isNativePlatform()) {
+    // Initialize each plugin separately so that if one fails, others can still work
+    try {
+      await initCapacitorPlatform();
+    } catch (error) {
+      console.error("Error initializing Capacitor platform features:", error);
     }
-  } catch (error) {
-    console.error("A critical error occurred during app initialization:", error);
+
+    try {
+      await initNetworkListener();
+    } catch (error) {
+      console.error("Error initializing network listener:", error);
+    }
+
+    try {
+      await initPushNotifications();
+    } catch (error) {
+      console.error("Error initializing push notifications:", error);
+    }
+  } else {
+    try {
+      await initNetworkListener();
+    } catch (error) {
+      console.error("Error initializing network listener:", error);
+    }
   }
 }
 
@@ -187,6 +206,7 @@ const initNetworkListener = async () => {
     }
   } catch (error) {
     console.error('Could not initialize network listener:', error)
+    isOffline.value = true
   }
 }
 

@@ -31,45 +31,42 @@
     <!-- Main Content Grid -->
     <ClientOnly>
       <div class="dashboard-grid">
-        <!-- Contacts List -->
+        <!-- Online Users List -->
         <div ref="contactsPanel" class="online-users-panel">
-          <h3>Contacts</h3>
-          <div v-if="messagesStore.contacts.length === 0 && !messagesStore.isLoadingContacts" class="no-users">
-            No contacts yet.
+          <h3>Online Users ({{ onlineUsersStore.users.length }})</h3>
+          <div v-if="onlineUsersStore.users.length === 0" class="no-users">
+            No users online.
           </div>
           <ul>
             <li
-              v-for="contact in messagesStore.contacts"
-              :key="contact.userId"
+              v-for="user in onlineUsersStore.users"
+              :key="user.userId"
               class="user-item"
-              :class="{ 'active-chat': recipientUserId === contact.userId, 'disabled': userStore.isGuest }"
-              @click="startChatWith(contact.userId)"
+              :class="{ 'active-chat': recipientUserId === user.userId, 'disabled': userStore.isGuest || user.userId === socketStore.currentUser?.userId }"
+              @click="startChatWith(user.userId)"
             >
               <div class="user-info">
-                <span class="user-name">{{ contact.name }}</span>
-                <span class="user-status" :class="isOnline(contact.userId) ? 'online' : 'offline'" />
+                <span class="user-name">{{ user.name }}</span>
+                <span class="user-status online" />
               </div>
               <div class="user-actions">
                 <button
                   class="vid-call-btn"
-                  :disabled="isInCall || userStore.isGuest"
-                  @click.stop="initiateCall(contact.userId, 'video')">
-                  <Icon v-if="!userStore.isGuest" name="heroicons:video-camera-solid" width="16" />
+                  :disabled="isInCall || userStore.isGuest || user.userId === socketStore.currentUser?.userId"
+                  @click.stop="initiateCall(user.userId, 'video')">
+                  <Icon v-if="!userStore.isGuest && user.userId !== socketStore.currentUser?.userId" name="heroicons:video-camera-solid" width="16" />
                   <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
                 </button>
                 <button
                   class="call-btn"
-                  :disabled="isInCall || userStore.isGuest"
-                  @click.stop="initiateCall(contact.userId, 'audio')">
-                  <Icon v-if="!userStore.isGuest" name="material-symbols:call" width="16" />
+                  :disabled="isInCall || userStore.isGuest || user.userId === socketStore.currentUser?.userId"
+                  @click.stop="initiateCall(user.userId, 'audio')">
+                  <Icon v-if="!userStore.isGuest && user.userId !== socketStore.currentUser?.userId" name="material-symbols:call" width="16" />
                   <Icon v-else name="ion:locked" width="15" height="15" mode="svg" />
                 </button>
               </div>
             </li>
           </ul>
-          <div v-if="messagesStore.isLoadingContacts" class="loading-indicator">
-            Loading...
-          </div>
         </div>
 
         <!-- Chat and Video Area -->
@@ -113,7 +110,7 @@
               <div v-if="messagesStore.isLoading" class="loading-indicator">
                 Loading older messages...
               </div>
-              <div v-for="msg in messagesStore.getMessagesForRecipient(recipientUserId)" :key="msg.id" :class="['message', msg.from === socketStore.currentUser?.userId ? 'sent' : 'received']">
+              <div v-for="msg in messagesStore.getMessagesForRecipient(recipientUserId)" :key="msg.id" :class="['message', msg.from === userStore.getUserId ? 'sent' : 'received']">
                 <div class="message-header">
                   <span class="sender-name">{{ msg.fromName }}</span>
                 </div>
@@ -202,32 +199,14 @@ const {
   cleanup,
 } = useWebRTC();
 
-// --- Infinite Scroll ---
-const { arrivedState } = useScroll(contactsPanel);
-watch(arrivedState, (newState) => {
-  if (newState.bottom) {
-    messagesStore.fetchContacts();
-  }
-});
-
 // --- Lifecycle Hooks ---
 onMounted(async () => {
   if (import.meta.client) {
-    setupSocketListeners();
+    // Make sure socket is initialized
+    socketStore.initializeSocket();
 
-    // Only fetch contacts after component is mounted on the client
-    if (socketStore.currentUser) {
-      messagesStore.clearContacts();
-      messagesStore.fetchContacts();
-    }
-
-    // Watch for changes after initialization
-    watch(() => socketStore.currentUser, (newUser) => {
-      if (newUser) {
-        messagesStore.clearContacts();
-        messagesStore.fetchContacts();
-      }
-    });
+    // Clear any old contacts since we're now showing online users
+    messagesStore.clearContacts();
 
     const pendingAction = await getAndClearPendingAction();
     if (pendingAction && pendingAction.action === 'open_chat' && pendingAction.fromUserId) {
@@ -247,15 +226,6 @@ onUnmounted(() => {
 const { getAndClearPendingAction } = usePendingActions();
 
 // --- Watchers ---
-watch(() => socketStore.socket, (newSocket, oldSocket) => {
-  if (oldSocket) {
-    cleanup();
-  }
-  if (newSocket) {
-    setupSocketListeners();
-  }
-}, { immediate: true });
-
 watch(recipientUserId, (newRecipientId) => {
   if (newRecipientId && userStore.isAuthenticated) {
     messagesStore.setLoading(true);
@@ -306,6 +276,12 @@ function startChatWith(userId: string) {
     alert('You cannot start a new chat while in a call.');
     return;
   }
+  // Check if the user is still online before starting chat
+  const isUserOnline = onlineUsersStore.users.some(user => user.userId === userId);
+  if (!isUserOnline && userId !== socketStore.currentUser?.userId) {
+    alert('This user is no longer online.');
+    return;
+  }
   recipientUserId.value = userId;
 }
 
@@ -333,16 +309,27 @@ function scrollToBottom() {
 }
 
 // --- Helpers ---
-const isOnline = (userId: string) => {
-  return onlineUsersStore.users.some(user => user.userId === userId);
-};
-
 const getUserName = (userId: string | null) => {
   if (!userId) return 'Unknown';
-  const user = messagesStore.contacts.find((u) => u.userId === userId);
-  if (user) return user.name;
+
+  // First check if it's the current user
+  if (userId === socketStore.currentUser?.userId) {
+    return socketStore.currentUser?.name || 'You';
+  }
+
+  // Then check online users
   const onlineUser = onlineUsersStore.users.find((u) => u.userId === userId);
-  return onlineUser ? onlineUser.name : 'Unknown User';
+  if (onlineUser) {
+    return onlineUser.name;
+  }
+
+  // If not found in online users, try to get from contacts (for users you've chatted with)
+  const contact = messagesStore.contacts.find((c) => c.userId === userId);
+  if (contact) {
+    return contact.name;
+  }
+
+  return 'Unknown User';
 };
 
 const getRecipientName = () => getUserName(recipientUserId.value);

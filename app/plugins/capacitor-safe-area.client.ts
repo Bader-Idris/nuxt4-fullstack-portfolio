@@ -23,7 +23,7 @@ export default defineNuxtPlugin(async () => {
         /* --safe-area-inset-right: 0px; */
         --safe-area-inset-bottom: 15px;
         /* --safe-area-inset-left: 0px; */
-        /* --safe-area-inset-status-bar: 50px; */
+        /* --safe-area-inset-status-bar: 25px; */
         /* --viewport-height: $full-viewport-height !important; */
         /* TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines */
       }

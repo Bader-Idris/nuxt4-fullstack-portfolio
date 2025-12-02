@@ -132,6 +132,13 @@ export const useSocketStore = defineStore('socket', () => {
       onlineUsersStore.removeUser(userId);
     });
 
+    socket.value.on('duplicate-connection', (data) => {
+      console.log('Duplicate connection detected:', data.message);
+      // Show a notification to the user
+      alert(data.message || 'Duplicate connection detected. Disconnecting previous session.');
+      // Optionally, you might want to log out or refresh the session
+    });
+
     const messagesStore = useMessagesStore();
     socket.value.on('private-message', (message) => {
       messagesStore.addMessage(message);

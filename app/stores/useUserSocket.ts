@@ -30,7 +30,11 @@ export const useUserStore = defineStore("user", () => {
   //   };
   // });
 
-  const user = ref<User | null>(null);
+  const user = ref<User | null>(
+    import.meta.client
+      ? JSON.parse(localStorage.getItem("user") || "null")
+      : null
+  );
 
   const isAuthenticated = computed(() => !!user.value && user.value.role !== 'guest');
   const isGuest = computed(() => !isAuthenticated.value);
@@ -68,7 +72,7 @@ export const useUserStore = defineStore("user", () => {
       const socketStore = useSocketStore();
       socketStore.initializeSocket();
     }
-  }
+  init();
 
   return {
     user,

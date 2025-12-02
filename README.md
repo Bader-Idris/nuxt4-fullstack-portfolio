@@ -29,6 +29,7 @@ Before starting with this project, ensure you have the following tools installed
 ### Installing Prerequisites
 
 **Docker Installation:**
+
 ```bash
 # Download and run the official Docker installation script
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -42,6 +43,7 @@ sudo usermod -aG docker $USER
 > After installing Docker, it's recommended to follow the [Docker post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/) for enhanced security and performance, including running Docker as a non-root user and configuring additional security options.
 
 **Bun Installation:**
+
 ```bash
 # Using the official Bun installer
 curl -fsSL https://bun.sh/install | bash
@@ -51,6 +53,7 @@ npm install -g bun
 ```
 
 **Git Installation:**
+
 ```bash
 # For Ubuntu/Debian
 sudo apt install git
@@ -139,12 +142,14 @@ The project includes environment configuration for different platforms:
 The project uses Docker Compose for a complete development environment that includes all necessary backend services.
 
 1. **Configure Environment Variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 2. **Start Docker Services**
+
    ```bash
    docker compose -f b.dev.yml up -d --build
    ```
@@ -238,6 +243,19 @@ To build the Android app, ensure you have [Android Studio](https://developer.and
 > [!CAUTION]  
 > Restart your shell session after adding the environment variables.
 
+### Android 15+ Compatibility Fix
+
+> [!CAUTION]  
+> For Android 15+ compatibility, after creating the Android project, you need to add the following line to every style section with `Theme.AppCompat.*` in the file `android/app/src/main/res/values/styles.xml` to fix the overlay=true bug in Capacitor:
+
+```xml
+<item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+```
+
+This ensures proper display behavior on Android 15+ devices when using Capacitor with `overlay=true` settings.
+
+You can check out the [issue here:](https://github.com/ionic-team/capacitor-plugins/issues/2350#issuecomment-2904401405)
+
 ## Electron Application
 
 ### Setup
@@ -245,6 +263,7 @@ To build the Android app, ensure you have [Android Studio](https://developer.and
 To create a production build for Electron:
 
 1. Create the Electron environment file:
+
    ```bash
    cp .env.electron.example .env.electron
    # Configure the environment variables

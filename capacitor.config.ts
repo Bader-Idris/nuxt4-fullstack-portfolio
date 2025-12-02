@@ -239,6 +239,7 @@ const config: CapacitorConfig = {
       // is there any workaround?
       // https://capacitorjs.com/docs/apis/status-bar
       style: "DARK",
+      overlaysWebView: true,
       backgroundColor: "#01080E",
     },
     // TextZoom: {

@@ -22,41 +22,48 @@ let riveInstance: any = null
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
-    const { Rive } = await import('@rive-app/canvas')
+    try {
+      const { Rive } = await import('@rive-app/canvas')
 
-    if (riveCanvas.value && container.value) {
-      riveInstance = new Rive({
-        src: props.src,
-        canvas: riveCanvas.value,
-        autoplay: true,
-        onLoad: () => {
-          const dpr = window.devicePixelRatio || 1
-          riveCanvas.value.width = container.value.clientWidth * dpr
-          riveCanvas.value.height = container.value.clientHeight * dpr
-          riveInstance.resizeDrawingSurfaceToCanvas()
-        },
-        onStop: () => {
-          emit('animationStopped') // Emit event when animation stops
-        }
-      })
+      if (riveCanvas.value && container.value) {
+        riveInstance = new Rive({
+          src: props.src,
+          canvas: riveCanvas.value,
+          autoplay: true,
+          onLoad: () => {
+            const dpr = window.devicePixelRatio || 1
+            riveCanvas.value.width = container.value.clientWidth * dpr
+            riveCanvas.value.height = container.value.clientHeight * dpr
+            riveInstance.resizeDrawingSurfaceToCanvas()
+          },
+          onStop: () => {
+            emit('animationStopped') // Emit event when animation stops
+          }
+        })
 
-      const resizeObserver = new ResizeObserver(() => {
-        if (riveInstance && riveCanvas.value && container.value) {
-          const dpr = window.devicePixelRatio || 1
-          riveCanvas.value.width = container.value.clientWidth * dpr
-          riveCanvas.value.height = container.value.clientHeight * dpr
-          riveInstance.resizeDrawingSurfaceToCanvas()
-        }
-      })
+        const resizeObserver = new ResizeObserver(() => {
+          if (riveInstance && riveCanvas.value && container.value) {
+            const dpr = window.devicePixelRatio || 1
+            riveCanvas.value.width = container.value.clientWidth * dpr
+            riveCanvas.value.height = container.value.clientHeight * dpr
+            riveInstance.resizeDrawingSurfaceToCanvas()
+          }
+        })
 
-      resizeObserver.observe(container.value)
+        resizeObserver.observe(container.value)
 
-      onUnmounted(() => {
-        resizeObserver.disconnect()
-        if (riveInstance) {
-          riveInstance.stop()
-        }
-      })
+        onUnmounted(() => {
+          resizeObserver.disconnect()
+          if (riveInstance) {
+            riveInstance.stop()
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error loading Rive animation:', error)
+      // Emit the animation stopped event immediately if Rive fails to load
+      // This allows the app to continue loading instead of being stuck on a black screen
+      emit('animationStopped')
     }
   }
 })

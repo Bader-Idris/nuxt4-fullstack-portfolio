@@ -93,8 +93,28 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
     io.bind(engine);
 
-    // Store connected users
-    const userSockets = new Map();
+    // Redis key for online users
+    const ONLINE_USERS_KEY = "online_users";
+
+    // Periodic cleanup of stale users (users that might not have properly disconnected)
+    const cleanupInterval = setInterval(async () => {
+      console.log("Running periodic cleanup of stale online users...");
+      try {
+        // In a production system, you might want to check for users that haven't
+        // been active for a certain period and remove them. For now, we'll just
+        // log the current online users count for monitoring purposes.
+        const onlineUsers = await getOnlineUsersFromRedis();
+        console.log(`Currently ${onlineUsers.length} online users`);
+      } catch (error) {
+        console.error("Error during periodic cleanup:", error);
+      }
+    }, 5 * 60 * 1000); // Run every 5 minutes
+
+    // Clean up on shutdown
+    process.on('SIGINT', () => {
+      clearInterval(cleanupInterval);
+      process.exit(0);
+    });
 
     io.use(async (socket, next) => {
       try {
@@ -123,32 +143,84 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       }
     });
 
-    io.on("connection", (socket) => {
+    // Helper functions for Redis-based online users management
+    const getOnlineUsersFromRedis = async () => {
+      try {
+        const onlineUsersData = await redisClient.hgetall(ONLINE_USERS_KEY);
+        return Object.entries(onlineUsersData).map(([userId, userDataStr]) => {
+          try {
+            return JSON.parse(userDataStr);
+          } catch (e) {
+            console.error(`Error parsing online user data for ${userId}:`, e);
+            return null;
+          }
+        }).filter(user => user !== null);
+      } catch (error) {
+        console.error("Error fetching online users from Redis:", error);
+        return [];
+      }
+    };
+
+    // ADDED: socketId to ensure we store the correct socket ID
+    const addOnlineUserToRedis = async (user, socketId) => {
+      try {
+        const userData = {
+          socketId: socketId,
+          name: user.name,
+          role: user.role,
+          userId: user.userId,
+          connectedAt: Date.now(),
+        };
+        await redisClient.hset(ONLINE_USERS_KEY, user.userId, JSON.stringify(userData));
+      } catch (error) {
+        console.error("Error adding user to Redis:", error);
+      }
+    };
+
+    // ADDED: socketId check to prevent race conditions
+    const removeOnlineUserFromRedis = async (userId, socketId) => {
+      try {
+        const userDataStr = await redisClient.hget(ONLINE_USERS_KEY, userId);
+        if (userDataStr) {
+            const userData = JSON.parse(userDataStr);
+            // Only remove if the socket ID matches the one disconnecting
+            if (userData.socketId === socketId) {
+                await redisClient.hdel(ONLINE_USERS_KEY, userId);
+                return true;
+            } else {
+                console.log(`Skipping removal for user ${userId}: Socket ID mismatch (stored: ${userData.socketId}, disconnecting: ${socketId})`);
+                return false;
+            }
+        }
+        return false;
+      } catch (error) {
+        console.error("Error removing user from Redis:", error);
+        return false;
+      }
+    };
+
+    io.on("connection", async (socket) => {
       const user = socket.data?.user;
       // TODO: get rid of these logs in prod!
       console.log(`User connected: ${user.name} (${user.userId})`);
 
       // Check if user is already connected, if so disconnect the old connection
       if (user && user.userId) {
-        const existingUserSocket = userSockets.get(user.userId);
-        if (existingUserSocket) {
-          console.log(`User ${user.userId} is already connected with socket ${existingUserSocket.socketId}, disconnecting old connection`);
-          // Remove the old user entry from the map immediately to avoid conflicts
-          userSockets.delete(user.userId);
-          // Find and disconnect the old socket connection
-          const oldSocket = io.sockets.sockets.get(existingUserSocket.socketId);
-          if (oldSocket) {
-            oldSocket.disconnect(true); // Force disconnect the old socket
-          }
+        // Get current online users from Redis
+        const onlineUsers = await getOnlineUsersFromRedis();
+        const existingUser = onlineUsers.find(u => u.userId === user.userId);
+
+        if (existingUser) {
+          console.log(`User ${user.userId} is already connected with socket ${existingUser.socketId}, notifying old session.`);
+          // Find and disconnect the old socket connection across all nodes using socket ID
+          // We'll broadcast a disconnect event to all nodes
+          io.in(`user-${user.userId}`).except(socket.id).emit('duplicate-connection', {
+            message: 'Duplicate connection detected. Disconnecting previous session.'
+          });
         }
-        
-        // Add user to connected users map
-        userSockets.set(user.userId, {
-          socketId: socket.id,
-          name: user.name,
-          role: user.role,
-          userId: user.userId,
-        });
+
+        // Add user to Redis with CURRENT socket ID
+        await addOnlineUserToRedis(user, socket.id);
       }
 
       // Send socket ID and user info to the client
@@ -159,21 +231,12 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         role: user.role,
       });
 
-      const onlineUsers = Array.from(userSockets.entries())
-        // .filter(([userId]) => userId !== socket.data.user.userId) // Exclude current user
-        .map(([userId, data]) => ({
-          userId,
-          socketId: data.socketId,
-          name: data.name,
-          role: data.role,
-        }));
-      socket.emit("online-users", onlineUsers);
+      // Send current online users list to the newly connected user
+      const currentOnlineUsers = await getOnlineUsersFromRedis();
+      const filteredOnlineUsers = currentOnlineUsers.filter(u => u.userId !== user.userId); // Exclude current user
+      socket.emit("online-users", filteredOnlineUsers);
 
-      // Emit updated online users list to admins
-      // const onlineUsers = Array.from(userSockets.values());
-      // io.to("admin-room").emit("online-users", { users: onlineUsers });
-
-      // Emit updated online users list to all users
+      // Emit updated online users list to all users (except the new one)
       socket.broadcast.emit("user-joined", {
         userId: user.userId,
         socketId: socket.id,
@@ -188,27 +251,28 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         socket.join("admin-room");
       }
 
-      socket.on("disconnect", (reason) => {
+      socket.on("disconnect", async (reason) => {
         const disconnectedUser = socket.data?.user;
         if (disconnectedUser && disconnectedUser.userId) {
-          // Only remove from userSockets if this socket is still registered as the user's socket
-          const currentUserSocket = userSockets.get(disconnectedUser.userId);
-          if (currentUserSocket && currentUserSocket.socketId === socket.id) {
-            console.log(`User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId}) - Reason: ${reason}`);
-            userSockets.delete(disconnectedUser.userId);
-            // Notify all other users that this user has left
-            socket.broadcast.emit("user-left", disconnectedUser.userId);
-          } else {
-            console.log(`Socket ${socket.id} for user ${disconnectedUser.userId} disconnected but was not the current socket for this user`);
+          console.log(`User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId}) - Reason: ${reason}`);
+          // Remove user from Redis - SAFE removal
+          const removed = await removeOnlineUserFromRedis(disconnectedUser.userId, socket.id);
+          
+          if (removed) {
+             // Notify all other users that this user has left ONLY if they were actually removed
+             socket.broadcast.emit("user-left", disconnectedUser.userId);
           }
         }
       });
 
-      socket.on("call-offer", (data) => {
+      socket.on("call-offer", async (data) => {
         const { to, offer, callType } = data;
-        const targetSocketId = userSockets.get(to)?.socketId;
-        if (targetSocketId) {
-          io.to(targetSocketId).emit("call-offer", {
+        // Check if user is online using Redis
+        const onlineUsers = await getOnlineUsersFromRedis();
+        const targetUser = onlineUsers.find(u => u.userId === to);
+
+        if (targetUser) {
+          io.to(`user-${to}`).emit("call-offer", {
             from: user.userId,
             fromName: user.name,
             offer,
@@ -219,11 +283,14 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         }
       });
 
-      socket.on("call-answer", (data) => {
+      socket.on("call-answer", async (data) => {
         const { to, answer, callType } = data;
-        const targetSocketId = userSockets.get(to)?.socketId;
-        if (targetSocketId) {
-          io.to(targetSocketId).emit("call-answer", {
+        // Check if user is online using Redis
+        const onlineUsers = await getOnlineUsersFromRedis();
+        const targetUser = onlineUsers.find(u => u.userId === to);
+
+        if (targetUser) {
+          io.to(`user-${to}`).emit("call-answer", {
             from: user.userId,
             answer,
             callType,
@@ -231,33 +298,43 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         }
       });
 
-      socket.on("ice-candidate", (data) => {
+      socket.on("ice-candidate", async (data) => {
         const { to, candidate } = data;
-        const targetSocketId = userSockets.get(to)?.socketId;
-        if (targetSocketId) {
-          io.to(targetSocketId).emit("ice-candidate", {
+        // Check if user is online using Redis
+        const onlineUsers = await getOnlineUsersFromRedis();
+        const targetUser = onlineUsers.find(u => u.userId === to);
+
+        if (targetUser) {
+          io.to(`user-${to}`).emit("ice-candidate", {
             from: user.userId,
             candidate,
           });
         }
       });
 
-      socket.on("call-declined", (data) => {
-        const { to } = data;
-        const targetSocketId = userSockets.get(to)?.socketId;
-        if (targetSocketId) {
-          io.to(targetSocketId).emit("call-declined", {
+      socket.on("call-declined", async (data) => {
+        const { to, reason } = data;
+        // Check if user is online using Redis
+        const onlineUsers = await getOnlineUsersFromRedis();
+        const targetUser = onlineUsers.find(u => u.userId === to);
+
+        if (targetUser) {
+          io.to(`user-${to}`).emit("call-declined", {
             from: user.userId,
             fromName: user.name,
+            reason
           });
         }
       });
 
-      socket.on("call-ended", (data) => {
+      socket.on("call-ended", async (data) => {
         const { to } = data;
-        const targetSocketId = userSockets.get(to)?.socketId;
-        if (targetSocketId) {
-          io.to(targetSocketId).emit("call-ended", {
+        // Check if user is online using Redis
+        const onlineUsers = await getOnlineUsersFromRedis();
+        const targetUser = onlineUsers.find(u => u.userId === to);
+
+        if (targetUser) {
+          io.to(`user-${to}`).emit("call-ended", {
             from: user.userId,
             fromName: user.name,
           });
@@ -410,50 +487,15 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       });
 
       // Handle online users request
-      socket.on("get-online-users", (data, callback) => {
+      socket.on("get-online-users", async (data, callback) => {
         try {
-          const onlineUsers = Array.from(userSockets.entries())
-            .map(([userId, userData]) => ({
-              userId,
-              socketId: userData.socketId,
-              name: userData.name,
-              role: userData.role,
-            }));
-          
+          const onlineUsers = await getOnlineUsersFromRedis();
           if (callback) callback({ users: onlineUsers });
         } catch (error) {
           console.error("Error fetching online users:", error);
           if (callback) callback({ error: "Failed to fetch online users" });
         }
       });
-
-      // socket.on("message-to-admin", async (data) => {
-      //   const { message, timestamp } = data;
-      //   const fromUser = socket.data.user.userId;
-
-      //   // Save message for each admin
-      //   const admins = Array.from(userSockets.values()).filter(
-      //     (u) => u.role === "admin"
-      //   );
-      //   for (const admin of admins) {
-      //     const newMessage = new Message({
-      //       from: fromUser,
-      //       to: admin.userId,
-      //       message,
-      //       timestamp,
-      //       // TODO: do we need to store ip address?
-      //     });
-      //     await newMessage.save();
-      //   }
-
-      //   // Forward to admin room
-      //   io.to("admin-room").emit("private-message", {
-      //     from: fromUser,
-      //     fromName: socket.data.user.name,
-      //     message,
-      //     timestamp,
-      //   });
-      // });
 
       socket.on("broadcast", async (data) => {
         // TODO: how to save video and audio broadcasts, do we need cloudinary?
@@ -479,14 +521,6 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           id: newMessage._id,
         });
       });
-
-      // Handle get-online-users request (for admins)
-      // socket.on("get-online-users", () => {
-      //   if (user.role === "admin") {
-      //     const onlineUsers = Array.from(userSockets.values());
-      //     socket.emit("online-users", { users: onlineUsers });
-      //   }
-      // });
     });
 
     nitroApp.router.use(

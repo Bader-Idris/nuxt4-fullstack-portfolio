@@ -175,14 +175,24 @@ export function useWebRTC() {
       return Promise.reject(new Error("Already in a call"));
     }
 
+    // Check if the user is online before initiating a call
+    const { useOnlineUsersStore } = await import('~/stores/useOnlineUsersStore');
+    const onlineUsersStore = useOnlineUsersStore();
+    const isUserOnline = onlineUsersStore.users.some(user => user.userId === userId);
+
+    if (!isUserOnline && userId !== userStore.user.userId) {
+      alert('This user is no longer online.');
+      return Promise.reject(new Error("User not online"));
+    }
+
     try {
       // Check for available media devices first
       const devices = await navigator.mediaDevices.enumerateDevices();
-      
+
       // Determine what devices are available
       const hasAudio = devices.some(device => device.kind === 'audioinput' && device.deviceId !== 'default' && device.deviceId !== 'communications');
       const hasVideo = type === 'video' && devices.some(device => device.kind === 'videoinput' && device.deviceId !== 'default');
-      
+
       // Define media constraints with better audio settings to prevent feedback
       let audioConstraints: boolean | MediaTrackConstraints = hasAudio;
       if (hasAudio) {
@@ -250,7 +260,7 @@ export function useWebRTC() {
       }
     } catch (error: any) {
       console.error("Error starting call:", error);
-      
+
       // Handle specific device not found error more gracefully
       if (error.name === 'NotFoundError' || error.message.includes('Requested device not found')) {
         alert(`Cannot start ${type} call: media device not found. Please check your camera and microphone permissions.`);
@@ -259,7 +269,7 @@ export function useWebRTC() {
       } else if (error.message) {
         alert(`Cannot start ${type} call: ${error.message}`);
       }
-      
+
       cleanupMedia();
       isInCall.value = false;
       currentCallPartner.value = null;
