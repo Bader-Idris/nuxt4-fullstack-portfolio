@@ -51,7 +51,11 @@ export const useUserStore = defineStore("user", () => {
     if (import.meta.client) {
       localStorage.setItem("user", JSON.stringify(newUser));
     }
-    init();
+    // Only initialize socket if we're on the client side and user is authenticated
+    if (import.meta.client && isAuthenticated.value) {
+      const socketStore = useSocketStore();
+      socketStore.initializeSocket();
+    }
   }
 
   function clearUser(): void {
@@ -72,7 +76,7 @@ export const useUserStore = defineStore("user", () => {
       const socketStore = useSocketStore();
       socketStore.initializeSocket();
     }
-  init();
+  }
 
   return {
     user,
@@ -84,5 +88,5 @@ export const useUserStore = defineStore("user", () => {
     setUser,
     clearUser,
     init,
-  };
+  }
 });

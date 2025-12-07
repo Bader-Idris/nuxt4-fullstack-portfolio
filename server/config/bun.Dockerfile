@@ -1,5 +1,5 @@
 # Stage 1: Base image with bun
-FROM oven/bun:1.3.3-alpine AS base
+FROM oven/bun:1.3.4-alpine AS base
 
 # Install Python and build tools for native dependencies (Alpine version)
 RUN apk add --no-cache python3 make g++
@@ -21,7 +21,7 @@ COPY . .
 RUN bun run build
 
 # Stage 4: Production runner
-FROM oven/bun:1.3.3-alpine AS runner
+FROM oven/bun:1.3.4-alpine AS runner
 
 # Install Python and build tools for native dependencies (Alpine version)
 RUN apk add --no-cache python3 make g++
