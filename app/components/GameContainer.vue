@@ -10,6 +10,7 @@
       hydrate-on-media-query="(min-width: 769px)"
       :food-left="foodLeft"
       :update-food-left="Object(updateFoodLeft)"
+      :trigger-signal="triggerSignal"
       @food-eaten="handleFoodEaten"
       @game-over="handleGameOver"
     />
@@ -55,6 +56,8 @@
 // Reactive state for food, typed as an array of FoodItem
 const foodLeft = ref<{ eaten: boolean }[]>(Array.from({ length: 10 }, () => ({ eaten: false })))
 const localePath = useLocalePath()
+// const snakeGame = ref<any>(null) // Removed ref
+const triggerSignal = ref<{ code: string, timestamp: number } | undefined>(undefined)
 
 // Function to update foodLeft, based on the score
 function updateFoodLeft(score: number): void {
@@ -72,10 +75,7 @@ function resetFoodLeft(): void {
 
 // Function to trigger a keyboard event, with typed key parameter
 function triggerKeyPress(key: string): void {
-  if (import.meta.client) {
-    const event = new KeyboardEvent('keydown', { key })
-    document.dispatchEvent(event)
-  }
+  triggerSignal.value = { code: key, timestamp: Date.now() }
 }
 
 // Function to handle food being eaten, updating foodLeft based on score

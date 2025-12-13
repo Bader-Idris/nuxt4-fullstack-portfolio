@@ -93,10 +93,18 @@ const { t } = useI18n({ useScope: 'global' })
 const isCapacitorDevice = useCapacitorDevice();
 
 // Define props with proper types
-defineProps<{
+const props = defineProps<{
   foodLeft: { eaten: boolean }[]
   updateFoodLeft: () => void
+  triggerSignal?: { code: string, timestamp: number }
 }>()
+
+// Watch for external trigger signals
+watch(() => props.triggerSignal, (signal) => {
+  if (signal && isClient) {
+    handleInput(signal.code)
+  }
+})
 
 // Emit types
 const emit = defineEmits<{
@@ -439,14 +447,14 @@ function stopGame(message: string): void {
   pause()
 }
 
-// Key event listener using useEventListener
-useEventListener(document, 'keydown', (event: KeyboardEvent) => {
+// Handle input from keyboard or external controls
+function handleInput(code: string) {
   if (!isClient) return
 
-  if ((gameOver.value || !gameStarted.value) && event.code === 'Space') {
+  if ((gameOver.value || !gameStarted.value) && code === 'Space') {
     triggerStartAnimation(board.value)
   } else if (gameStarted.value) {
-    switch (event.code) {// event.key is too specific and bad with i18n, requires you to use these two for one keyCode
+    switch (code) {// event.key is too specific and bad with i18n, requires you to use these two for one keyCode
     //  ["س ", "s"]
       case 'ArrowUp':
       case 'KeyW':
@@ -466,7 +474,16 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
         break
     }
   }
+}
+
+// Key event listener using useEventListener
+useEventListener(document, 'keydown', (event: KeyboardEvent) => {
+  handleInput(event.code)
 });
+
+defineExpose({
+  handleInput
+})
 </script>
 
 
