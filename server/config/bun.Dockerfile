@@ -1,5 +1,5 @@
 # Stage 1: Base image with bun
-FROM oven/bun:1.3.4-alpine AS base
+FROM oven/bun:1.3.5-alpine AS base
 
 # Install Python and build tools for native dependencies (Alpine version)
 RUN apk add --no-cache python3 make g++
@@ -19,12 +19,10 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
 RUN bun run build
+# RUN ["/bin/sh", "-c", "bunx prisma generate && bun run build"]
 
 # Stage 4: Production runner
-FROM oven/bun:1.3.4-alpine AS runner
-
-# Install Python and build tools for native dependencies (Alpine version)
-RUN apk add --no-cache python3 make g++
+FROM oven/bun:1.3.5-alpine AS runner
 
 # Copy only the necessary production dependencies
 COPY --from=deps /app/node_modules ./node_modules

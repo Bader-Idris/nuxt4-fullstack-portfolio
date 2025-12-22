@@ -43,30 +43,19 @@
           <p>{{ createTimeCodeSnippet }}</p>
         </div>
       </div>
-      <!-- <client-only>
-        <tiptap-editor ref="codeBlock" class="javascript" />
-      </client-only> -->
-      <pre>
-        <code
-          ref="codeBlock"
-          class="javascript"
-        >
-  const pigIt = (str) => {
-    return str.split(' ').map(e => {
-      return e.length > 0 && !e.match(/[!?@#$%^&*]/)
-        ? e.substring(1) + e.slice(0, 1) + 'ay'
-        : e;
-    }).join(' ');
-  };
-        </code>
-      </pre>
+      <ClientOnly>
+        <TiptapEditorContent
+          v-if="editor"
+          :editor="editor"
+        />
+      </ClientOnly>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import hljs from 'highlight.js'
-import 'highlight.js/styles/github-dark.css' // You can change the theme here
+import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
+import { all, createLowlight } from 'lowlight'
 import { Flip } from 'gsap/all'
 
 const { t, locale } = useI18n()
@@ -103,8 +92,36 @@ useSchemaOrg([
   }
 ])
 
-const codeBlock = ref<HTMLElement | null>(null)
 const bioContainer = ref<HTMLElement | null>(null)
+
+// Tiptap Editor Setup
+const lowlight = createLowlight(all)
+const editor = useEditor({
+  content: `
+<pre><code class="language-javascript">
+  const pigIt = (str) => {
+    return str.split(' ').map(e => {
+      return e.length > 0 && !e.match(/[!?@#$%^&*]/)
+        ? e.substring(1) + e.slice(0, 1) + 'ay'
+        : e;
+    }).join(' ');
+  };
+</code></pre>
+  `,
+  editable: false,
+  extensions: [
+    TiptapStarterKit.configure({
+      codeBlock: false,
+    }),
+    CodeBlockLowlight.configure({
+      lowlight,
+    }),
+  ],
+})
+
+onBeforeUnmount(() => {
+  unref(editor)?.destroy()
+})
 
 // Calculate the duration since June 15, 2022 with i18n support
 const startDate = new Date('2022-06-15')
@@ -259,12 +276,12 @@ onBeforeMount(() => {
   }
 })
 
-onMounted(() => {
-  if (codeBlock.value) hljs.highlightElement(codeBlock.value)
-})
+// Removed onMounted highlight.js call
 </script>
 
 <style lang="scss">
+@import 'highlight.js/styles/github-dark.css'; // Keep import or remove if tiptap handles styles fully, but we need base styles for tokens
+
 .split-in-half {
   @include flex-container(row, nowrap, center, center);
   width: calc(100% - 300px);
@@ -367,19 +384,32 @@ onMounted(() => {
 
     & *:not(.code-author, .code-author *) {
       background-color: $code-snippets-bg;
+      border-radius: 15px;
+      padding: 0 5px;
+      margin: 20px 0;
     }
 
-    pre {
-      border-right: 1px solid $lines;
-      margin: 0;
-      border-radius: 20px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    code {
-      font-size: 14px;
-      line-height: 1.5;
+    /* Target Tiptap's prose mirror structure */
+    .ProseMirror {
+      outline: none;
+      
+      pre {
+        // border-right: 1px solid $lines;
+        // margin: 0;
+        // border-radius: 20px;
+        // white-space: pre-wrap;
+        // word-wrap: break-word;
+        // background: transparent;
+        // padding: 0;
+        
+        code {
+          background: none;
+          color: inherit;
+          font-size: 14px;
+          line-height: 1.5;
+          padding: 0;
+        }
+      }
     }
   }
 }

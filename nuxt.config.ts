@@ -143,6 +143,7 @@ export default defineNuxtConfig({
     "@nuxt/image",
     "@nuxt/icon",
     "@nuxt/content",
+    "nuxt-tiptap-editor",
     "@nuxt/eslint",
     "@nuxt/scripts",
     "v-gsap-nuxt",
@@ -253,6 +254,9 @@ export default defineNuxtConfig({
       renderer: {},
     },
   }),
+  tiptap: {
+    prefix: 'Tiptap', //prefix for Tiptap imports, composables not included
+  },
   // pwa: {
   //   // official source: https://github.com/vite-pwa/nuxt/blob/main/playground/nuxt.config.ts
   //   strategies: sw ? "injectManifest" : "generateSW",
