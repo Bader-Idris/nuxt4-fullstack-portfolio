@@ -17,6 +17,8 @@ import { sendAPN, sendFCM } from "../utils/push";
 // for future organizing
 // import * from '.././sockets'
 
+// let Engine: any; // if we want to use dynamic import below, as it differs in bun, but not functional yet with bun 1.3.6
+
 export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
   if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
     // --- START: Production-Ready Rate Limiters ---
@@ -53,6 +55,17 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       duration: 60, // Per 1 minute
     });
     // --- END: Production-Ready Rate Limiters ---
+
+    // Dynamically import the correct Engine.io server based on environment
+    // if (process.env.NITRO_PRESET === "bun" || typeof Bun !== "undefined") {
+    //   // Dynamically load the Bun-optimized engine
+    //   const mod = await import("@socket.io/bun-engine");
+    //   Engine = mod.Server;
+    // } else {
+    //   // Fallback to standard Node.js engine
+    //   const mod = await import("engine.io");
+    //   Engine = mod.Server;
+    // }
 
     const webpush = createWebPushInstance();
 

@@ -1,5 +1,5 @@
 # Stage 1: Base image with bun
-FROM oven/bun:1.3.5-alpine AS base
+FROM oven/bun:1.3.6-alpine AS base
 
 # Install Python and build tools for native dependencies (Alpine version)
 RUN apk add --no-cache python3 make g++
@@ -18,11 +18,16 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
+
+# TODO: read https://nitro.build/config
+ENV NITRO_PRESET=bun
 RUN bun run build
-# RUN ["/bin/sh", "-c", "bunx prisma generate && bun run build"]
 
 # Stage 4: Production runner
-FROM oven/bun:1.3.5-alpine AS runner
+FROM oven/bun:1.3.6-alpine AS runner
+
+# RUN apk add --no-cache vips
+# WORKDIR /app
 
 # Copy only the necessary production dependencies
 COPY --from=deps /app/node_modules ./node_modules
