@@ -371,7 +371,7 @@ export default defineNuxtConfig({
     // },
     // lazy: true,
 
-    // seo: true,
+    // seo: true, // Removed as it's deprecated in newer versions
     langDir: "../app/i18n/locales/",
     locales: [
       {

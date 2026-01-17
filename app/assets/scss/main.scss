@@ -1,5 +1,6 @@
 @use '../scss/' as *;
 @use './variables' as *;
+@use 'sass:map';
 
 /* Global Rules */
 * {

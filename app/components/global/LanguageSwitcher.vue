@@ -6,20 +6,21 @@
       @change="handleLocaleChange"
     >
       <option
-        v-for="localeItem in locales"
+        v-for="localeItem in allLocales"
         :key="localeItem.code"
         :value="localeItem.code"
+        :disabled="localeItem.code === locale.value"
       >
         {{ getFlagEmoji(localeItem.iso) }} {{ localeItem.name }}
+        {{ localeItem.code === locale.value ? ' (current)' : '' }}
       </option>
     </select>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-
-const { locale, locales, setLocale } = useI18n()
+const { locale, locales } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
 
 // Get region code from ISO (e.g., 'en-US' -> 'US')
 const getRegionCode = (iso: string) => {
@@ -33,29 +34,49 @@ const getFlagEmoji = (iso: string) => {
   return String.fromCodePoint(...[...regionCode.toUpperCase()].map(c => 0x1F1A5 + c.charCodeAt(0)))
 }
 
+// All locales for the dropdown
+const allLocales = computed(() => {
+  return locales.value
+})
+
 // Initialize with current locale
 const selectedLocale = ref(locale.value)
 
 // Reactive HTML lang attribute
 const htmlAttrs = ref({
-  lang: selectedLocale.value,
+  lang: locale.value,
 })
 
-// Use useHead with a reactive object
+// Reactive link attributes for SEO (hreflang)
+const linkAttrs = computed(() => {
+  return locales.value.map(loc => ({
+    rel: 'alternate',
+    hrefLang: loc.iso,
+    href: switchLocalePath(loc.code)
+  }))
+})
+
+// Use useHead with reactive objects
 useHead({
   htmlAttrs: htmlAttrs.value,
+  link: linkAttrs
 })
 
-// Watch for locale changes and update the HTML lang attribute
-watch(selectedLocale, (newLocale) => {
+// Watch for locale changes and update the HTML lang attribute and selected locale
+watch(locale, (newLocale) => {
   if (newLocale) {
     htmlAttrs.value.lang = newLocale
+    selectedLocale.value = newLocale
   }
 })
 
-// Handle locale change
+// Handle locale change by navigating to the new locale path
 const handleLocaleChange = () => {
-  setLocale(selectedLocale.value)
+  if (selectedLocale.value !== locale.value) {
+    const newPath = switchLocalePath(selectedLocale.value)
+    // Use navigateTo for proper navigation that preserves SEO
+    navigateTo(newPath)
+  }
 }
 </script>
 

@@ -1,20 +1,22 @@
 <template>
-  <footer>
+  <footer itemscope itemtype="http://schema.org/WPFooter">
     <div class="container">
       <p>find me in:</p>
-      <div class="social">
+      <div class="social" itemprop="contactPoint" itemscope itemtype="http://schema.org/ContactPoint">
         <div
           class="telegram"
           @click="navigateToChild(telegramLink)">
-          <CustomLink 
-            aria-label="go to my telegram profile" 
+          <CustomLink
+            aria-label="go to my telegram profile"
             class="link external-link"
             :to="telegramLink"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <Icon 
-              name="ic:baseline-telegram" 
-              width="30" 
-              height="30" 
+            <Icon
+              name="ic:baseline-telegram"
+              width="30"
+              height="30"
               mode="svg"
               class="svg" />
           </CustomLink>
@@ -22,34 +24,38 @@
         <div
           class="facebook"
           @click="navigateToChild(facebookLink)">
-          <CustomLink 
-            aria-label="go to my facebook page" 
+          <CustomLink
+            aria-label="go to my facebook page"
             class="link external-link"
             :to="facebookLink"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <Icon 
-              name="basil:facebook-solid" 
-              width="30" 
-              height="30" 
+            <Icon
+              name="basil:facebook-solid"
+              width="30"
+              height="30"
               mode="svg"
               class="svg" />
           </CustomLink>
         </div>
       </div>
-      <div 
-        class="github" 
-        tabindex="0" 
+      <div
+        class="github"
+        tabindex="0"
         @click="navigateToGithub">
         <p>@bader-idris</p>
         <CustomLink
           aria-label="go to my github profile"
           :to="githubLink"
           class="external-link"
+          rel="noopener noreferrer"
+          target="_blank"
         >
-          <Icon 
-          name="mdi:github" 
-          width="30" 
-          height="30" 
+          <Icon
+          name="mdi:github"
+          width="30"
+          height="30"
           mode="svg"
             class="svg" />
         </CustomLink>
@@ -60,6 +66,7 @@
 
 <script setup lang="ts">
 import socialData from '~/apis/random-data.json'
+import { definePerson } from "nuxt-schema-org/schema"
 
 const [{ socialLinks }] = socialData
 // @ts-expect-error: socialLinks is not properly typed
@@ -68,14 +75,24 @@ const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => ur
 // Handle client-side navigation
 const navigateToGithub = () => {
   if (import.meta.client) { // Ensure this runs only on the client side
-    window.open(githubLink, '_blank') // Opens in a new tab
+    window.open(githubLink, '_blank', 'noopener,noreferrer') // Opens in a new tab with security attributes
   }
 }
 const navigateToChild = (child : string) => {
   if (import.meta.client) { // Ensure this runs only on the client side
-    window.open(child, '_blank') // Opens in a new tab
+    window.open(child, '_blank', 'noopener,noreferrer') // Opens in a new tab with security attributes
   }
 }
+
+// Add structured data for social profiles using Nuxt SEO
+definePerson({
+  name: 'Bader Idris',
+  sameAs: [
+    githubLink,
+    telegramLink,
+    facebookLink
+  ]
+})
 </script>
 
 <style lang="scss" scoped>

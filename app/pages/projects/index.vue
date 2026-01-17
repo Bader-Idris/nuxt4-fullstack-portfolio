@@ -128,6 +128,17 @@ const toggleSidebar = () => {
 }
 
 onMounted(() => {
+  const isMobileWidth = useMobile()
+  // this is an ugly solution, but because the whole project is old, I don't care about fixing it
+  if(isMobileWidth.value) {
+    sidebarDisplay.value = 'none'
+    // query select .foldable-tab add .is-folded
+    const foldableTab = document.querySelector('.foldable-tab')
+    if (foldableTab) {
+      foldableTab.classList.add('is-folded')
+    }
+  }
+
   loadActiveItems()
 })
 
