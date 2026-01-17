@@ -116,14 +116,14 @@ const handleLocaleChange = () => {
   }
 }
 
-html[lang="ar"] {
+html[lang="ar-PS"] {
   @include tablet-to-up {
     .language-switcher {
         right: 125px;
       }
   }
 }
-html[lang="es"] {
+html[lang="es-ES"] {
   @include tablet-to-up {
     .language-switcher {
         right: 160px;

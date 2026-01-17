@@ -70,7 +70,7 @@ defineProps<{
   }
 }
 
-html[lang="es"] {
+html[lang="es-ES"] {
   .food-left {
     top: 55%;
   }

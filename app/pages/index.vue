@@ -565,7 +565,7 @@ useSeoMeta({
   }
 }
 
-html[lang="es"] {
+html[lang="es-ES"] {
   .info {
     p {
       font-size: calc($sub-headline-size - 25%) !important;
@@ -573,7 +573,7 @@ html[lang="es"] {
   }
 }
 
-html[lang="ar"] {
+html[lang="ar-PS"] {
   .info {
     direction: rtl;
     .greeting {

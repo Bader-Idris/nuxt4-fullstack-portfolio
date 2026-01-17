@@ -574,7 +574,7 @@ defineExpose({
   }
 }
 
-html[lang="es"] {
+html[lang="es-ES"] {
   .outcome-display {
     .congrats {
       font-size: $code-snippets-size;

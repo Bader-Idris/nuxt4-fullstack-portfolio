@@ -371,25 +371,25 @@ export default defineNuxtConfig({
     // },
     // lazy: true,
 
-    // seo: true, // Removed as it's deprecated in newer versions
     langDir: "../app/i18n/locales/",
     locales: [
       {
         code: "en",
-        iso: "en-US",
+        iso: "en-US", // check if deprecated
         dir: "ltr",
-        language: "en",
+        language: 'en-US',
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
         // https://i18n.nuxtjs.org/docs/guide/lazy-load-translations#basic-usage
         // TODO: 🥊 to be able to fetch from nuxt server 🥊
         file: "en-US.json",
         name: "English",
+        isCatchallLocale: true // This one will be used as catchall locale
       },
       {
         code: "ar",
         iso: "ar-PS",
         dir: "rtl",
-        language: "ar",
+        language: "ar-PS",
         file: "ar-PS.json",
         name: "العربية",
       },
@@ -397,7 +397,7 @@ export default defineNuxtConfig({
         code: "es",
         iso: "es-ES",
         dir: "ltr",
-        language: "es",
+        language: "es-ES",
         file: "es-ES.json",
         name: "Español",
       },
