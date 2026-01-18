@@ -146,6 +146,7 @@ export default defineNuxtConfig({
     "@nuxt/content",
     "nuxt-tiptap-editor",
     "@nuxt/eslint",
+    "@teages/nuxt-legacy",
     "@nuxt/scripts",
     "v-gsap-nuxt",
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
@@ -623,6 +624,15 @@ export default defineNuxtConfig({
     //     imports: ["useI18n"],
     //   },
     // ],
+  },
+  // for older browsers we use polyfills, this looks good: @teages/nuxt-legacy,
+  // check its site: https://nuxt.com/modules/nuxt-legacy
+  legacy:{
+    // `@vitejs/plugin-legacy` options
+    vite: {
+      // check how it uses browsersl.ist options here: https://www.npmjs.com/package/@vitejs/plugin-legacy#Options
+      targets: ['defaults', 'not IE 11'], // defaults in v.7.2.1
+    },
   },
   scripts: {
     registry: {
