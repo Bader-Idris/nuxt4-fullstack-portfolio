@@ -1,6 +1,6 @@
 # Stage 1: Base image with bun
 # FROM oven/bun:latest AS base
-FROM node:24.11-alpine AS base
+FROM node:24.13.0-alpine AS base
 # FROM oven/bun:alpine AS base
 
 # Install Python and build tools for native dependencies
@@ -36,7 +36,7 @@ RUN npm run build
 # FROM base AS runner
 # FROM node:24.11-alpine3.21 AS runner
 # FROM base AS runner TODO: required for stability
-FROM node:24.11-alpine AS runner
+FROM node:24.13.0-alpine AS runner
 
 # Install Python and build tools for native dependencies (Alpine version)
 # RUN apk add --no-cache python3 make g++
