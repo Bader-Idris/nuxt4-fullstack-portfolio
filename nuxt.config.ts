@@ -366,12 +366,6 @@ export default defineNuxtConfig({
   //   },
   // },
   i18n: {
-    // TODO: these two are removed, check: https://i18n.nuxtjs.org/docs/guide/migrating
-    // bundle: {
-    //   optimizeTranslationDirective: false,
-    // },
-    // lazy: true,
-
     langDir: "../app/i18n/locales/",
     locales: [
       {
@@ -405,9 +399,7 @@ export default defineNuxtConfig({
     ],
     defaultLocale: "en",
     defaultDirection: "ltr",
-
     strategy: "prefix_except_default",
-    // strategy: "no_prefix",
     // vueI18n: "~/i18n/i18n.config.ts", // using custom path, default
   },
   pinia: {
@@ -562,8 +554,6 @@ export default defineNuxtConfig({
       // ...(process.env.IS_ELECTRON === "false") && {
       i18n: {
         // ssr: process.env.NUXT_SSR !== "false",
-        // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-        // do if electron ./ else process.env.DOMAIN_NAME
         baseUrl: process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
         // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
       },

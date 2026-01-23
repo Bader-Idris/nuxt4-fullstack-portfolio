@@ -1,13 +1,5 @@
-# Stage 1: Base image with bun
-# FROM oven/bun:latest AS base
-FROM node:24.11-alpine AS base
-# FROM oven/bun:alpine AS base
-
-# Install Python and build tools for native dependencies
-# RUN apt-get update && apt-get install -y \
-#   python3 \
-#   build-essential \
-#   && rm -rf /var/lib/apt/lists/*
+# Stage 1: Base image with node.js
+FROM node:24.13-alpine AS base
 
 # Update npm to the latest version for performance and security benefits
 RUN npm install -g npm@latest
@@ -20,9 +12,7 @@ WORKDIR /app
 # This layer is cached as long as package.json doesn't change
 FROM base AS deps
 COPY package*.json bun.lock* ./
-# RUN bun install
 RUN --mount=type=cache,target=/root/.npm npm install --force
-
 
 # Stage 3: Build the Nuxt application
 # This layer is cached as long as source code doesn't change
@@ -30,13 +20,10 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
-# RUN bun run build
 RUN npm run build
 
-# FROM base AS runner
-# FROM node:24.11-alpine3.21 AS runner
 # FROM base AS runner TODO: required for stability
-FROM node:24.11-alpine AS runner
+FROM node:24.13-alpine AS runner
 
 # Install Python and build tools for native dependencies (Alpine version)
 # RUN apk add --no-cache python3 make g++
@@ -54,4 +41,3 @@ EXPOSE $PORT
 # EXPOSE 3000
 # CMD [ "node", ".output/server/index.mjs" ]
 CMD ["npm", "start"]
-# CMD ["bun", "run", "start"]

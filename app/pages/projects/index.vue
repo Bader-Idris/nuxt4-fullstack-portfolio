@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+import projects from '~/apis/projects_info.json'
+
 // const img = useImage()
 const { t } = useI18n()
 
@@ -48,7 +50,18 @@ useSchemaOrg([
   {
     "@type": "CollectionPage",
     name: "Projects I created during my career",
-    description: "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
+    description: "Explore a diverse collection of projects by Bader Idris, featuring full-stack applications, responsive web designs, and interactive tools built with Vue.js, Nuxt, TypeScript, and more.",
+    itemListElement: projects.map((project, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "CreativeWork",
+        name: project.title,
+        description: project.desc,
+        url: project.url,
+        image: project.img.startsWith('http') ? project.img : `${useRuntimeConfig().public.originUrl}${project.img}`
+      }
+    }))
   }
 ])
 

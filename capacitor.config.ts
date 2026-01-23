@@ -132,12 +132,6 @@ const config: CapacitorConfig = {
     // not only barcode but also QR code ⏹️
     // https://capacitorjs.com/docs/apis/barcode-scanner
     // },
-    GoogleAuth: {
-      scopes: ["openid", "profile", "email"],
-      androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID,
-      iosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
-      forceCodeForRefreshToken: true,
-    },
     ActionSheet: {
       // the card that comes from the bottom of the screen.
       // check out https://ionicframework.com/docs/api/action-sheet
@@ -249,6 +243,37 @@ const config: CapacitorConfig = {
     // Toast: {
     // I think it's useless
     // }
+
+    // read: @capgo/capacitor-social-login docs here:
+    // https://www.npmjs.com/package/@capgo/capacitor-social-login#Dynamic-Provider-Dependencies
+    SocialLogin: {
+      providers: {
+        google: {
+          // Enable Google login with offline access
+          enabled: true,
+          // Configure for offline access
+          mode: 'offline',
+          // iOS specific configuration
+          iOSClientId: process.env.GOOGLE_IOS_CLIENT_ID,
+          iOSServerClientId: process.env.GOOGLE_WEB_CLIENT_ID,
+          // Android specific configuration
+          androidServerClientId: process.env.GOOGLE_WEB_CLIENT_ID,
+        },
+        facebook: {
+          // Enable Facebook login
+          enabled: true,
+        },   // Use false to reduce app size
+        // apple: true,      // Apple uses system APIs, no external deps
+        twitter: false   // false = disabled (not bundled)
+      }
+    },
+    // old approach
+    // GoogleAuth: {
+    //   scopes: ["openid", "profile", "email"],
+    //   androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID,
+    //   iosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
+    //   forceCodeForRefreshToken: true,
+    // },
   },
 };
 

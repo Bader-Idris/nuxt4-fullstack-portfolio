@@ -41,6 +41,33 @@
         </div>
       </div>
       <div
+        class="terms-services-container"
+        @click="toggleTerms = !toggleTerms"
+      >
+        <Icon name="heroicons:information-circle" width="30" height="30" />
+        <div v-show="toggleTerms" @click.stop>
+          <CustomLink
+            aria-label="legal terms"
+            class="link"
+            :to="localePath('/legal/terms')"
+            target="_blank"
+          >
+            <!-- {{ t('home.hello') }} -->
+            terms
+          </CustomLink>
+          & 
+          <CustomLink
+            aria-label="privacy policy"
+            class="link"
+            :to="localePath('/privacy/policy')"
+            target="_blank"
+          >
+            <!-- {{ t('home.hello') }} -->
+            privacy services
+          </CustomLink>
+        </div>
+      </div>
+      <div
         class="github"
         tabindex="0"
         @click="navigateToGithub">
@@ -68,6 +95,8 @@
 import socialData from '~/apis/random-data.json'
 import { definePerson } from "nuxt-schema-org/schema"
 
+const localePath = useLocalePath()
+const toggleTerms = ref(false)
 const [{ socialLinks }] = socialData
 // @ts-expect-error: socialLinks is not properly typed
 const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => url)
@@ -85,14 +114,19 @@ const navigateToChild = (child : string) => {
 }
 
 // Add structured data for social profiles using Nuxt SEO
-definePerson({
-  name: 'Bader Idris',
-  sameAs: [
-    githubLink,
-    telegramLink,
-    facebookLink
-  ]
-})
+useSchemaOrg([
+  definePerson({
+    name: 'Bader Idris',
+    image: '/imgs/meTwentyFour.jpg',
+    jobTitle: 'Full Stack Developer',
+    url: useRuntimeConfig().public.originUrl,
+    sameAs: [
+      githubLink,
+      telegramLink,
+      facebookLink
+    ]
+  })
+])
 </script>
 
 <style lang="scss" scoped>
@@ -147,6 +181,41 @@ footer {
 
       .facebook {
         padding-top: 15px;
+      }
+    }
+    .terms-services-container {
+      @include flex-container(row, unset, space-around, center);
+      // border-radius: 50%;
+      position: absolute;
+      right: 170px;
+      width: 55px;
+      height: 55px;
+      cursor: pointer;
+
+      // line-height: 60px;
+      i {
+        margin-top: 20px;
+        text-align: center;
+        
+      }
+      > div {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: $primary2;
+        border: 1px solid $lines;
+        border-radius: 5px;
+        padding: 5px 10px;
+        white-space: nowrap;
+        z-index: 100;
+        margin-bottom: 5px; // spacing from icon
+
+        @include mobile {
+          right: -40px;
+          left: auto;
+          transform: none;
+        }
       }
     }
 
