@@ -58,15 +58,15 @@ const linuxTargets = [
 
 const baseConfig = {
   /*
-  configuration.win should be one of these:
-  object { additionalCertificateFile?, appId?, artifactName?, asar?, asarUnpack?, azureSignOptions?, certificateFile?,
-  certificatePassword?, certificateSha1?, certificateSubjectName?, compression?, cscKeyPassword?, cscLink?, defaultArch?,
-  detectUpdateChannel?, disableDefaultIgnoredFiles?, electronLanguages?, electronUpdaterCompatibility?, executableName?,
-  extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, icon?,
-  legalTrademarks?, protocols?, publish?, publisherName?, releaseInfo?, requestedExecutionLevel?, rfc3161TimeStampServer?,
-  sign?, signAndEditExecutable?, signDlls?, signExts?, signingHashAlgorithms?, signtoolOptions?, target?, timeStampServer?,
-  verifyUpdateCodeSignature? } | null
-*/
+    configuration.win should be one of these:
+    object { additionalCertificateFile?, appId?, artifactName?, asar?, asarUnpack?, azureSignOptions?, certificateFile?,
+    certificatePassword?, certificateSha1?, certificateSubjectName?, compression?, cscKeyPassword?, cscLink?, defaultArch?,
+    detectUpdateChannel?, disableDefaultIgnoredFiles?, electronLanguages?, electronUpdaterCompatibility?, executableName?,
+    extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, icon?,
+    legalTrademarks?, protocols?, publish?, publisherName?, releaseInfo?, requestedExecutionLevel?, rfc3161TimeStampServer?,
+    sign?, signAndEditExecutable?, signDlls?, signExts?, signingHashAlgorithms?, signtoolOptions?, target?, timeStampServer?,
+    verifyUpdateCodeSignature? } | null
+  */
 
   productName: packageJson.name,
   // afterSign: './createMD5List.js',
@@ -77,6 +77,10 @@ const baseConfig = {
   artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${platform}_${arch}.${ext}', // ! can't read them with template strings!
   directories: {
     output: './release/${version}'
+  },
+  // Set homepage to baderidris.com instead of GitHub URL using extraMetadata
+  extraMetadata: {
+    homepage: 'https://baderidris.com'
   },
   mac: {
     bundleVersion: '1.0',
@@ -176,7 +180,7 @@ const baseConfig = {
   //   publisher: `CN=${packageJson.author.split(' <')[0]}`
   // },
   linux: {
-    executableName: packageJson.name.toLowerCase(),
+    executableName: 'portfolio', // Allow opening via "portfolio" command in terminal
     icon: 'electronAssets/resources',
     category: 'Utility',
     target: linuxTargets
@@ -198,14 +202,16 @@ const baseConfig = {
       'libappindicator3-1', // For app indicator support
       'libxtst6', // X11 Testing support
       // "xapp-gtk3-module"
-    ]
+    ],
+    // https://www.electron.build/electron-builder.interface.deboptions
+    synopsis: "Bader's portfolio application",
+    description: packageJson.description || 'A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile.',
   },
   snap: {
     grade: 'stable',
     confinement: 'strict',
-    summary: "Bader's portfolio using Vite + Vue 3 + Electron + Capacitor",
-    description:
-      "A multi-platform portfolio application built with Vite, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information."
+    summary: "Bader's portfolio using Nuxt 4 + Vue 3 + Electron + Capacitor",
+    description: packageJson.description || "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information."
   },
   files: [
     'dist-electron/**/*',
@@ -246,7 +252,7 @@ if (process.env.MAC_NOTARIZE === 'true') {
 }
 
 module.exports = {
-  ...baseConfig
+  ...baseConfig,
 }
 
 // export default {

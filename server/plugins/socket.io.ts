@@ -355,6 +355,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
       });
 
       socket.on("private-message", async (data) => {
+        // TODO: we can implement profanity control to filter bad words
         const { to, message, timestamp } = data;
         const fromUser = socket.data.user;
 
