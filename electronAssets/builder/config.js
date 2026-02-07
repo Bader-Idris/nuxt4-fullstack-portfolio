@@ -72,6 +72,11 @@ const baseConfig = {
   // afterSign: './createMD5List.js',
   appId: packageJson.appId,
   asar: true, // set true for securing the source code and some performances
+  // ? read https://sharp.pixelplumbing.com/install/#electron
+  asarUnpack: [
+    "**/node_modules/sharp/**/*",
+    "**/node_modules/@img/**/*"
+  ],
   // extends: null,
   compression: 'maximum',
   artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${platform}_${arch}.${ext}', // ! can't read them with template strings!

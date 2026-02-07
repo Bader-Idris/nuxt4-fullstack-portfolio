@@ -77,6 +77,17 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
 
+definePageMeta({
+  middleware: [
+    (to) => {
+      const localePath = useLocalePath()
+      if (to.path === localePath('/about') || to.path === '/about') {
+        return navigateTo(localePath('/about/personal'), { replace: true })
+      }
+    },
+  ],
+})
+
 // const route = useRoute()
 const router = useRouter()
 const activeIconIndex = ref(1)
@@ -126,19 +137,51 @@ const copyToClipboard = async (index: number): Promise<void> => {
   }
 }
 
-const icons = ref([
+const icons = useState('aboutIcons', () => [
   { iconSrc: '/imgs/svgs/shell.svg', iconAlt: 'shell', path: 'professional' },
   { iconSrc: '/imgs/svgs/circle.svg', iconAlt: 'circle', path: 'personal' },
   { iconSrc: '/imgs/svgs/game.svg', iconAlt: 'game', path: 'hobbies' },
 ])
 
-const hobbiesObj = ref([
+const hobbiesObj = useState('aboutHobbies', () => [
   { title: 'bio',         icon: '/imgs/svgs/red-dir.svg', iconAlt: 'red folder' },
   { title: 'interests',   icon: '/imgs/svgs/green-dir.svg', iconAlt: 'green folder' },
   { title: 'education',   icon: '/imgs/svgs/purple-dir.svg', iconAlt: 'purple folder' },
   { title: 'high-school', icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
   { title: 'University',  icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
 ])
+
+if (import.meta.server) {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
+  const sharp = (await import('sharp')).default
+  
+  const processIcon = async (iconPath: string) => {
+    const inputPath = path.join(process.cwd(), 'public', iconPath)
+    const outputPath = inputPath.replace('.svg', '.webp')
+    const webpPath = iconPath.replace('.svg', '.webp')
+    
+    if (fs.existsSync(inputPath)) {
+      if (!fs.existsSync(outputPath)) {
+        await sharp(inputPath)
+          .webp({ quality: 80 })
+          .toFile(outputPath)
+      }
+      return webpPath
+    }
+    return iconPath
+  }
+
+  // Process main icons
+  for (const icon of icons.value) {
+    icon.iconSrc = await processIcon(icon.iconSrc)
+  }
+
+  // Process hobbies icons
+  for (const hobby of hobbiesObj.value) {
+    hobby.icon = await processIcon(hobby.icon)
+  }
+}
 
 const toggleHobbies = () => {
   isHobbiesHidden.value = !isHobbiesHidden.value
@@ -170,12 +213,6 @@ watch(() => route.path, (newPath) => {
     activeIconIndex.value = index
   }
 }, { immediate: true })
-
-if (import.meta.client) {
-  if (route.path === localePath('/about')) {
-    router.replace(localePath('/about/personal'))
-  }
-}
 
 onMounted(() => {
   checkScreenSize()

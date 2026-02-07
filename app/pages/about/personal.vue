@@ -31,13 +31,30 @@
           loading="lazy"
         /> -->
         <img
-          src="/imgs/meTwentyFour.jpg"
+          ref="imageRef"
+          :src="profileImage"
           alt="personal-img"
           class="mi-imagen"
           loading="lazy"
           data-flip-id="profile-pic"
           @click="toggleLightbox"
         >
+
+        <Teleport to="body">
+          <div
+            v-show="isLightboxOpen"
+            ref="overlayRef"
+            class="lightbox-overlay"
+            @click="toggleLightbox"
+          >
+            <img
+              ref="lightboxImageRef"
+              :src="profileImage"
+              alt="personal-img-lightbox"
+              class="lightbox-img"
+            >
+          </div>
+        </Teleport>
         <div class="auth-aside">
           <p>@bader-idris</p>
           <p>{{ createTimeCodeSnippet }}</p>
@@ -61,13 +78,32 @@ import { Flip } from 'gsap/all'
 const { t, locale } = useI18n()
 const { $device } = useNuxtApp()
 
+const profileImage = useState('profileImage', () => '/imgs/meTwentyFour.jpg')
+
+if (import.meta.server) {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
+  const inputPath = path.join(process.cwd(), 'public/imgs/meTwentyFour.jpg')
+  const outputPath = path.join(process.cwd(), 'public/imgs/meTwentyFour.webp')
+
+  if (fs.existsSync(inputPath)) {
+    if (!fs.existsSync(outputPath)) {
+      const sharp = (await import('sharp')).default
+      await sharp(inputPath)
+        .webp({ quality: 80 })
+        .toFile(outputPath)
+    }
+    profileImage.value = '/imgs/meTwentyFour.webp'
+  }
+}
+
 // SEO optimization using @nuxtjs/seo module
 useSeoMeta({
   title: t('about.personal.title'),
   description: t('about.personal.description'),
   ogTitle: t('about.personal.title'),
   ogDescription: t('about.personal.description'),
-  ogImage: useRuntimeConfig().public.originUrl + '/imgs/meTwentyFour.jpg',
+  ogImage: useRuntimeConfig().public.originUrl + profileImage.value,
   twitterCard: 'summary_large_image',
 })
 
@@ -82,7 +118,7 @@ useSchemaOrg([
       name: "Bader Idris",
       jobTitle: t('about.personal.schema.jobTitle'),
       description: t('about.personal.schema.personDescription'),
-      image: useRuntimeConfig().public.originUrl + '/imgs/meTwentyFour.jpg',
+      image: useRuntimeConfig().public.originUrl + profileImage.value,
       url: useRuntimeConfig().public.originUrl + useRoute().path,
       sameAs: [
         "https://github.com/bader-idris",
@@ -228,47 +264,86 @@ const createTimeCodeSnippet = computed(() => {
 // --- GSAP Flip Animation Logic ---
 const imageRef = ref<HTMLImageElement | null>(null)
 const lightboxImageRef = ref<HTMLImageElement | null>(null)
+const overlayRef = ref<HTMLElement | null>(null)
 const isLightboxOpen = ref(false)
 
-const toggleLightbox = () => {
-  isLightboxOpen.value = !isLightboxOpen.value 
+const toggleLightbox = async () => {
+  if (!isLightboxOpen.value) {
+    isLightboxOpen.value = true
+    await nextTick()
+
+    // Capture original state
+    const state = Flip.getState(imageRef.value, { props: "borderRadius" });
+
+    // Switch visibility
+    useGSAP().set(lightboxImageRef.value, { visibility: 'visible' })
+    useGSAP().set(imageRef.value, { visibility: 'hidden' })
+
+    // Fade in overlay
+    useGSAP().fromTo(overlayRef.value, 
+      { opacity: 0 }, 
+      { opacity: 1, duration: 0.4, ease: 'power2.inOut' }
+    )
+
+    // Flip animation to lightbox
+    Flip.from(state, {
+      targets: lightboxImageRef.value,
+      duration: 0.6,
+      ease: "back.out(1.5)",
+      scale: true,
+    })
+  } else {
+    // Capture lightbox state
+    const state = Flip.getState(lightboxImageRef.value, { props: "borderRadius" });
+
+    // Switch visibility back
+    useGSAP().set(imageRef.value, { visibility: 'visible' })
+    useGSAP().set(lightboxImageRef.value, { visibility: 'hidden' })
+
+    // Fade out overlay
+    useGSAP().to(overlayRef.value, { 
+      opacity: 0, 
+      duration: 0.4, 
+      ease: 'power2.inOut' 
+    })
+
+    // Flip animation back to original place
+    Flip.from(state, {
+      targets: imageRef.value,
+      duration: 0.6,
+      ease: "power3.inOut",
+      scale: true,
+      onComplete: () => {
+        isLightboxOpen.value = false
+      }
+    })
+  }
 }
 
-// 2. This `watch` automatically runs when the state changes
-watch(isLightboxOpen, async (isOpen) => { 
-  
-  // 3. This ensures the DOM is ready (critical in Vue)
-  await nextTick() 
-
-  const startEl = isOpen ? imageRef.value : lightboxImageRef.value
-  const endEl = isOpen ? lightboxImageRef.value : imageRef.value
-
-  if (!startEl || !endEl) return
-
-  // 4. The core Flip logic, identical to the example
-  const state = Flip.getState(startEl, { props: "borderRadius" });
-
-  // This is the "LAST" state change
-  startEl.style.visibility = 'hidden';
-  endEl.style.visibility = 'visible';
-  
-  // Animate from FIRST to LAST
-  Flip.from(state, { 
-    duration: 0.5,
-    ease: 'power3.inOut',
-    scale: true,
-    onComplete: () => {
-      if (!isOpen) {
-         endEl.style.visibility = 'visible';
-      }
-    }
-  });
-})
+// Removed the watch as logic is now handled in toggleLightbox
 
 // Use VueUse for better lifecycle management
-useEventListener(bioContainer, 'mousedown', handleMouseDown)
-useEventListener(bioContainer, 'mousemove', handleMouseMove)
-useEventListener(document, 'mouseup', handleMouseUp)
+if (import.meta.client) {
+  useEventListener(bioContainer, 'mousedown', handleMouseDown)
+  useEventListener(bioContainer, 'mousemove', handleMouseMove)
+  useEventListener(document, 'mouseup', handleMouseUp)
+
+  // Handle window resize to avoid GSAP/Flip sticking issues
+  const handleResize = useThrottleFn(() => {
+    if (isLightboxOpen.value) {
+      // Force close if open to avoid calculation issues on layout shift
+      isLightboxOpen.value = false
+      useGSAP().set(overlayRef.value, { opacity: 0 })
+      useGSAP().set(lightboxImageRef.value, { visibility: 'hidden' })
+      useGSAP().set(imageRef.value, { 
+        clearProps: 'all',
+        visibility: 'visible' 
+      })
+    }
+  }, 200)
+
+  useEventListener(window, 'resize', handleResize)
+}
 
 onBeforeMount(() => {
   if (import.meta.client) {
@@ -412,5 +487,27 @@ onBeforeMount(() => {
       }
     }
   }
+}
+
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.lightbox-img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 10px;
+  object-fit: contain;
 }
 </style>
