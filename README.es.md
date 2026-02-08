@@ -18,7 +18,7 @@
 
 </div>
 
-[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt4-fullstack-portfolio/26e3f86aaa361639f25b0ce933df59ea982e5e41/client/public/thumbnail.webp)](https://baderidris.com)
+[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt3-fullstack-portfolio/26e3f86aaa361639f25b0ce933df59ea982e5e41/client/public/thumbnail-es.png)](https://baderidris.com)
 
 Una aplicación completa de portafolio full-stack construida con Nuxt 4, que incluye características de comunicación en tiempo real, autenticación y soporte multiplataforma. Para obtener información más detallada, consulte la [documentación de Nuxt](https://nuxt.com/docs/getting-started/introduction).
 
