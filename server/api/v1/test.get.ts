@@ -1,20 +1,20 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+// before
+// import { PrismaClient } from '@prisma/client'
+import { prisma } from '@server/plugins/prisma.ts'  // path to your plugin file
 
 export default defineEventHandler(async (event) => {
-  // For testing: Create a dummy user if none exists (or use an existing one)
-  let user = await prisma.user.findFirst();
+  // No need to create a new PrismaClient() anymore
+
+  let user = await prisma.user.findFirst()
   if (!user) {
     user = await prisma.user.create({
       data: {
         email: 'test@baderidris.com',
         name: 'Test User',
       },
-    });
+    })
   }
 
-  // Create a pseudo (dummy) post associated with the user
   const pseudoPost = await prisma.post.create({
     data: {
       title: 'My First Pseudo Post',
@@ -22,12 +22,11 @@ export default defineEventHandler(async (event) => {
       published: true,
       authorId: user.id,
     },
-  });
+  })
 
-  // Optionally, fetch all posts to verify
   const allPosts = await prisma.post.findMany({
-    include: { author: true }, // Include author details if needed
-  });
+    include: { author: true },
+  })
 
-  return { createdPost: pseudoPost, allPosts };
+  return { createdPost: pseudoPost, allPosts }
 })

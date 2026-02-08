@@ -5,15 +5,16 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js" // "prisma-client" required in v7+
-  // output   = "./generated/prisma" // required with prisma-client
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // make it production exclusive
+  provider = "prisma-client" // "prisma-client" required in v7+
+  // output   = "./generated" //
+  output   = "./generated/prisma" // required with prisma-client
+  // binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // make it production exclusive
 }
 
 datasource db {
   provider = "postgresql"
   // deprecated: check this out https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7#prisma-schema-changes
-  url      = env("PSQL_URL")
+  // url      = env("PSQL_URL")
 }
 
 model User {
@@ -27,9 +28,12 @@ model User {
 
 model Post {
   id        Int     @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   title     String
   content   String?
   published Boolean @default(false)
+  viewCount Int      @default(0)
   author    User    @relation(fields: [authorId], references: [id])
   authorId  Int
 
