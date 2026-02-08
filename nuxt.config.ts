@@ -112,12 +112,6 @@ export default defineNuxtConfig({
         },
       },
     },
-    resolve: {
-      alias: {
-        ".prisma/client/index-browser":
-          "./node_modules/.prisma/client/index-browser.js",
-      },
-    },
   },
   typescript: {
     tsConfig: {
@@ -191,7 +185,6 @@ export default defineNuxtConfig({
                   "node:sqlite",
                   "fsevents",
                   "sharp",
-                  "@prisma/client"
                 ],
               },
               outDir: 'dist-electron/main',
@@ -597,8 +590,6 @@ export default defineNuxtConfig({
     //   database: {
     //     type: "postgres",
     //     url: String(process.env.PSQL_URL),
-    //     /* Other options for `pg` */
-    //     // can we use prisma instead of pg??
     //   },
     // experimental: {
     //   // enable awesome search, see: https://content.nuxt.com/get-started/configuration#search
