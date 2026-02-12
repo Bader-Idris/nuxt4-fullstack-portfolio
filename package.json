@@ -69,6 +69,7 @@
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
+    "three": "^0.182.0",
     "v-gsap-nuxt": "^1.5.12",
     "vue": "3.5.28",
     "vue-router": "5.0.2",

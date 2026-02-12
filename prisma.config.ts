@@ -11,7 +11,9 @@ export default defineConfig({
     // seed: "bun run ./server/prisma/seed.ts",
   },
   datasource: {
-    url: env("PSQL_URL"),
+    // url: env("PSQL_URL"),
+    // will not throw if DATABASE_URL is missing
+    url: process.env.PSQL_URL ?? '',
   },
 });
 

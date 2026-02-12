@@ -1,6 +1,7 @@
 <template>
   <div class="hobbies-info">
-    <h1>hobbies page is under construction </h1>
+    <!-- <h1>Basic Three.js Cube </h1> -->
+    <ThreeCanvas />
   </div>
 </template>
 
