@@ -544,6 +544,11 @@ export default defineNuxtConfig({
       isCapacitor: process.env.IS_CAPACITOR === "true",
       // for web-push pkg
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+      googleClientId: process.env.GOOGLE_CLIENT_ID,
+      // check https://www.npmjs.com/package/@capgo/capacitor-social-login#Google
+      // iOSClientId: 'YOUR_IOS_CLIENT_ID',        // Required for iOS  
+      // iOSServerClientId: 'YOUR_WEB_CLIENT_ID',  // Required for iOS offline mode and server authorization (same as webClientId)
+
       // if not electron
       // ...(process.env.IS_ELECTRON === "false") && {
       i18n: {

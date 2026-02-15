@@ -65,8 +65,6 @@ import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import { CapacitorCookies } from '@capacitor/core';
 
-// TODO: fix the cap auth mechanisms!
-
 // Important for disabling layouts
 definePageMeta({
   layout: 'default', // Specify the layout
@@ -91,8 +89,11 @@ const route = useRoute();
 
 // Utility type for server response
 interface RegisterResponse {
-  msg: string
-  [key: string]: any
+  user: {
+    name: string;
+    userId: string;
+    role: string;
+  };
 }
 
 // Access token from cookie
@@ -130,40 +131,19 @@ const register = async (): Promise<void> => {
   };
 
   try {
-    const { data: response, error } = await useFetch<RegisterResponse>(url, {
+    const response = await $fetch<RegisterResponse>(url, {
       method: 'POST',
       body: data,
       baseURL: useRuntimeConfig().public.originUrl,
     });
 
-    if (error.value) {
-      // Handle API errors
-      switch (error.value.statusCode) {
-        case 400:
-          toast(error.value.data?.message || 'Invalid request.', {
-            theme: 'dark',
-            type: 'error',
-            position: 'top-center',
-          });
-          showPrompt.value = true;
-          break;
-        case 401:
-          toast('Unauthorized. Please check your credentials.', {
-            theme: 'dark',
-            type: 'error',
-            position: 'top-center',
-          });
-          break;
-        default:
-          toast('An unexpected error occurred.', {
-            theme: 'dark',
-            type: 'error',
-            position: 'top-center',
-          });
-      }
-    } else if (response.value) {
-      // @ts-expect-error: setUser expects a user object, not a string
-      useUserStore().setUser(user.value);
+    if (response && response.user) {
+      // Set user in store
+      useUserStore().setUser({
+        username: response.user.name,
+        userId: response.user.userId,
+        role: response.user.role,
+      });
 
       toast('Successfully Registered', {
         theme: 'auto',
@@ -177,8 +157,10 @@ const register = async (): Promise<void> => {
     }
   } catch (error) {
     // Handle network or unexpected errors
-    console.error('Fetch error:', error);
-    toast('Network error. Please try again.', {
+    console.error('Registration error:', error);
+    // @ts-expect-error type safety for error
+    const msg = error.data?.message || 'Network error. Please try again.';
+    toast(msg, {
       theme: 'dark',
       type: 'error',
       position: 'top-center',
@@ -224,25 +206,37 @@ const googleRegister = async () => {
   try {
     // Dynamically import the social login plugin
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
-    
-    // Perform Google sign-in
-    const result = await SocialLogin.signIn({
-      provider: 'google',
-      googleOptions: {
-        // Add any specific Google options here
+    const config = useRuntimeConfig()
+
+    // Initialize the social login plugin with Google configuration
+    await SocialLogin.initialize({
+      google: {
+        webClientId: config.public.googleClientId, // Required for Android and Web
+        // iOSClientId: 'YOUR_IOS_CLIENT_ID',         // Required for iOS
+        // iOSServerClientId: 'YOUR_WEB_CLIENT_ID',   // Required for iOS offline mode and server authorization (same as webClientId)
+        mode: 'online',  // 'online' or 'offline'
       }
     });
 
-    if (!result.idToken) {
-      throw new Error('No ID token received from Google');
+    // Perform Google sign-in
+    const result = await SocialLogin.login({
+      provider: 'google',
+      // only with online mode!
+      options: {
+        scopes: ['openid','email', 'profile'],
+      },
+    });
+    // TODO: just have the online approach, commit it, then offline if better!
+
+    if (!result.accessToken) {
+      throw new Error('No access token received from Google');
     }
 
-    // Use the social callback endpoint to process the token from the plugin
-    const response = await $fetch('/api/v1/auth/social/callback', {
+    // Use the dedicated Google social auth endpoint for Capacitor
+    const response = await $fetch('/api/v1/auth/social/google', {
       method: 'POST',
       body: {
-        provider: 'google',
-        idToken: result.idToken,
+        accessToken: result.accessToken,
         profile: {
           name: result.profile?.name || result.profile?.displayName,
           email: result.profile?.email,
@@ -254,21 +248,24 @@ const googleRegister = async () => {
     });
 
     // The server sets cookies, but for Capacitor we need to sync them
-    let accessTokenFromCookie = null;
     if (import.meta.client && (await useCapacitorDevice())) {
       // Wait a bit for cookies to be set
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const cookies = await CapacitorCookies.getCookies();
       console.log('🎈Google register cookies:🎈', cookies);
       if (cookies.accessToken) {
-        accessTokenFromCookie = cookies.accessToken;
+        accessToken.value = cookies.accessToken;
       }
     }
 
     // Get user info from the response
     if (response && response.user) {
-      useUserStore().setUser(response.user);
+      useUserStore().setUser({
+        username: response.user.name,
+        userId: response.user.userId,
+        role: response.user.role,
+      });
 
       toast('Successfully registered/logged in with Google', {
         theme: 'auto',
@@ -307,11 +304,11 @@ const facebookRegister = async () => {
   try {
     // Dynamically import the social login plugin
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
-    
+
     // Perform Facebook sign-in
-    const result = await SocialLogin.signIn({
+    const result = await SocialLogin.login({
       provider: 'facebook',
-      facebookOptions: {
+      options: {
         // Add any specific Facebook permissions here if needed
         permissions: ['public_profile', 'user_friends', 'email'],
       }
@@ -321,11 +318,10 @@ const facebookRegister = async () => {
       throw new Error('No access token received from Facebook');
     }
 
-    // Process the Facebook registration using the social callback endpoint
-    const response = await $fetch('/api/v1/auth/social/callback', {
+    // Process the Facebook registration using the dedicated Facebook social auth endpoint
+    const response = await $fetch('/api/v1/auth/social/facebook', {
       method: 'POST',
       body: {
-        provider: 'facebook',
         accessToken: result.accessToken,
         profile: {
           name: result.profile?.name || result.profile?.displayName,
@@ -338,21 +334,24 @@ const facebookRegister = async () => {
     });
 
     // The server sets cookies, but for Capacitor we need to sync them
-    let accessTokenFromCookie = null;
     if (import.meta.client && (await useCapacitorDevice())) {
       // Wait a bit for cookies to be set
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const cookies = await CapacitorCookies.getCookies();
       console.log('🎈Facebook register cookies:🎈', cookies);
       if (cookies.accessToken) {
-        accessTokenFromCookie = cookies.accessToken;
+        accessToken.value = cookies.accessToken;
       }
     }
 
     // Get user info from the response
     if (response && response.user) {
-      useUserStore().setUser(response.user);
+      useUserStore().setUser({
+        username: response.user.name,
+        userId: response.user.userId,
+        role: response.user.role,
+      });
 
       toast('Successfully registered/logged in with Facebook', {
         theme: 'auto',

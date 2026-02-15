@@ -203,36 +203,27 @@ const google = async () => {
   try {
     // Dynamically import the social login plugin
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
-    
+
+    const config = useRuntimeConfig()
+
     // Perform Google sign-in
-    const result = await SocialLogin.signIn({
+    const result = await SocialLogin.login({
       provider: 'google',
-      googleOptions: {
-        // Add any specific Google options here
+      options: {
+        webClientId: config.public.googleClientId,
+        offlineAccess: false, // Set to false for online mode
       }
     });
 
-    if (!result.idToken) {
-      throw new Error('No ID token received from Google');
+    if (!result.accessToken) {
+      throw new Error('No access token received from Google');
     }
 
-    // The backend expects an OAuth code, but the plugin returns an access token
-    // We can still use the existing callback endpoint by passing the access token
-    // However, since our backend expects an authorization code, we need to simulate
-    // the existing flow by using the callback endpoint approach
-    
-    // For Google, we might need to pass the idToken instead of serverAuthCode
-    // Our current backend expects the code parameter in the callback
-    // Since SocialLogin.signIn() returns profile data directly, we can bypass the callback
-    // and directly handle the user creation/login in the backend via a new API endpoint
-    
-    // For now, let's use the callback flow by sending the data to a custom endpoint
-    // that processes social login results
-    const response = await $fetch('/api/v1/auth/social/callback', {
+    // Use the dedicated Google social auth endpoint for Capacitor
+    const response = await $fetch('/api/v1/auth/social/google', {
       method: 'POST',
       body: {
-        provider: 'google',
-        idToken: result.idToken,
+        accessToken: result.accessToken,
         profile: {
           name: result.profile?.name || result.profile?.displayName,
           email: result.profile?.email,
@@ -244,16 +235,14 @@ const google = async () => {
     });
 
     // The server sets cookies, but for Capacitor we need to sync them
-    let accessTokenFromCookie = null;
     if (import.meta.client && (await isCapacitorDevice)) {
       // Wait a bit for cookies to be set
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const cookies = await CapacitorCookies.getCookies();
       console.log('🎈Google cookies:🎈', cookies);
       if (cookies.accessToken) {
         accessToken.value = cookies.accessToken;
-        accessTokenFromCookie = cookies.accessToken;
       }
     }
 
@@ -306,11 +295,11 @@ const facebook = async () => {
   try {
     // Dynamically import the social login plugin
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
-    
+
     // Perform Facebook sign-in
-    const result = await SocialLogin.signIn({
+    const result = await SocialLogin.login({
       provider: 'facebook',
-      facebookOptions: {
+      options: {
         // Add any specific Facebook permissions here if needed
         permissions: ['public_profile', 'user_friends', 'email'],
       }
@@ -320,11 +309,10 @@ const facebook = async () => {
       throw new Error('No access token received from Facebook');
     }
 
-    // Use the social callback endpoint to process the token from the plugin
-    const response = await $fetch('/api/v1/auth/social/callback', {
+    // Use the dedicated Facebook social auth endpoint for Capacitor
+    const response = await $fetch('/api/v1/auth/social/facebook', {
       method: 'POST',
       body: {
-        provider: 'facebook',
         accessToken: result.accessToken,
         profile: {
           name: result.profile?.name || result.profile?.displayName,
@@ -341,7 +329,7 @@ const facebook = async () => {
     if (import.meta.client && (await isCapacitorDevice)) {
       // Wait a bit for cookies to be set
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const cookies = await CapacitorCookies.getCookies();
       console.log('🎈Facebook cookies:🎈', cookies);
       if (cookies.accessToken) {

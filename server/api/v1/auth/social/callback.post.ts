@@ -1,6 +1,7 @@
-import { defineEventHandler, readBody, sendRedirect } from "h3";
+import { defineEventHandler, readBody, sendRedirect, createError, getRequestHeader, getRequestIP } from "h3";
 import { User, Token } from "../../../../models/mongo";
 import crypto from 'node:crypto';
+import { createTokenUser, attachCookiesToResponse } from '../../../../utils';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -16,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
     // Find or create user based on the provider
     let user = await User.findOne({ email: profile.email });
-    
+
     if (!user) {
       // Create new user
       user = new User({

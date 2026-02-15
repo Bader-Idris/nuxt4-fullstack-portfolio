@@ -248,24 +248,12 @@ const config: CapacitorConfig = {
     // https://www.npmjs.com/package/@capgo/capacitor-social-login#Dynamic-Provider-Dependencies
     SocialLogin: {
       providers: {
-        google: {
-          // Enable Google login with offline access
-          enabled: true,
-          // Configure for offline access
-          mode: 'offline',
-          // iOS specific configuration
-          iOSClientId: process.env.GOOGLE_IOS_CLIENT_ID,
-          iOSServerClientId: process.env.GOOGLE_WEB_CLIENT_ID,
-          // Android specific configuration
-          androidServerClientId: process.env.GOOGLE_WEB_CLIENT_ID,
-        },
-        facebook: {
-          // Enable Facebook login
-          enabled: true,
-        },   // Use false to reduce app size
+        google: true,
+        facebook: true,
         // apple: true,      // Apple uses system APIs, no external deps
         twitter: false   // false = disabled (not bundled)
-      }
+      },
+      logLevel: 1 // Warnings and errors only
     },
     // old approach
     // GoogleAuth: {
