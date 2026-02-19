@@ -10,3 +10,7 @@ end_of_line = crlf
 charset = utf-8
 trim_trailing_whitespace = false
 insert_final_newline = false
+
+# It's lovely that ox formatter reads this file
+# check the compatibility out here: https://oxc.rs/docs/guide/usage/formatter/config.html#editorconfig
+max_line_length = 80

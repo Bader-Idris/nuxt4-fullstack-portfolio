@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    ".data/**",
+    ".nuxt/**",
+    ".output/**",
+    "dist/**",
+    "dist-electron/**",
+    "*.yaml",
+    "*.yml",
+    "*.min.js"
+  ],
+}
