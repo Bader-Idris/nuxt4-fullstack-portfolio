@@ -29,7 +29,7 @@ FROM node:24.13-alpine AS runner
 # RUN apk add --no-cache python3 make g++
 
 # Copy only the necessary production dependencies
-COPY --from=deps /app/node_modules ./node_modules
+# COPY --from=deps /app/node_modules ./node_modules
 # Copy the built output from the builder stage
 
 COPY --from=builder /app/.output ./.output

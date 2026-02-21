@@ -30,7 +30,7 @@ FROM oven/bun:1.3.9-alpine AS runner
 # WORKDIR /app
 
 # Copy only the necessary production dependencies
-COPY --from=deps /app/node_modules ./node_modules
+# COPY --from=deps /app/node_modules ./node_modules
 
 # Copy the built output from the builder stage
 COPY --from=builder /app/.output ./.output
