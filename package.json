@@ -32,7 +32,7 @@
     "vapid-generate": "web-push generate-vapid-keys [--json]"
   },
   "dependencies": {
-    "@capgo/capacitor-social-login": "^8.3.5",
+    "@capgo/capacitor-social-login": "^8.3.6",
     "@nuxt/content": "^3.11.2",
     "@nuxt/icon": "^2.2.1",
     "@nuxt/image": "^2.0.0",
@@ -118,7 +118,7 @@
     "@iconify-json/ic": "^1.2.4",
     "@iconify-json/ion": "^1.2.6",
     "@iconify-json/lineicons": "^1.2.6",
-    "@iconify-json/material-symbols": "^1.2.56",
+    "@iconify-json/material-symbols": "^1.2.57",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/ri": "^1.2.10",
     "@iconify-json/simple-icons": "^1.2.71",
@@ -145,7 +145,7 @@
     "electron-builder": "^26.8.1",
     "eslint": "^10.0.1",
     "nuxt-electron": "^0.7.0",
-    "oxfmt": "^0.34.0",
+    "oxfmt": "^0.35.0",
     "patch-package": "^8.0.1",
     "postcss-custom-media": "^12.0.1",
     "postcss-custom-properties": "^15.0.1",
