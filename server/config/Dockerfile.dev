@@ -1,5 +1,5 @@
 # Development Dockerfile for Nuxt.js app
-FROM node:24.11-alpine
+FROM node:24.14-alpine
 
 # Install Python and build tools for native dependencies
 RUN npm install -g npm@latest
