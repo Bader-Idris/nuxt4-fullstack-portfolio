@@ -98,6 +98,56 @@ services:
       - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     networks:
       - app-network
+
+# uncomment to add your mail server (e.g:using vscode uncomment ctrl+/ )
+#   mail:
+#     image: mailserver/docker-mailserver:14.0 # same as image: ghcr.io/docker-mailserver/docker-mailserver:latest
+#     # review migration guide to 15.1.0
+#     container_name: mail
+#     # Provide the FQDN of your mail server here (Your DNS MX record should point to this value)
+#     hostname: mail.baderidris.com
+#     env_file: ./server/config/mailserver/mailserver.env
+#     # More information about the mail-server ports:
+#     # https://docker-mailserver.github.io/docker-mailserver/latest/config/security/understanding-the-ports/
+#     ports:
+#       - "25:25"    # SMTP  (explicit TLS => STARTTLS, Authentication is DISABLED => use port 465/587 instead)
+#       - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+#       - "465:465"  # ESMTP (implicit TLS)
+#       - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+#       - "993:993"  # IMAP4 (implicit TLS)
+#     volumes:
+#       - ./server/mailserver/mail-data:/var/mail/
+#       - ./server/mailserver/mail-state:/var/mail-state/
+#       # - ./server/mailserver/mail-logs:/var/log/mail/ # TODO: fix its disk vulnerability
+#       - ./server/mailserver/config/:/tmp/docker-mailserver/
+#       - /etc/localtime:/etc/localtime:ro
+
+#       - certbot-etc:/etc/letsencrypt:ro
+#       - certbot-var:/var/lib/letsencrypt:ro
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '0.2'  # 20% of 1 core
+#           memory: 200m  # Max memory
+#         reservations:
+#           memory: 150m  # Minimum memory guaranteed
+#     memswap_limit: 350m
+#     restart: always
+#     stop_grace_period: 1m
+#     # Uncomment if using `ENABLE_FAIL2BAN=1`: # TODO: use the host one instead!
+#     cap_add:
+#       - NET_ADMIN
+#     healthcheck:
+#       test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+#       timeout: 3s
+#       retries: 0
+#     networks:
+#       - app-network
+# # postfix configuration files are:  /etc/postfix/main.cf and /usr/share/postfix/main.cf.dist The 2nd is the global one
+# # dovecot conf file: /etc/dovecot/dovecot.conf 
+# # also check /etc/dovecot/userdb /etc/dovecot/masterdb
+
+
 volumes:
   # app-data:
   mongo-db:
