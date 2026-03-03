@@ -20,11 +20,13 @@ services:
       context: .
       # dockerfile: ./server/config/bun.Dockerfile
       dockerfile: ./server/config/Dockerfile
+      # dockerfile: ./server/config/deno.Dockerfile
       args:
         - NODE_ENV=production
         - PORT=3000
-    # image: baderidris/nuxt-portfolio:3.2.3-production-slim
+    # image: baderidris/nuxt-portfolio:3.2.5-testing-bun-prod
     image: baderidris/nuxt-portfolio:3.2.3-testing-prod
+    # image: baderidris/nuxt-portfolio:3.2.5-testing-deno-prod
     restart: always
     deploy:
       replicas: 2
