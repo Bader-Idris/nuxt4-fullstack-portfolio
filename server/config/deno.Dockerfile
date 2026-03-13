@@ -38,7 +38,7 @@ RUN npm run build
 # ────────────────────────────────────────────────────────────────
 # Final stage: Deno runtime only – no Node left
 # ────────────────────────────────────────────────────────────────
-FROM denoland/deno:alpine-2.7.2 AS runner
+FROM denoland/deno:alpine-2.7.5 AS runner
 
 WORKDIR /app
 
@@ -46,6 +46,16 @@ USER deno
 
 # Copy the minimal runtime artifacts
 COPY --from=builder /app/.output ./.output
+
+# Quick & dirty fix — rewrite bare "url" → "node:url" (and others)
+# ! didn't work!
+RUN sed -i \
+    -e 's|from "url"|from "node:url"|g' \
+    -e 's|from "path"|from "node:path"|g' \
+    -e 's|from "fs"|from "node:fs"|g' \
+    -e 's|from "os"|from "node:os"|g' \
+    -e 's|from "process"|from "node:process"|g' \
+    .output/server/index.mjs
 
 # Copy package.json only if needed for something at runtime (rare for standalone Nitro)
 # COPY --from=builder /app/package.json ./package.json
@@ -58,8 +68,9 @@ ENV NITRO_PRESET=deno_server
 EXPOSE 3000
 
 CMD ["deno", "run", \
-     "--allow-net", \
-     "--allow-env", \
-     "--allow-read", \
-     "--allow-sys", \
-     ".output/server/index.mjs"]
+    "--allow-net", \
+    "--allow-env", \
+    "--allow-read", \
+    "--allow-sys", \
+    "--allow-ffi", \
+    ".output/server/index.mjs"]
