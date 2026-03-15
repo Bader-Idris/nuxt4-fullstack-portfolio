@@ -192,7 +192,7 @@ docker exec -i mongo mongorestore \
   < /path/to/your/backup-4.4.gz
 
 # and do this for compatibility
-docker exec -it mongo mongosh -u Bader -p myPassword --authenticationDatabase admin --eval '
+docker exec -it mongo mongosh -u <Mongo_user> -p <Mongo_password> --authenticationDatabase admin --eval '
   db.adminCommand({ setFeatureCompatibilityVersion: "8.2", confirm: true });
   db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 });
 '

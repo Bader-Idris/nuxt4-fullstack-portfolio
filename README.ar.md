@@ -175,6 +175,30 @@ db.users.updateOne(
 db.users.deleteOne({ "email": "contact@baderidris.com" })
 ```
 
+### أمر الترحيل من MongoDB 4.4.29 إلى 8.2.5
+
+```sh
+# بعد تنفيذ أمر النسخ الاحتياطي مع:
+docker exec mongo sh -c 'mongodump --archive --gzip -u <Mongo_user> -p <Mongo_password> --authenticationDatabase admin' > /path/to/your/backup-4.4.gz
+# بعض البيانات ستُفقد، لقد لاحظت أن المحادثات فُقدت! لكن ليس رسائل المشرفين!
+
+# ثم نفذ هذا الأمر لاستعادة البيانات: (أفضل نهج هو الترحيل التسلسلي للإصدارات مثل 4 -> 5 -> 6 إلخ...)
+
+docker exec -i mongo mongorestore \
+  --archive --gzip \
+  -u <Mongo_user> \
+  -p <Mongo_password> \
+  --authenticationDatabase admin \
+  < /path/to/your/backup-4.4.gz
+
+# وللتوافق نفذ هذا:
+docker exec -it mongo mongosh -u <Mongo_user> -p <Mongo_password> --authenticationDatabase admin --eval '
+  db.adminCommand({ setFeatureCompatibilityVersion: "8.2", confirm: true });
+  db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 });
+'
+
+```
+
 ## إعداد Docker
 
 ### بيئة التطوير

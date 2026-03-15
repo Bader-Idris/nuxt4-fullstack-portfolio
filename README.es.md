@@ -175,6 +175,30 @@ db.users.updateOne(
 db.users.deleteOne({ "email": "contact@baderidris.com" })
 ```
 
+### Comando de migración de MongoDB 4.4.29 a 8.2.5
+
+```sh
+# después de haber realizado el comando de respaldo con:
+docker exec mongo sh -c 'mongodump --archive --gzip -u <Mongo_user> -p <Mongo_password> --authenticationDatabase admin' > /path/to/your/backup-4.4.gz
+# ¡algunos datos se perderán, he visto que los chats se perdieron! ¡pero no los mensajes de administración!
+
+# Luego ejecute este comando para restaurar los datos: (el mejor enfoque es hacer versionado secuencial como 4 -> 5 -> 6, etc.)
+
+docker exec -i mongo mongorestore \
+  --archive --gzip \
+  -u <Mongo_user> \
+  -p <Mongo_password> \
+  --authenticationDatabase admin \
+  < /path/to/your/backup-4.4.gz
+
+# y haga esto para compatibilidad
+docker exec -it mongo mongosh -u <Mongo_user> -p <Mongo_password>  --authenticationDatabase admin --eval '
+  db.adminCommand({ setFeatureCompatibilityVersion: "8.2", confirm: true });
+  db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 });
+'
+
+```
+
 ## Configuración de Docker
 
 ### Entorno de desarrollo
