@@ -145,7 +145,7 @@ const register = async (): Promise<void> => {
         role: response.user.role,
       });
 
-      toast('Successfully Registered', {
+      toast('Successfully Registered! Please check your email to verify your account.', {
         theme: 'auto',
         type: 'success',
         position: 'top-center',

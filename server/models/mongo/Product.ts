@@ -78,9 +78,8 @@ ProductSchema.virtual('reviews', {
   justOne: false,
 })
 
-ProductSchema.pre('remove', async function (next) {
+ProductSchema.pre('deleteOne', { document: true, query: false }, async function () {
   await Review.deleteMany({ product: this._id })
-  next()
 })
 
 export const Product = model<IProduct>('Product', ProductSchema)

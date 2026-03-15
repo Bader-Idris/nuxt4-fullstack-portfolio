@@ -50,12 +50,11 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   // Only hash the password if it has been modified (or is new) and the provider is email
-  if (!this.isModified('password') || this.provider !== 'email') return next()
+  if (!this.isModified('password') || this.provider !== 'email') return
   const salt = await bcrypt.genSalt(10)
-  this.password = await bcrypt.hash(this.password, salt)
-  next()
+  this.password = await bcrypt.hash(this.password as string, salt)
 })
 
 UserSchema.methods.comparePassword = async function (

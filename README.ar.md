@@ -153,6 +153,28 @@ cp .env.example .env
 - `.env.electron.example` - متغيرات بيئة تطبيق Electron
 - `.env.capacitor.example` - متغيرات بيئة تطبيق الجوال
 
+### أوامر MongoDB CLI v8
+
+```js
+show dbs
+// اسم قاعدة البيانات الخاصة بك MONGO_DB_NAME
+use MONGO_DB_NAME
+show collections
+// على سبيل المثال مجموعة المستخدمين
+db.getCollection("users").find()
+// للبحث في المجموعات:
+db.users.find({ field: "value" }) // مثل
+db.users.find({ "email": "contact@baderidris.com" })
+
+// لتعديل الصلاحية بناءً على البريد الإلكتروني:
+db.users.updateOne(
+  { "email": "contact@baderidris.com" },
+  { $set: { "role": "admin" } }
+)
+// للحذف:
+db.users.deleteOne({ "email": "contact@baderidris.com" })
+```
+
 ## إعداد Docker
 
 ### بيئة التطوير

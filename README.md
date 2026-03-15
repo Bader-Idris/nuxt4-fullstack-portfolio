@@ -153,6 +153,52 @@ The project includes environment configuration for different platforms:
 - `.env.electron.example` - Electron application environment variables
 - `.env.capacitor.example` - Mobile application environment variables
 
+### mongoDB cli v8 commands
+
+```js
+show dbs
+// your MONGO_DB_NAME
+use MONGO_DB_NAME
+show collections
+// for instance users collection
+db.getCollection("users").find()
+// to find in collections:
+db.users.find({ field: "value" }) // such as
+db.users.find({ "email": "contact@baderidris.com" })
+
+// to modify the role based on email do:
+db.users.updateOne(
+  { "email": "contact@baderidris.com" }, 
+  { $set: { "role": "admin" } }
+)
+// to delete do:
+db.users.deleteOne({ "email": "contact@baderidris.com" })
+```
+
+### migration from mongoDB 4.4.29 to 8.2.5 command
+
+```sh
+# after you've done the backup command with:
+docker exec mongo sh -c 'mongodump --archive --gzip -u <Mongo_user> -p <Mongo_password> --authenticationDatabase admin' > /path/to/your/backup-4.4.gz
+# some data will be lose, I've seen that the chats were lost! but not the admin messages!
+
+# Then do this command to restore data: (the best approach is to do sequential versioning as 4 -> 5 -> 6 etc...)
+
+docker exec -i mongo mongorestore \
+  --archive --gzip \
+  -u <Mongo_user> \
+  -p <Mongo_password> \
+  --authenticationDatabase admin \
+  < /path/to/your/backup-4.4.gz
+
+# and do this for compatibility
+docker exec -it mongo mongosh -u Bader -p myPassword --authenticationDatabase admin --eval '
+  db.adminCommand({ setFeatureCompatibilityVersion: "8.2", confirm: true });
+  db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 });
+'
+
+```
+
 ## Docker Setup
 
 ### Development Environment

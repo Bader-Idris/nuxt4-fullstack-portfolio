@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose'
+import { Schema, model, type Document } from 'mongoose'
 import { Product } from './Product'
 
 const ReviewSchema = new Schema<IReview>(
@@ -64,11 +64,11 @@ ReviewSchema.statics.calculateAverageRating = async function (
 }
 
 ReviewSchema.post('save', async function (doc) {
-  await doc.constructor.calculateAverageRating(doc.product)
+  await (doc.constructor as any).calculateAverageRating(doc.product)
 })
 
-ReviewSchema.post('remove', async function (doc) {
-  await doc.constructor.calculateAverageRating(doc.product)
+ReviewSchema.post('deleteOne', { document: true, query: false }, async function (doc) {
+  await (doc.constructor as any).calculateAverageRating(doc.product)
 })
 
 export const Review = model<IReview>('Review', ReviewSchema)

@@ -1,5 +1,5 @@
 
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, type Document } from 'mongoose';
 
 export interface IPushSubscription extends Document {
   user: Schema.Types.ObjectId;

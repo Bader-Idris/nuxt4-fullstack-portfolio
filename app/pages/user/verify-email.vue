@@ -1,6 +1,9 @@
 <template>
   <div class="verify-comp">
-    <div v-if="verified" class="verify">
+    <div v-if="isLoading" class="verify">
+      <p>Verifying your email...</p>
+    </div>
+    <div v-else-if="verified" class="verify">
       <p>Your email has been verified</p>
       <p>
         <span>{{ seconds < 10 ? '0' + seconds : seconds }}</span> seconds to go
@@ -25,7 +28,7 @@
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import { useIntervalFn } from '@vueuse/core'
-import { useRoute, useLocalePath, useAsyncData } from '#imports'
+import { useRoute, useLocalePath, computed, ref, onMounted } from '#imports'
 
 const localePath = useLocalePath()
 const route = useRoute()
@@ -34,34 +37,42 @@ type VerifyEmailResponse = {
   message: string
 }
 
-const email = route.query.email?.toString()
-const verificationToken = route.query.verificationToken?.toString()
 const seconds = ref(10)
 const verified = ref(false)
+const isLoading = ref(true)
+const errorMessage = ref<string | null>(null)
 
-// Use useAsyncData to handle server-side and client-side verification
-const { data, error } = await useAsyncData(
-  `verify-email-${route.fullPath}`, // Unique key based on URL
-  () => {
-    if (!email || !verificationToken) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing verification parameters',
-      })
-    }
+// Extract query parameters - reactive access
+const email = computed(() => route.query.email?.toString())
+const verificationToken = computed(() => route.query.verificationToken?.toString())
 
-    return $fetch<VerifyEmailResponse>('/api/v1/auth/verify-email', {
+// Verification function
+const verifyEmail = async () => {
+  if (!email.value || !verificationToken.value) {
+    errorMessage.value = 'Missing verification parameters'
+    isLoading.value = false
+    return
+  }
+
+  try {
+    const data = await $fetch<VerifyEmailResponse>('/api/v1/auth/verify-email', {
       baseURL: useRuntimeConfig().public.originUrl,
       method: 'POST',
-      body: { email, verificationToken },
+      body: { email: email.value, verificationToken: verificationToken.value },
     })
-  }
-)
 
-// Set verification status based on response
-if (data.value?.message === 'Email Verified') {
-  verified.value = true
+    if (data.message === 'Email Verified') {
+      verified.value = true
+    }
+  } catch (err: any) {
+    errorMessage.value = err.data?.message || err.message || 'Verification failed'
+  } finally {
+    isLoading.value = false
+  }
 }
+
+// Verify immediately on component setup (works for both SSR and CSR)
+await verifyEmail()
 
 useSeoMeta({
   title: 'Verify Email',
@@ -77,14 +88,19 @@ const { pause } = useIntervalFn(() => {
   }
 }, 1000)
 
-// Client-side toast notifications
+// Client-side toast notifications and re-verification on mount
 onMounted(() => {
   if (import.meta.client) {
+    // Re-verify on mount if query params exist (handles direct URL access)
+    if (email.value && verificationToken.value && isLoading.value) {
+      verifyEmail()
+    }
+
+    // Show toast based on result
     if (verified.value) {
       toast('Email verified successfully', { theme: 'dark', type: 'success' })
-    } else if (error.value) {
-      const message = error.value.statusMessage || error.value.data?.message || 'Verification failed'
-      toast(message, { theme: 'dark', type: 'error' })
+    } else if (errorMessage.value) {
+      toast(errorMessage.value, { theme: 'dark', type: 'error' })
     }
   }
 })

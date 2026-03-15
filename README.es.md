@@ -153,6 +153,28 @@ El proyecto incluye configuración de entorno para diferentes plataformas:
 - `.env.electron.example` - Variables de entorno de la aplicación Electron
 - `.env.capacitor.example` - Variables de entorno de la aplicación móvil
 
+### Comandos de MongoDB CLI v8
+
+```js
+show dbs
+// su MONGO_DB_NAME
+use MONGO_DB_NAME
+show collections
+// por ejemplo, la colección de usuarios
+db.getCollection("users").find()
+// para buscar en colecciones:
+db.users.find({ field: "value" }) // por ejemplo
+db.users.find({ "email": "contact@baderidris.com" })
+
+// para modificar el rol basado en el correo electrónico:
+db.users.updateOne(
+  { "email": "contact@baderidris.com" },
+  { $set: { "role": "admin" } }
+)
+// para eliminar:
+db.users.deleteOne({ "email": "contact@baderidris.com" })
+```
+
 ## Configuración de Docker
 
 ### Entorno de desarrollo

@@ -222,7 +222,7 @@ Update your `package.json` to use an appId without periods:
 {
   "name": "nuxt4-fullstack-portfolio",
   "private": true,
-  "version": "3.2.4",
+  "version": "3.2.6",
   "main": "dist-electron/main/index.js",
   "appId": "com_baderidris_www",
   ...

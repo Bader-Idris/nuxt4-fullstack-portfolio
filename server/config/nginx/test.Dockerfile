@@ -1,6 +1,6 @@
 # This is the custom nginx Dockerfile that fetches the static files from the Nuxt build output
 # and serves them using nginx.
-FROM baderidris/nuxt-portfolio:3.2.4-testing-prod AS builder
+FROM baderidris/nuxt-portfolio:3.2.6-testing-prod AS builder
 # FROM baderidris/nuxt-portfolio:3.2.5-testing-bun-prod AS builder
 # FROM baderidris/nuxt-portfolio:3.2.5-testing-deno-prod AS builder
 

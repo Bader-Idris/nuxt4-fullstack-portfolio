@@ -25,7 +25,7 @@ services:
         - NODE_ENV=production
         - PORT=3000
     # image: baderidris/nuxt-portfolio:3.2.5-testing-bun-prod
-    image: baderidris/nuxt-portfolio:3.2.3-testing-prod
+    image: baderidris/nuxt-portfolio:3.2.6-testing-prod
     # image: baderidris/nuxt-portfolio:3.2.5-testing-deno-prod
     restart: always
     deploy:
@@ -46,8 +46,8 @@ services:
     networks:
       - app-network
   mongo:
-    image: mongo:4.4 # TODO: old cpus!
-    # image: mongo
+    # image: mongo:4.4 # TODO: old cpus!
+    image: mongo:8.2
     container_name: mongo
     restart: always
 

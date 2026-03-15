@@ -79,7 +79,8 @@ services:
     # command: bun start
     command: npm start
   mongo:
-    image: mongo:4.4
+    # image: mongo:4.4 # TODO: old cpus! deprecated, use 8.2 or later
+    image: mongo:8.2
     container_name: mongo
     restart: always
     environment:
