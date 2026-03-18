@@ -2,13 +2,14 @@
 /// <reference types="@capacitor/status-bar" />
 
 import type { CapacitorConfig } from '@capacitor/cli'
+import packageJson from './package.json'
 
 const config: CapacitorConfig = {
   appId: "com.baderidris.portfolio",
   appName: "Portfolio",
   webDir: "./.output/public",
   loggingBehavior: "production",
-  appVersion: "3.2.0", // TODO: make this custom property read the package.json version manually 
+  appVersion: packageJson.version,
   // server: {
   //   hostname: 'localhost', // Default hostname used by Capacitor
   //   androidScheme: 'https', // Ensures HTTPS for Android WebView

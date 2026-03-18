@@ -42,7 +42,6 @@ import { SplitText } from 'gsap/all';
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const { fontReadyPromise } = useFontLoader();
 // const img = useImage()
 
 const windowWidth = ref(500)
@@ -75,22 +74,15 @@ watch(locale, () => {
   setInfoDirection();
 });
 
-
-onBeforeMount(() => {
-  if (import.meta.client) {
-    // Register SplitText plugin with GSAP
-    // Check the docs: https://v-gsap-nuxt.vercel.app/information/gsap-plugins
-    // how to use it after the fonts get loaded?
-    useGSAP().registerPlugin(SplitText);
-  }
-})
-
 onMounted(async () => {
   if (import.meta.client) {
     windowWidth.value = window.innerWidth
     windowHeight.value = window.innerHeight
     
-    await fontReadyPromise;
+    await document.fonts.ready;
+    // await fontReadyPromise;
+    await nextTick();
+    useGSAP().registerPlugin(SplitText);
     setInfoDirection();
 
     const isMobileWidth = useMobile()
@@ -263,7 +255,7 @@ useSeoMeta({
   twitterTitle: t('home.title'),
   twitterDescription: t('home.description'),
   twitterImage: optimizedThumbnail,
-  twitterSite: '@badr_idris_',
+  twitterSite: '@bader_idri8628',
   // fbAppId: 'YOUR_FACEBOOK_APP_ID', // Add your Facebook App ID here
   appleMobileWebAppStatusBarStyle: 'black-translucent',
   articleAuthor: ['https://baderidris.com/contact'],
