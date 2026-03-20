@@ -35,11 +35,13 @@ const OrderSchema = new Schema<IOrder>(
       type: String,
       enum: ['pending', 'failed', 'paid', 'delivered', 'canceled'],
       default: 'pending',
+      index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
     },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     clientSecret: {
       type: String,
@@ -47,6 +49,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentIntentId: {
       type: String,
+      index: true,
     },
   },
   { timestamps: true },

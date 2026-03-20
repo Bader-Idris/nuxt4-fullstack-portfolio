@@ -16,6 +16,7 @@ const PushSubscriptionSchema = new Schema<IPushSubscription>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
     },
     endpoint: {
       type: String,

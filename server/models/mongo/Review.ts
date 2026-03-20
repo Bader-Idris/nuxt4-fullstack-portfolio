@@ -23,11 +23,13 @@ const ReviewSchema = new Schema<IReview>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
     },
     product: {
       type: Schema.Types.ObjectId,
       ref: 'Product',
       required: true,
+      index: true,
     },
   },
   { timestamps: true },

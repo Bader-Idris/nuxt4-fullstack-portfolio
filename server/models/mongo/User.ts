@@ -20,6 +20,7 @@ const UserSchema = new Schema<IUser>(
           /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(value),
         message: "Please provide valid email",
       },
+      index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
     },
     password: {
       type: String,
@@ -36,13 +37,13 @@ const UserSchema = new Schema<IUser>(
       enum: ["admin", "user", "premium", "editor" ],
       default: "user",
     },
-    verificationToken: String,
+    verificationToken: { type: String, index: true },
     isVerified: {
       type: Boolean,
       default: false,
     },
     verified: Date,
-    passwordToken: String,
+    passwordToken: { type: String, index: true },
     passwordTokenExpirationDate: Date,
   },
   {

@@ -5,11 +5,13 @@ const MessageSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
+    index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
   },
   to: {
     type: Schema.Types.ObjectId,
     ref: "User",
     required: false, // Optional for broadcast messages
+    index: true,
   },
   message: {
     type: String,
@@ -18,10 +20,12 @@ const MessageSchema = new Schema({
   timestamp: {
     type: Date,
     default: Date.now,
+    index: true,
   },
   isBroadcast: {
     type: Boolean,
     default: false,
+    index: true,
   },
 });
 
