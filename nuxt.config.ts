@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-03-16",
+  compatibilityDate: "2026-03-25",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {
@@ -19,6 +19,9 @@ export default defineNuxtConfig({
     "@server": "./server",
   },
   serverDir: "./server",
+  future: {
+    compatibilityVersion: 5,
+  },
   nitro: {
     // ...(process.env.IS_ELECTRON === "true" && {
     // hooks: {
@@ -93,9 +96,6 @@ export default defineNuxtConfig({
       // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
-    future: {
-      compatibilityVersion: 5,
-    },
     experimental: {
       websocket: true,
       // asyncContext: true,

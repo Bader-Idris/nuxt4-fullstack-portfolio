@@ -1,26 +1,29 @@
 <template>
-  <RiveSplash
-    v-if="showRiveSplash"
-    src="/lottieToRive.riv"
-    @animation-stopped="hideSplashAndShowApp"
-  />
+  <!-- for nuxt ui that requires tailwind to be installed! -->
+  <!-- <UApp :toaster="{ position: 'top-center' }" > -->
+    <RiveSplash
+      v-if="showRiveSplash"
+      src="/lottieToRive.riv"
+      @animation-stopped="hideSplashAndShowApp"
+    />
 
-  <template v-if="showMainContent || !config.public.isCapacitor">
-    <NuxtLayout>
-      <NuxtPage v-slot="{ Component }">
-        <Transition
-          :name="isFirstLoad ? '' : 'fade'"
-          mode="out-in"
-          @before-enter="handleBeforeEnter"
-        >
-          <component
-            :is="Component"
-            :key="$route.fullPath"
-          />
-        </Transition>
-      </NuxtPage>
-    </NuxtLayout>
-  </template>
+    <template v-if="showMainContent || !config.public.isCapacitor">
+      <NuxtLayout>
+        <NuxtPage v-slot="{ Component }">
+          <Transition
+            :name="isFirstLoad ? '' : 'fade'"
+            mode="out-in"
+            @before-enter="handleBeforeEnter"
+          >
+            <component
+              :is="Component"
+              :key="$route.fullPath"
+            />
+          </Transition>
+        </NuxtPage>
+      </NuxtLayout>
+    </template>
+  <!-- </UApp> -->
 </template>
 
 <script setup lang="ts">
