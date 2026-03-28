@@ -23,6 +23,14 @@ export default defineNuxtConfig({
     compatibilityVersion: 5,
   },
   nitro: {
+    // Fix for Windows path resolution in prerenderer
+    ...(process.platform === 'win32' && {
+      esbuild: {
+        options: {
+          target: 'node20',
+        },
+      },
+    }),
     // ...(process.env.IS_ELECTRON === "true" && {
     // hooks: {
     //   'prerender:generate'(route) {

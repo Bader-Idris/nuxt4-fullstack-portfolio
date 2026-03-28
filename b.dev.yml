@@ -83,6 +83,8 @@ services:
     image: mongo:8.2
     container_name: mongo
     restart: always
+    ports:
+      - "27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=Bader
       - MONGO_INITDB_ROOT_PASSWORD=myPassword
@@ -97,6 +99,8 @@ services:
     image: redis:alpine3.18
     container_name: redis
     restart: always
+    ports:
+      - "6379:6379"
     volumes:
       - ./server/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
       - redis-data:/data:rw
@@ -109,8 +113,8 @@ services:
     privileged: true
     command: >
       sh -c "sysctl vm.overcommit_memory=1 &&
-      redis-server /usr/local/etc/redis/redis.conf --requirepass myPassword && 
-      AUTH default myPassword && 
+      redis-server /usr/local/etc/redis/redis.conf --requirepass myPassword &&
+      AUTH default myPassword &&
       save 60 1"
   # TODO: with binding the data volume we can do backup services as:
   # redis-backup:
