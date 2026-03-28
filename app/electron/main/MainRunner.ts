@@ -1,4 +1,7 @@
-import { app, BrowserWindow, ipcMain, RenderProcessGoneDetails, Menu, Tray } from 'electron'
+import { app, BrowserWindow, ipcMain, type RenderProcessGoneDetails, Menu, Tray, session } from 'electron'
+import path from 'node:path'
+import { URL } from 'node:url'
+import fs from 'node:fs'
 import Constants from './utils/Constants'
 import IPCs from './IPCs'
 import menuTemplate from './utils/menu-template'
@@ -25,12 +28,15 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     useContentSize: true,
     // titleBarStyle: 'hidden',
     // frame: false, // disable default title bar || frame
-    webPreferences: Constants.DEFAULT_WEB_PREFERENCES
+    webPreferences: {
+      ...Constants.DEFAULT_WEB_PREFERENCES,
+      webviewTag: false,
+    }
   })
 
   mainWindow.setMenu(null) // Disable default menu
 
-  const menu = Menu.buildFromTemplate(menuTemplate) // Set custom menu
+  const menu = Menu.buildFromTemplate(menuTemplate)
   Menu.setApplicationMenu(menu)
 
   // Define user tasks for the taskbar context menu
@@ -95,7 +101,62 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
   if (Constants.IS_DEV_ENV) {
     await mainWindow.loadURL(Constants.APP_INDEX_URL_DEV)
   } else {
-    console.log("[Electron Main] Loading file:",  Constants.APP_INDEX_URL_PROD);
+    const appRoot = process.env.VITE_PUBLIC!
+    console.log("[Electron Main] Loading file:", Constants.APP_INDEX_URL_PROD)
+    console.log("[Electron Main] App root:", appRoot)
+    console.log("[Electron Main] Resources path:", process.resourcesPath)
+    console.log("[Electron Main] App path:", app.getAppPath())
+    console.log("[Electron Main] EXE path:", process.execPath)
+
+    // Determine the base directory for app assets
+    // In production:
+    // - process.resourcesPath points to resources/ directory next to the executable
+    // - Unpacked files are in resources/app.asar.unpacked/
+    const resourcesBase = process.resourcesPath || path.join(path.dirname(app.getAppPath()), 'resources')
+    const unpackedBase = path.join(resourcesBase, 'app.asar.unpacked')
+    
+    console.log("[Electron Main] Resources base:", resourcesBase)
+    console.log("[Electron Main] Unpacked base:", unpackedBase)
+
+    // Set up file protocol interceptor BEFORE loading the file
+    // This intercepts requests for app assets and serves them from the unpacked directory
+    session.defaultSession.protocol.interceptFileProtocol('file', (request, callback) => {
+      const parsedUrl = new URL(request.url)
+      let pathname = decodeURIComponent(parsedUrl.pathname)
+
+      // Handle Windows paths (e.g., /C:/path -> C:/path)
+      const isWindowsPath = /^\/[A-Z]:\//i.test(pathname)
+      if (isWindowsPath) {
+        pathname = pathname.substring(1)
+      }
+
+      // Check if this is an app asset that should be served from unpacked resources
+      const appAssetPrefixes = ['/imgs/', '/_nuxt/', '/fonts/', '/sounds/', '/favicon', '/builds/', '/__nuxt_content/']
+      const isAppAsset = appAssetPrefixes.some(prefix => pathname.startsWith(prefix))
+
+      if (isAppAsset) {
+        // Files are unpacked to: resources/app.asar.unpacked/.output/public/
+        const filePath = path.join(unpackedBase, '.output/public', pathname)
+        
+        console.log(`[Electron Protocol] Trying: ${filePath}`)
+        
+        // Check if file exists
+        fs.stat(filePath, (err, stats) => {
+          if (err) {
+            console.error(`[Electron Protocol] File not found: ${filePath}`, err.message)
+            callback({ statusCode: 404 })
+          } else {
+            console.log(`[Electron Protocol] Serving: ${filePath}`)
+            callback({ path: filePath })
+          }
+        })
+      } else {
+        // Default handling for other paths
+        callback({ path: decodeURIComponent(parsedUrl.pathname) })
+      }
+    })
+
+    // Load the main HTML file
     await mainWindow.loadFile(Constants.APP_INDEX_URL_PROD)
   }
 
@@ -146,7 +207,17 @@ const createErrorWindow = async (
 }
 
 const createTray = () => {
-  tray = new Tray('../../../electronAssets/resources/icon.png')
+  // Use absolute path for tray icon in production
+  // In production, resources are unpacked to resources/app.asar.unpacked/
+  const resourcesBase = process.resourcesPath || path.join(path.dirname(app.getAppPath()), 'resources')
+  const unpackedBase = path.join(resourcesBase, 'app.asar.unpacked')
+  
+  const iconPath = Constants.IS_DEV_ENV
+    ? path.join(process.env.APP_ROOT!, 'electronAssets/resources/icon.png')
+    : path.join(unpackedBase, 'electronAssets/resources/icon.png')
+  
+  console.log('[Electron Tray] Icon path:', iconPath)
+  tray = new Tray(iconPath)
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open',

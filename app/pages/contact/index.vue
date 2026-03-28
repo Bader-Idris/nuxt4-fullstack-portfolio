@@ -5,7 +5,36 @@ import { useApiError } from '~/composables/useApiError';
 
 const { t, locale } = useI18n();
 const { getFriendlyErrorMessage } = useApiError();
+const config = useRuntimeConfig()
 const isSubmitted = ref<boolean>(false);
+
+// Thank you image path with originUrl for SSR
+const thanksImage = ref('/imgs/thanks.svg')
+
+if (import.meta.server) {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
+  const inputPath = path.join(process.cwd(), 'public/imgs/thanks.svg')
+  const outputPath = path.join(process.cwd(), 'public/imgs/thanks.webp')
+
+  try {
+    if (fs.existsSync(inputPath) && !fs.existsSync(outputPath)) {
+      const sharp = (await import('sharp')).default
+      await sharp(inputPath)
+        .webp({ quality: 80 })
+        .toFile(outputPath)
+      console.log('[contact.vue] WebP generated')
+    }
+    if (fs.existsSync(outputPath)) {
+      thanksImage.value = `${config.public.originUrl}/imgs/thanks.webp`
+    } else {
+      thanksImage.value = `${config.public.originUrl}/imgs/thanks.svg`
+    }
+  } catch (error) {
+    console.error('[contact.vue] Sharp error:', error)
+    thanksImage.value = `${config.public.originUrl}/imgs/thanks.svg`
+  }
+}
 
 useSeoMeta({
   title: t('contact.title'),
@@ -182,7 +211,7 @@ onBeforeUnmount(() => {
         loading="lazy"
       /> -->
       <img
-        src="/imgs/thanks.svg"
+        :src="thanksImage"
         alt="thank you message icon"
         format="webp"
         loading="lazy"

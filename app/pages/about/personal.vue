@@ -77,23 +77,40 @@ import { Flip } from 'gsap/all'
 
 const { t, locale } = useI18n()
 const { $device } = useNuxtApp()
+const config = useRuntimeConfig()
 
-const profileImage = useState('profileImage', () => '/imgs/meTwentyFour.jpg')
+// Base image path
+const imageBasePath = '/imgs/meTwentyFour.jpg'
 
+// State to hold the final image path (shared between SSR and client)
+const profileImage = useState('profileImage', () => imageBasePath)
+
+// Generate WebP and set image path on server
 if (import.meta.server) {
   const fs = await import('node:fs')
   const path = await import('node:path')
   const inputPath = path.join(process.cwd(), 'public/imgs/meTwentyFour.jpg')
   const outputPath = path.join(process.cwd(), 'public/imgs/meTwentyFour.webp')
 
-  if (fs.existsSync(inputPath)) {
-    if (!fs.existsSync(outputPath)) {
+  try {
+    // Generate WebP if it doesn't exist
+    if (fs.existsSync(inputPath) && !fs.existsSync(outputPath)) {
       const sharp = (await import('sharp')).default
       await sharp(inputPath)
         .webp({ quality: 80 })
         .toFile(outputPath)
+      console.log('[personal.vue] WebP generated')
     }
-    profileImage.value = '/imgs/meTwentyFour.webp'
+    
+    // Set WebP path with originUrl for SSR
+    if (fs.existsSync(outputPath)) {
+      profileImage.value = `${config.public.originUrl}/imgs/meTwentyFour.webp`
+    } else {
+      profileImage.value = `${config.public.originUrl}${imageBasePath}`
+    }
+  } catch (error) {
+    console.error('[personal.vue] Sharp error:', error)
+    profileImage.value = `${config.public.originUrl}${imageBasePath}`
   }
 }
 
@@ -103,7 +120,7 @@ useSeoMeta({
   description: t('about.personal.description'),
   ogTitle: t('about.personal.title'),
   ogDescription: t('about.personal.description'),
-  ogImage: useRuntimeConfig().public.originUrl + profileImage.value,
+  ogImage: profileImage.value,
   twitterCard: 'summary_large_image',
 })
 
@@ -118,8 +135,8 @@ useSchemaOrg([
       name: "Bader Idris",
       jobTitle: t('about.personal.schema.jobTitle'),
       description: t('about.personal.schema.personDescription'),
-      image: useRuntimeConfig().public.originUrl + profileImage.value,
-      url: useRuntimeConfig().public.originUrl + useRoute().path,
+      image: profileImage.value,
+      url: `${config.public.originUrl}${useRoute().path}`,
       sameAs: [
         "https://github.com/bader-idris",
         "https://linkedin.com/in/bader-idris"

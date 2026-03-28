@@ -28,8 +28,14 @@ export default class Constants {
     contextIsolation: true,
     enableRemoteModule: false,
     preload: path.join(MAIN_DIST, 'preload/index.js'),
+    // Allow loading resources from file:// protocol
+    webSecurity: true,
+    allowRunningInsecureContent: false,
   }
 
   static APP_INDEX_URL_DEV = `http://localhost:${process.env.PORT}`
   static APP_INDEX_URL_PROD = path.join(process.env.VITE_PUBLIC!, 'index.html')
+  
+  // Custom protocol for loading app assets
+  static APP_PROTOCOL = 'app'
 }

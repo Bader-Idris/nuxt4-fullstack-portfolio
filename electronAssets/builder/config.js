@@ -73,10 +73,16 @@ const baseConfig = {
   appId: packageJson.appId,
   asar: true, // set true for securing the source code and some performances
   // ? read https://sharp.pixelplumbing.com/install/#electron
-  asarUnpack: [
-    "**/node_modules/sharp/**/*",
-    "**/node_modules/@img/**/*"
-  ],
+  // asarUnpack: [
+  //   "**/node_modules/sharp/**/*",
+  //   "**/node_modules/@img/**/*",
+  //   // Only unpack image and SVG files for direct file access
+  //   ".output/public/imgs/**/*.{png,jpg,jpeg,webp,svg,gif,ico}",
+  //   ".output/public/fonts/**/*",
+  //   ".output/public/sounds/**/*",
+  //   // Unpack electronAssets/resources for tray icon access
+  //   "electronAssets/resources/**/*"
+  // ],
   // extends: null,
   compression: 'maximum',
   artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${platform}_${arch}.${ext}', // ! can't read them with template strings!
@@ -221,6 +227,7 @@ const baseConfig = {
   files: [
     'dist-electron/**/*',
     ".output/**/*",
+    "electronAssets/resources/**/*",
     '!dist-electron/main/index.dev.js',
     '!dist',
     '!electronAssets/builder/envs', // important security to hide our certs from third parties, or in the app bundle

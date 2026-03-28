@@ -73,7 +73,6 @@
 </template>
 
 <script setup lang="ts">
-const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
 
@@ -88,7 +87,7 @@ definePageMeta({
   ],
 })
 
-// const route = useRoute()
+const route = useRoute()
 const router = useRouter()
 const activeIconIndex = ref(1)
 const isHobbiesHidden = ref(false)
@@ -151,25 +150,35 @@ const hobbiesObj = useState('aboutHobbies', () => [
   { title: 'University',  icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
 ])
 
+const config = useRuntimeConfig()
+
 if (import.meta.server) {
   const fs = await import('node:fs')
   const path = await import('node:path')
   const sharp = (await import('sharp')).default
-  
+
   const processIcon = async (iconPath: string) => {
     const inputPath = path.join(process.cwd(), 'public', iconPath)
     const outputPath = inputPath.replace('.svg', '.webp')
     const webpPath = iconPath.replace('.svg', '.webp')
-    
+
     if (fs.existsSync(inputPath)) {
       if (!fs.existsSync(outputPath)) {
-        await sharp(inputPath)
-          .webp({ quality: 80 })
-          .toFile(outputPath)
+        try {
+          await sharp(inputPath)
+            .webp({ quality: 80 })
+            .toFile(outputPath)
+          console.log(`[about.vue] WebP generated: ${webpPath}`)
+        } catch (error) {
+          console.error(`[about.vue] Sharp error for ${iconPath}:`, error)
+          return `${config.public.originUrl}${iconPath}`
+        }
       }
-      return webpPath
+      // Return WebP path with originUrl for SSR
+      return `${config.public.originUrl}${webpPath}`
     }
-    return iconPath
+    // Fallback to original path with originUrl
+    return `${config.public.originUrl}${iconPath}`
   }
 
   // Process main icons
