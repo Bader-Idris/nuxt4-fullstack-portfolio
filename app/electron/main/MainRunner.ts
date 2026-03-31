@@ -124,35 +124,77 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
       const parsedUrl = new URL(request.url)
       let pathname = decodeURIComponent(parsedUrl.pathname)
 
-      // Handle Windows paths (e.g., /C:/path -> C:/path)
-      const isWindowsPath = /^\/[A-Z]:\//i.test(pathname)
-      if (isWindowsPath) {
-        pathname = pathname.substring(1)
+      console.log(`[Electron Protocol] Raw pathname: ${pathname}`)
+
+      // On Windows, URL.pathname comes as /C:/path/to/file
+      // We need to handle this carefully for cross-platform builds
+      if (process.platform === 'win32') {
+        // Check if this is a Windows path with drive letter
+        if (/^\/[A-Z]:\//i.test(pathname)) {
+          pathname = pathname.substring(1) // Remove leading slash: /C:/... -> C:/...
+          console.log(`[Electron Protocol] Windows path detected: ${pathname}`)
+        }
       }
 
-      // Check if this is an app asset that should be served from unpacked resources
-      const appAssetPrefixes = ['/imgs/', '/_nuxt/', '/fonts/', '/sounds/', '/favicon', '/builds/', '/__nuxt_content/']
-      const isAppAsset = appAssetPrefixes.some(prefix => pathname.startsWith(prefix))
+      // Check if this is an app asset (imgs, _nuxt, fonts, sounds, etc.)
+      // Normalize for comparison by converting backslashes and lowercase
+      const normalizedPath = pathname.replace(/\\/g, '/').toLowerCase()
+      
+      // App asset patterns - these should be served from our app resources
+      const isAppAsset = [
+        'imgs/', '_nuxt/', 'fonts/', 'sounds/', 
+        'favicon', 'builds/', '__nuxt_content/'
+      ].some(pattern => {
+        // Handle both absolute paths (/imgs/) and Windows paths (C:/imgs/)
+        const cleanNormalized = normalizedPath.replace(/^[a-z]:\//, '')
+        return cleanNormalized.startsWith(pattern) || normalizedPath.startsWith('/' + pattern)
+      })
 
       if (isAppAsset) {
+        // Strip drive letter and leading slashes for path joining
+        // C:/imgs/... -> imgs/...
+        // /imgs/... -> imgs/...
+        let cleanPath = pathname.replace(/^[\/\\]+/, '')
+        
+        // Remove Windows drive letter if present
+        if (/^[A-Z]:\//i.test(cleanPath)) {
+          cleanPath = cleanPath.substring(3)
+        }
+
         // Files are unpacked to: resources/app.asar.unpacked/.output/public/
-        const filePath = path.join(unpackedBase, '.output/public', pathname)
-        
+        const filePath = path.join(unpackedBase, '.output', 'public', cleanPath)
+
         console.log(`[Electron Protocol] Trying: ${filePath}`)
-        
+
         // Check if file exists
         fs.stat(filePath, (err, stats) => {
           if (err) {
             console.error(`[Electron Protocol] File not found: ${filePath}`, err.message)
-            callback({ statusCode: 404 })
+            // Try alternative path without 'public' subdirectory
+            const altFilePath = path.join(unpackedBase, '.output', cleanPath)
+            console.log(`[Electron Protocol] Trying alternative: ${altFilePath}`)
+            fs.stat(altFilePath, (altErr, altStats) => {
+              if (altErr) {
+                console.error(`[Electron Protocol] Alternative also not found: ${altFilePath}`, altErr.message)
+                callback({ statusCode: 404 })
+              } else {
+                console.log(`[Electron Protocol] Serving alternative: ${altFilePath}`)
+                callback({ path: altFilePath })
+              }
+            })
           } else {
             console.log(`[Electron Protocol] Serving: ${filePath}`)
             callback({ path: filePath })
           }
         })
       } else {
-        // Default handling for other paths
-        callback({ path: decodeURIComponent(parsedUrl.pathname) })
+        // Non-app assets - pass through with platform-appropriate path format
+        if (process.platform === 'win32') {
+          const winPath = pathname.replace(/^[\/\\]+/, '').replace(/\//g, '\\')
+          callback({ path: winPath })
+        } else {
+          callback({ path: pathname })
+        }
       }
     })
 
@@ -211,13 +253,40 @@ const createTray = () => {
   // In production, resources are unpacked to resources/app.asar.unpacked/
   const resourcesBase = process.resourcesPath || path.join(path.dirname(app.getAppPath()), 'resources')
   const unpackedBase = path.join(resourcesBase, 'app.asar.unpacked')
-  
+
   const iconPath = Constants.IS_DEV_ENV
-    ? path.join(process.env.APP_ROOT!, 'electronAssets/resources/icon.png')
-    : path.join(unpackedBase, 'electronAssets/resources/icon.png')
-  
+    ? path.join(process.env.APP_ROOT!, 'electronAssets', 'resources', 'icon.png')
+    : path.join(unpackedBase, 'electronAssets', 'resources', 'icon.png')
+
   console.log('[Electron Tray] Icon path:', iconPath)
-  tray = new Tray(iconPath)
+  console.log('[Electron Tray] Icon exists:', fs.existsSync(iconPath))
+  
+  // Fallback for Windows if the icon path doesn't exist
+  if (!fs.existsSync(iconPath) && !Constants.IS_DEV_ENV) {
+    // Try alternative paths for Windows
+    const appDir = path.dirname(process.execPath)
+    const alternativePaths = [
+      path.join(appDir, 'resources', 'app.asar.unpacked', 'electronAssets', 'resources', 'icon.png'),
+      path.join(appDir, 'electronAssets', 'resources', 'icon.png'),
+      path.join(appDir, 'resources', 'icon.png')
+    ]
+    
+    for (const altPath of alternativePaths) {
+      console.log('[Electron Tray] Trying alternative icon path:', altPath)
+      if (fs.existsSync(altPath)) {
+        tray = new Tray(altPath)
+        console.log('[Electron Tray] Using alternative icon:', altPath)
+        break
+      }
+    }
+    
+    if (!tray) {
+      console.error('[Electron Tray] No icon found, creating tray without icon')
+      tray = new Tray(null) // Creates tray with default icon
+    }
+  } else {
+    tray = new Tray(iconPath)
+  }
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open',

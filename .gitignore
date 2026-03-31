@@ -46,3 +46,8 @@ server/lib/generated/prisma
 
 **/service-accounts*.json
 /server/prisma/generated/prisma
+
+electronAssets/builder/envs/request.csr
+electronAssets/builder/envs/certificate.crt
+electronAssets/builder/envs/private.key
+electronAssets/builder/envs/Cert.pfx

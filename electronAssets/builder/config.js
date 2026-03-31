@@ -72,6 +72,10 @@ const baseConfig = {
   // afterSign: './createMD5List.js',
   appId: packageJson.appId,
   asar: true, // set true for securing the source code and some performances
+  // Skip rebuilding native modules for cross-platform builds
+  // This is required when building Windows apps from Linux/macOS
+  npmRebuild: false,
+  nodeGypRebuild: false,
   // ? read https://sharp.pixelplumbing.com/install/#electron
   // asarUnpack: [
   //   "**/node_modules/sharp/**/*",
@@ -126,8 +130,20 @@ const baseConfig = {
     // timeStampServer: 'http://timestamp.comodoca.com',
 
     // Use correct property names for electron-builder Windows configuration
-    cscLink: process.env.WIN_CSC_LINK || path.join(__dirname, 'envs', 'Cert.pfx'),
-    cscKeyPassword: process.env.WIN_CSC_KEY_PASSWORD,
+    // For cross-platform builds from Linux/macOS, use WIN_* variables
+    // Certificate can be:
+    // 1. Path to .pfx file (relative or absolute)
+    // 2. Base64-encoded certificate content (prefix with "base64:")
+    cscLink: process.env.WIN_CSC_LINK || (function() {
+      const certPath = path.join(__dirname, 'envs', 'Cert.pfx')
+      // Only use default path if file exists, otherwise let electron-builder skip signing
+      try {
+        return require('fs').existsSync(certPath) ? certPath : undefined
+      } catch {
+        return undefined
+      }
+    })(),
+    cscKeyPassword: process.env.WIN_CSC_KEY_PASSWORD || undefined,
     // signingHashAlgorithms: ['sha256'], // used from gemini web not cli, invalid config!
     // publisherName: 'Bader-Idris',
 

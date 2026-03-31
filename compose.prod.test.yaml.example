@@ -65,7 +65,7 @@ services:
     networks:
       - app-network
   redis:
-    image: redis:alpine3.18
+    image: redis:alpine
     container_name: redis
     restart: always
     volumes:
@@ -88,7 +88,7 @@ services:
   #   volumes:
   #     - redis-data:/backup/redis:ro
   postgres:
-    image: postgres:16-alpine3.18
+    image: postgres:16-alpine
     container_name: psql
     restart: always
     environment:

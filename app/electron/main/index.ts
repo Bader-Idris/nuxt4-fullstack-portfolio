@@ -47,7 +47,7 @@ function createWindow() {
     // In production: unpacked files are in resources/app.asar.unpacked/
     const resourcesBase = process.resourcesPath || path.join(path.dirname(app.getAppPath()), 'resources');
     const unpackedBase = path.join(resourcesBase, 'app.asar.unpacked');
-    
+
     console.log("[Electron Main] Resources base:", resourcesBase);
     console.log("[Electron Main] Unpacked base:", unpackedBase);
 
@@ -57,20 +57,45 @@ function createWindow() {
       const parsedUrl = new URL(request.url);
       let pathname = decodeURIComponent(parsedUrl.pathname);
 
-      // Handle Windows paths (e.g., /C:/path -> C:/path)
-      const isWindowsPath = /^\/[A-Z]:\//i.test(pathname);
-      if (isWindowsPath) {
-        pathname = pathname.substring(1);
+      console.log(`[Electron Protocol] Raw pathname: ${pathname}`);
+
+      // On Windows, URL.pathname comes as /C:/path/to/file
+      // We need to handle this carefully for cross-platform builds
+      if (process.platform === 'win32') {
+        // Check if this is a Windows path with drive letter
+        if (/^\/[A-Z]:\//i.test(pathname)) {
+          pathname = pathname.substring(1); // Remove leading slash: /C:/... -> C:/...
+          console.log(`[Electron Protocol] Windows path detected: ${pathname}`);
+        }
       }
 
-      // Check if this is an app asset that should be served from app resources
-      const appAssetPrefixes = ['/imgs/', '/_nuxt/', '/fonts/', '/sounds/', '/favicon', '/builds/', '/__nuxt_content/'];
-      const isAppAsset = appAssetPrefixes.some(prefix => pathname.startsWith(prefix));
+      // Check if this is an app asset (imgs, _nuxt, fonts, sounds, etc.)
+      // Normalize for comparison by converting backslashes and lowercase
+      const normalizedPath = pathname.replace(/\\/g, '/').toLowerCase();
+      
+      // App asset patterns - these should be served from our app resources
+      const isAppAsset = [
+        'imgs/', '_nuxt/', 'fonts/', 'sounds/', 
+        'favicon', 'builds/', '__nuxt_content/'
+      ].some(pattern => {
+        // Handle both absolute paths (/imgs/) and Windows paths (C:/imgs/)
+        const cleanNormalized = normalizedPath.replace(/^[a-z]:\//, '');
+        return cleanNormalized.startsWith(pattern) || normalizedPath.startsWith('/' + pattern);
+      });
 
       if (isAppAsset) {
-        // First try unpacked location (for images, fonts, sounds)
-        const unpackedPath = path.join(unpackedBase, '.output/public', pathname);
+        // Strip drive letter and leading slashes for path joining
+        // C:/imgs/... -> imgs/...
+        // /imgs/... -> imgs/...
+        let cleanPath = pathname.replace(/^[\/\\]+/, '');
         
+        // Remove Windows drive letter if present
+        if (/^[A-Z]:\//i.test(cleanPath)) {
+          cleanPath = cleanPath.substring(3);
+        }
+
+        // Try unpacked location first (for images, fonts, sounds)
+        const unpackedPath = path.join(unpackedBase, '.output', 'public', cleanPath);
         console.log(`[Electron Protocol] Trying unpacked: ${unpackedPath}`);
 
         fs.stat(unpackedPath, (err, stats) => {
@@ -78,24 +103,40 @@ function createWindow() {
             console.log(`[Electron Protocol] Serving unpacked: ${unpackedPath}`);
             callback({ path: unpackedPath });
           } else {
-            // Fallback to ASAR archive (for JS, CSS, etc.)
-            const asarPath = path.join(resourcesBase, 'app.asar', '.output/public', pathname);
-            console.log(`[Electron Protocol] Trying ASAR: ${asarPath}`);
-            
-            fs.stat(asarPath, (err2, stats2) => {
-              if (err2) {
-                console.error(`[Electron Protocol] File not found: ${pathname}`);
-                callback({ statusCode: 404 });
+            // Try without 'public' subdirectory
+            const altPath = path.join(unpackedBase, '.output', cleanPath);
+            console.log(`[Electron Protocol] Trying alternative: ${altPath}`);
+
+            fs.stat(altPath, (altErr, altStats) => {
+              if (!altErr && altStats.isFile()) {
+                console.log(`[Electron Protocol] Serving alternative: ${altPath}`);
+                callback({ path: altPath });
               } else {
-                console.log(`[Electron Protocol] Serving ASAR: ${asarPath}`);
-                callback({ path: asarPath });
+                // Fallback to ASAR (for JS, CSS)
+                const asarPath = path.join(resourcesBase, 'app.asar', '.output', 'public', cleanPath);
+                console.log(`[Electron Protocol] Trying ASAR: ${asarPath}`);
+
+                fs.stat(asarPath, (asarErr, asarStats) => {
+                  if (asarErr) {
+                    console.error(`[Electron Protocol] File not found: ${cleanPath}`);
+                    callback({ statusCode: 404 });
+                  } else {
+                    console.log(`[Electron Protocol] Serving ASAR: ${asarPath}`);
+                    callback({ path: asarPath });
+                  }
+                });
               }
             });
           }
         });
       } else {
-        // Default handling for other paths
-        callback({ path: decodeURIComponent(parsedUrl.pathname) });
+        // Non-app assets - pass through with platform-appropriate path format
+        if (process.platform === 'win32') {
+          const winPath = pathname.replace(/^[\/\\]+/, '').replace(/\//g, '\\');
+          callback({ path: winPath });
+        } else {
+          callback({ path: pathname });
+        }
       }
     });
 
