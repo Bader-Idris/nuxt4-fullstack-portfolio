@@ -38,7 +38,7 @@ RUN npm run build
 # ────────────────────────────────────────────────────────────────
 # Final stage: Deno runtime only – no Node left
 # ────────────────────────────────────────────────────────────────
-FROM denoland/deno:alpine-2.7.8 AS runner
+FROM denoland/deno:alpine-2.7.11 AS runner
 
 WORKDIR /app
 

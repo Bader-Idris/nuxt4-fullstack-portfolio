@@ -1,5 +1,8 @@
 import { defineCollection, z } from "@nuxt/content";
-import { asSeoCollection } from "@nuxtjs/seo/content";
+import { defineRobotsSchema } from "@nuxtjs/robots/content";
+import { defineSitemapSchema } from "@nuxtjs/sitemap/content";
+import { defineOgImageSchema } from "nuxt-og-image/content";
+import { defineSchemaOrgSchema } from "nuxt-schema-org/content";
 
 const commonProjectSchema = z.object({
   title: z.string().nonempty(),
@@ -12,38 +15,39 @@ const commonProjectSchema = z.object({
   featured: z.boolean().optional(),
 });
 
+const seoSchema = z.object({
+  robots: defineRobotsSchema(),
+  sitemap: defineSitemapSchema(),
+  ogImage: defineOgImageSchema(),
+  schemaOrg: defineSchemaOrgSchema(),
+});
+
 export const collections = {
-  projects_en: defineCollection(
-    asSeoCollection({
-      type: "page",
-      source: {
-        include: "en/projects/*.md",
-        exclude: ["index.**"],
-        prefix: "/projects",
-      },
-      schema: commonProjectSchema,
-    })
-  ),
-  projects_ar: defineCollection(
-    asSeoCollection({
-      type: "page",
-      source: {
-        include: "ar/projects/*.md",
-        exclude: ["index.**"],
-        prefix: "/ar/projects",
-      },
-      schema: commonProjectSchema,
-    })
-  ),
-  projects_es: defineCollection(
-    asSeoCollection({
-      type: "page",
-      source: {
-        include: "es/projects/*.md",
-        exclude: ["index.**"],
-        prefix: "/es/projects",
-      },
-      schema: commonProjectSchema,
-    })
-  ),
+  projects_en: defineCollection({
+    type: "page",
+    source: {
+      include: "en/projects/*.md",
+      exclude: ["index.**"],
+      prefix: "/projects",
+    },
+    schema: commonProjectSchema.merge(seoSchema),
+  }),
+  projects_ar: defineCollection({
+    type: "page",
+    source: {
+      include: "ar/projects/*.md",
+      exclude: ["index.**"],
+      prefix: "/ar/projects",
+    },
+    schema: commonProjectSchema.merge(seoSchema),
+  }),
+  projects_es: defineCollection({
+    type: "page",
+    source: {
+      include: "es/projects/*.md",
+      exclude: ["index.**"],
+      prefix: "/es/projects",
+    },
+    schema: commonProjectSchema.merge(seoSchema),
+  }),
 };

@@ -96,7 +96,7 @@ services:
         ipv4_address: 200.200.1.200
     command: mongod --config /etc/mongod.conf  # Specify the custom configuration file path
   redis:
-    image: redis:alpine3.18
+    image: redis:alpine
     container_name: redis
     restart: always
     ports:
@@ -122,7 +122,7 @@ services:
   #   volumes:
   #     - redis-data:/backup/redis:ro
   postgres:
-    image: postgres:16-alpine3.18
+    image: postgres:16-alpine
     # image: postgres:17.5-alpine3.22
     container_name: psql
     restart: always
