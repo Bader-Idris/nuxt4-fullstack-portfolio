@@ -123,7 +123,7 @@ services:
   #     - redis-data:/backup/redis:ro
   postgres:
     image: postgres:16-alpine
-    # image: postgres:17.5-alpine3.22
+    # image: postgres:17.5-alpine
     container_name: psql
     restart: always
     networks:

@@ -35,6 +35,8 @@ FROM node:24.14-alpine AS runner
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
 
+USER node
+
 # Expose the port and define the command to run the app
 ENV PORT 3000
 EXPOSE $PORT

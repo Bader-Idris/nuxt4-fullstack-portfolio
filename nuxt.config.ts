@@ -3,6 +3,8 @@ import { definePerson } from "nuxt-schema-org/schema";
 import path, { dirname } from 'path';
 import { fileURLToPath } from "url";
 // import { writeFileSync } from 'node:fs'
+// TODO: this crashes with: _nuxt/!~{00x}~-legacy.js:25:12: ERROR: Transforming destructuring to the configured target environment ("chrome64", "edge79", "es2020", "firefox67", "safari12" + 2 overrides) is not supported yet
+// import legacy from '@vitejs/plugin-legacy';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -11,7 +13,7 @@ const __dirname = dirname(__filename);
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-03-25",
+  compatibilityDate: "2026-04-10",
   devtools: { enabled: true },
   srcDir: "./app",
   alias: {
@@ -23,14 +25,16 @@ export default defineNuxtConfig({
     compatibilityVersion: 5,
   },
   nitro: {
-    // Fix for Windows path resolution in prerenderer
-    ...(process.platform === 'win32' && {
-      esbuild: {
-        options: {
-          target: 'node20',
-        },
-      },
-    }),
+    // // Fix for Windows path resolution in prerenderer
+    // TODO: test on windows!!
+    // ...(process.platform === 'win32' && {
+    //   esbuild: {
+    //     options: {
+    //       target: 'node20',
+    //     },
+    //   },
+    // }),
+
     // ...(process.env.IS_ELECTRON === "true" && {
     // hooks: {
     //   'prerender:generate'(route) {
@@ -112,6 +116,13 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
   vite: {
+    plugins: [
+      // legacy({
+      //   targets: ['defaults', 'not IE 11'],
+      //   // modernPolyfills: true,
+      //   // renderLegacyChunks: true,
+      // }),
+    ],
     css: {
       preprocessorOptions: {
         scss: {
@@ -148,9 +159,9 @@ export default defineNuxtConfig({
     "@nuxt/content",
     "nuxt-tiptap-editor",
     "@nuxt/eslint",
-    "@teages/nuxt-legacy",
     "@nuxt/scripts",
     "v-gsap-nuxt",
+    // "@teages/nuxt-legacy", // Removed: using @vitejs/plugin-legacy directly in vite config
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
   ...(process.env.IS_ELECTRON === "true" && {
@@ -619,15 +630,6 @@ export default defineNuxtConfig({
     //     imports: ["useI18n"],
     //   },
     // ],
-  },
-  // for older browsers we use polyfills, this looks good: @teages/nuxt-legacy,
-  // check its site: https://nuxt.com/modules/nuxt-legacy
-  legacy:{
-    // `@vitejs/plugin-legacy` options
-    vite: {
-      // check how it uses browsersl.ist options here: https://www.npmjs.com/package/@vitejs/plugin-legacy#Options
-      targets: ['defaults', 'not IE 11'], // defaults in v.7.2.1
-    },
   },
   scripts: {
     registry: {

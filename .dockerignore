@@ -7,6 +7,7 @@ a.yml
 a.*
 b.*
 bun.lockb
+# TODO: check bun builds, this could be required!
 bun.lock
 /.vscode
 

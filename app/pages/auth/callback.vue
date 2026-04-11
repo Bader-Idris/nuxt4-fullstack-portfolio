@@ -15,7 +15,8 @@ onMounted(async () => {
   try {
     // After redirect from OAuth, we have the cookie.
     // Call the /api/me endpoint to get the user data.
-    const { user } = await $fetch('/api/v1/auth/me');
+    const response = await $fetch('/api/v1/auth/me');
+    const user = response.user;
 
     if (user) {
       // This is the crucial step: set the user in the store.
