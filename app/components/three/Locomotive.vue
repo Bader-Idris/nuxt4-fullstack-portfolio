@@ -32,7 +32,14 @@ import { createSmokeTexture } from './utils/smokeTexture'
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
-const PIXEL_RATIO_MAX = 2 // Limit max pixel ratio for performance
+
+// Resolution tracking for shaders
+const sizes = {
+  width: 0,
+  height: 0,
+  pixelRatio: 1,
+  resolution: new THREE.Vector2(0, 0),
+}
 
 // Fullscreen state - synced with parent via v-model
 const modelFullscreen = defineModel<boolean>('fullscreen', { default: false })
@@ -151,13 +158,21 @@ const handleResize = () => {
 
   const width = containerRef.value.clientWidth
   const height = containerRef.value.clientHeight
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, PIXEL_RATIO_MAX)
+  sizes.pixelRatio = Math.min(window.devicePixelRatio, 2)
+  sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio)
 
+  // Update camera
   camera.aspect = width / height
   camera.updateProjectionMatrix()
 
+  // Update renderer
   renderer.setSize(width, height)
-  renderer.setPixelRatio(pixelRatio)
+  renderer.setPixelRatio(sizes.pixelRatio)
+
+  // Update shader uniform
+  if (smokeMaterial) {
+    smokeMaterial.uniforms.uResolution.value.copy(sizes.resolution)
+  }
 }
 
 onMounted(async () => {
@@ -176,28 +191,36 @@ onMounted(async () => {
   scene = new THREE.Scene()
   scene.background = new THREE.Color(0x228B22)
 
-  // Camera
-  camera = new THREE.PerspectiveCamera(
-    75,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    1000
-  )
-  camera.position.set(5, 3, 5)
-
   // Renderer
   renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
   })
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, PIXEL_RATIO_MAX)
-  renderer.setSize(container.clientWidth, container.clientHeight)
-  renderer.setPixelRatio(pixelRatio)
+  const width = container.clientWidth
+  const height = container.clientHeight
+
+  // Initialize sizes and resolution
+  sizes.width = width
+  sizes.height = height
+  sizes.pixelRatio = Math.min(window.devicePixelRatio, 2)
+  sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio)
+
+  renderer.setSize(width, height)
+  renderer.setPixelRatio(sizes.pixelRatio)
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.0
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFShadowMap
+
+  // Camera
+  camera = new THREE.PerspectiveCamera(
+    75,
+    sizes.width / sizes.height,
+    0.1,
+    1000
+  )
+  camera.position.set(5, 3, 5)
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
@@ -322,12 +345,14 @@ onMounted(async () => {
         uniforms: {
           uTime: { value: 0 },
           // --- PARTICLE SIZE ---
-          // Base size in world units (multiplied by screen distance factor)
-          uParticleSize: { value: 0.5 },
+          // Scaled for uResolution.y (screen pixels), so particles stay consistent across devices
+          // ~1-2% of screen height as base size
+          uParticleSize: { value: 0.15 },
           // --- SMOKE COLOR ---
           // Warm gray: rgb(217, 209, 204)
           uColor: { value: new THREE.Color(0.85, 0.82, 0.8) },
           uTexture: { value: smokeTexture },
+          uResolution: { value: sizes.resolution.clone() },
         },
         vertexShader: particleVertexShader,
         fragmentShader: particleFragmentShader,

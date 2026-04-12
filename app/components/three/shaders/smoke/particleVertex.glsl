@@ -1,5 +1,6 @@
 uniform float uTime;
 uniform float uParticleSize;
+uniform vec2 uResolution;
 
 attribute float aLife;
 attribute float aBirth;
@@ -36,19 +37,13 @@ void main() {
     pos.x += sin(age * 0.5 + aSeed * 6.28) * 0.3 * lifeRatio;
     pos.z += cos(age * 0.5 + aSeed * 6.28) * 0.3 * lifeRatio;
 
-    // --- SCALE ---
-    // Particle grows as it ages: uParticleSize * (1.0 + lifeRatio * expansion_factor)
-    // uParticleSize: base size (set in TS uniform, default 0.5)
-    // 1.5: expansion multiplier - increase for bigger smoke clouds
-    float size = uParticleSize * (1.0 + lifeRatio * 1.5);
-
     // Alpha: fade in quickly, fade out slowly
     vAlpha = smoothstep(0.0, 0.1, lifeRatio) * (1.0 - smoothstep(0.3, 1.0, lifeRatio));
     vLife = lifeRatio;
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
-    
-    // 200.0: distance-based size attenuation - higher = larger on screen
-    gl_PointSize = size * (200.0 / -mvPosition.z);
+
+    // Resolution-based size: consistent visual size across all devices
+    gl_PointSize = uParticleSize * uResolution.y * (1.0 + lifeRatio * 1.5) * (1.0 / -mvPosition.z);
 }
