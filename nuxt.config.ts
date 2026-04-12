@@ -2,6 +2,7 @@ import { definePerson } from "nuxt-schema-org/schema";
 // for electron
 import path, { dirname } from 'path';
 import { fileURLToPath } from "url";
+import glsl from "vite-plugin-glsl";
 // import { writeFileSync } from 'node:fs'
 // TODO: this crashes with: _nuxt/!~{00x}~-legacy.js:25:12: ERROR: Transforming destructuring to the configured target environment ("chrome64", "edge79", "es2020", "firefox67", "safari12" + 2 overrides) is not supported yet
 // import legacy from '@vitejs/plugin-legacy';
@@ -117,11 +118,24 @@ export default defineNuxtConfig({
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
   vite: {
     plugins: [
-      // legacy({
+            // legacy({
       //   targets: ['defaults', 'not IE 11'],
       //   // modernPolyfills: true,
       //   // renderLegacyChunks: true,
       // }),
+      glsl({
+        include: [
+          '**/*.glsl',
+          '**/*.vert',
+          '**/*.frag',
+          '**/*.vs',
+          '**/*.fs',
+        ],
+        exclude: [],
+        warnDuplicatedImports: true,
+        defaultExtension: 'glsl',
+        compress: false,
+      }),
     ],
     css: {
       preprocessorOptions: {

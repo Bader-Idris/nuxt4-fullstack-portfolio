@@ -1,16 +1,16 @@
 <template>
   <div
     ref="containerRef"
-    :class="{ 'is-fullscreen': isFullscreen }"
+    :class="{ 'is-fullscreen': modelFullscreen }"
   >
     <canvas ref="canvasRef"></canvas>
     <button
       class="fullscreen-btn"
-      :aria-label="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+      :aria-label="modelFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
       @click="toggleFullscreen"
     >
       <Icon
-        :name="isFullscreen ? 'material-symbols-light:fullscreen-exit' : 'material-symbols:fullscreen'"
+        :name="modelFullscreen ? 'material-symbols-light:fullscreen-exit' : 'material-symbols:fullscreen'"
         size="28"
       />
     </button>
@@ -22,16 +22,25 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { useFullscreen } from '@vueuse/core'
+
+import particleVertexShader from './shaders/smoke/particleVertex.glsl'
+import particleFragmentShader from './shaders/smoke/particleFragment.glsl'
+// import particleVertexShader from './shaders/smoke/particleVertex.glsl'
+// import particleFragmentShader from './shaders/smoke/particleFragment.glsl'
+import { createSmokeTexture } from './utils/smokeTexture'
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const PIXEL_RATIO_MAX = 2 // Limit max pixel ratio for performance
 
 // Fullscreen state - synced with parent via v-model
-const isFullscreen = defineModel<boolean>('fullscreen', { default: false })
+const modelFullscreen = defineModel<boolean>('fullscreen', { default: false })
 const route = useRoute()
 const router = useRouter()
+
+// VueUse useFullscreen bound to containerRef
+const { isFullscreen: nativeFullscreen, enter, exit, toggle } = useFullscreen(containerRef, { autoExit: true })
 
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
@@ -39,85 +48,102 @@ let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 let locomotive: THREE.Group
 let animationId: number
+let smokeParticles: THREE.Points | null = null
+let smokeMaterial: THREE.ShaderMaterial | null = null
+let smokePositions: Float32Array
+let smokeLifetimes: Float32Array
+let smokeBirths: Float32Array
+let smokeLifespans: Float32Array
+let smokeVelocities: Float32Array
+let smokeSeeds: Float32Array
+// --- PARTICLE COUNT ---
+// Lower = better performance on mobile (try 30 for low-end devices)
+const PARTICLE_COUNT = 100
+// --- LIFETIME ---
+// How long each particle lives before respawning (seconds)
+const SMOKE_LIFETIME = 4.0
+
+const ticker = {
+  elapsed: 0,
+  delta: 1 / 60,
+  maxDelta: 1 / 30,
+  update(elapsedMs: number) {
+    const elapsedSeconds = elapsedMs / 1000
+    this.delta = Math.min(elapsedSeconds - this.elapsed, this.maxDelta)
+    this.elapsed = elapsedSeconds
+  },
+}
 
 const toggleFullscreen = async () => {
-  if (!containerRef.value) return
-
-  if (!isFullscreen.value) {
-    // Enter fullscreen - use real Fullscreen API
-    try {
-      await containerRef.value.requestFullscreen()
-    } catch (err) {
-      console.error('Fullscreen request failed:', err)
-    }
-  } else {
-    // Exit fullscreen - check if real API is active
-    if (document.fullscreenElement) {
-      try {
-        await document.exitFullscreen()
-      } catch (err) {
-        console.error('Exit fullscreen failed:', err)
-      }
-    } else {
-      // CSS-only fullscreen (from ?fullscreen=true), just toggle state
-      isFullscreen.value = false
-    }
-  }
+  // console.log(nativeFullscreen.value);
+  await toggle()
 }
 
-// Listen for fullscreen changes (user can press Escape)
-const handleFullscreenChange = () => {
-  isFullscreen.value = document.fullscreenElement !== null
-  if (!isFullscreen.value) {
-    document.body.classList.remove('fullscreen-active')
-    const newQuery = { ...route.query }
-    delete newQuery.fullscreen
-    router.replace({ query: newQuery })
-  }
-}
+// Sync VueUse nativeFullscreen → modelFullscreen + URL
+// watch(nativeFullscreen, async (val) => {
+//   modelFullscreen.value = val
 
-// Watch isFullscreen to sync URL when toggled via button
-watch(isFullscreen, (val) => {
-  if (val) {
-    document.body.classList.add('fullscreen-active')
-    router.replace({ query: { ...route.query, fullscreen: 'true' } })
-  } else {
-    document.body.classList.remove('fullscreen-active')
-    if (route.query.fullscreen) {
-      const newQuery = { ...route.query }
-      delete newQuery.fullscreen
-      router.replace({ query: newQuery })
-    }
-  }
-})
+//   if (val) {
+//     document.body.classList.add('fullscreen-active')
+//     await navigateTo({ query: { ...route.query, fullscreen: 'true' } }, { replace: true })
+//   } else {
+//     document.body.classList.remove('fullscreen-active')
+//     if (route.query.fullscreen) {
+//       const newQuery = { ...route.query }
+//       delete newQuery.fullscreen
+//       await navigateTo({ query: newQuery }, { replace: true })
+//     }
+//   }
 
-const animate = () => {
+//   // Trigger resize after fullscreen transition
+//   setTimeout(handleResize, 100)
+// })
+
+const animate = (elapsedMs: number) => {
   animationId = requestAnimationFrame(animate)
+
+  ticker.update(elapsedMs)
+
+  // Update smoke particles
+  if (smokeParticles && smokeMaterial) {
+    smokeMaterial.uniforms.uTime.value = ticker.elapsed
+    
+    // Respawn dead particles
+    const positions = smokeParticles.geometry.attributes.position.array as Float32Array
+    for(let i = 0; i < PARTICLE_COUNT; i++) {
+      const age = ticker.elapsed - smokeBirths[i]
+      if(age > smokeLifespans[i]) {
+        // --- RESPAWN TIMING ---
+        // 2.0: delay before respawn (stagger, prevents clumping)
+        smokeBirths[i] = ticker.elapsed + Math.random() * 2.0
+        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 1.5
+
+        // --- RESPAWN POSITION (local space) ---
+        positions[i * 3] = (Math.random() - 0.5) * 0.2 // X: narrow spread
+        positions[i * 3 + 1] = Math.random() * 0.2     // Y: start near emitter base
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 0.2 // Z: narrow spread
+
+        // --- RESPAWN VELOCITY ---
+        // X: slight lateral drift
+        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.15
+        // Y: RISE SPEED (0.3-0.5 units/sec) - match init values
+        smokeVelocities[i * 3 + 1] = 0.3 + Math.random() * 0.2
+        // Z: slight depth drift
+        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.15
+
+        smokeSeeds[i] = Math.random()
+      }
+    }
+    
+    smokeParticles.geometry.attributes.position.needsUpdate = true
+    smokeParticles.geometry.attributes.aBirth.needsUpdate = true
+    smokeParticles.geometry.attributes.aLifespan.needsUpdate = true
+    smokeParticles.geometry.attributes.aVelocity.needsUpdate = true
+    smokeParticles.geometry.attributes.aSeed.needsUpdate = true
+  }
 
   if (controls) controls.update()
   renderer.render(scene, camera)
-}
-
-// Create a soft radial glow texture for the bulb halo
-const createGlowTexture = () => {
-  const size = 64
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-
-  const ctx = canvas.getContext('2d')!
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-  gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.6)')
-  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)')
-  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, size, size)
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.needsUpdate = true
-  return texture
 }
 
 const handleResize = () => {
@@ -136,6 +162,12 @@ const handleResize = () => {
 
 onMounted(async () => {
   if (!containerRef.value || !canvasRef.value) return
+
+  // Sync CSS class from URL (don't auto-enter native fullscreen)
+  // if (route.query.fullscreen === 'true' && !modelFullscreen.value) {
+  //   modelFullscreen.value = true
+  //   document.body.classList.add('fullscreen-active')
+  // }
 
   const container = containerRef.value
   const canvas = canvasRef.value
@@ -167,13 +199,6 @@ onMounted(async () => {
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFShadowMap
 
-  // Environment map for PBR reflections (WebGL compatible)
-  const pmremGenerator = new THREE.PMREMGenerator(renderer)
-  pmremGenerator.compileEquirectangularShader()
-  const envMap = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
-  scene.environment = envMap
-  pmremGenerator.dispose()
-
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
   scene.add(ambientLight)
@@ -182,10 +207,6 @@ onMounted(async () => {
   directionalLight.position.set(5, 10, 7)
   scene.add(directionalLight)
 
-  const pointLight = new THREE.PointLight(0xffffff, 0.5)
-  pointLight.position.set(-5, 5, -5)
-  scene.add(pointLight)
-
   // Load Locomotive model with Draco
   const loader = new GLTFLoader()
   const dracoLoader = new DRACOLoader()
@@ -193,10 +214,8 @@ onMounted(async () => {
   dracoLoader.setDecoderPath('/assets/three/draco/gltf/')
   loader.setDRACOLoader(dracoLoader)
 
-  // const locomotivePath = '/assets/three/resources/Locomotive.glb'
-  const locomotivePath = '/assets/three/resources/Locomotive_compressed.glb' 
-  // compressed with gltf-optimizer.simondev.io
-  // we can do it locally, but for bigger projects: 🤗 
+  const locomotivePath = '/assets/three/resources/Locomotive.glb'
+  // Don't compress meshes with gltf-optimizer.simondev.io, it removes their names, use draco compression script instead!
 
   try {
     const gltf = await new Promise<any>((resolve, reject) => {
@@ -225,68 +244,121 @@ onMounted(async () => {
     locomotive.position.y += (size.y * scale) / 2
     locomotive.position.z += 2 // Push toward camera
 
-    // Find headlight position and add actual light (emissive doesn't cast light)
+    // Find headlight mesh by name
     let headlightMesh: THREE.Mesh | null = null
-    let maxEmissive = 0
+    let chimneySteamPipeMesh: THREE.Mesh | null = null
 
     locomotive.traverse((child) => {
-      if (child.isMesh && child.material) {
-        const mat = child.material as THREE.MeshStandardMaterial
-        // Find the brightest emissive surface (likely the headlight)
-        if (mat.emissive && mat.emissiveIntensity !== undefined) {
-          mat.emissiveIntensity = Math.max(mat.emissiveIntensity, 2.0)
-          mat.envMapIntensity = 1.5
-          mat.needsUpdate = true
-
-          // Track brightest emissive mesh
-          const brightness = mat.emissive.r + mat.emissive.g + mat.emissive.b
-          if (brightness > maxEmissive) {
-            maxEmissive = brightness
-            headlightMesh = child
-          }
+      if (child.isMesh) {
+        if (child.name === 'Forward-light') {
+          headlightMesh = child
+        }
+        if (child.name === 'chimney-steam-pipe') {
+          chimneySteamPipeMesh = child
         }
       }
     })
 
-    // Add actual bulb-style light at headlight position
+    // Apply emissive settings to the headlight mesh
     if (headlightMesh) {
-      // Visible bulb — small glowing sphere, attached to the mesh
-      const bulbGeo = new THREE.SphereGeometry(0.08, 16, 16)
-      const bulbMat = new THREE.MeshBasicMaterial({
-        color: 0xffeedd,
-        transparent: true,
-        opacity: 0.9,
-      })
-      const bulbMesh = new THREE.Mesh(bulbGeo, bulbMat)
-      bulbMesh.position.set(0, 0, 0) // At the surface center
-      headlightMesh.add(bulbMesh)
+      const mat = headlightMesh.material as THREE.MeshStandardMaterial
+      if (mat.emissive) {
+        mat.emissiveIntensity = 1.0
+        mat.envMapIntensity = 0.8
+      }
+    }
 
-      // Bulb glow halo — sprite always facing camera
-      const glowTexture = createGlowTexture()
-      const glowMat = new THREE.SpriteMaterial({
-        map: glowTexture,
-        color: 0xffeedd,
+    // Create smoke particle system at chimney position
+    if (chimneySteamPipeMesh) {
+      const chimneyWorldPos = new THREE.Vector3()
+      chimneySteamPipeMesh.getWorldPosition(chimneyWorldPos)
+
+      // Initialize particle data arrays
+      smokePositions = new Float32Array(PARTICLE_COUNT * 3)
+      smokeBirths = new Float32Array(PARTICLE_COUNT)
+      smokeLifespans = new Float32Array(PARTICLE_COUNT)
+      smokeVelocities = new Float32Array(PARTICLE_COUNT * 3)
+      smokeSeeds = new Float32Array(PARTICLE_COUNT)
+
+      // Initialize particles with staggered birth times
+      for(let i = 0; i < PARTICLE_COUNT; i++) {
+        // --- LIFETIME (duration before respawn) ---
+        smokeBirths[i] = -Math.random() * SMOKE_LIFETIME // Negative = some already alive at start
+        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 1.5 // 4.0-5.5s duration
+
+        // --- INITIAL POSITION (local space, relative to chimney emitter) ---
+        // X: horizontal spread (-0.1 to 0.1)
+        smokePositions[i * 3] = (Math.random() - 0.5) * 0.
+        // Y: vertical start (0 to 2.0 units above emitter) - controls initial height
+        smokePositions[i * 3 + 1] = Math.random() * 2.0
+        // Z: depth spread (-0.1 to 0.1)
+        smokePositions[i * 3 + 2] = (Math.random() - 0.5) * 0.2
+
+        // --- VELOCITY (speed & direction) ---
+        // X: lateral drift (-0.075 to 0.075 units/sec)
+        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.15
+        // Y: RISE SPEED - 0.3 to 0.5 units/sec (increase for faster rise)
+        smokeVelocities[i * 3 + 1] = 0.3 + Math.random() * 0.2
+        // Z: depth drift (-0.075 to 0.075 units/sec)
+        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.15
+
+        // Random seed for unique wind oscillation per particle
+        smokeSeeds[i] = Math.random()
+      }
+
+      // Create particle geometry
+      const particleGeo = new THREE.BufferGeometry()
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(smokePositions, 3))
+      particleGeo.setAttribute('aBirth', new THREE.BufferAttribute(smokeBirths, 1))
+      particleGeo.setAttribute('aLifespan', new THREE.BufferAttribute(smokeLifespans, 1))
+      particleGeo.setAttribute('aVelocity', new THREE.BufferAttribute(smokeVelocities, 3))
+      particleGeo.setAttribute('aSeed', new THREE.BufferAttribute(smokeSeeds, 1))
+
+      // Create smoke texture
+      const smokeTexture = createSmokeTexture()
+
+      // Create shader material for particles
+      smokeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          // --- PARTICLE SIZE ---
+          // Base size in world units (multiplied by screen distance factor)
+          uParticleSize: { value: 0.5 },
+          // --- SMOKE COLOR ---
+          // Warm gray: rgb(217, 209, 204)
+          uColor: { value: new THREE.Color(0.85, 0.82, 0.8) },
+          uTexture: { value: smokeTexture },
+        },
+        vertexShader: particleVertexShader,
+        fragmentShader: particleFragmentShader,
         transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending,
         depthWrite: false,
+        depthTest: true,
+        blending: THREE.NormalBlending,
       })
-      const glowSprite = new THREE.Sprite(glowMat)
-      glowSprite.position.set(0, 0, 0.15) // Slightly in front of surface
-      glowSprite.scale.set(0.6, 0.6, 1)
-      headlightMesh.add(glowSprite)
 
-      // Narrow beam angled -90° to the right
+      // Create points
+      smokeParticles = new THREE.Points(particleGeo, smokeMaterial)
+      smokeParticles.position.copy(chimneyWorldPos)
+      // --- EMITTER POSITION ---
+      // Offset above chimney steam pipe (0.2 units)
+      smokeParticles.position.y += 0.2
+
+      scene.add(smokeParticles)
+    }
+
+    // Add narrow beam angled -90° to the right
+    if (headlightMesh) {
       const beam = new THREE.SpotLight(0xffeedd, 80, 8, Math.PI / 8, 0.1, 1.5)
-      beam.position.set(0, 0, 0) // Attached to surface
+      beam.position.set(0, 0, 0)
 
       // Target: -90° right from forward (local +Z → -X)
       const angle = -Math.PI / 2
       const distance = 1.5
       beam.target.position.set(
-        Math.sin(angle) * distance, // right (-X)
-        -0.5,                       // slight downward
-        Math.cos(angle) * distance  // forward (0 on Z)
+        Math.sin(angle) * distance,
+        -0.5,
+        Math.cos(angle) * distance
       )
 
       beam.castShadow = true
@@ -329,10 +401,9 @@ onMounted(async () => {
   const resizeObserver = new ResizeObserver(handleResize)
   resizeObserver.observe(container)
   window.addEventListener('resize', handleResize)
-  document.addEventListener('fullscreenchange', handleFullscreenChange)
 
   // Start animation
-  animate()
+  animate(0)
 })
 
 onUnmounted(() => {
@@ -341,7 +412,6 @@ onUnmounted(() => {
   controls?.dispose()
   renderer?.dispose()
 
-  document.removeEventListener('fullscreenchange', handleFullscreenChange)
   window.removeEventListener('resize', handleResize)
 })
 </script>
