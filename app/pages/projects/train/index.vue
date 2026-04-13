@@ -6,6 +6,21 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const runtimeConfig = useRuntimeConfig()
+
+const trainTitle = '3D Train Locomotive Project'
+const trainDescription = 'Interactive 3D train locomotive scene built with Nuxt 4, Three.js, custom GLSL smoke particles, and a procedural sky shader.'
+const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-04-13.png`
+
+useSeoMeta({
+  title: trainTitle,
+  description: trainDescription,
+  ogTitle: trainTitle,
+  ogDescription: trainDescription,
+  ogImage: trainSeoImage,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+})
 
 // Initialize from URL on client to avoid hydration mismatch
 const isFullscreen = ref(false)
