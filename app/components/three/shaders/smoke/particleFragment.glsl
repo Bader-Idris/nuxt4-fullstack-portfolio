@@ -1,27 +1,37 @@
+// Smoke Particle Fragment Shader
+// Colors each smoke particle (point sprite billboard).
+// Puff shape computed in GLSL from gl_PointCoord (no texture needed).
+
+#include ../includes/simplexNoise4d.glsl;
+
 uniform vec3 uColor;
-uniform sampler2D uTexture;
 
 varying float vAlpha;
 varying float vLife;
+varying float vNoise;
 
 void main() {
-    // Sample smoke puff texture (radial gradient)
-    vec4 texel = texture2D(uTexture, gl_PointCoord);
+  // Puff shape: radial gradient from center
+  float dist = distance(gl_PointCoord, vec2(0.5));
+  float puffShape = 1.0 - smoothstep(0.15, 0.45, dist);
 
-    // --- COLOR ---
-    // Set in TS: uColor uniform (default 0.85, 0.82, 0.8 = warm gray)
-    vec3 col = uColor;
+  if (dist > 0.45) discard;
 
-    // Color shifts darker/cooler as smoke ages
-    // 0.3: intensity of the color shift
-    col = mix(col, col * 0.8, vLife * 0.3);
+  // Base color
+  vec3 col = uColor;
 
-    // --- ALPHA / OPACITY ---
-    // 0.4: base opacity multiplier - lower = more transparent
-    // Combined with vAlpha (from vertex shader fade curve)
-    float alpha = texel.a * vAlpha * 0.4;
+  // Darken as smoke rises (upper half gets darker for sky contrast)
+  float darkening = smoothstep(0.4, 0.7, vLife);
+  vec3 darkColor = col * 0.35;
+  col = mix(col, darkColor, darkening * 0.75);
 
-    if(alpha < 0.01) discard;
+  // Noise-based color variation
+  col *= 0.82 + vNoise * 0.28;
 
-    gl_FragColor = vec4(col, alpha);
+  // Alpha
+  float noiseAlpha = mix(0.22, 0.55, vNoise);
+  float edgeNoise = simplexNoise4d(vec4(gl_PointCoord * 6.0, vLife * 2.0, vNoise * 3.0)) * 0.5 + 0.5;
+  float alpha = puffShape * vAlpha * noiseAlpha * mix(0.8, 1.1, edgeNoise);
+
+  gl_FragColor = vec4(col, alpha);
 }

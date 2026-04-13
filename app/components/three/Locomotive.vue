@@ -3,7 +3,7 @@
     ref="containerRef"
     :class="{ 'is-fullscreen': modelFullscreen }"
   >
-    <canvas ref="canvasRef"></canvas>
+    <canvas ref="canvasRef" />
     <button
       class="fullscreen-btn"
       :aria-label="modelFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
@@ -26,9 +26,10 @@ import { useFullscreen } from '@vueuse/core'
 
 import particleVertexShader from './shaders/smoke/particleVertex.glsl'
 import particleFragmentShader from './shaders/smoke/particleFragment.glsl'
+import skyVertexShader from './shaders/sky/vertex.glsl'
+import skyFragmentShader from './shaders/sky/fragment.glsl'
 // import particleVertexShader from './shaders/smoke/particleVertex.glsl'
 // import particleFragmentShader from './shaders/smoke/particleFragment.glsl'
-import { createSmokeTexture } from './utils/smokeTexture'
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -43,11 +44,9 @@ const sizes = {
 
 // Fullscreen state - synced with parent via v-model
 const modelFullscreen = defineModel<boolean>('fullscreen', { default: false })
-const route = useRoute()
-const router = useRouter()
 
 // VueUse useFullscreen bound to containerRef
-const { isFullscreen: nativeFullscreen, enter, exit, toggle } = useFullscreen(containerRef, { autoExit: true })
+const { toggle } = useFullscreen(containerRef, { autoExit: true })
 
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
@@ -56,19 +55,22 @@ let controls: OrbitControls
 let locomotive: THREE.Group
 let animationId: number
 let smokeParticles: THREE.Points | null = null
+let skyMesh: THREE.Mesh | null = null
+let skyMaterial: THREE.ShaderMaterial | null = null
 let smokeMaterial: THREE.ShaderMaterial | null = null
 let smokePositions: Float32Array
-let smokeLifetimes: Float32Array
 let smokeBirths: Float32Array
 let smokeLifespans: Float32Array
 let smokeVelocities: Float32Array
 let smokeSeeds: Float32Array
+let resizeObserver: ResizeObserver | null = null
 // --- PARTICLE COUNT ---
-// Lower = better performance on mobile (try 30 for low-end devices)
-const PARTICLE_COUNT = 100
+// Higher = denser, more realistic coal smoke (try 200+ for thick smoke)
+const PARTICLE_COUNT = 400
 // --- LIFETIME ---
 // How long each particle lives before respawning (seconds)
-const SMOKE_LIFETIME = 4.0
+// Lower = shorter smoke column
+const SMOKE_LIFETIME = 3.0
 
 const ticker = {
   elapsed: 0,
@@ -82,7 +84,6 @@ const ticker = {
 }
 
 const toggleFullscreen = async () => {
-  // console.log(nativeFullscreen.value);
   await toggle()
 }
 
@@ -111,32 +112,47 @@ const animate = (elapsedMs: number) => {
 
   ticker.update(elapsedMs)
 
-  // Update smoke particles
-  if (smokeParticles && smokeMaterial) {
+  // Update smoke and sky
+  if (smokeMaterial) {
     smokeMaterial.uniforms.uTime.value = ticker.elapsed
-    
-    // Respawn dead particles
+  }
+  // Sky follows camera for proper spherical dome perception
+  if (skyMesh) {
+    skyMesh.position.copy(camera.position)
+  }
+  if (skyMaterial) {
+    skyMaterial.uniforms.uTime.value = ticker.elapsed
+  }
+
+  // Respawn dead particles
+  if (smokeParticles) {
     const positions = smokeParticles.geometry.attributes.position.array as Float32Array
     for(let i = 0; i < PARTICLE_COUNT; i++) {
       const age = ticker.elapsed - smokeBirths[i]
       if(age > smokeLifespans[i]) {
         // --- RESPAWN TIMING ---
-        // 2.0: delay before respawn (stagger, prevents clumping)
-        smokeBirths[i] = ticker.elapsed + Math.random() * 2.0
-        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 1.5
+        // Small stagger delay prevents clumping
+        smokeBirths[i] = ticker.elapsed + Math.random() * 1.5
+        // Smoke height control:
+        // longer lifespan = particles survive longer and rise higher.
+        // Example:
+        // Shorter plume: SMOKE_LIFETIME + Math.random() * 1.0
+        // Taller plume:  SMOKE_LIFETIME + Math.random() * 2.0
+        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 2.0
 
         // --- RESPAWN POSITION (local space) ---
-        positions[i * 3] = (Math.random() - 0.5) * 0.2 // X: narrow spread
-        positions[i * 3 + 1] = Math.random() * 0.2     // Y: start near emitter base
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 0.2 // Z: narrow spread
+        positions[i * 3] = (Math.random() - 0.5) * 0.25
+        positions[i * 3 + 1] = Math.random() * 0.2
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 0.25
 
         // --- RESPAWN VELOCITY ---
-        // X: slight lateral drift
-        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.15
-        // Y: RISE SPEED (0.3-0.5 units/sec) - match init values
-        smokeVelocities[i * 3 + 1] = 0.3 + Math.random() * 0.2
-        // Z: slight depth drift
-        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.15
+        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.2
+        // Main smoke height control for respawned particles.
+        // Example:
+        // Lower plume:  0.3 + Math.random() * 0.25
+        // Taller plume: 0.8 + Math.random() * 0.25
+        smokeVelocities[i * 3 + 1] = 0.8 + Math.random() * 0.25
+        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2
 
         smokeSeeds[i] = Math.random()
       }
@@ -189,7 +205,24 @@ onMounted(async () => {
 
   // Scene
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x228B22)
+
+  // Sky (large inverted sphere with shader on the inside)
+  const skyGeo = new THREE.SphereGeometry(500, 32, 15)
+  skyMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uSunDir: { value: new THREE.Vector3(-0.5, 0.15, -0.5).normalize() },
+    },
+    vertexShader: skyVertexShader,
+    fragmentShader: skyFragmentShader,
+    side: THREE.BackSide,
+    depthTest: false,
+    depthWrite: false,
+  })
+  skyMesh = new THREE.Mesh(skyGeo, skyMaterial)
+  skyMesh.frustumCulled = false
+  skyMesh.renderOrder = -1
+  scene.add(skyMesh)
 
   // Renderer
   renderer = new THREE.WebGLRenderer({
@@ -220,7 +253,7 @@ onMounted(async () => {
     0.1,
     1000
   )
-  camera.position.set(5, 3, 5)
+  camera.position.set(5, 2.3, 2.5)
 
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
@@ -293,9 +326,6 @@ onMounted(async () => {
 
     // Create smoke particle system at chimney position
     if (chimneySteamPipeMesh) {
-      const chimneyWorldPos = new THREE.Vector3()
-      chimneySteamPipeMesh.getWorldPosition(chimneyWorldPos)
-
       // Initialize particle data arrays
       smokePositions = new Float32Array(PARTICLE_COUNT * 3)
       smokeBirths = new Float32Array(PARTICLE_COUNT)
@@ -303,29 +333,39 @@ onMounted(async () => {
       smokeVelocities = new Float32Array(PARTICLE_COUNT * 3)
       smokeSeeds = new Float32Array(PARTICLE_COUNT)
 
-      // Initialize particles with staggered birth times
+      // Initialize particles with staggered birth times for continuous smoke column
       for(let i = 0; i < PARTICLE_COUNT; i++) {
         // --- LIFETIME (duration before respawn) ---
-        smokeBirths[i] = -Math.random() * SMOKE_LIFETIME // Negative = some already alive at start
-        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 1.5 // 4.0-5.5s duration
+        // Smoke height control:
+        // longer lifespan = particles survive longer and rise higher.
+        // Example:
+        // Shorter plume: SMOKE_LIFETIME + Math.random() * 1.0
+        // Taller plume:  SMOKE_LIFETIME + Math.random() * 2.0
+        smokeBirths[i] = -Math.random() * SMOKE_LIFETIME * 2 // Negative = some already alive at start
+        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 2.0 // 3.0-5.0s duration
 
         // --- INITIAL POSITION (local space, relative to chimney emitter) ---
-        // X: horizontal spread (-0.1 to 0.1)
-        smokePositions[i * 3] = (Math.random() - 0.5) * 0.
-        // Y: vertical start (0 to 2.0 units above emitter) - controls initial height
-        smokePositions[i * 3 + 1] = Math.random() * 2.0
-        // Z: depth spread (-0.1 to 0.1)
-        smokePositions[i * 3 + 2] = (Math.random() - 0.5) * 0.2
+        // X: wider horizontal spread for a thick smoke plume
+        smokePositions[i * 3] = (Math.random() - 0.5) * 0.25
+        // Y: start at emitter base
+        smokePositions[i * 3 + 1] = Math.random() * 0.2
+        // Z: wider depth spread for a thick smoke plume
+        smokePositions[i * 3 + 2] = (Math.random() - 0.5) * 0.25
 
         // --- VELOCITY (speed & direction) ---
-        // X: lateral drift (-0.075 to 0.075 units/sec)
-        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.15
-        // Y: RISE SPEED - 0.3 to 0.5 units/sec (increase for faster rise)
-        smokeVelocities[i * 3 + 1] = 0.3 + Math.random() * 0.2
-        // Z: depth drift (-0.075 to 0.075 units/sec)
-        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.15
+        // X: wider lateral drift for thick, spreading smoke
+        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.2
+        // Main smoke height control:
+        // higher Y velocity = taller plume because particles climb farther before fading.
+        // Example:
+        // Lower plume:  0.3 + Math.random() * 0.25
+        // Taller plume: 0.8 + Math.random() * 0.25
+        // Current value is raised to make the smoke reach about 2 units higher.
+        smokeVelocities[i * 3 + 1] = 0.8 + Math.random() * 0.25
+        // Z: wider depth drift
+        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2
 
-        // Random seed for unique wind oscillation per particle
+        // Random seed for unique noise-driven motion per particle
         smokeSeeds[i] = Math.random()
       }
 
@@ -337,21 +377,16 @@ onMounted(async () => {
       particleGeo.setAttribute('aVelocity', new THREE.BufferAttribute(smokeVelocities, 3))
       particleGeo.setAttribute('aSeed', new THREE.BufferAttribute(smokeSeeds, 1))
 
-      // Create smoke texture
-      const smokeTexture = createSmokeTexture()
-
-      // Create shader material for particles
+      // Create shader material for particles (puff shape computed in GLSL)
       smokeMaterial = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
           // --- PARTICLE SIZE ---
           // Scaled for uResolution.y (screen pixels), so particles stay consistent across devices
-          // ~1-2% of screen height as base size
           uParticleSize: { value: 0.15 },
           // --- SMOKE COLOR ---
           // Warm gray: rgb(217, 209, 204)
           uColor: { value: new THREE.Color(0.85, 0.82, 0.8) },
-          uTexture: { value: smokeTexture },
           uResolution: { value: sizes.resolution.clone() },
         },
         vertexShader: particleVertexShader,
@@ -364,12 +399,9 @@ onMounted(async () => {
 
       // Create points
       smokeParticles = new THREE.Points(particleGeo, smokeMaterial)
-      smokeParticles.position.copy(chimneyWorldPos)
-      // --- EMITTER POSITION ---
-      // Offset above chimney steam pipe (0.2 units)
-      smokeParticles.position.y += 0.2
-
-      scene.add(smokeParticles)
+      smokeParticles.position.set(0, 0.12, 0)
+      smokeParticles.frustumCulled = false
+      chimneySteamPipeMesh.add(smokeParticles)
     }
 
     // Add narrow beam angled -90° to the right
@@ -398,7 +430,7 @@ onMounted(async () => {
     // Add ground plane for testing
     const groundGeo = new THREE.PlaneGeometry(40, 40)
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x3a5a40,
+      color: 0x1a2a10,
       roughness: 0.9,
       metalness: 0.0,
     })
@@ -423,7 +455,7 @@ onMounted(async () => {
   controls.target.set(0, 1, 0)
 
   // Resize handling
-  const resizeObserver = new ResizeObserver(handleResize)
+  resizeObserver = new ResizeObserver(handleResize)
   resizeObserver.observe(container)
   window.addEventListener('resize', handleResize)
 
@@ -434,7 +466,12 @@ onMounted(async () => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
 
+  resizeObserver?.disconnect()
   controls?.dispose()
+  smokeParticles?.geometry.dispose()
+  smokeMaterial?.dispose()
+  skyMesh?.geometry.dispose()
+  skyMaterial?.dispose()
   renderer?.dispose()
 
   window.removeEventListener('resize', handleResize)
