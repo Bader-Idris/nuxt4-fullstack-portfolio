@@ -4,6 +4,55 @@
     :class="{ 'is-fullscreen': modelFullscreen }"
   >
     <canvas ref="canvasRef" />
+    
+    <!-- Speed Display Overlay -->
+    <div v-if="physicsMode || wheelSpinMode" class="speed-display">
+      <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
+      <div class="speed-label">RPM</div>
+      <div v-if="wheelSpinMode" class="speed-mode">WHEEL SPIN</div>
+      <div v-else-if="physicsMode" class="speed-mode">GEAR {{ currentGear.label.toUpperCase() }}</div>
+    </div>
+
+    <div class="controls-container">
+      <button
+        class="control-btn"
+        :class="{ active: physicsMode }"
+        :aria-label="physicsMode ? 'Disable physics' : 'Enable physics'"
+        @click="togglePhysics"
+      >
+        <Icon name="mdi:train" size="24" />
+        <span class="btn-text">{{ physicsMode ? 'Physics ON' : 'Physics OFF' }}</span>
+      </button>
+      <button
+        class="control-btn"
+        :class="{ active: showBlocks }"
+        :aria-label="showBlocks ? 'Hide blocks' : 'Show blocks'"
+        :disabled="!physicsMode"
+        @click="toggleBlocks"
+      >
+        <Icon name="mdi:cube-outline" size="24" />
+        <span class="btn-text">{{ showBlocks ? 'Blocks ON' : 'Blocks OFF' }}</span>
+      </button>
+      <button
+        class="control-btn"
+        :class="{ active: wheelSpinMode, warning: wheelSpinMode }"
+        :aria-label="wheelSpinMode ? 'Stop wheel spin' : 'Spin wheels only'"
+        @click="toggleWheelSpin"
+      >
+        <Icon :name="wheelSpinMode ? 'mdi:stop' : 'mdi:speedometer'" size="24" />
+        <span class="btn-text">{{ wheelSpinMode ? 'STOP SPIN' : 'WHEEL SPIN' }}</span>
+      </button>
+      <button
+        v-if="physicsMode"
+        class="control-btn primary"
+        :aria-label="`Change train gear. Current gear ${currentGear.label}`"
+        :disabled="wheelSpinMode"
+        @click="cycleGear"
+      >
+        <Icon name="mdi:car-shift-pattern" size="24" />
+        <span class="btn-text">GEAR: {{ currentGear.label.toUpperCase() }}</span>
+      </button>
+    </div>
     <button
       class="fullscreen-btn"
       :aria-label="modelFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
@@ -23,6 +72,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { useFullscreen } from '@vueuse/core'
+import type { Tween } from 'gsap'
 
 import particleVertexShader from './shaders/smoke/particleVertex.glsl'
 import particleFragmentShader from './shaders/smoke/particleFragment.glsl'
@@ -45,6 +95,21 @@ const sizes = {
 // Fullscreen state - synced with parent via v-model
 const modelFullscreen = defineModel<boolean>('fullscreen', { default: false })
 
+// Physics mode state
+const physicsMode = ref(false)
+const showBlocks = ref(true)
+const wheelSpinMode = ref(false)
+const wheelSpeed = ref(0)
+const wheelSpinGSAPRef = { ref: [] as Tween[] }
+const gearPhases = [
+  { key: 'backward', label: 'backward', speed: 2.4, rpm: 45 },
+  { key: 'idle', label: 'idle', speed: 0, rpm: 0 },
+  { key: 'medium', label: 'medium', speed: -3.5, rpm: 90 },
+  { key: 'high', label: 'high', speed: -6.8, rpm: 160 },
+] as const
+const currentGearIndex = ref(1)
+const currentGear = computed(() => gearPhases[currentGearIndex.value])
+
 // VueUse useFullscreen bound to containerRef
 const { toggle } = useFullscreen(containerRef, { autoExit: true })
 
@@ -64,6 +129,25 @@ let smokeLifespans: Float32Array
 let smokeVelocities: Float32Array
 let smokeSeeds: Float32Array
 let resizeObserver: ResizeObserver | null = null
+let physicsBlocksGroup: THREE.Group | null = null
+let physicsBlocks: THREE.Mesh[] = []
+let trainPhysicsBody: any = null
+const trainBodyOffset = new THREE.Vector3()
+const trainBodyHalfExtents = new THREE.Vector3(1.2, 0.7, 0.6)
+const trainFocusPoint = new THREE.Vector3()
+const trainStartPosition = new THREE.Vector3(20, 0, 0)
+
+const GROUND_Y = 0
+const TRACK_CENTER_Z = 0
+// Move this closer to the train for faster crashes, or farther away for a longer runway.
+const BLOCKS_START_X = 9
+// Increase this when you want a denser obstacle field and bigger chain reactions.
+const STONE_COUNT = 12
+// Camera offset is the quickest way to tune how close the player feels to the locomotive.
+const CAMERA_OFFSET = new THREE.Vector3(3.5, 2.2, 5)
+
+// Physics engine instance
+const trainPhysics = useTrainPhysics()
 // --- PARTICLE COUNT ---
 // Higher = denser, more realistic coal smoke (try 200+ for thick smoke)
 const PARTICLE_COUNT = 400
@@ -83,8 +167,219 @@ const ticker = {
   },
 }
 
+const updateTrainFocusPoint = () => {
+  if (!locomotive) return
+
+  trainFocusPoint.copy(locomotive.position).add(trainBodyOffset)
+}
+
+const syncCameraToTrain = (followMotion: boolean = false) => {
+  if (!controls || !camera || !locomotive) return
+
+  updateTrainFocusPoint()
+
+  if (followMotion) {
+    controls.target.lerp(trainFocusPoint, 0.15)
+    return
+  }
+
+  controls.target.copy(trainFocusPoint)
+  camera.position.copy(trainFocusPoint.clone().add(CAMERA_OFFSET))
+}
+
+const syncTrainBodyFromVisual = () => {
+  if (!locomotive || !trainPhysicsBody) return
+
+  const targetPosition = locomotive.position.clone().add(trainBodyOffset)
+  trainPhysicsBody.setTranslation(targetPosition, true)
+  trainPhysicsBody.setNextKinematicTranslation(targetPosition)
+  trainPhysicsBody.setLinvel({ x: 0, y: 0, z: 0 }, true)
+  trainPhysicsBody.setAngvel({ x: 0, y: 0, z: 0 }, true)
+}
+
+const syncLocomotiveFromPhysics = () => {
+  if (!locomotive || !trainPhysicsBody) return
+
+  const physicsPos = trainPhysicsBody.translation()
+  locomotive.position.set(
+    physicsPos.x - trainBodyOffset.x,
+    physicsPos.y - trainBodyOffset.y,
+    physicsPos.z - trainBodyOffset.z
+  )
+  updateTrainFocusPoint()
+}
+
+const placeLocomotiveOnTrack = () => {
+  if (!locomotive) return
+
+  locomotive.position.set(0, 0, 0)
+
+  const modelBounds = new THREE.Box3().setFromObject(locomotive)
+  const modelCenter = modelBounds.getCenter(new THREE.Vector3())
+
+  locomotive.position.set(
+    trainStartPosition.x - modelCenter.x,
+    GROUND_Y - modelBounds.min.y,
+    TRACK_CENTER_Z - modelCenter.z
+  )
+
+  const placedBounds = new THREE.Box3().setFromObject(locomotive)
+  const placedCenter = placedBounds.getCenter(new THREE.Vector3())
+  const placedSize = placedBounds.getSize(new THREE.Vector3())
+
+  trainBodyOffset.copy(placedCenter).sub(locomotive.position)
+  trainBodyHalfExtents.set(
+    Math.max(placedSize.x * 0.48, 0.6),
+    Math.max(placedSize.y * 0.48, 0.4),
+    Math.max(placedSize.z * 0.42, 0.35)
+  )
+
+  updateTrainFocusPoint()
+}
+
+const createTrainTracks = () => {
+  // Create two parallel rails
+  const railGeometry = new THREE.BoxGeometry(60, 0.1, 0.1)
+  const railMaterial = new THREE.MeshStandardMaterial({
+    color: 0x888888,
+    roughness: 0.4,
+    metalness: 0.8,
+  })
+
+  // Left rail
+  const leftRail = new THREE.Mesh(railGeometry, railMaterial)
+  leftRail.position.set(15, 0.05, -0.6)
+  leftRail.receiveShadow = true
+  scene.add(leftRail)
+
+  // Right rail
+  const rightRail = new THREE.Mesh(railGeometry, railMaterial)
+  rightRail.position.set(15, 0.05, 0.6)
+  rightRail.receiveShadow = true
+  scene.add(rightRail)
+
+  // Add sleepers (wooden beams)
+  const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.8)
+  const sleeperMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513,
+    roughness: 0.9,
+    metalness: 0.0,
+  })
+
+  for (let i = -10; i < 30; i += 1.5) {
+    const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial)
+    sleeper.position.set(i, 0.02, 0)
+    sleeper.receiveShadow = true
+    scene.add(sleeper)
+  }
+}
+
+const createObstacleField = () => {
+  if (!trainPhysics.physicsWorld || !physicsBlocksGroup || physicsBlocks.length > 0) return
+
+  const startPos = new THREE.Vector3(BLOCKS_START_X, 0.5, 0)
+  const blocks = trainPhysics.createPhysicsBlocks(
+    trainPhysics.physicsWorld,
+    STONE_COUNT,
+    startPos
+  )
+
+  blocks.forEach((block) => {
+    physicsBlocksGroup!.add(block.mesh)
+    physicsBlocks.push(block.mesh)
+  })
+}
+
+const clearObstacleField = () => {
+  physicsBlocks.forEach((mesh) => {
+    physicsBlocksGroup?.remove(mesh)
+    mesh.geometry.dispose()
+    mesh.material.dispose()
+  })
+
+  physicsBlocks = []
+  trainPhysics.blocksRef.blocks = []
+}
+
 const toggleFullscreen = async () => {
   await toggle()
+}
+
+const togglePhysics = async () => {
+  physicsMode.value = !physicsMode.value
+
+  if (!physicsMode.value) {
+    currentGearIndex.value = 1
+    wheelSpeed.value = 0
+    return
+  }
+
+  try {
+    await trainPhysics.initPhysics()
+
+    if (trainPhysics.physicsWorld && locomotive) {
+      if (!trainPhysicsBody) {
+        trainPhysics.createGroundCollider(trainPhysics.physicsWorld)
+        trainPhysicsBody = trainPhysics.createTrainBody(
+          trainPhysics.physicsWorld,
+          locomotive.position.clone().add(trainBodyOffset),
+          { halfExtents: trainBodyHalfExtents.clone() }
+        )
+      }
+
+      syncTrainBodyFromVisual()
+
+      if (showBlocks.value) {
+        createObstacleField()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to initialize physics:', error)
+    physicsMode.value = false
+  }
+}
+
+const toggleBlocks = () => {
+  if (!physicsMode.value || !trainPhysics.physicsWorld || !locomotive || !physicsBlocksGroup) return
+  
+  showBlocks.value = !showBlocks.value
+  
+  if (showBlocks.value) {
+    createObstacleField()
+  } else {
+    clearObstacleField()
+  }
+}
+
+const toggleWheelSpin = () => {
+  if (!locomotive) return
+
+  wheelSpinMode.value = !wheelSpinMode.value
+
+  wheelSpinGSAPRef.ref.forEach((tween) => tween.kill())
+  wheelSpinGSAPRef.ref = []
+
+  if (wheelSpinMode.value) {
+    currentGearIndex.value = 1
+    wheelSpeed.value = 90
+    wheelSpinGSAPRef.ref = trainPhysics.startWheelSpin(locomotive, wheelSpeed.value)
+    return
+  }
+
+  wheelSpeed.value = 0
+}
+
+const cycleGear = () => {
+  if (!locomotive || !trainPhysics.physicsWorld || !trainPhysicsBody) return
+
+  currentGearIndex.value = (currentGearIndex.value + 1) % gearPhases.length
+  syncTrainBodyFromVisual()
+
+  if (trainPhysics.blocksRef.blocks.length > 0) {
+    trainPhysics.resetBlocks(trainPhysics.blocksRef.blocks, trainPhysics.physicsWorld)
+  }
+
+  wheelSpeed.value = currentGear.value.rpm
 }
 
 // Sync VueUse nativeFullscreen → modelFullscreen + URL
@@ -122,6 +417,28 @@ const animate = (elapsedMs: number) => {
   }
   if (skyMaterial) {
     skyMaterial.uniforms.uTime.value = ticker.elapsed
+  }
+
+  if (physicsMode.value && trainPhysics.physicsWorld && trainPhysicsBody) {
+    const distanceDelta = currentGear.value.speed * ticker.delta
+
+    if (!wheelSpinMode.value && distanceDelta !== 0) {
+      const physicsPos = trainPhysicsBody.translation()
+      trainPhysicsBody.setNextKinematicTranslation({
+        x: physicsPos.x + distanceDelta,
+        y: physicsPos.y,
+        z: physicsPos.z,
+      })
+      trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta)
+    }
+
+    trainPhysics.stepPhysics(trainPhysics.physicsWorld, ticker.delta)
+    trainPhysics.updatePhysicsBlocks(trainPhysics.blocksRef.blocks)
+    syncLocomotiveFromPhysics()
+
+    if (currentGear.value.speed !== 0) {
+      syncCameraToTrain(true)
+    }
   }
 
   // Respawn dead particles
@@ -288,17 +605,13 @@ onMounted(async () => {
 
     // Center and scale the model
     const box = new THREE.Box3().setFromObject(locomotive)
-    const center = box.getCenter(new THREE.Vector3())
     const size = box.getSize(new THREE.Vector3())
 
     const maxDim = Math.max(size.x, size.y, size.z)
     const scale = 3 / maxDim
     locomotive.scale.setScalar(scale)
 
-    // Move locomotive closer to camera
-    locomotive.position.sub(center.multiplyScalar(scale))
-    locomotive.position.y += (size.y * scale) / 2
-    locomotive.position.z += 2 // Push toward camera
+    placeLocomotiveOnTrack()
 
     // Find headlight mesh by name
     let headlightMesh: THREE.Mesh | null = null
@@ -427,11 +740,11 @@ onMounted(async () => {
       headlightMesh.add(beam.target)
     }
 
-    // Add ground plane for testing
-    const groundGeo = new THREE.PlaneGeometry(40, 40)
+    // Layered ground colors read more naturally than a flat test green.
+    const groundGeo = new THREE.PlaneGeometry(60, 60)
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x1a2a10,
-      roughness: 0.9,
+      color: new THREE.Color('#6c7b46'),
+      roughness: 0.98,
       metalness: 0.0,
     })
     const ground = new THREE.Mesh(groundGeo, groundMat)
@@ -440,10 +753,42 @@ onMounted(async () => {
     ground.receiveShadow = true
     scene.add(ground)
 
-    // Add subtle grid helper for context
+    const soilPatchGeo = new THREE.CircleGeometry(18, 32)
+    const soilPatchMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#8a7353'),
+      roughness: 1.0,
+      metalness: 0.0,
+    })
+    const soilPatch = new THREE.Mesh(soilPatchGeo, soilPatchMat)
+    soilPatch.rotation.x = -Math.PI / 2
+    soilPatch.position.set(11, 0.002, 0)
+    soilPatch.receiveShadow = true
+    scene.add(soilPatch)
+
+    const mossStripGeo = new THREE.PlaneGeometry(60, 7)
+    const mossStripMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#5a6a36'),
+      roughness: 0.96,
+      metalness: 0.0,
+    })
+    const mossStrip = new THREE.Mesh(mossStripGeo, mossStripMat)
+    mossStrip.rotation.x = -Math.PI / 2
+    mossStrip.position.set(8, 0.003, 0)
+    mossStrip.receiveShadow = true
+    scene.add(mossStrip)
+
+    // Keep the grid hidden by default so the scene reads like a world, not a sandbox.
     const gridHelper = new THREE.GridHelper(40, 40, 0x555555, 0x333333)
     gridHelper.position.y = 0.005
+    gridHelper.visible = false
     scene.add(gridHelper)
+
+    // Create physics blocks group (hidden initially)
+    physicsBlocksGroup = new THREE.Group()
+    scene.add(physicsBlocksGroup)
+
+    // Add train tracks
+    createTrainTracks()
   } catch (error) {
     console.error('Error loading locomotive model:', error)
   }
@@ -452,7 +797,13 @@ onMounted(async () => {
   controls = new OrbitControls(camera, canvas)
   controls.enableDamping = true
   controls.dampingFactor = 0.05
-  controls.target.set(0, 1, 0)
+  controls.enableZoom = true
+  controls.zoomSpeed = 1.15
+  controls.minDistance = 1.5
+  controls.maxDistance = 60
+  controls.maxPolarAngle = Math.PI / 2.02
+  controls.target.copy(trainFocusPoint)
+  syncCameraToTrain()
 
   // Resize handling
   resizeObserver = new ResizeObserver(handleResize)
@@ -468,11 +819,17 @@ onUnmounted(() => {
 
   resizeObserver?.disconnect()
   controls?.dispose()
+  wheelSpinGSAPRef.ref.forEach((tween) => tween.kill())
   smokeParticles?.geometry.dispose()
   smokeMaterial?.dispose()
   skyMesh?.geometry.dispose()
   skyMaterial?.dispose()
   renderer?.dispose()
+
+  // Cleanup physics
+  trainPhysics.cleanup()
+  clearObstacleField()
+  physicsBlocksGroup = null
 
   window.removeEventListener('resize', handleResize)
 })
@@ -532,6 +889,76 @@ canvas {
 
   &:active {
     background: rgba(0, 0, 0, 0.9);
+  }
+}
+
+.controls-container {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+  justify-content: flex-start;
+  align-items: flex-end;
+
+  @include mobile {
+    left: 8px;
+    bottom: 8px;
+    gap: 4px;
+  }
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: auto;
+
+  &:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  &:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.9);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.active {
+    background: rgba(0, 128, 255, 0.6);
+
+    &:hover:not(:disabled) {
+      background: rgba(0, 128, 255, 0.8);
+    }
+  }
+
+  &.primary {
+    background: rgba(0, 200, 83, 0.7);
+
+    &:hover:not(:disabled) {
+      background: rgba(0, 200, 83, 0.9);
+    }
+  }
+
+  .btn-text {
+    @include mobile {
+      display: none;
+    }
   }
 }
 </style>
