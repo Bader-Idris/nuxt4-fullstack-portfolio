@@ -14,14 +14,14 @@ const __dirname = dirname(__filename);
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-04-10",
+  compatibilityDate: "2026-04-20",
   devtools: { enabled: true },
-  srcDir: "./app",
+  srcDir: path.resolve(__dirname, "./app"),
   alias: {
-    "@": "./app",
-    "@server": "./server",
+    "@": path.resolve(__dirname, "./app"),
+    "@server": path.resolve(__dirname, "./server"),
   },
-  serverDir: "./server",
+  serverDir: path.resolve(__dirname, "./server"),
   future: {
     compatibilityVersion: 5,
   },
@@ -647,8 +647,14 @@ export default defineNuxtConfig({
   },
   scripts: {
     registry: {
-      googleAnalytics: true,
-      googleTagManager: true, // more robust with var for docker image building
+      googleAnalytics: {
+        id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+        trigger: 'onNuxtReady'
+      },
+      googleTagManager: {
+        id: process.env.GOOGLE_TAG_MANAGER_ID,
+        trigger: 'onNuxtReady'
+      }, // more robust with var for docker image building
       // ? check https://scripts.nuxt.com/scripts/tracking/google-tag-manager#loading-globally
       // googleAdsense: {
       //   client: process.env.GOOGLE_ADSENSE_ID || "", // AdSense Publisher ID

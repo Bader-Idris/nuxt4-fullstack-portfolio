@@ -1,5 +1,5 @@
 # Stage 1: Base image with node.js
-FROM node:24.14-alpine AS base
+FROM node:24.15-alpine AS base
 
 # Update npm to the latest version for performance and security benefits
 RUN npm install -g npm@latest
@@ -23,7 +23,7 @@ COPY . .
 RUN npm run build
 
 # FROM base AS runner TODO: required for stability
-FROM node:24.14-alpine AS runner
+FROM node:24.15-alpine AS runner
 
 # Install Python and build tools for native dependencies (Alpine version)
 # RUN apk add --no-cache python3 make g++

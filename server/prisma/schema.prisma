@@ -6,8 +6,7 @@
 
 generator client {
   provider = "prisma-client" // "prisma-client" required in v7+
-  // output   = "./generated" //
-  output   = "./generated/prisma" // required with prisma-client
+  output   = env("PRISMA_GEN_PATH")
   // binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // make it production exclusive
 }
 
