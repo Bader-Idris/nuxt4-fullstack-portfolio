@@ -20,6 +20,29 @@ const sounds = {
   //   src: ["/sounds/buzzer.mp3"],
   //   volume: 0.5,
   // }),
+
+  // Locomotive sounds - Ensure these files exist in public/sounds/
+  trainHorn: new Howl({
+    src: ["/sounds/train-horn.wav"],
+    volume: 0.7,
+    // rate: 0.9,
+  }),
+  brickHit: new Howl({ src: ["/sounds/brick-hit.wav"], volume: 0.45 }),
+  trainBrakes: new Howl({
+    src: ["/sounds/train-brakes.wav"],
+    volume: 0.4,
+    loop: false,
+  }),
+  trainWheels: new Howl({
+    src: ["/sounds/train-wheels.wav"],
+    volume: 0.0,
+    loop: true,
+  }),
+  trainEngine: new Howl({
+    src: ["/sounds/train-engine.wav"],
+    volume: 0.3,
+    loop: true,
+  }),
 };
 
 export function useSound() {
@@ -31,9 +54,86 @@ export function useSound() {
     }
   };
 
-  // You might add methods to control volume, mute, etc. here
+  /**
+   * Plays a sound with slight pitch and volume randomization.
+   * Useful for avoiding "machine-gun" effect on repetitive sounds like brick hits.
+   */
+  const playWithVariation = (
+    name: keyof typeof sounds,
+    rateRange = 0.2,
+    volRange = 0.1
+  ) => {
+    const sound = sounds[name];
+    if (sound) {
+      const id = sound.play();
+      // Randomize rate (pitch) around 1.0
+      sound.rate(1.0 + (Math.random() - 0.5) * rateRange, id);
+      // Randomize volume slightly
+      sound.volume(sound.volume() + (Math.random() - 0.5) * volRange, id);
+    }
+  };
+
+  /**
+   * Returns the Howl instance directly for advanced control (e.g. updating volume/rate in a loop)
+   */
+  const getSound = (name: keyof typeof sounds) => sounds[name];
+
+  const useContinuous = (
+    name: keyof typeof sounds,
+    rateRange = 0.05,
+    volRange = 0.05
+  ) => {
+    const sound = sounds[name];
+    let soundId: number | null = null;
+    let isHeld = false;
+    const baseVolume = sound.volume() as number;
+
+    const start = () => {
+      if (isHeld || !sound) return;
+      isHeld = true;
+
+      if (soundId !== null) sound.stop(soundId);
+      sound.loop(true); // Ensure the sound loops while held
+
+      const id = sound.play();
+      soundId = id;
+
+      // Apply variation logic for organic feel
+      sound.rate(1.0 + (Math.random() - 0.5) * rateRange, id);
+
+      // Smooth start to prevent "clicks" and "cuts" at loop boundary
+      const targetVol = baseVolume + (Math.random() - 0.5) * volRange;
+      sound.volume(0, id);
+      sound.fade(0, targetVol, 100, id);
+    };
+
+    const stop = () => {
+      if (!isHeld || soundId === null) return;
+      isHeld = false;
+
+      const id = soundId;
+      const currentVol = sound.volume(id) as number;
+      sound.fade(currentVol, 0, 300, id); // Howler handles the smooth fade natively
+
+      sound.once(
+        "fade",
+        () => {
+          sound.stop(id);
+          sound.loop(false); // Reset loop for future use
+          soundId = null;
+          sound.volume(baseVolume); // reset for next play
+        },
+        id
+      );
+    };
+
+    return { start, stop };
+  };
 
   return {
     playSound,
+    playWithVariation,
+    useContinuous,
+    getSound,
   };
 }
