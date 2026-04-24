@@ -69,6 +69,30 @@ export function useTrainPhysics() {
     world.createCollider(groundColliderDesc)
   }
 
+  function createTerrainCollider(world: RAPIER.World, heights: Float32Array, width: number, depth: number, resX: number, resY: number) {
+    if (!rapier) throw new Error('Rapier not initialized')
+
+    const scale = {
+      x: width / (resX - 1),
+      y: 1,
+      z: depth / (resY - 1)
+    }
+
+    const colliderDesc = rapier.ColliderDesc.heightfield(
+      resX - 1,
+      resY - 1,
+      heights,
+      scale
+    )
+    return world.createCollider(colliderDesc)
+  }
+
+  function createTrimeshCollider(world: RAPIER.World, vertices: Float32Array, indices: Uint32Array) {
+    if (!rapier) throw new Error('Rapier not initialized')
+    const colliderDesc = rapier.ColliderDesc.trimesh(vertices, indices)
+    return world.createCollider(colliderDesc)
+  }
+
   function createTrainBody(
     world: RAPIER.World,
     position: THREE.Vector3,

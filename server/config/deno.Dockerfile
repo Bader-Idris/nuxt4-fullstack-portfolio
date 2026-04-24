@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────
 # Stage 1: Base (not really used, but keeps structure similar)
 # ────────────────────────────────────────────────────────────────
-FROM node:24.14-alpine AS base
+FROM node:24.15-alpine AS base
 
 RUN apk add --no-cache python3 make g++ \
     && npm install -g npm@latest
@@ -38,7 +38,7 @@ RUN npm run build
 # ────────────────────────────────────────────────────────────────
 # Final stage: Deno runtime only – no Node left
 # ────────────────────────────────────────────────────────────────
-FROM denoland/deno:alpine-2.7.11 AS runner
+FROM denoland/deno:alpine-2.7.13 AS runner
 
 WORKDIR /app
 

@@ -82,19 +82,19 @@
 
 <script setup lang="ts">
 import * as THREE from "three";
+// import { ShaderMaterial, Points } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { useFullscreen } from "@vueuse/core";
-import type { Tween } from "gsap";
 import { useSound } from "@/composables/useSound";
+import { useTerrain } from "@/composables/threeD/useTerrain";
+import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
+import { useSky } from "@/composables/threeD/useSky";
+// import { useSmokeParticles } from "@/composables/threeD/useSmokeParticles";
 
 import particleVertexShader from "./shaders/smoke/particleVertex.glsl";
 import particleFragmentShader from "./shaders/smoke/particleFragment.glsl";
-import skyVertexShader from "./shaders/sky/vertex.glsl";
-import skyFragmentShader from "./shaders/sky/fragment.glsl";
-// import particleVertexShader from './shaders/smoke/particleVertex.glsl'
-// import particleFragmentShader from './shaders/smoke/particleFragment.glsl'
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -124,7 +124,7 @@ const motionTweens = {
   bend: null as any,
   lifeSpeed: null as any,
 };
-const wheelSpinGSAPRef = { ref: [] as Tween[] };
+const wheelSpinGSAPRef = { ref: [] as any[] };
 const gearPhases = [
   { key: "idle", label: "idle", speed: 0, rpm: 0 },
   { key: "medium", label: "medium", speed: -3.5, rpm: 90 },
@@ -146,9 +146,11 @@ let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let locomotive: THREE.Group;
 let animationId: number;
-let smokeParticles: THREE.Points | null = null;
 let skyMesh: THREE.Mesh | null = null;
-let skyMaterial: THREE.ShaderMaterial | null = null;
+let skyInstance: ReturnType<typeof useSky> | null = null;
+// let smokeInstance: ReturnType<typeof useSmokeParticles> | null = null;
+
+let smokeParticles: THREE.Points | null = null;
 let smokeMaterial: THREE.ShaderMaterial | null = null;
 let smokePositions: Float32Array;
 let smokeBirths: Float32Array;
@@ -159,6 +161,8 @@ let resizeObserver: ResizeObserver | null = null;
 let physicsBlocksGroup: THREE.Group | null = null;
 let physicsBlocks: THREE.Object3D[] = [];
 let trainPhysicsBody: any = null;
+let terrain: any = null;
+const { Terrain } = useTerrain();
 const trainBodyOffset = new THREE.Vector3();
 const trainBodyHalfExtents = new THREE.Vector3(1.2, 0.7, 0.6);
 const trainFocusPoint = new THREE.Vector3();
@@ -166,11 +170,8 @@ const trainStartPosition = new THREE.Vector3(20, 0, 0);
 
 const GROUND_Y = 0;
 const TRACK_CENTER_Z = 0;
-// Move this closer to the train for faster crashes, or farther away for a longer runway.
 const BLOCKS_START_X = 9;
-// Increase this when you want a denser obstacle field and bigger chain reactions.
 const STONE_COUNT = 26;
-// Camera offset is the quickest way to tune how close the player feels to the locomotive.
 const CAMERA_OFFSET = new THREE.Vector3(3.5, 2.2, 5);
 const CAMERA_FOLLOW_MIN_DISTANCE = 2.2;
 const CAMERA_FOLLOW_MAX_DISTANCE = 8.5;
@@ -221,7 +222,6 @@ const ticker = {
 
 const updateTrainFocusPoint = () => {
   if (!locomotive) return;
-
   trainFocusPoint.copy(locomotive.position).add(trainBodyOffset);
 };
 
@@ -265,7 +265,6 @@ const syncCameraToTrain = (followMotion: boolean = false) => {
 
 const syncTrainBodyFromVisual = () => {
   if (!locomotive || !trainPhysicsBody) return;
-
   const targetPosition = locomotive.position.clone().add(trainBodyOffset);
   trainPhysicsBody.setTranslation(targetPosition, true);
   trainPhysicsBody.setNextKinematicTranslation(targetPosition);
@@ -275,7 +274,6 @@ const syncTrainBodyFromVisual = () => {
 
 const syncLocomotiveFromPhysics = () => {
   if (!locomotive || !trainPhysicsBody) return;
-
   const physicsPos = trainPhysicsBody.translation();
   locomotive.position.set(
     physicsPos.x - trainBodyOffset.x,
@@ -287,64 +285,56 @@ const syncLocomotiveFromPhysics = () => {
 
 const placeLocomotiveOnTrack = () => {
   if (!locomotive) return;
-
   locomotive.position.set(0, 0, 0);
-
   const modelBounds = new THREE.Box3().setFromObject(locomotive);
   const modelCenter = modelBounds.getCenter(new THREE.Vector3());
-
+  const terrainHeight = terrain
+    ? terrain.getHeightAt(
+        trainStartPosition.x - modelCenter.x,
+        TRACK_CENTER_Z - modelCenter.z
+      )
+    : 0;
   locomotive.position.set(
     trainStartPosition.x - modelCenter.x,
-    GROUND_Y - modelBounds.min.y,
+    GROUND_Y - modelBounds.min.y + terrainHeight,
     TRACK_CENTER_Z - modelCenter.z
   );
-
   const placedBounds = new THREE.Box3().setFromObject(locomotive);
   const placedCenter = placedBounds.getCenter(new THREE.Vector3());
   const placedSize = placedBounds.getSize(new THREE.Vector3());
-
   trainBodyOffset.copy(placedCenter).sub(locomotive.position);
   trainBodyHalfExtents.set(
     Math.max(placedSize.x * 0.48, 0.6),
     Math.max(placedSize.y * 0.48, 0.4),
     Math.max(placedSize.z * 0.42, 0.35)
   );
-
   updateTrainFocusPoint();
 };
 
 const horn = useContinuous("trainHorn");
 
 const createTrainTracks = () => {
-  // Create two parallel rails
-  const railGeometry = new THREE.BoxGeometry(60, 0.1, 0.1);
+  const railGeometry = new THREE.BoxGeometry(500, 0.1, 0.1);
   const railMaterial = new THREE.MeshStandardMaterial({
     color: 0x888888,
     roughness: 0.4,
     metalness: 0.8,
   });
-
-  // Left rail
   const leftRail = new THREE.Mesh(railGeometry, railMaterial);
-  leftRail.position.set(15, 0.05, -0.6);
+  leftRail.position.set(0, 0.05, -0.6);
   leftRail.receiveShadow = true;
   scene.add(leftRail);
-
-  // Right rail
   const rightRail = new THREE.Mesh(railGeometry, railMaterial);
-  rightRail.position.set(15, 0.05, 0.6);
+  rightRail.position.set(0, 0.05, 0.6);
   rightRail.receiveShadow = true;
   scene.add(rightRail);
-
-  // Add sleepers (wooden beams)
   const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.8);
   const sleeperMaterial = new THREE.MeshStandardMaterial({
     color: 0x8b4513,
     roughness: 0.9,
     metalness: 0.0,
   });
-
-  for (let i = -10; i < 30; i += 1.5) {
+  for (let i = -250; i < 250; i += 1.5) {
     const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
     sleeper.position.set(i, 0.02, 0);
     sleeper.receiveShadow = true;
@@ -353,62 +343,35 @@ const createTrainTracks = () => {
 };
 
 const createObstacleField = () => {
-  if (
-    !trainPhysics.physicsWorld ||
-    !physicsBlocksGroup ||
-    physicsBlocks.length > 0
-  )
-    return;
-
+  if (!trainPhysics.physicsWorld || !physicsBlocksGroup || physicsBlocks.length > 0) return;
   const startPos = new THREE.Vector3(BLOCKS_START_X, 0.01, 0);
-  trainPhysics.createPhysicsBlocks(
-    trainPhysics.physicsWorld,
-    STONE_COUNT,
-    startPos
-  );
-
+  trainPhysics.createPhysicsBlocks(trainPhysics.physicsWorld, STONE_COUNT, startPos);
   trainPhysics.blockRenderMeshesRef.meshes.forEach((renderMesh) => {
     physicsBlocksGroup!.add(renderMesh);
     physicsBlocks.push(renderMesh);
   });
-
-  const speedFactor = Math.min(
-    Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED,
-    1
-  );
-  trainPhysics.setBlockBounceProfile(
-    trainPhysics.blocksRef.blocks,
-    speedFactor
-  );
+  const speedFactor = Math.min(Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED, 1);
+  trainPhysics.setBlockBounceProfile(trainPhysics.blocksRef.blocks, speedFactor);
 };
 
 const clearObstacleField = () => {
   physicsBlocks.forEach((mesh) => {
     physicsBlocksGroup?.remove(mesh);
-    if ("geometry" in mesh && mesh.geometry) {
-      mesh.geometry.dispose();
-    }
+    if ("geometry" in mesh && mesh.geometry) mesh.geometry.dispose();
     if ("material" in mesh && mesh.material) {
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((mat) => mat.dispose());
-      } else {
-        mesh.material.dispose();
-      }
+      if (Array.isArray(mesh.material)) mesh.material.forEach((mat) => mat.dispose());
+      else mesh.material.dispose();
     }
   });
-
   physicsBlocks = [];
   trainPhysics.blocksRef.blocks = [];
   trainPhysics.blockRenderMeshesRef.meshes = [];
 };
 
-const toggleFullscreen = async () => {
-  await toggle();
-};
+const toggleFullscreen = async () => await toggle();
 
 const togglePhysics = async () => {
   physicsMode.value = !physicsMode.value;
-
   if (!physicsMode.value) {
     currentGearIndex.value = 0;
     wheelSpeed.value = 0;
@@ -417,25 +380,23 @@ const togglePhysics = async () => {
     motionTweens.rpm?.kill();
     return;
   }
-
   try {
     await trainPhysics.initPhysics();
-
     if (trainPhysics.physicsWorld && locomotive) {
+      if (terrain) {
+        terrain.setPhysics(trainPhysics.physicsWorld, trainPhysics.rapier);
+        terrain.initPhysics();
+      }
       if (!trainPhysicsBody) {
-        trainPhysics.createGroundCollider(trainPhysics.physicsWorld);
+        if (!terrain || !terrain.collider) trainPhysics.createGroundCollider(trainPhysics.physicsWorld);
         trainPhysicsBody = trainPhysics.createTrainBody(
           trainPhysics.physicsWorld,
           locomotive.position.clone().add(trainBodyOffset),
           { halfExtents: trainBodyHalfExtents.clone() }
         );
       }
-
       syncTrainBodyFromVisual();
-
-      if (showBlocks.value) {
-        createObstacleField();
-      }
+      if (showBlocks.value) createObstacleField();
     }
   } catch (error) {
     console.error("Failed to initialize physics:", error);
@@ -444,185 +405,74 @@ const togglePhysics = async () => {
 };
 
 const toggleBlocks = () => {
-  if (
-    !physicsMode.value ||
-    !trainPhysics.physicsWorld ||
-    !locomotive ||
-    !physicsBlocksGroup
-  )
-    return;
-
+  if (!physicsMode.value || !trainPhysics.physicsWorld || !locomotive || !physicsBlocksGroup) return;
   showBlocks.value = !showBlocks.value;
-
-  if (showBlocks.value) {
-    createObstacleField();
-  } else {
-    clearObstacleField();
-  }
+  if (showBlocks.value) createObstacleField();
+  else clearObstacleField();
 };
 
 const toggleWheelSpin = () => {
   if (!locomotive) return;
-
   wheelSpinMode.value = !wheelSpinMode.value;
-
   wheelSpinGSAPRef.ref.forEach((tween) => tween.kill());
   wheelSpinGSAPRef.ref = [];
-
   motionTweens.speed?.kill();
   motionTweens.rpm?.kill();
-
   if (wheelSpinMode.value) {
     currentGearIndex.value = 0;
     wheelSpeed.value = 90;
     locomotiveSpeed.value = 0;
-    wheelSpinGSAPRef.ref = trainPhysics.startWheelSpin(
-      locomotive,
-      wheelSpeed.value
-    );
+    wheelSpinGSAPRef.ref = trainPhysics.startWheelSpin(locomotive, wheelSpeed.value);
     return;
   }
-
   wheelSpeed.value = 0;
 };
 
 const cycleGear = () => {
   if (!locomotive || !trainPhysics.physicsWorld || !trainPhysicsBody) return;
-
   const oldSpeed = locomotiveSpeed.value;
   currentGearIndex.value = (currentGearIndex.value + 1) % gearPhases.length;
   const newSpeed = currentGear.value.speed;
   syncTrainBodyFromVisual();
-
-  // Play brake sound if we are slowing down significantly (absolute speed decreases)
-  if (Math.abs(newSpeed) < Math.abs(oldSpeed) - 0.5) {
-    playSound("trainBrakes");
-  }
-
-  // Kill existing motion tweens to avoid conflicts
+  if (Math.abs(newSpeed) < Math.abs(oldSpeed) - 0.5) playSound("trainBrakes");
   motionTweens.speed?.kill();
   motionTweens.rpm?.kill();
   motionTweens.bend?.kill();
   motionTweens.lifeSpeed?.kill();
-
   const duration = 4.5;
   const ease = "power1.inOut";
-
-  // --- HEAVY MASS SIMULATION ---
-  // Speed transition
-  motionTweens.speed = useGSAP().to(locomotiveSpeed, {
-    value: newSpeed,
-    duration,
-    ease,
-  });
-
-  // Synchronize display RPM
-  motionTweens.rpm = useGSAP().to(wheelSpeed, {
-    value: currentGear.value.rpm,
-    duration,
-    ease,
-  });
-
-  // Smoke Bend Angle (Air resistance simulation)
-  const targetBend = THREE.MathUtils.degToRad(
-    SMOKE_BEND_ANGLE_BY_GEAR[currentGear.value.key]
-  );
-  motionTweens.bend = useGSAP().to(smokeBendAngle, {
-    value: targetBend,
-    duration,
-    ease,
-  });
-
-  // Smoke Life Speed (Coal burn intensity simulation)
+  motionTweens.speed = useGSAP().to(locomotiveSpeed, { value: newSpeed, duration, ease });
+  motionTweens.rpm = useGSAP().to(wheelSpeed, { value: currentGear.value.rpm, duration, ease });
+  const targetBend = THREE.MathUtils.degToRad(SMOKE_BEND_ANGLE_BY_GEAR[currentGear.value.key]);
+  motionTweens.bend = useGSAP().to(smokeBendAngle, { value: targetBend, duration, ease });
   const targetLifeSpeed = SMOKE_LIFE_SPEED_BY_GEAR[currentGear.value.key];
-  motionTweens.lifeSpeed = useGSAP().to(smokeLifeSpeed, {
-    value: targetLifeSpeed,
-    duration,
-    ease,
-  });
-
-  const speedFactor = Math.min(
-    Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED,
-    1
-  );
-  trainPhysics.setBlockBounceProfile(
-    trainPhysics.blocksRef.blocks,
-    speedFactor
-  );
+  motionTweens.lifeSpeed = useGSAP().to(smokeLifeSpeed, { value: targetLifeSpeed, duration, ease });
+  const speedFactor = Math.min(Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED, 1);
+  trainPhysics.setBlockBounceProfile(trainPhysics.blocksRef.blocks, speedFactor);
 };
-
-// Sync VueUse nativeFullscreen → modelFullscreen + URL
-// watch(nativeFullscreen, async (val) => {
-//   modelFullscreen.value = val
-
-//   if (val) {
-//     document.body.classList.add('fullscreen-active')
-//     await navigateTo({ query: { ...route.query, fullscreen: 'true' } }, { replace: true })
-//   } else {
-//     document.body.classList.remove('fullscreen-active')
-//     if (route.query.fullscreen) {
-//       const newQuery = { ...route.query }
-//       delete newQuery.fullscreen
-//       await navigateTo({ query: newQuery }, { replace: true })
-//     }
-//   }
-
-//   // Trigger resize after fullscreen transition
-//   setTimeout(handleResize, 100)
-// })
 
 const animate = (elapsedMs: number) => {
   animationId = requestAnimationFrame(animate);
-
   ticker.update(elapsedMs);
 
-  // Update engine sound (wheels) volume and rate based on speed
   const wheelSound = getSound("trainWheels");
   if (wheelSound) {
     const absSpeed = Math.abs(locomotiveSpeed.value);
-    // Map speed 0-6.8 to volume 0-0.6 and rate 0.5-1.5
-    const targetVol = THREE.MathUtils.mapLinear(
-      absSpeed,
-      0,
-      MAX_GEAR_ABS_SPEED,
-      0,
-      0.6
-    );
-    const targetRate = THREE.MathUtils.mapLinear(
-      absSpeed,
-      0,
-      MAX_GEAR_ABS_SPEED,
-      0.5,
-      1.5
-    );
-
-    wheelSound.volume(targetVol);
-    wheelSound.rate(targetRate);
+    wheelSound.volume(THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0, 0.3));// TODO: was 6 but too
+    wheelSound.rate(THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0.5, 1.1));
   }
 
-  // Update engine idle/running sound (trainEngine) based on gear
   const engineSound = getSound("trainEngine");
   if (engineSound) {
-    let targetRate = 0.8; // Idle rate
-    let targetVol = 0.3; // Idle volume
-
+    let targetRate = 0.8, targetVol = 0.3;
     const absSpeed = Math.abs(locomotiveSpeed.value);
-
     if (currentGear.value.key === "high") {
       targetRate = THREE.MathUtils.mapLinear(absSpeed, 3.5, 6.8, 1.1, 1.4);
       targetVol = THREE.MathUtils.mapLinear(absSpeed, 3.5, 6.8, 0.45, 0.6);
-    } else if (
-      currentGear.value.key === "medium" ||
-      currentGear.value.key === "backward"
-    ) {
-      targetRate = THREE.MathUtils.mapLinear(absSpeed, 0, 3.5, 0.8, 1.1);
-      targetVol = THREE.MathUtils.mapLinear(absSpeed, 0, 3.5, 0.3, 0.45);
     } else {
-      // Idle or slowing down to idle
       targetRate = THREE.MathUtils.mapLinear(absSpeed, 0, 3.5, 0.8, 1.1);
       targetVol = THREE.MathUtils.mapLinear(absSpeed, 0, 3.5, 0.3, 0.45);
     }
-
     engineSound.rate(targetRate);
     engineSound.volume(targetVol);
   }
@@ -678,52 +528,23 @@ const animate = (elapsedMs: number) => {
       lerpT
     );
   }
-  // Sky follows camera for proper spherical dome perception
-  if (skyMesh) {
-    skyMesh.position.copy(camera.position);
-  }
-  if (skyMaterial) {
-    skyMaterial.uniforms.uTime.value = ticker.elapsed;
-  }
+
+  if (skyMesh) skyMesh.position.copy(camera.position);
 
   if (physicsMode.value && trainPhysics.physicsWorld && trainPhysicsBody) {
-    // Perform stable physics steps with a fixed timestep (60Hz).
-    // All per-step physics logic (kinematic movement, forces) goes inside the callback.
-    trainPhysics.stepPhysics(
-      trainPhysics.physicsWorld,
-      ticker.delta,
-      (stepDt) => {
-        const distanceDelta = locomotiveSpeed.value * stepDt;
-
-        // 1. Move the kinematic train body and rotate wheels
-        if (!wheelSpinMode.value && Math.abs(distanceDelta) > 0.0001) {
-          const physicsPos = trainPhysicsBody.translation();
-          trainPhysicsBody.setNextKinematicTranslation({
-            x: physicsPos.x + distanceDelta,
-            y: physicsPos.y,
-            z: physicsPos.z,
-          });
-          trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta);
-        }
-
-        // 2. Apply wake forces to nearby blocks
-        trainPhysics.applyTrainSeparationForces(
-          trainPhysics.blocksRef.blocks,
-          trainPhysicsBody,
-          locomotiveSpeed.value,
-          stepDt,
-          () => playWithVariation("brickHit")
-        );
+    trainPhysics.stepPhysics(trainPhysics.physicsWorld, ticker.delta, (stepDt) => {
+      const distanceDelta = locomotiveSpeed.value * stepDt;
+      if (!wheelSpinMode.value && Math.abs(distanceDelta) > 0.0001) {
+        const physicsPos = trainPhysicsBody.translation();
+        const nextX = physicsPos.x + distanceDelta, nextZ = physicsPos.z;
+        trainPhysicsBody.setNextKinematicTranslation({ x: nextX, y: (terrain ? terrain.getHeightAt(nextX, nextZ) : 0) + trainBodyHalfExtents.y, z: nextZ });
+        trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta);
       }
-    );
-
-    // Update visual meshes from physics state and sync camera
+      trainPhysics.applyTrainSeparationForces(trainPhysics.blocksRef.blocks, trainPhysicsBody, locomotiveSpeed.value, stepDt, () => playWithVariation("brickHit"));
+    });
     trainPhysics.updatePhysicsBlocks(trainPhysics.blocksRef.blocks);
     syncLocomotiveFromPhysics();
-
-    if (Math.abs(locomotiveSpeed.value) > 0.0001) {
-      syncCameraToTrain(true);
-    }
+    if (Math.abs(locomotiveSpeed.value) > 0.0001) syncCameraToTrain(true);
   }
 
   // Respawn dead particles
@@ -770,21 +591,16 @@ const animate = (elapsedMs: number) => {
 
   if (controls) controls.update();
   renderer.render(scene, camera);
+  skyInstance?.update(camera);
 };
 
 const handleResize = () => {
   if (!containerRef.value || !renderer || !camera) return;
-
-  const width = containerRef.value.clientWidth;
-  const height = containerRef.value.clientHeight;
+  const width = containerRef.value.clientWidth, height = containerRef.value.clientHeight;
   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2);
   sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio);
-
-  // Update camera
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
-
-  // Update renderer
   renderer.setSize(width, height);
   renderer.setPixelRatio(sizes.pixelRatio);
 
@@ -794,149 +610,65 @@ const handleResize = () => {
   }
 };
 
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.repeat) return; // blocks browser key-repeat spam
-  if (e.key.toLowerCase() === "h") horn.start();
-};
-
-const handleKeyup = (e: KeyboardEvent) => {
-  if (e.key.toLowerCase() === "h") horn.stop();
-};
+const handleKeydown = (e: KeyboardEvent) => { if (!e.repeat && e.key.toLowerCase() === "h") horn.start(); };
+const handleKeyup = (e: KeyboardEvent) => { if (e.key.toLowerCase() === "h") horn.stop(); };
 
 onMounted(async () => {
   if (!containerRef.value || !canvasRef.value) return;
-
-  // Sync CSS class from URL (don't auto-enter native fullscreen)
-  // if (route.query.fullscreen === 'true' && !modelFullscreen.value) {
-  //   modelFullscreen.value = true
-  //   document.body.classList.add('fullscreen-active')
-  // }
-
   window.addEventListener("keydown", handleKeydown);
   window.addEventListener("keyup", handleKeyup);
-
-  // Start engine loop
   getSound("trainWheels")?.play();
-  // getSound("trainEngine")?.play();
 
-  const container = containerRef.value;
-  const canvas = canvasRef.value;
-
-  // Scene
+  const container = containerRef.value, canvas = canvasRef.value;
   scene = new THREE.Scene();
+  skyInstance = useSky(scene, { sunDirection: new THREE.Vector3(-0.5, 0.15, -0.5).normalize() });
+  if (skyInstance) skyMesh = skyInstance.mesh;
 
-  // Sky (large inverted sphere with shader on the inside)
-  const skyGeo = new THREE.SphereGeometry(500, 32, 15);
-  skyMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: { value: 0 },
-      uSunDir: { value: new THREE.Vector3(-0.5, 0.15, -0.5).normalize() },
-    },
-    vertexShader: skyVertexShader,
-    fragmentShader: skyFragmentShader,
-    side: THREE.BackSide,
-    depthTest: false,
-    depthWrite: false,
-  });
-  skyMesh = new THREE.Mesh(skyGeo, skyMaterial);
-  skyMesh.frustumCulled = false;
-  skyMesh.renderOrder = -1;
-  scene.add(skyMesh);
-
-  // Renderer
-  renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: true,
-  });
-  const width = container.clientWidth;
-  const height = container.clientHeight;
-
-  // Initialize sizes and resolution
-  sizes.width = width;
-  sizes.height = height;
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const width = container.clientWidth, height = container.clientHeight;
+  sizes.width = width; sizes.height = height;
   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2);
   sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio);
-
   renderer.setSize(width, height);
   renderer.setPixelRatio(sizes.pixelRatio);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
 
-  // Camera
-  camera = new THREE.PerspectiveCamera(
-    75,
-    sizes.width / sizes.height,
-    0.1,
-    1000
-  );
+  camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000);
   camera.position.set(5, 2.3, 2.5);
-
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
   directionalLight.position.set(5, 10, 7);
   scene.add(directionalLight);
 
-  // Load Locomotive model with Draco
-  const loader = new GLTFLoader();
-  const dracoLoader = new DRACOLoader();
-  // we can get the current version of draco dir from node_modules/three/examples/jsm/libs/draco
+  const loader = new GLTFLoader(), dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath("/assets/three/draco/gltf/");
   loader.setDRACOLoader(dracoLoader);
 
-  const locomotivePath = "/assets/three/resources/Locomotive.glb";
-  // Don't compress meshes with gltf-optimizer.simondev.io, it removes their names, use draco compression script instead!
-
   try {
-    const gltf = await new Promise<any>((resolve, reject) => {
-      loader.load(
-        locomotivePath,
-        (gltf) => resolve(gltf),
-        undefined,
-        (error) => reject(error)
-      );
-    });
-
+    const gltf = await new Promise<any>((resolve, reject) => { loader.load("/assets/three/resources/Locomotive.glb", resolve, undefined, reject); });
     locomotive = gltf.scene;
     scene.add(locomotive);
-
-    // Center and scale the model
-    const box = new THREE.Box3().setFromObject(locomotive);
-    const size = box.getSize(new THREE.Vector3());
-
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 3 / maxDim;
-    locomotive.scale.setScalar(scale);
-
+    const box = new THREE.Box3().setFromObject(locomotive), size = box.getSize(new THREE.Vector3());
+    locomotive.scale.setScalar(3 / Math.max(size.x, size.y, size.z));
     placeLocomotiveOnTrack();
 
-    // Find headlight mesh by name
     let headlightMesh: THREE.Mesh | null = null;
     let chimneySteamPipeMesh: THREE.Mesh | null = null;
-
     locomotive.traverse((child) => {
-      if (child.isMesh) {
-        if (child.name === "Forward-light") {
-          headlightMesh = child;
-        }
-        if (child.name === "chimney-steam-pipe") {
-          chimneySteamPipeMesh = child;
-        }
+      if (child instanceof THREE.Mesh) {
+        if (child.name === "Forward-light") headlightMesh = child;
+        if (child.name === "chimney-steam-pipe") chimneySteamPipeMesh = child;
       }
     });
-
-    // Apply emissive settings to the headlight mesh
     if (headlightMesh) {
       const mat = headlightMesh.material as THREE.MeshStandardMaterial;
-      if (mat.emissive) {
-        mat.emissiveIntensity = 1.0;
-        mat.envMapIntensity = 0.8;
-      }
+      if (mat.emissive) { mat.emissiveIntensity = 1.0; mat.envMapIntensity = 0.8; }
+      const beam = new THREE.SpotLight(0xffeedd, 80, 8, Math.PI / 8, 0.1, 1.5);
+      beam.position.set(0, 0, 0);
+      beam.target.position.set(Math.sin(-Math.PI / 2) * 1.5, -0.5, Math.cos(-Math.PI / 2) * 1.5);
+      beam.castShadow = true;
+      headlightMesh.add(beam); headlightMesh.add(beam.target);
     }
 
     // Create smoke particle system at chimney position
@@ -1037,152 +769,47 @@ onMounted(async () => {
       chimneySteamPipeMesh.add(smokeParticles);
     }
 
-    // Add narrow beam angled -90° to the right
-    if (headlightMesh) {
-      // (color, intensity, distance, angle, penumbra, decay)
-      // Boost intensity (e.g. 150) for a "searchlight" look.
-      const beam = new THREE.SpotLight(0xffeedd, 80, 8, Math.PI / 8, 0.1, 1.5);
-      beam.position.set(0, 0, 0);
-
-      // Target: -90° right from forward (local +Z → -X)
-      const angle = -Math.PI / 2;
-      const distance = 1.5;
-      beam.target.position.set(
-        Math.sin(angle) * distance,
-        -0.5,
-        Math.cos(angle) * distance
-      );
-
-      beam.castShadow = true;
-      beam.shadow.mapSize.set(512, 512);
-      beam.shadow.camera.near = 0.1;
-      beam.shadow.camera.far = 8;
-      beam.shadow.bias = -0.002;
-      headlightMesh.add(beam);
-      headlightMesh.add(beam.target);
-    }
-
-    // Layered ground colors read more naturally than a flat test green.
-    const groundGeo = new THREE.PlaneGeometry(60, 60);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#6c7b46"),
-      roughness: 0.98,
-      metalness: 0.0,
-    });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 0;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    const soilPatchGeo = new THREE.CircleGeometry(18, 32);
-    const soilPatchMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#8a7353"),
-      roughness: 1.0,
-      metalness: 0.0,
-    });
-    const soilPatch = new THREE.Mesh(soilPatchGeo, soilPatchMat);
-    soilPatch.rotation.x = -Math.PI / 2;
-    soilPatch.position.set(11, 0.002, 0);
-    soilPatch.receiveShadow = true;
-    scene.add(soilPatch);
-
-    const mossStripGeo = new THREE.PlaneGeometry(60, 7);
-    const mossStripMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#5a6a36"),
-      roughness: 0.96,
-      metalness: 0.0,
-    });
-    const mossStrip = new THREE.Mesh(mossStripGeo, mossStripMat);
-    mossStrip.rotation.x = -Math.PI / 2;
-    mossStrip.position.set(8, 0.003, 0);
-    mossStrip.receiveShadow = true;
-    scene.add(mossStrip);
-
-    // Keep the grid hidden by default so the scene reads like a world, not a sandbox.
-    const gridHelper = new THREE.GridHelper(40, 40, 0x555555, 0x333333);
-    gridHelper.position.y = 0.005;
-    gridHelper.visible = false;
-    scene.add(gridHelper);
-
-    // Create physics blocks group (hidden initially)
+    terrain = new Terrain(scene);
+    await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png");
     physicsBlocksGroup = new THREE.Group();
     scene.add(physicsBlocksGroup);
-
-    // Add train tracks
     createTrainTracks();
-  } catch (error) {
-    console.error("Error loading locomotive model:", error);
-  }
+  } catch (error) { console.error("Error loading locomotive model:", error); }
 
-  // Orbit Controls
   controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.enableZoom = true;
-  controls.zoomSpeed = 1.15;
-  controls.minDistance = 1.5;
-  controls.maxDistance = 30;
-  controls.maxPolarAngle = Math.PI / 2.02;
   controls.target.copy(trainFocusPoint);
   syncCameraToTrain();
 
-  // Resize handling
   resizeObserver = new ResizeObserver(handleResize);
   resizeObserver.observe(container);
   window.addEventListener("resize", handleResize);
-
-  // Start animation
   animate(0);
 });
 
 onUnmounted(() => {
   cancelAnimationFrame(animationId);
-
   window.removeEventListener("keydown", handleKeydown);
   window.removeEventListener("keyup", handleKeyup);
   getSound("trainWheels")?.stop();
-  // getSound("trainEngine")?.stop();
-
   resizeObserver?.disconnect();
   controls?.dispose();
   wheelSpinGSAPRef.ref.forEach((tween) => tween.kill());
-  smokeParticles?.geometry.dispose();
+  // smokeInstance?.dispose();
+  skyInstance?.dispose();
   smokeMaterial?.dispose();
-  skyMesh?.geometry.dispose();
-  skyMaterial?.dispose();
   renderer?.dispose();
-
-  // Cleanup physics
   trainPhysics.cleanup();
   clearObstacleField();
-  physicsBlocksGroup = null;
-
   window.removeEventListener("resize", handleResize);
 });
 </script>
 
 <style lang="scss" scoped>
 div {
-  width: 100%;
-  height: 80vh;
-  position: relative;
-  transition: all 0.3s ease;
-
-  &.is-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    background: #228b22;
-  }
-
-  @include mobile {
-    overflow-y: scroll;
-    padding-bottom: 10vh;
-  }
+  width: 100%; height: 80vh; position: relative; transition: all 0.3s ease;
+  &.is-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: #228b22; }
+  @include mobile { overflow-y: scroll; padding-bottom: 10vh; }
 }
 
 canvas {
@@ -1236,7 +863,6 @@ canvas {
     gap: 4px;
   }
 }
-
 .control-btn {
   display: flex;
   align-items: center;
@@ -1288,9 +914,7 @@ canvas {
     }
   }
 }
-</style>
 
-<style lang="scss">
 body.fullscreen-active {
   overflow: hidden !important;
 
