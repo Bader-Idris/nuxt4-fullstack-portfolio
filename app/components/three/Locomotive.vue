@@ -92,10 +92,11 @@ import { useSound } from "@/composables/useSound";
 import { useTerrain } from "@/composables/threeD/useTerrain";
 import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
 import { useSky } from "@/composables/threeD/useSky";
+import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
 // import { useSmokeParticles } from "@/composables/threeD/useSmokeParticles";
 
-import particleVertexShader from "./shaders/smoke/particleVertex.glsl";
-import particleFragmentShader from "./shaders/smoke/particleFragment.glsl";
+const chimneySteam = useChimneySteam();
+const { smokeBendAngle, smokeLifeSpeed, SMOKE_BEND_ANGLE_BY_GEAR, SMOKE_LIFE_SPEED_BY_GEAR } = chimneySteam;
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -118,7 +119,6 @@ const showBlocks = ref(true);
 const wheelSpinMode = ref(false);
 const wheelSpeed = ref(0);
 const locomotiveSpeed = ref(0);
-const smokeLifeSpeed = ref(1);
 const motionTweens = {
   speed: null as any,
   rpm: null as any,
@@ -151,13 +151,6 @@ let skyMesh: THREE.Mesh | null = null;
 let skyInstance: ReturnType<typeof useSky> | null = null;
 // let smokeInstance: ReturnType<typeof useSmokeParticles> | null = null;
 
-let smokeParticles: THREE.Points | null = null;
-let smokeMaterial: THREE.ShaderMaterial | null = null;
-let smokePositions: Float32Array;
-let smokeBirths: Float32Array;
-let smokeLifespans: Float32Array;
-let smokeVelocities: Float32Array;
-let smokeSeeds: Float32Array;
 let resizeObserver: ResizeObserver | null = null;
 let physicsBlocksGroup: THREE.Group | null = null;
 let physicsBlocks: THREE.Object3D[] = [];
@@ -182,33 +175,6 @@ const cameraFollowState = { initialized: false };
 
 // Physics engine instance
 const trainPhysics = useTrainPhysics();
-// --- PARTICLE COUNT ---
-// Higher = denser, more realistic coal smoke (try 200+ for thick smoke)
-const PARTICLE_COUNT = 400;
-// --- LIFETIME ---
-// How long each particle lives before respawning (seconds)
-// Lower = shorter smoke column
-const SMOKE_LIFETIME = 3.0;
-const SMOKE_BEND_ANGLE_BY_GEAR: Record<
-  (typeof gearPhases)[number]["key"],
-  number
-> = {
-  backward: -45,
-  idle: 0,
-  medium: 60,
-  high: 80,
-};
-const SMOKE_LIFE_SPEED_BY_GEAR: Record<
-  (typeof gearPhases)[number]["key"],
-  number
-> = {
-  backward: 1,
-  idle: 0.2,
-  medium: 1,
-  high: 1.6,
-};
-const smokeBendAngle = { value: 0 };
-const SMOKE_BEND_SMOOTHING = 3.2;
 
 const ticker = {
   elapsed: 0,
@@ -479,56 +445,7 @@ const animate = (elapsedMs: number) => {
   }
 
   // Update smoke and sky
-  if (smokeMaterial) {
-    smokeMaterial.uniforms.uTime.value = ticker.elapsed;
-
-    // Drive smoke bend by actual locomotive speed (heavy mass simulation)
-    // Forward (negative speed) tilts right, Backward (positive) tilts left
-    let targetBendDeg = 0;
-    if (locomotiveSpeed.value < 0) {
-      // Mapping forward speed (-6.8 max) to 90 degrees tilt
-      targetBendDeg = THREE.MathUtils.mapLinear(
-        locomotiveSpeed.value,
-        0,
-        -6.8,
-        0,
-        80
-      );
-    } else {
-      // Mapping backward speed (2.4 max) to -45 degrees tilt
-      targetBendDeg = THREE.MathUtils.mapLinear(
-        locomotiveSpeed.value,
-        0,
-        2.4,
-        0,
-        -45
-      );
-    }
-
-    const targetBendRad = THREE.MathUtils.degToRad(targetBendDeg);
-    const lerpT = Math.min(ticker.delta * SMOKE_BEND_SMOOTHING, 1);
-    smokeBendAngle.value = THREE.MathUtils.lerp(
-      smokeBendAngle.value,
-      targetBendRad,
-      lerpT
-    );
-    smokeMaterial.uniforms.uWindBendAngle.value = smokeBendAngle.value;
-
-    // Drive smoke life speed (intensity) by speed as well
-    // It stays at 1.0 until speed exceeds medium forward, then ramps to 1.1
-    const lifeSpeedTarget =
-      locomotiveSpeed.value < -3.5
-        ? THREE.MathUtils.mapLinear(locomotiveSpeed.value, -3.5, -6.8, 1.0, 1.1)
-        : 1.0;
-
-    // Lerp the life speed as well for extra smoothness when stopping
-    const currentLifeSpeed = smokeMaterial.uniforms.uLifeSpeed.value;
-    smokeMaterial.uniforms.uLifeSpeed.value = THREE.MathUtils.lerp(
-      currentLifeSpeed,
-      lifeSpeedTarget,
-      lerpT
-    );
-  }
+  chimneySteam.update(ticker.elapsed, ticker.delta, locomotiveSpeed.value);
 
   if (skyMesh) skyMesh.position.copy(camera.position);
 
@@ -548,48 +465,6 @@ const animate = (elapsedMs: number) => {
     if (Math.abs(locomotiveSpeed.value) > 0.0001) syncCameraToTrain(true);
   }
 
-  // Respawn dead particles
-  if (smokeParticles) {
-    const positions = smokeParticles.geometry.attributes.position
-      .array as Float32Array;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const age = ticker.elapsed - smokeBirths[i];
-      if (age > smokeLifespans[i]) {
-        // --- RESPAWN TIMING ---
-        // Small stagger delay prevents clumping
-        smokeBirths[i] = ticker.elapsed + Math.random() * 1.5;
-        // Smoke height control:
-        // longer lifespan = particles survive longer and rise higher.
-        // Example:
-        // Shorter plume: SMOKE_LIFETIME + Math.random() * 1.0
-        // Taller plume:  SMOKE_LIFETIME + Math.random() * 2.0
-        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 2.0;
-
-        // --- RESPAWN POSITION (local space) ---
-        positions[i * 3] = (Math.random() - 0.5) * 0.25;
-        positions[i * 3 + 1] = Math.random() * 0.2;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 0.25;
-
-        // --- RESPAWN VELOCITY ---
-        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.2;
-        // Main smoke height control for respawned particles.
-        // Example:
-        // Lower plume:  0.3 + Math.random() * 0.25
-        // Taller plume: 0.8 + Math.random() * 0.25
-        smokeVelocities[i * 3 + 1] = 0.8 + Math.random() * 0.25;
-        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
-
-        smokeSeeds[i] = Math.random();
-      }
-    }
-
-    smokeParticles.geometry.attributes.position.needsUpdate = true;
-    smokeParticles.geometry.attributes.aBirth.needsUpdate = true;
-    smokeParticles.geometry.attributes.aLifespan.needsUpdate = true;
-    smokeParticles.geometry.attributes.aVelocity.needsUpdate = true;
-    smokeParticles.geometry.attributes.aSeed.needsUpdate = true;
-  }
-
   if (controls) controls.update();
   renderer.render(scene, camera);
   skyInstance?.update(camera);
@@ -606,9 +481,7 @@ const handleResize = () => {
   renderer.setPixelRatio(sizes.pixelRatio);
 
   // Update shader uniform
-  if (smokeMaterial) {
-    smokeMaterial.uniforms.uResolution.value.copy(sizes.resolution);
-  }
+  chimneySteam.updateResolution(sizes.resolution);
 };
 
 const handleKeydown = (e: KeyboardEvent) => { if (!e.repeat && e.key.toLowerCase() === "h") horn.start(); };
@@ -674,100 +547,7 @@ onMounted(async () => {
 
     // Create smoke particle system at chimney position
     if (chimneySteamPipeMesh) {
-      // Initialize particle data arrays
-      smokePositions = new Float32Array(PARTICLE_COUNT * 3);
-      smokeBirths = new Float32Array(PARTICLE_COUNT);
-      smokeLifespans = new Float32Array(PARTICLE_COUNT);
-      smokeVelocities = new Float32Array(PARTICLE_COUNT * 3);
-      smokeSeeds = new Float32Array(PARTICLE_COUNT);
-
-      // Initialize particles with staggered birth times for continuous smoke column
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        // --- LIFETIME (duration before respawn) ---
-        // Smoke height control:
-        // longer lifespan = particles survive longer and rise higher.
-        // Example:
-        // Shorter plume: SMOKE_LIFETIME + Math.random() * 1.0
-        // Taller plume:  SMOKE_LIFETIME + Math.random() * 2.0
-        smokeBirths[i] = -Math.random() * SMOKE_LIFETIME * 2; // Negative = some already alive at start
-        smokeLifespans[i] = SMOKE_LIFETIME + Math.random() * 2.0; // 3.0-5.0s duration
-
-        // --- INITIAL POSITION (local space, relative to chimney emitter) ---
-        // X: wider horizontal spread for a thick smoke plume
-        smokePositions[i * 3] = (Math.random() - 0.5) * 0.25;
-        // Y: start at emitter base
-        smokePositions[i * 3 + 1] = Math.random() * 0.2;
-        // Z: wider depth spread for a thick smoke plume
-        smokePositions[i * 3 + 2] = (Math.random() - 0.5) * 0.25;
-
-        // --- VELOCITY (speed & direction) ---
-        // X: wider lateral drift for thick, spreading smoke
-        smokeVelocities[i * 3] = (Math.random() - 0.5) * 0.2;
-        // Main smoke height control:
-        // higher Y velocity = taller plume because particles climb farther before fading.
-        // Example:
-        // Lower plume:  0.3 + Math.random() * 0.25
-        // Taller plume: 0.8 + Math.random() * 0.25
-        // Current value is raised to make the smoke reach about 2 units higher.
-        smokeVelocities[i * 3 + 1] = 0.8 + Math.random() * 0.25;
-        // Z: wider depth drift
-        smokeVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
-
-        // Random seed for unique noise-driven motion per particle
-        smokeSeeds[i] = Math.random();
-      }
-
-      // Create particle geometry
-      const particleGeo = new THREE.BufferGeometry();
-      particleGeo.setAttribute(
-        "position",
-        new THREE.BufferAttribute(smokePositions, 3)
-      );
-      particleGeo.setAttribute(
-        "aBirth",
-        new THREE.BufferAttribute(smokeBirths, 1)
-      );
-      particleGeo.setAttribute(
-        "aLifespan",
-        new THREE.BufferAttribute(smokeLifespans, 1)
-      );
-      particleGeo.setAttribute(
-        "aVelocity",
-        new THREE.BufferAttribute(smokeVelocities, 3)
-      );
-      particleGeo.setAttribute(
-        "aSeed",
-        new THREE.BufferAttribute(smokeSeeds, 1)
-      );
-
-      // Create shader material for particles (puff shape computed in GLSL)
-      smokeMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0 },
-          uWindBendAngle: { value: 0 },
-          uLifeSpeed: { value: 1 },
-          // --- PARTICLE SIZE ---
-          // Base radius of the smoke puffs.
-          // Small (0.05) = wispy steam, Large (0.3) = heavy coal clouds.
-          uParticleSize: { value: 0.15 },
-          // --- SMOKE COLOR ---
-          // Warm gray: rgb(217, 209, 204)
-          uColor: { value: new THREE.Color(0.85, 0.82, 0.8) },
-          uResolution: { value: sizes.resolution.clone() },
-        },
-        vertexShader: particleVertexShader,
-        fragmentShader: particleFragmentShader,
-        transparent: true,
-        depthWrite: false,
-        depthTest: true,
-        blending: THREE.NormalBlending,
-      });
-
-      // Create points
-      smokeParticles = new THREE.Points(particleGeo, smokeMaterial);
-      smokeParticles.position.set(0, 0.12, 0);
-      smokeParticles.frustumCulled = false;
-      chimneySteamPipeMesh.add(smokeParticles);
+      chimneySteam.init(chimneySteamPipeMesh, sizes.resolution);
     }
 
     terrain = new Terrain(scene);
@@ -798,7 +578,7 @@ onUnmounted(() => {
   wheelSpinGSAPRef.ref.forEach((tween) => tween.kill());
   // smokeInstance?.dispose();
   skyInstance?.dispose();
-  smokeMaterial?.dispose();
+  chimneySteam.dispose();
   renderer?.dispose();
   trainPhysics.cleanup();
   clearObstacleField();
