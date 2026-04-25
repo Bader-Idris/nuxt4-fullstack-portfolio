@@ -90,6 +90,8 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { useFullscreen } from "@vueuse/core";
 import { useSound } from "@/composables/useSound";
 import { useTerrain } from "@/composables/threeD/useTerrain";
+import { useWater } from "@/composables/threeD/useWater";
+import { useGrass } from "@/composables/threeD/useGrass";
 import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
 import { useSky } from "@/composables/threeD/useSky";
 import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
@@ -150,6 +152,8 @@ let animationId: number;
 let skyMesh: THREE.Mesh | null = null;
 let skyInstance: ReturnType<typeof useSky> | null = null;
 // let smokeInstance: ReturnType<typeof useSmokeParticles> | null = null;
+let waterInstance: ReturnType<typeof useWater> | null = null;
+let grassInstance: ReturnType<typeof useGrass> | null = null;
 
 let resizeObserver: ResizeObserver | null = null;
 let physicsBlocksGroup: THREE.Group | null = null;
@@ -418,6 +422,29 @@ const cycleGear = () => {
   trainPhysics.setBlockBounceProfile(trainPhysics.blocksRef.blocks, speedFactor);
 };
 
+let knotMesh: THREE.Object3D | null = null;
+const knotInitialPosition = new THREE.Vector3();
+
+// ... (other refs)
+
+const updateKnotSmoothly = () => {
+  if (!knotMesh || trainPhysics.wheelMeshesRef.meshes.length === 0) return;
+  
+  const smallWheel = trainPhysics.wheelMeshesRef.meshes.find(w => w.wheel.name === 'SmallWheels_2');
+  if (smallWheel) {
+    const angle = smallWheel.mesh.rotation.z;
+    const amplitude = 0.235; 
+    
+    // We use GSAP to set the values for slightly better interpolation/sub-frame consistency 
+    // although for physics we might still stay frame-bound.
+    useGSAP().set(knotMesh.position, {
+      x: knotInitialPosition.x + Math.cos(angle) * amplitude,
+      y: knotInitialPosition.y - Math.sin(angle) * amplitude,
+      overwrite: 'auto'
+    });
+  }
+};
+
 const animate = (elapsedMs: number) => {
   animationId = requestAnimationFrame(animate);
   ticker.update(elapsedMs);
@@ -425,13 +452,18 @@ const animate = (elapsedMs: number) => {
   const wheelSound = getSound("trainWheels");
   if (wheelSound) {
     const absSpeed = Math.abs(locomotiveSpeed.value);
-    wheelSound.volume(THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0, 0.3));// TODO: was 6 but too
-    wheelSound.rate(THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0.5, 1.1));
+    wheelSound.volume(
+      THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0, 0.3)
+    ); // TODO: was 6 but too
+    wheelSound.rate(
+      THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0.5, 1.1)
+    );
   }
 
   const engineSound = getSound("trainEngine");
   if (engineSound) {
-    let targetRate = 0.8, targetVol = 0.3;
+    let targetRate = 0.8,
+      targetVol = 0.3;
     const absSpeed = Math.abs(locomotiveSpeed.value);
     if (currentGear.value.key === "high") {
       targetRate = THREE.MathUtils.mapLinear(absSpeed, 3.5, 6.8, 1.1, 1.4);
@@ -448,6 +480,9 @@ const animate = (elapsedMs: number) => {
   chimneySteam.update(ticker.elapsed, ticker.delta, locomotiveSpeed.value);
 
   if (skyMesh) skyMesh.position.copy(camera.position);
+
+  // Animate Knot mechanical linkage smoothly
+  updateKnotSmoothly();
 
   if (physicsMode.value && trainPhysics.physicsWorld && trainPhysicsBody) {
     trainPhysics.stepPhysics(trainPhysics.physicsWorld, ticker.delta, (stepDt) => {
@@ -468,6 +503,8 @@ const animate = (elapsedMs: number) => {
   if (controls) controls.update();
   renderer.render(scene, camera);
   skyInstance?.update(camera);
+  waterInstance?.update(ticker.elapsed, camera);
+  grassInstance?.update(ticker.elapsed);
 };
 
 const handleResize = () => {
@@ -526,16 +563,27 @@ onMounted(async () => {
     const box = new THREE.Box3().setFromObject(locomotive), size = box.getSize(new THREE.Vector3());
     locomotive.scale.setScalar(3 / Math.max(size.x, size.y, size.z));
     placeLocomotiveOnTrack();
+    
+    // Initialize wheel meshes for linkage animation
+    trainPhysics.collectWheelMeshes(locomotive);
 
-    let headlightMesh: THREE.Mesh | null = null;
-    let chimneySteamPipeMesh: THREE.Mesh | null = null;
+    let headlightMesh: THREE.Object3D | null = null;
+    let chimneySteamPipeMesh: THREE.Object3D | null = null;
     locomotive.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.name === "Forward-light") headlightMesh = child;
-        if (child.name === "chimney-steam-pipe") chimneySteamPipeMesh = child;
+      if (child.name) {
+        // Robust name matching with includes to handle potential prefixes or hierarchy changes
+        if (child.name.includes("Forward-light")) headlightMesh = child;
+        if (child.name.includes("chimney")) chimneySteamPipeMesh = child;
+        if (child.name.includes("knot")) {
+          knotMesh = child;
+          // TODO: hide it for now, nla is much better!!
+          knotMesh.visible = false;
+          knotInitialPosition.copy(child.position);
+        }
       }
     });
-    if (headlightMesh) {
+
+    if (headlightMesh && headlightMesh instanceof THREE.Mesh) {
       const mat = headlightMesh.material as THREE.MeshStandardMaterial;
       if (mat.emissive) { mat.emissiveIntensity = 1.0; mat.envMapIntensity = 0.8; }
       const beam = new THREE.SpotLight(0xffeedd, 80, 8, Math.PI / 8, 0.1, 1.5);
@@ -552,6 +600,19 @@ onMounted(async () => {
 
     terrain = new Terrain(scene);
     await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png");
+
+    if (terrain.splatTexture) {
+      waterInstance = useWater(scene, {
+        splatTexture: terrain.splatTexture,
+        terrainSize: terrain.size,
+      });
+
+      grassInstance = useGrass(scene, {
+        splatTexture: terrain.splatTexture,
+        terrainSize: terrain.size,
+      });
+    }
+
     physicsBlocksGroup = new THREE.Group();
     scene.add(physicsBlocksGroup);
     createTrainTracks();
@@ -578,6 +639,8 @@ onUnmounted(() => {
   wheelSpinGSAPRef.ref.forEach((tween) => tween.kill());
   // smokeInstance?.dispose();
   skyInstance?.dispose();
+  waterInstance?.dispose();
+  grassInstance?.dispose();
   chimneySteam.dispose();
   renderer?.dispose();
   trainPhysics.cleanup();

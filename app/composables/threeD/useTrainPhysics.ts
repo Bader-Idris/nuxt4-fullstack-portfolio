@@ -32,11 +32,11 @@ export function useTrainPhysics() {
   const BRICK_HIT_THROTTLE_MS = 120
 
   const wheels: WheelConfig[] = [
-    { name: 'SmallWheels1', radius: 0.3, isBigWheel: false, rotationAxis: 'y', spinDirection: 1 },
-    { name: 'SmallWheels_2', radius: 0.3, isBigWheel: false, rotationAxis: 'z', spinDirection: -1 },
-    { name: 'BigWheels3002', radius: 0.6, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
-    { name: 'BigWheels3001', radius: 0.6, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
-    { name: 'BigWheels3', radius: 0.6, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
+    { name: 'SmallWheels1', radius: 0.71, isBigWheel: false, rotationAxis: 'y', spinDirection: 1 },
+    { name: 'SmallWheels_2', radius: 0.71, isBigWheel: false, rotationAxis: 'z', spinDirection: -1 },
+    { name: 'BigWheels3002', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
+    { name: 'BigWheels3001', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
+    { name: 'BigWheels3', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
   ]
 
   const trainBodyRef = { body: null as RAPIER.RigidBody | null }
@@ -279,7 +279,8 @@ export function useTrainPhysics() {
     const wheelMeshes: { mesh: THREE.Object3D; wheel: WheelConfig }[] = []
 
     locomotive.traverse((child: THREE.Object3D) => {
-      const matchedWheel = wheels.find((w) => child.name === w.name)
+      // Find a wheel config where the child name contains the wheel name
+      const matchedWheel = wheels.find((w) => child.name.includes(w.name))
       if (matchedWheel) {
         wheelMeshes.push({ mesh: child, wheel: matchedWheel })
       }
