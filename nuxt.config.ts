@@ -476,8 +476,12 @@ export default defineNuxtConfig({
     head: {
       charset: "utf-8",
       viewport:
-        "viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=3.0, user-scalable=yes",
-      // meta: [{}],
+        "viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no",
+      meta: [
+        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+        { name: "mobile-web-app-capable", content: "yes" },
+      ],
       link: [
         {
           rel: "icon",

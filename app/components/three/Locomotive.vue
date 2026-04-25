@@ -2,16 +2,6 @@
   <div ref="containerRef" :class="{ 'is-fullscreen': modelFullscreen }">
     <canvas ref="canvasRef" />
 
-    <!-- Speed Display Overlay -->
-    <div v-if="physicsMode || wheelSpinMode" class="speed-display">
-      <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
-      <div class="speed-label">RPM</div>
-      <div v-if="wheelSpinMode" class="speed-mode">WHEEL SPIN</div>
-      <div v-else-if="physicsMode" class="speed-mode">
-        GEAR {{ currentGear.label.toUpperCase() }}
-      </div>
-    </div>
-
     <div class="controls-container">
       <button
         class="control-btn"
@@ -62,6 +52,17 @@
           >GEAR: {{ currentGear.label.toUpperCase() }}</span
         >
       </button>
+
+      <!-- Speed Display Overlay -->
+      <div v-if="physicsMode || wheelSpinMode" class="speed-display">
+        <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
+        <div class="speed-label">RPM</div>
+        <div v-if="wheelSpinMode" class="speed-mode">WHEEL SPIN</div>
+        <div v-else-if="physicsMode" class="speed-mode">
+          GEAR {{ currentGear.label.toUpperCase() }}
+        </div>
+      </div>
+
     </div>
     <button
       class="fullscreen-btn"
@@ -321,11 +322,11 @@ const createTrainTracks = () => {
     metalness: 0.8,
   });
   const leftRail = new THREE.Mesh(railGeometry, railMaterial);
-  leftRail.position.set(0, 0.05, -0.6);
+  leftRail.position.set(0, 0.05, -0.3);
   leftRail.receiveShadow = true;
   scene.add(leftRail);
   const rightRail = new THREE.Mesh(railGeometry, railMaterial);
-  rightRail.position.set(0, 0.05, 0.6);
+  rightRail.position.set(0, 0.05, 0.3);
   rightRail.receiveShadow = true;
   scene.add(rightRail);
   const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.8);
@@ -807,15 +808,20 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 div {
-  width: 100%; height: 80vh; position: relative; transition: all 0.3s ease;
-  &.is-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: #228b22; }
-  @include mobile { overflow-y: scroll; padding-bottom: 10vh; }
+  width: 100%; height: 80dvh; position: relative; transition: all 0.3s ease;
+  &.is-fullscreen { position: fixed; top: 0; left: 0; width: 100dvw; height: 100dvh; z-index: 9999; background: #228b22; }
+  // @include mobile { overflow-y: scroll; padding-bottom: 10dvh; }
 }
 
 canvas {
   display: block;
   width: 100%;
   height: 100%;
+  @include mobile {
+    width: calc(100dvw - 30px);
+    height: calc(100dvh - 90px);
+    position: fixed;
+  }
 }
 
 .fullscreen-btn {
@@ -837,6 +843,11 @@ canvas {
   transition: background 0.2s ease;
   backdrop-filter: blur(4px);
 
+  @include mobile {
+    bottom: 15%;
+    // should be hidden after 5 seconds on focused
+  }
+
   &:hover {
     background: rgba(0, 0, 0, 0.8);
   }
@@ -856,13 +867,28 @@ canvas {
   pointer-events: none;
   justify-content: flex-start;
   align-items: flex-end;
+  height: 50px;
+
+  .speed-display {
+    text-align: center;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 12px;
+    border-radius: 8px;
+    height: 25px;
+    min-width: 30px;
+    max-width: 45px;
+    line-height: 25px;
+  }
 
   @include mobile {
     left: 8px;
-    bottom: 8px;
+    bottom: 15%;
+    height: 60px;
     gap: 4px;
   }
 }
+
 .control-btn {
   display: flex;
   align-items: center;

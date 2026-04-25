@@ -59,17 +59,16 @@ watch(isFullscreen, (val) => {
   @include mainMiddleSettings;
 
   @include mobile {
+    // overflow-y: hidden;
+    margin-right: 0;
+    padding: 0 0 10dvh 0;
+    
     @include phone-borders;
   }
 
-  @include mobile {
-    overflow-y: scroll;
-    padding-bottom: 10vh;
-  }
-
   &.page-fullscreen {
-    width: 100vw;
-    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
     padding: 0;
     margin: 0;
     overflow: hidden;

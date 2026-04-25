@@ -112,7 +112,7 @@ div {
     left: 150px;
     top: -320px;
   }
-  height: 80vh; /* Adjust as needed – you can also use 100vh for full-screen */
+  height: 80dvh; /* Adjust as needed – you can also use 100vh for full-screen */
   position: relative;
 }
 

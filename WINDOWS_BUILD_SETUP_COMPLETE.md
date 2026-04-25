@@ -55,7 +55,7 @@ WIN_CSC_KEY_PASSWORD="ChangeMeToASecurePassword123!"
 DOMAIN_NAME=http://localhost:5000 SOCKET_URL=ws://localhost:5000 bun run build:electron:win
 ```
 
-Output will be in: `release/3.2.6/`
+Output will be in: `release/3.3.1/`
 
 ---
 

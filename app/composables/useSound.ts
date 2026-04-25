@@ -1,4 +1,4 @@
-import { Howl } from "howler";
+import { Howl, Howler } from "howler";
 
 // Define sound files - place these in your public directory (e.g., public/sounds)
 const sounds = {
@@ -130,10 +130,26 @@ export function useSound() {
     return { start, stop };
   };
 
+  /**
+   * Stops all sounds currently playing.
+   */
+  const stopAll = () => {
+    Howler.stop();
+  };
+
+  /**
+   * Mutes or unmutes all sounds.
+   */
+  const muteAll = (muted: boolean) => {
+    Howler.mute(muted);
+  };
+
   return {
     playSound,
     playWithVariation,
     useContinuous,
     getSound,
+    stopAll,
+    muteAll,
   };
 }

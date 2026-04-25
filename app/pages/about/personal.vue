@@ -402,7 +402,7 @@ onBeforeMount(() => {
   }
 
   .personal-bio {
-    height: 50vh;
+    height: 50dvh;
     overflow-y: scroll;
     cursor: grab;
     user-select: none;
@@ -421,7 +421,7 @@ onBeforeMount(() => {
       height: inherit;
 
       & p {
-        // height: 80vh;
+        // height: 80dvh;
         margin-bottom: 30px;
       }
     }

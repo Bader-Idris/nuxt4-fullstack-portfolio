@@ -520,20 +520,20 @@ useSeoMeta({
       // }
 
       @include mobile {
-        height: 80vh;
+        height: 80dvh;
         @include flex-container(column, nowrap, space-around, center);
       }
 
       @media screen and (max-height: 430px) {
         position: fixed;
-        left: 10vw;
+        left: 10dvw;
       }
     }
 
     aside {
       @media screen and (max-height: 430px) {
         position: fixed;
-        right: 10vw;
+        right: 10dvw;
       }
 
       @media screen and (max-height: 500px) {

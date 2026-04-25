@@ -245,7 +245,7 @@ onUnmounted(() => {
 
   @include mobile {
     overflow-y: scroll;
-    padding-bottom: 10vh;
+    padding-bottom: 10dvh;
   }
 
   aside {

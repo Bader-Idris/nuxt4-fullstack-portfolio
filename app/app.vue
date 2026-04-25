@@ -30,6 +30,7 @@
 import { Capacitor } from '@capacitor/core'
 import type { URLOpenListenerEvent } from '@capacitor/app'
 import { useColorMode } from '@vueuse/core'
+import { useSound } from '@/composables/useSound'
 
 useHead({
   // link: []
@@ -74,6 +75,13 @@ onMounted(async () => {
     // For web builds, show the main content and initialize immediately.
     showMainContent.value = true
     await initializeMainApp()
+
+    // Hide address bar on mobile devices
+    if (import.meta.client && !config.public.isCapacitor) {
+      setTimeout(() => {
+        window.scrollTo(0, 1)
+      }, 100)
+    }
   }
 })
 
@@ -100,10 +108,28 @@ const hideSplashAndShowApp = async () => {
  * This function is now safely called after the main UI is visible.
  */
 const initializeMainApp = async () => {
+  const { muteAll } = useSound()
+
+  // Handle web visibility change (screen lock/tab switch)
+  if (import.meta.client) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        muteAll(true)
+      } else {
+        muteAll(false)
+      }
+    })
+  }
+
   if (Capacitor.isNativePlatform()) {
     // Initialize each plugin separately so that if one fails, others can still work
     try {
       await initCapacitorPlatform();
+      // Add Capacitor-specific background listener
+      const { App: CapacitorApp } = await import('@capacitor/app')
+      CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+        muteAll(!isActive)
+      })
     } catch (error) {
       console.error("Error initializing Capacitor platform features:", error);
     }
@@ -276,7 +302,7 @@ if (import.meta.client) {
 
 <style lang="scss">
 :root {
-  --full-viewport-height: 100vh;
+  --full-viewport-height: 100dvh;
   height: var(--full-viewport-height);
   width: $full-viewport-width;
 }
