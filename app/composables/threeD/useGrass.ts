@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import vertexGrass from "@/components/three/shaders/grass/vertex.glsl"
+import fragmentGrass from "@/components/three/shaders/grass/fragment.glsl"
 
 export interface GrassOptions {
   subdivisions?: number;
@@ -26,13 +28,16 @@ export function useGrass(
   if (import.meta.server) return null;
 
   const {
-    subdivisions = 300, // 90,000 blades for a lush feel
+    // UPDATED: subdivisions set to match a density of 50 blades per unit area (size * size)
+    // Formula: subdivisions = size * sqrt(density)
     size = 500,
+    subdivisions = Math.floor(size * 7.07), // sqrt(50) ≈ 7.07
     splatTexture,
     terrainSize,
     grassColor = "#729f24", // More vibrant green
   } = options;
 
+  // UPDATED: Total count calculated from subdivisions (count = density * size * size)
   const count = subdivisions * subdivisions;
   const geometry = new THREE.BufferGeometry();
 
@@ -75,117 +80,23 @@ export function useGrass(
       uTime: { value: 0 },
       uSplatTexture: { value: splatTexture },
       uTerrainSize: { value: terrainSize },
-      uGrassColor: { value: new THREE.Color(grassColor) },
-      uBladeWidth: { value: 0.2 },
-      uBladeHeight: { value: 0.7 },
+      uGrassColorDark: { value: new THREE.Color("#2d4c1e") },
+      uGrassColorLight: { value: new THREE.Color(grassColor) },
+      uShadowColor: { value: new THREE.Color("#1a2c12") },
+      // UPDATED: Reduced width and height for smaller, denser grass
+      uBladeWidth: { value: 0.1 }, 
+      uBladeHeight: { value: 0.26 }, // Reduced to ~1/3 of previous 0.8
+      uWindSpeed: { value: 1.5 },
+      uWindAmplitude: { value: 1.2 },
+      uWindWaveTiling: { value: 0.8 },
+      uWindWaveStrength: { value: -0.5 },
+      uWindBaseTiling: { value: 0.3 },
+      uWindBaseStrength: { value: 0.8 },
+      uNormalStrength: { value: 0.3 },
+      uTerrainNormalScale: { value: 1.0 },
     },
-    vertexShader: `
-      uniform float uTime;
-      uniform sampler2D uSplatTexture;
-      uniform float uTerrainSize;
-      uniform float uBladeWidth;
-      uniform float uBladeHeight;
-
-      attribute vec2 aAnchor;
-      attribute float aHeightRandomness;
-      attribute float aVertexIndex;
-
-      varying vec2 vUv;
-      varying float vGrassMask;
-      varying float vRandom;
-
-      // Simple 2D Noise
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-      }
-
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
-                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-      }
-
-      void main() {
-        vRandom = aHeightRandomness;
-        
-        // 1. Terrain Data
-        vec2 terrainUv = vec2(aAnchor.x / uTerrainSize + 0.5, 0.5 - aAnchor.y / uTerrainSize);
-        vec4 terrainData = texture2D(uSplatTexture, terrainUv);
-        float depth = terrainData.b;
-        float grassMask = terrainData.g;
-        vGrassMask = grassMask;
-
-        // 2. Base Position
-        // Terrain elevation is b * -1.5
-        float elevation = depth * -1.5;
-        vec3 basePosition = vec3(aAnchor.x, elevation, aAnchor.y);
-
-        // 3. Blade Shape
-        float height = uBladeHeight * (0.6 + aHeightRandomness * 0.4) * grassMask;
-        
-        // Push below ground if no grass here or underwater
-        if (grassMask < 0.05 || depth > 0.18) {
-          height = 0.0;
-        }
-
-        vec3 vPos = vec3(0.0);
-        float tipness = 0.0;
-
-        if (aVertexIndex == 0.0) { // Tip
-          vPos = vec3(0.0, height, 0.0);
-          tipness = 1.0;
-        } else if (aVertexIndex == 1.0) { // Bottom Left
-          vPos = vec3(-uBladeWidth * 0.5, 0.0, 0.0);
-        } else { // Bottom Right
-          vPos = vec3(uBladeWidth * 0.5, 0.0, 0.0);
-        }
-
-        // 4. Billboarding (Face Camera)
-        vec3 worldBasePos = (modelMatrix * vec4(basePosition, 1.0)).xyz;
-        vec3 cameraPos = cameraPosition;
-        float angle = atan(worldBasePos.x - cameraPos.x, worldBasePos.z - cameraPos.z);
-        
-        float c = cos(angle);
-        float s = sin(angle);
-        mat2 rot = mat2(c, s, -s, c);
-        vPos.xz = rot * vPos.xz;
-
-        // 5. Wind (Multiple octaves for richness)
-        float windTime = uTime * 0.6;
-        float wind = noise(worldBasePos.xz * 0.1 + windTime);
-        wind += noise(worldBasePos.xz * 0.5 + windTime * 1.5) * 0.5;
-        
-        float windStrength = wind * tipness * height * 0.4;
-        vPos.x += windStrength;
-        vPos.z += windStrength * 0.5;
-
-        vUv = vec2(aVertexIndex / 2.0, tipness);
-        
-        gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(basePosition + vPos, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 uGrassColor;
-      varying vec2 vUv;
-      varying float vGrassMask;
-      varying float vRandom;
-
-      void main() {
-        if (vGrassMask < 0.05) discard;
-        
-        // Color variation per blade
-        vec3 color = uGrassColor;
-        color = mix(color, color * 1.2, vRandom); // Some brighter blades
-        color = mix(color * 0.7, color, vUv.y);   // Darker at bottom
-        
-        // Simple top-lighting
-        color *= (0.8 + vUv.y * 0.4);
-        
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `,
+    vertexShader: vertexGrass,
+    fragmentShader: fragmentGrass,
     side: THREE.DoubleSide,
   });
 

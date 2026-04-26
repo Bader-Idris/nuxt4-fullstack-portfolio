@@ -84,6 +84,10 @@ export class Terrain {
     geometry.rotateX(-Math.PI * 0.5)
 
     const material = new THREE.MeshStandardMaterial({
+      // --- TERRAIN REFLECTION TUNING ---
+      // To reduce the "too strong" reflection on the terrain:
+      // 1. Increase roughness (closer to 1.0) to make the surface more matte.
+      // 2. Decrease metalness (closer to 0.0) to reduce specular highlights.
       roughness: 0.8,
       metalness: 0.1
     })

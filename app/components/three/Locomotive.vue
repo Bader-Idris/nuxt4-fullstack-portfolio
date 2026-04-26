@@ -95,6 +95,7 @@ import { useGrass } from "@/composables/threeD/useGrass";
 import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
 import { useSky } from "@/composables/threeD/useSky";
 import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
+// import { useCamera } from "@/composables/threeD/useCamera";
 // import { useSmokeParticles } from "@/composables/threeD/useSmokeParticles";
 
 const chimneySteam = useChimneySteam();
@@ -145,6 +146,7 @@ const { toggle } = useFullscreen(containerRef, { autoExit: true });
 
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
+// let cameraInstance: ReturnType<typeof useCamera> | null = null;
 let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let locomotive: THREE.Group;
@@ -170,6 +172,7 @@ const GROUND_Y = 0;
 const TRACK_CENTER_Z = 0;
 const BLOCKS_START_X = 9;
 const STONE_COUNT = 26;
+// could be moved to useCamera!
 const CAMERA_OFFSET = new THREE.Vector3(3.5, 2.2, 5);
 const CAMERA_FOLLOW_MIN_DISTANCE = 2.2;
 const CAMERA_FOLLOW_MAX_DISTANCE = 8.5;
@@ -196,6 +199,7 @@ const updateTrainFocusPoint = () => {
   trainFocusPoint.copy(locomotive.position).add(trainBodyOffset);
 };
 
+// was completely removed, maybe moved to useCamera!?
 const syncCameraToTrain = (followMotion: boolean = false) => {
   if (!controls || !camera || !locomotive) return;
 
@@ -449,6 +453,8 @@ const animate = (elapsedMs: number) => {
   animationId = requestAnimationFrame(animate);
   ticker.update(elapsedMs);
 
+  // if (!cameraInstance) return;
+
   const wheelSound = getSound("trainWheels");
   if (wheelSound) {
     const absSpeed = Math.abs(locomotiveSpeed.value);
@@ -465,7 +471,7 @@ const animate = (elapsedMs: number) => {
     let targetRate = 0.8,
       targetVol = 0.3;
     const absSpeed = Math.abs(locomotiveSpeed.value);
-    if (currentGear.value.key === "high") {
+    if (currentGear.value?.key === "high") {
       targetRate = THREE.MathUtils.mapLinear(absSpeed, 3.5, 6.8, 1.1, 1.4);
       targetVol = THREE.MathUtils.mapLinear(absSpeed, 3.5, 6.8, 0.45, 0.6);
     } else {
@@ -504,16 +510,25 @@ const animate = (elapsedMs: number) => {
   renderer.render(scene, camera);
   skyInstance?.update(camera);
   waterInstance?.update(ticker.elapsed, camera);
+
+  // updateTrainFocusPoint();
+  // cameraInstance.update(trainFocusPoint, Math.abs(locomotiveSpeed.value) > 0.0001);
+
+  // renderer.render(scene, cameraInstance.camera);
+  // skyInstance?.update(cameraInstance.camera);
+  // waterInstance?.update(ticker.elapsed, cameraInstance.camera);
   grassInstance?.update(ticker.elapsed);
 };
 
 const handleResize = () => {
   if (!containerRef.value || !renderer || !camera) return;
+  // if (!containerRef.value || !renderer || !cameraInstance) return;
   const width = containerRef.value.clientWidth, height = containerRef.value.clientHeight;
   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2);
   sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
+  // cameraInstance.handleResize(width, height);
   renderer.setSize(width, height);
   renderer.setPixelRatio(sizes.pixelRatio);
 
@@ -547,14 +562,26 @@ onMounted(async () => {
 
   camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000);
   camera.position.set(5, 2.3, 2.5);
+  // cameraInstance = useCamera({
+  //   canvas,
+  //   width,
+  //   height,
+  //   pixelRatio: sizes.pixelRatio,
+  //   terrain
+  // });
+
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  directionalLight.position.set(5, 10, 7);
+  directionalLight.position.set(0, 60, -180);
   scene.add(directionalLight);
 
   const loader = new GLTFLoader(), dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath("/assets/three/draco/gltf/");
   loader.setDRACOLoader(dracoLoader);
+
+  // Directional Light Helper to visualize sun position
+  // const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
+  // scene.add(lightHelper);
 
   try {
     const gltf = await new Promise<any>((resolve, reject) => { loader.load("/assets/three/resources/Locomotive.glb", resolve, undefined, reject); });
@@ -622,6 +649,8 @@ onMounted(async () => {
   controls.enableDamping = true;
   controls.target.copy(trainFocusPoint);
   syncCameraToTrain();
+  // updateTrainFocusPoint();
+  // cameraInstance.update(trainFocusPoint);
 
   resizeObserver = new ResizeObserver(handleResize);
   resizeObserver.observe(container);
@@ -636,6 +665,7 @@ onUnmounted(() => {
   getSound("trainWheels")?.stop();
   resizeObserver?.disconnect();
   controls?.dispose();
+  // cameraInstance?.controls?.dispose();
   wheelSpinGSAPRef.ref.forEach((tween) => tween.kill());
   // smokeInstance?.dispose();
   skyInstance?.dispose();
@@ -687,7 +717,7 @@ canvas {
   backdrop-filter: blur(4px);
 
   @include mobile {
-    bottom: 15%;
+    bottom: 10px;
     // should be hidden after 5 seconds on focused
   }
 
@@ -726,7 +756,7 @@ canvas {
 
   @include mobile {
     left: 8px;
-    bottom: 15%;
+    bottom: 10px;
     height: 60px;
     gap: 4px;
   }
