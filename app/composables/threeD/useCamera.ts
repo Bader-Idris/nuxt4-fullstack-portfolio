@@ -10,7 +10,8 @@ export interface CameraOptions {
 }
 
 export function useCamera(options: CameraOptions) {
-  const { canvas, width, height, terrain } = options;
+  const { canvas, width, height } = options;// don't put terrain here, it's a let not const!
+  let currentTerrain = options.terrain; 
 
   const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
   camera.position.set(5, 2.3, 2.5);
@@ -18,68 +19,82 @@ export function useCamera(options: CameraOptions) {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   
+  // Prevent camera from going below the horizon or too high up
+  controls.maxPolarAngle = Math.PI * 0.48; // Hide "underneath"
+  controls.minPolarAngle = Math.PI * 0.15; // Prevent looking straight up into empty sky
+  
+  // Horizontal (Azimuth) limits to keep the "sides" focused on the scene
+  // This prevents the user from rotating behind the "main view" if desired.
+  // controls.minAzimuthAngle = -Math.PI * 0.5; 
+  // controls.maxAzimuthAngle = Math.PI * 0.5;
+
+  controls.minDistance = 2.0;
+  controls.maxDistance = 35.0; // Tightened distance
+  
   // Internal state for follow logic
   const lastTargetPos = new THREE.Vector3();
   const followState = { initialized: false };
   const CAMERA_OFFSET = new THREE.Vector3(3.5, 2.2, 5);
   const FOLLOW_TIGHTNESS = 0.16;
-  const MIN_DISTANCE = 2.2;
-  const MAX_DISTANCE = 15.0; // Slightly more room
-  const MIN_ALTITUDE_BUFFER = 0.5; // Offset from ground
+  const MIN_ALTITUDE_BUFFER = 0.8;
 
-  // Boundaries based on terrain size (500)
-  const BOUNDS = 245; 
+  // Tighter boundaries based on terrain size (512) 
+  // to ensure the camera never sees past the fog/edges.
+  const BOUNDS = 220; 
 
   const update = (targetPos: THREE.Vector3, followMotion: boolean = false) => {
+    // 1. Clamp the target position itself to keep the focus within the terrain
+    const clampedTarget = targetPos.clone();
+    clampedTarget.x = THREE.MathUtils.clamp(clampedTarget.x, -BOUNDS, BOUNDS);
+    clampedTarget.z = THREE.MathUtils.clamp(clampedTarget.z, -BOUNDS, BOUNDS);
+
     if (followMotion) {
       if (!followState.initialized) {
-        controls.target.copy(targetPos);
-        lastTargetPos.copy(targetPos);
+        controls.target.copy(clampedTarget);
+        lastTargetPos.copy(clampedTarget);
         followState.initialized = true;
       } else {
-        const delta = targetPos.clone().sub(lastTargetPos);
+        const delta = clampedTarget.clone().sub(lastTargetPos);
         controls.target.add(delta);
         camera.position.add(delta);
-        controls.target.lerp(targetPos, FOLLOW_TIGHTNESS);
+        controls.target.lerp(clampedTarget, FOLLOW_TIGHTNESS);
 
         const toTarget = camera.position.clone().sub(controls.target);
         const dist = toTarget.length();
-        if (dist > MAX_DISTANCE) {
-          toTarget.setLength(MAX_DISTANCE);
+        if (dist > controls.maxDistance) {
+          toTarget.setLength(controls.maxDistance);
           camera.position.copy(controls.target).add(toTarget);
-        } else if (dist < MIN_DISTANCE) {
-          toTarget.setLength(MIN_DISTANCE);
+        } else if (dist < controls.minDistance) {
+          toTarget.setLength(controls.minDistance);
           camera.position.copy(controls.target).add(toTarget);
         }
-        lastTargetPos.copy(targetPos);
+        lastTargetPos.copy(clampedTarget);
       }
     } else {
-      controls.target.copy(targetPos);
+      controls.target.copy(clampedTarget);
       if (!followState.initialized) {
-        camera.position.copy(targetPos.clone().add(CAMERA_OFFSET));
+        camera.position.copy(clampedTarget.clone().add(CAMERA_OFFSET));
         followState.initialized = true;
       }
-      lastTargetPos.copy(targetPos);
+      lastTargetPos.copy(clampedTarget);
     }
-
-    controls.update();
 
     // --- CAMERA CONSTRAINTS ---
     
-    // 1. Boundary constraints (XZ)
+    // 2. Strict Boundary constraints for Camera position (XZ)
     camera.position.x = THREE.MathUtils.clamp(camera.position.x, -BOUNDS, BOUNDS);
     camera.position.z = THREE.MathUtils.clamp(camera.position.z, -BOUNDS, BOUNDS);
 
-    // 2. Terrain collision (Altitude)
-    if (terrain) {
-      const groundHeight = terrain.getHeightAt(camera.position.x, camera.position.z);
+    // 3. Terrain collision (Altitude)
+    if (currentTerrain) {
+      const groundHeight = currentTerrain.getHeightAt(camera.position.x, camera.position.z);
       const minHeight = groundHeight + MIN_ALTITUDE_BUFFER;
       if (camera.position.y < minHeight) {
         camera.position.y = minHeight;
-        // If we hit the ground, we might need to update controls target to avoid looking "through" the terrain
-        // but for now simple clamping is usually enough.
       }
     }
+
+    controls.update();
   };
 
   const handleResize = (newWidth: number, newHeight: number) => {
@@ -96,6 +111,7 @@ export function useCamera(options: CameraOptions) {
     controls,
     update,
     handleResize,
-    resetFollow
+    resetFollow,
+    setTerrain: (newTerrain: any) => { currentTerrain = newTerrain; }
   };
 }

@@ -84,7 +84,8 @@
 <script setup lang="ts">
 import * as THREE from "three";
 // import { ShaderMaterial, Points } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// use then one in camera instead!!
+import type {  OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { useFullscreen } from "@vueuse/core";
@@ -96,6 +97,7 @@ import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
 import { useSky } from "@/composables/threeD/useSky";
 import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
 import { useInteraction } from "@/composables/threeD/useInteraction";
+import { useCamera } from "@/composables/threeD/useCamera";
 
 const chimneySteam = useChimneySteam();
 const { smokeBendAngle, smokeLifeSpeed, SMOKE_BEND_ANGLE_BY_GEAR, SMOKE_LIFE_SPEED_BY_GEAR } = chimneySteam;
@@ -145,7 +147,7 @@ const { toggle } = useFullscreen(containerRef, { autoExit: true });
 
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
-// let cameraInstance: ReturnType<typeof useCamera> | null = null;
+let cameraInstance: ReturnType<typeof useCamera> | null = null;
 let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let locomotive: THREE.Group;
@@ -174,13 +176,6 @@ const GROUND_Y = 0;
 const TRACK_CENTER_Z = 0;
 const BLOCKS_START_X = 9;
 const STONE_COUNT = 26;
-// could be moved to useCamera!
-const CAMERA_OFFSET = new THREE.Vector3(3.5, 2.2, 5);
-const CAMERA_FOLLOW_MIN_DISTANCE = 2.2;
-const CAMERA_FOLLOW_MAX_DISTANCE = 8.5;
-const CAMERA_FOLLOW_TIGHTNESS = 0.16;
-const lastTrainFocusPoint = new THREE.Vector3();
-const cameraFollowState = { initialized: false };
 
 // Physics engine instance
 const trainPhysics = useTrainPhysics();
@@ -203,41 +198,9 @@ const updateTrainFocusPoint = () => {
 
 // was completely removed, maybe moved to useCamera!?
 const syncCameraToTrain = (followMotion: boolean = false) => {
-  if (!controls || !camera || !locomotive) return;
-
+  if (!cameraInstance || !locomotive) return;
   updateTrainFocusPoint();
-
-  if (followMotion) {
-    if (!cameraFollowState.initialized) {
-      controls.target.copy(trainFocusPoint);
-      lastTrainFocusPoint.copy(trainFocusPoint);
-      cameraFollowState.initialized = true;
-      return;
-    }
-
-    const focusDelta = trainFocusPoint.clone().sub(lastTrainFocusPoint);
-    controls.target.add(focusDelta);
-    camera.position.add(focusDelta);
-    controls.target.lerp(trainFocusPoint, CAMERA_FOLLOW_TIGHTNESS);
-
-    const cameraToTarget = camera.position.clone().sub(controls.target);
-    const distance = cameraToTarget.length();
-    if (distance > CAMERA_FOLLOW_MAX_DISTANCE) {
-      cameraToTarget.setLength(CAMERA_FOLLOW_MAX_DISTANCE);
-      camera.position.copy(controls.target).add(cameraToTarget);
-    } else if (distance < CAMERA_FOLLOW_MIN_DISTANCE) {
-      cameraToTarget.setLength(CAMERA_FOLLOW_MIN_DISTANCE);
-      camera.position.copy(controls.target).add(cameraToTarget);
-    }
-
-    lastTrainFocusPoint.copy(trainFocusPoint);
-    return;
-  }
-
-  controls.target.copy(trainFocusPoint);
-  camera.position.copy(trainFocusPoint.clone().add(CAMERA_OFFSET));
-  lastTrainFocusPoint.copy(trainFocusPoint);
-  cameraFollowState.initialized = true;
+  cameraInstance.update(trainFocusPoint, followMotion);
 };
 
 const syncTrainBodyFromVisual = () => {
@@ -455,8 +418,12 @@ const animate = (elapsedMs: number) => {
   animationId = requestAnimationFrame(animate);
   ticker.update(elapsedMs);
 
-  // Update interaction texture
-  if (interactionInstance && locomotive) {
+  const camDist = locomotive ? camera.position.distanceTo(locomotive.position) : 0;
+  const isFar = camDist > 50;
+  const isVeryFar = camDist > 120;
+
+  // Update interaction texture - only if close enough to see effects clearly
+  if (interactionInstance && locomotive && !isVeryFar) {
     interactionInstance.update(locomotive.position);
   }
 
@@ -488,12 +455,16 @@ const animate = (elapsedMs: number) => {
   }
 
   // Update smoke and sky
-  chimneySteam.update(ticker.elapsed, ticker.delta, locomotiveSpeed.value);
+  // THROTTLE: Only update smoke logic fully if not very far
+  chimneySteam.update(ticker.elapsed, ticker.delta, locomotiveSpeed.value, camDist);
 
   if (skyMesh) skyMesh.position.copy(camera.position);
 
   // Animate Knot mechanical linkage smoothly
-  updateKnotSmoothly();
+  // CPU OPTIMIZATION: Skip linkage animation if far away
+  if (!isFar) {
+    updateKnotSmoothly();
+  }
 
   if (physicsMode.value && trainPhysics.physicsWorld && trainPhysicsBody) {
     trainPhysics.stepPhysics(trainPhysics.physicsWorld, ticker.delta, (stepDt) => {
@@ -522,7 +493,7 @@ const animate = (elapsedMs: number) => {
   // renderer.render(scene, cameraInstance.camera);
   // skyInstance?.update(cameraInstance.camera);
   // waterInstance?.update(ticker.elapsed, cameraInstance.camera);
-  grassInstance?.update(ticker.elapsed);
+  grassInstance?.update(ticker.elapsed, camera.position);
 };
 
 const handleResize = () => {
@@ -565,15 +536,29 @@ onMounted(async () => {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = true;
 
-  camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000);
-  camera.position.set(5, 2.3, 2.5);
-  // cameraInstance = useCamera({
-  //   canvas,
-  //   width,
-  //   height,
-  //   pixelRatio: sizes.pixelRatio,
-  //   terrain
-  // });
+  // Enhanced Atmospheric Fog
+  // We use linear fog to strictly hide the terrain edges at a certain distance
+  // while keeping the foreground clear.
+  const fogColor = new THREE.Color("#735233"); // Matches sky horizon
+  scene.fog = new THREE.Fog(fogColor, 10, 250); // Start at 10, total fog at 250
+  scene.background = fogColor; // Set background to fog color for seamless blend
+
+  cameraInstance = useCamera({
+    canvas,
+    width,
+    height,
+    pixelRatio: sizes.pixelRatio,
+  });
+  
+  // Apply Azimuth (horizontal) limits to lock the "sides" 
+  // so the user stays focused on the track and beautiful terrain.
+  if (cameraInstance.controls) {
+    cameraInstance.controls.minAzimuthAngle = -Math.PI * 0.85; // Limit rotation to ~300 degrees
+    cameraInstance.controls.maxAzimuthAngle = Math.PI * 0.85;
+  }
+
+  camera = cameraInstance.camera;
+  controls = cameraInstance.controls;
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -673,14 +658,13 @@ onMounted(async () => {
     physicsBlocksGroup = new THREE.Group();
     scene.add(physicsBlocksGroup);
     createTrainTracks();
+
+    // Pass loaded terrain to camera instance for altitude constraints
+    if (cameraInstance) cameraInstance.setTerrain(terrain);
+
   } catch (error) { console.error("Error loading locomotive model:", error); }
 
-  controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.target.copy(trainFocusPoint);
   syncCameraToTrain();
-  // updateTrainFocusPoint();
-  // cameraInstance.update(trainFocusPoint);
 
   // Terrain position test!
   // console.log(terrain.mesh.getWorldPosition(new THREE.Vector3()));

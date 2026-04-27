@@ -152,7 +152,7 @@ export class Terrain {
 
     const visualMesh = new THREE.Mesh(geometry, material)
     visualMesh.receiveShadow = true
-    // position test 1
+        // position test 1
     // console.log(visualMesh.position);         // should be (0,0,0)
     // console.log(visualMesh.parent?.position); // parent offset?
     // console.log(visualMesh.matrixWorld);      // after scene update
@@ -166,6 +166,20 @@ export class Terrain {
     // setTimeout(() => {
     //   console.log(visualMesh.getWorldPosition(new THREE.Vector3()));
     // }, 100);
+
+    // Add a solid base (skirt) to make the terrain look like a physical block
+    // and hide the "empty" space underneath when the camera is at low angles.
+    const baseDepth = 20
+    const baseGeometry = new THREE.BoxGeometry(this.size, baseDepth, this.size)
+    const baseMaterial = new THREE.MeshStandardMaterial({ 
+      color: '#2a1f14', // Dark earthy color
+      roughness: 0.9,
+      metalness: 0.0
+    })
+    const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial)
+    // Position it so the top is just below the terrain's lowest point
+    baseMesh.position.y = -(baseDepth * 0.5) - 1.5 
+    this.scene.add(baseMesh)
   }
 
   setPhysics(world: RAPIER.World, rapier: any) {

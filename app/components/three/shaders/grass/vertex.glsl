@@ -11,6 +11,7 @@ uniform float uWindWaveTiling;
 uniform float uWindWaveStrength;
 uniform float uWindBaseTiling;
 uniform float uWindBaseStrength;
+uniform vec3 uCameraPosition;
 
 attribute vec2 aAnchor;
 attribute float aHeightRandomness;
@@ -39,10 +40,11 @@ float smoothNoise2D(vec2 p) {
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-float fbm(vec2 p, float lacunarity) {
+float fbm(vec2 p, float lacunarity, int octaves) {
     float value = 0.0;
     float amplitude = 0.5;
     for(int i = 0; i < 2; i++) {
+        if (i >= octaves) break;
         value += amplitude * smoothNoise2D(p);
         p *= lacunarity;
         amplitude *= 0.5;
@@ -50,16 +52,23 @@ float fbm(vec2 p, float lacunarity) {
     return value;
 }
 
-vec2 calculateWindVector(vec3 worldPos) {
+vec2 calculateWindVector(vec3 worldPos, float dist) {
+    // GPU OPTIMIZATION: Reduce octaves for distant grass
+    int octaves = (dist < 60.0) ? 2 : 1;
+    
     vec2 windWavePos = worldPos.xz * uWindWaveTiling;
     float windWaveTime = uTime * uWindSpeed;
-    float wave1 = fbm(windWavePos - vec2(windWaveTime * 0.35, windWaveTime), 3.0);
-    float wave2 = fbm(windWavePos - vec2(0.0, windWaveTime * 0.35), 2.0);
-    float primaryWave = (wave1 + wave2) * 0.5 * uWindWaveStrength;
+    float wave1 = fbm(windWavePos - vec2(windWaveTime * 0.35, windWaveTime), 3.0, octaves);
+    
+    float primaryWave = wave1 * uWindWaveStrength;
+    if (dist < 60.0) {
+        float wave2 = fbm(windWavePos - vec2(0.0, windWaveTime * 0.35), 2.0, octaves);
+        primaryWave = (wave1 + wave2) * 0.5 * uWindWaveStrength;
+    }
 
     vec2 windBasePos = worldPos.xz * uWindBaseTiling;
     float baseWaveTime = uTime * (uWindSpeed * 0.93);
-    float baseWave = fbm(windBasePos - vec2(baseWaveTime, 0.0), 2.0) * uWindBaseStrength;
+    float baseWave = fbm(windBasePos - vec2(baseWaveTime, 0.0), 2.0, octaves) * uWindBaseStrength;
 
     float windStrength = (primaryWave + baseWave) * uWindAmplitude;
     vec2 windDir;
@@ -96,13 +105,15 @@ void main() {
   vInteraction = interactionFlatten;
 
   // 2. Base Position & World Position Offset (WPO)
-  // Use noise for height variation (WPO)
   float heightNoise = smoothNoise2D(aAnchor * 0.1);
   float wpoHeight = (heightNoise * 2.0 - 1.0) * 0.5;
   
   float elevation = depth * -1.5;
   vec3 basePosition = vec3(aAnchor.x, elevation, aAnchor.y);
   vec3 worldBasePos = (modelMatrix * vec4(basePosition, 1.0)).xyz;
+  
+  // GPU OPTIMIZATION: Calculate distance once for reuse
+  float dist = distance(worldBasePos, uCameraPosition);
 
   // 3. Blade Shape
   float height = uBladeHeight * (0.7 + aHeightRandomness * 0.6 + wpoHeight) * vGrassMask;
@@ -131,12 +142,9 @@ void main() {
   vPos.xz = rot * vPos.xz;
 
   // 5. Wind & Interaction Bending
-  vec2 windVector = calculateWindVector(worldBasePos);
+  vec2 windVector = calculateWindVector(worldBasePos, dist);
   
-  // Combine wind and interaction
-  // Interaction pushes grass down (bend rotation)
   float interactionBend = interactionFlatten * 1.5;
-  
   float windMagnitude = length(windVector);
   vec3 rotationAxis = vec3(1.0, 0.0, 0.0); // Default axis
   float totalBend = interactionBend;
@@ -147,13 +155,11 @@ void main() {
     totalBend += windMagnitude * 1.5;
   }
   
-  // Apply bend based on tipness (bottom stays fixed)
   if (totalBend > 0.001) {
     mat3 bendRotation = rotateAxis(rotationAxis, totalBend * tipness * tipness);
     vPos = bendRotation * vPos;
   }
 
-  // Final push down for interaction to ensure it stays flat
   vPos.y -= interactionFlatten * height * 0.8 * tipness;
 
   vUv = vec2(aVertexIndex / 2.0, tipness);

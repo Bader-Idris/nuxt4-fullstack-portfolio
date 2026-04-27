@@ -127,10 +127,15 @@ export const useChimneySteam = () => {
     chimneyMesh.add(smokeParticles);
   };
 
-  const update = (elapsed: number, delta: number, locomotiveSpeed: number) => {
+  const update = (elapsed: number, delta: number, locomotiveSpeed: number, camDist: number = 0) => {
     if (!smokeMaterial || !smokeParticles) return;
 
     smokeMaterial.uniforms.uTime.value = elapsed;
+    
+    // CPU OPTIMIZATION: If very far away, skip most of the update logic
+    // We still update uTime but skip the expensive loop and attribute updates
+    const isVeryFar = camDist > 150;
+    const isFar = camDist > 80;
 
     // Drive smoke bend by actual locomotive speed (heavy mass simulation)
     // Forward (negative speed) tilts right, Backward (positive) tilts left
@@ -178,9 +183,17 @@ export const useChimneySteam = () => {
       lerpT
     );
 
-    // Respawn dead particles
+    if (isVeryFar) return;
+
+    // Respawn dead particles - THROTTLE: only every few frames if far
+    // Or just process a subset? Simple approach: full update but skip if very far.
     const positions = smokeParticles.geometry.attributes.position.array as Float32Array;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    
+    // If far, we only process half of the particles per frame to save CPU
+    const stride = isFar ? 2 : 1;
+    const offset = Math.floor(elapsed * 60) % stride;
+
+    for (let i = offset; i < PARTICLE_COUNT; i += stride) {
       const age = elapsed - smokeBirths[i];
       if (age > smokeLifespans[i]) {
         // --- RESPAWN TIMING ---

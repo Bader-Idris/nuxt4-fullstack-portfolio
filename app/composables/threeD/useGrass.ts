@@ -105,6 +105,7 @@ export function useGrass(
       uWindBaseStrength: { value: 0.8 },
       uNormalStrength: { value: 0.3 },
       uTerrainNormalScale: { value: 1.0 },
+      uCameraPosition: { value: new THREE.Vector3() },
     },
     vertexShader: vertexGrass,
     fragmentShader: fragmentGrass,
@@ -117,8 +118,9 @@ export function useGrass(
 
   return {
     mesh,
-    update(elapsed: number) {
+    update(elapsed: number, cameraPos?: THREE.Vector3) {
       material.uniforms.uTime.value = elapsed;
+      if (cameraPos) material.uniforms.uCameraPosition.value.copy(cameraPos);
     },
     dispose() {
       geometry.dispose();
