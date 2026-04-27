@@ -95,8 +95,7 @@ import { useGrass } from "@/composables/threeD/useGrass";
 import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
 import { useSky } from "@/composables/threeD/useSky";
 import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
-// import { useCamera } from "@/composables/threeD/useCamera";
-// import { useSmokeParticles } from "@/composables/threeD/useSmokeParticles";
+import { useInteraction } from "@/composables/threeD/useInteraction";
 
 const chimneySteam = useChimneySteam();
 const { smokeBendAngle, smokeLifeSpeed, SMOKE_BEND_ANGLE_BY_GEAR, SMOKE_LIFE_SPEED_BY_GEAR } = chimneySteam;
@@ -150,12 +149,15 @@ let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let locomotive: THREE.Group;
+let areas: THREE.Group;
+let areasMesh: THREE.Object3D | null = null;
 let animationId: number;
 let skyMesh: THREE.Mesh | null = null;
 let skyInstance: ReturnType<typeof useSky> | null = null;
 // let smokeInstance: ReturnType<typeof useSmokeParticles> | null = null;
 let waterInstance: ReturnType<typeof useWater> | null = null;
 let grassInstance: ReturnType<typeof useGrass> | null = null;
+let interactionInstance: ReturnType<typeof useInteraction> | null = null;
 
 let resizeObserver: ResizeObserver | null = null;
 let physicsBlocksGroup: THREE.Group | null = null;
@@ -453,7 +455,10 @@ const animate = (elapsedMs: number) => {
   animationId = requestAnimationFrame(animate);
   ticker.update(elapsedMs);
 
-  // if (!cameraInstance) return;
+  // Update interaction texture
+  if (interactionInstance && locomotive) {
+    interactionInstance.update(locomotive.position);
+  }
 
   const wheelSound = getSound("trainWheels");
   if (wheelSound) {
@@ -584,9 +589,28 @@ onMounted(async () => {
   // scene.add(lightHelper);
 
   try {
-    const gltf = await new Promise<any>((resolve, reject) => { loader.load("/assets/three/resources/Locomotive.glb", resolve, undefined, reject); });
-    locomotive = gltf.scene;
+    // Parallel loading of locomotive and areas for better performance and clean orchestration
+    const [locomotiveGltf, areasGltf] = await Promise.all([
+      loader.loadAsync("/assets/three/resources/Locomotive.glb"),
+      loader.loadAsync("/areas/areas.glb")
+    ]);
+
+    locomotive = locomotiveGltf.scene;
     scene.add(locomotive);
+
+    areas = areasGltf.scene;
+    scene.add(areas);
+    // areas.position.x -= 20; // all meshes go +20, fix the uv
+
+    // Preserve Blender positions: the 'areas' group stays at (0,0,0) by default.
+    // We apply standard properties to children and find the primary areasMesh if present.
+    areas.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.receiveShadow = true;
+      }
+      if (child.name && child.name.includes("areas")) areasMesh = child;
+    });
+
     const box = new THREE.Box3().setFromObject(locomotive), size = box.getSize(new THREE.Vector3());
     locomotive.scale.setScalar(3 / Math.max(size.x, size.y, size.z));
     placeLocomotiveOnTrack();
@@ -629,6 +653,11 @@ onMounted(async () => {
     await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png");
 
     if (terrain.splatTexture) {
+      interactionInstance = useInteraction({
+        size: terrain.size,
+        renderer,
+      });
+
       waterInstance = useWater(scene, {
         splatTexture: terrain.splatTexture,
         terrainSize: terrain.size,
@@ -636,6 +665,7 @@ onMounted(async () => {
 
       grassInstance = useGrass(scene, {
         splatTexture: terrain.splatTexture,
+        interactionTexture: interactionInstance.texture,
         terrainSize: terrain.size,
       });
     }
@@ -651,6 +681,9 @@ onMounted(async () => {
   syncCameraToTrain();
   // updateTrainFocusPoint();
   // cameraInstance.update(trainFocusPoint);
+
+  // Terrain position test!
+  // console.log(terrain.mesh.getWorldPosition(new THREE.Vector3()));
 
   resizeObserver = new ResizeObserver(handleResize);
   resizeObserver.observe(container);
@@ -671,6 +704,7 @@ onUnmounted(() => {
   skyInstance?.dispose();
   waterInstance?.dispose();
   grassInstance?.dispose();
+  interactionInstance?.dispose();
   chimneySteam.dispose();
   renderer?.dispose();
   trainPhysics.cleanup();

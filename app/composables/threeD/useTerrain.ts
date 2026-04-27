@@ -9,7 +9,7 @@ export class Terrain {
   rapier: any = null
   
   // Data
-  size: number = 500
+  size: number = 512
   subdivision: number = 256
   
   // Assets
@@ -152,7 +152,20 @@ export class Terrain {
 
     const visualMesh = new THREE.Mesh(geometry, material)
     visualMesh.receiveShadow = true
+    // position test 1
+    // console.log(visualMesh.position);         // should be (0,0,0)
+    // console.log(visualMesh.parent?.position); // parent offset?
+    // console.log(visualMesh.matrixWorld);      // after scene update
     this.scene.add(visualMesh)
+
+    // position test 2
+    // const axesHelper = new THREE.AxesHelper(100);
+    // this.scene.add(axesHelper);
+
+    // position test 3
+    // setTimeout(() => {
+    //   console.log(visualMesh.getWorldPosition(new THREE.Vector3()));
+    // }, 100);
   }
 
   setPhysics(world: RAPIER.World, rapier: any) {
