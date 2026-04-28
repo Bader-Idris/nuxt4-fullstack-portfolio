@@ -85,6 +85,7 @@
 import * as THREE from "three";
 // import { ShaderMaterial, Points } from "three";
 // use then one in camera instead!!
+// import { RuntimeInspector } from "@needle-tools/engine";
 import type {  OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
@@ -139,6 +140,10 @@ const gearPhases = [
 ] as const;
 const currentGearIndex = ref(0);
 const currentGear = computed(() => gearPhases[currentGearIndex.value]);
+// const currentGear = computed(() => {
+//   const phase = gearPhases[currentGearIndex.value];
+//   return phase || gearPhases[0];
+// });
 const MAX_GEAR_ABS_SPEED =
   Math.max(...gearPhases.map((phase) => Math.abs(phase.speed))) || 1;
 
@@ -161,6 +166,7 @@ let waterInstance: ReturnType<typeof useWater> | null = null;
 let grassInstance: ReturnType<typeof useGrass> | null = null;
 let interactionInstance: ReturnType<typeof useInteraction> | null = null;
 
+// let inspector: any = null;
 let resizeObserver: ResizeObserver | null = null;
 let physicsBlocksGroup: THREE.Group | null = null;
 let physicsBlocks: THREE.Object3D[] = [];
@@ -636,6 +642,17 @@ onMounted(async () => {
 
     terrain = new Terrain(scene);
     await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png");
+
+    // // Initialize Needle Engine Context for the Inspector Extension to detect the scene
+    // const { Context } = await import("@needle-tools/engine");
+    // const needleContext = new Context({
+    //   scene,
+    //   camera,
+    //   renderer,
+    //   domElement: canvas,
+    // });
+    // // @ts-ignore
+    // needleContext.start();
 
     if (terrain.splatTexture) {
       interactionInstance = useInteraction({

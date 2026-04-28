@@ -72,6 +72,15 @@ export class Terrain {
       }
     })
 
+    // Align 320-unit Blender geometry to 512-unit world size
+    // if (this.mesh) {
+    //   const originalBlenderSize = 512
+    //   const scaleFactor = this.size / originalBlenderSize
+    //   // Scale the geometry itself to ensure raycaster and physics use updated bounds
+    //   this.mesh.geometry.scale(scaleFactor, 1, scaleFactor)
+    //   this.mesh.updateMatrixWorld()
+    // }
+
     if (this.world && this.rapier && this.mesh) {
       this.setPhysical(this.mesh.geometry)
     }
