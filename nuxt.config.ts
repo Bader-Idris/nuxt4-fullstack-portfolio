@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-04-20",
+  compatibilityDate: "2026-04-28",
   devtools: { enabled: true },
   srcDir: path.resolve(__dirname, "./app"),
   alias: {
@@ -134,7 +134,6 @@ export default defineNuxtConfig({
         exclude: [],
         warnDuplicatedImports: true,
         defaultExtension: 'glsl',
-        compress: false,
       }),
     ],
     css: {
@@ -241,6 +240,7 @@ export default defineNuxtConfig({
             resolve: {
               alias: {
                 '~/': path.join(__dirname, 'app/'),
+                "@/": path.resolve(__dirname, "app/"),
                 '@server/': path.join(__dirname, 'server/'),
               },
             },

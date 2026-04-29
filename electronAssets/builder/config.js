@@ -228,6 +228,9 @@ const baseConfig = {
       'libatspi2.0-0', // Accessibility support
       'libappindicator3-1', // For app indicator support
       'libxtst6', // X11 Testing support
+      // TODO: FIX THIS BUG, these are not functional yet!
+      'libgbm1', // Essential for WebGL/GPU acceleration
+      'libasound2', // Essential for audio support
       // "xapp-gtk3-module"
     ],
     // https://www.electron.build/electron-builder.interface.deboptions

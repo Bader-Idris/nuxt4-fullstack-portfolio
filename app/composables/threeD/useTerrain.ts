@@ -51,14 +51,14 @@ export class Terrain {
     this.gradientTexture.colorSpace = THREE.SRGBColorSpace
   }
 
-  async load(glbUrl: string, splatUrl: string) {
-    const textureLoader = new THREE.TextureLoader()
+  async load(glbUrl: string, splatUrl: string, manager?: THREE.LoadingManager) {
+    const textureLoader = new THREE.TextureLoader(manager)
     this.splatTexture = await textureLoader.loadAsync(splatUrl)
     this.splatTexture.colorSpace = THREE.NoColorSpace
     this.splatTexture.wrapS = THREE.RepeatWrapping
     this.splatTexture.wrapT = THREE.RepeatWrapping
 
-    const loader = new GLTFLoader()
+    const loader = new GLTFLoader(manager)
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/assets/three/draco/gltf/')
     loader.setDRACOLoader(dracoLoader)

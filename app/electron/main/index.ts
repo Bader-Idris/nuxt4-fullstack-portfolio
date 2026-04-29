@@ -3,6 +3,14 @@ import path from "node:path";
 import { URL } from "node:url";
 import fs from "node:fs";
 
+// Fix WebGL context issues on Linux and some hardware
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('disable-gpu-sandbox');
+}
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+
 // The built directory structure
 //
 // ├─┬ dist-electron

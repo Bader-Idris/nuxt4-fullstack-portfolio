@@ -1,5 +1,6 @@
 <template>
   <div ref="containerRef" :class="{ 'is-fullscreen': modelFullscreen }">
+    <ThreeTrainLoader :loading="isLoading" :progress="loadProgress" />
     <canvas ref="canvasRef" />
 
     <div class="controls-container">
@@ -41,7 +42,7 @@
         }}</span>
       </button>
       <button
-        v-if="physicsMode"
+        v-if="physicsMode && currentGear"
         class="control-btn primary"
         :aria-label="`Change train gear. Current gear ${currentGear.label}`"
         :disabled="wheelSpinMode"
@@ -54,7 +55,7 @@
       </button>
 
       <!-- Speed Display Overlay -->
-      <div v-if="physicsMode || wheelSpinMode" class="speed-display">
+      <div v-if="(physicsMode || wheelSpinMode) && currentGear" class="speed-display">
         <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
         <div class="speed-label">RPM</div>
         <div v-if="wheelSpinMode" class="speed-mode">WHEEL SPIN</div>
@@ -94,6 +95,7 @@ import { useSound } from "@/composables/useSound";
 import { useTerrain } from "@/composables/threeD/useTerrain";
 import { useWater } from "@/composables/threeD/useWater";
 import { useGrass } from "@/composables/threeD/useGrass";
+import { useSlabs } from "@/composables/threeD/useSlabs";
 import { useTrainPhysics } from "@/composables/threeD/useTrainPhysics";
 import { useSky } from "@/composables/threeD/useSky";
 import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
@@ -102,6 +104,9 @@ import { useCamera } from "@/composables/threeD/useCamera";
 
 const chimneySteam = useChimneySteam();
 const { smokeBendAngle, smokeLifeSpeed, SMOKE_BEND_ANGLE_BY_GEAR, SMOKE_LIFE_SPEED_BY_GEAR } = chimneySteam;
+
+const isLoading = ref(true);
+const loadProgress = ref(0);
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -139,11 +144,7 @@ const gearPhases = [
   { key: "backward", label: "backward", speed: 2.4, rpm: 45 },
 ] as const;
 const currentGearIndex = ref(0);
-const currentGear = computed(() => gearPhases[currentGearIndex.value]);
-// const currentGear = computed(() => {
-//   const phase = gearPhases[currentGearIndex.value];
-//   return phase || gearPhases[0];
-// });
+const currentGear = computed(() => gearPhases[currentGearIndex.value]!);
 const MAX_GEAR_ABS_SPEED =
   Math.max(...gearPhases.map((phase) => Math.abs(phase.speed))) || 1;
 
@@ -164,6 +165,7 @@ let skyInstance: ReturnType<typeof useSky> | null = null;
 // let smokeInstance: ReturnType<typeof useSmokeParticles> | null = null;
 let waterInstance: ReturnType<typeof useWater> | null = null;
 let grassInstance: ReturnType<typeof useGrass> | null = null;
+let slabsInstance: ReturnType<typeof useSlabs> | null = null;
 let interactionInstance: ReturnType<typeof useInteraction> | null = null;
 
 // let inspector: any = null;
@@ -541,6 +543,7 @@ onMounted(async () => {
   renderer.setPixelRatio(sizes.pixelRatio);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoftShadowMap is deprecated in latest Three.js
 
   // Enhanced Atmospheric Fog
   // We use linear fog to strictly hide the terrain edges at a certain distance
@@ -568,10 +571,31 @@ onMounted(async () => {
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  directionalLight.position.set(0, 60, -180);
+  directionalLight.position.set(30, 60, -180);
+  directionalLight.castShadow = true;
+  // Professional Shadow Tuning: High resolution and tight frustum for crisp terrain/train shadows
+  directionalLight.shadow.mapSize.set(2048, 2048);
+  directionalLight.shadow.camera.left = -150;
+  directionalLight.shadow.camera.right = 150;
+  directionalLight.shadow.camera.top = 150;
+  directionalLight.shadow.camera.bottom = -150;
+  directionalLight.shadow.camera.far = 500;
+  directionalLight.shadow.bias = -0.0005; // Reduce shadow acne
   scene.add(directionalLight);
 
-  const loader = new GLTFLoader(), dracoLoader = new DRACOLoader();
+  const manager = new THREE.LoadingManager();
+  manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+    if (itemsTotal > 0) {
+      loadProgress.value = (itemsLoaded / itemsTotal) * 100;
+    }
+  };
+  manager.onLoad = () => {
+    setTimeout(() => {
+      isLoading.value = false;
+    }, 500);
+  };
+
+  const loader = new GLTFLoader(manager), dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath("/assets/three/draco/gltf/");
   loader.setDRACOLoader(dracoLoader);
 
@@ -582,11 +606,19 @@ onMounted(async () => {
   try {
     // Parallel loading of locomotive and areas for better performance and clean orchestration
     const [locomotiveGltf, areasGltf] = await Promise.all([
-      loader.loadAsync("/assets/three/resources/Locomotive.glb"),
+      // loader.loadAsync("/assets/three/resources/Locomotive.glb"),
+      loader.loadAsync("/train/locomotive.glb"),
       loader.loadAsync("/areas/areas.glb")
     ]);
 
     locomotive = locomotiveGltf.scene;
+    // By default, all locomotive parts cast and receive shadows for maximum depth
+    locomotive.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
     scene.add(locomotive);
 
     areas = areasGltf.scene;
@@ -597,6 +629,7 @@ onMounted(async () => {
     // We apply standard properties to children and find the primary areasMesh if present.
     areas.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        child.castShadow = true; // Added castShadow for areas elements (furniture, etc.)
         child.receiveShadow = true;
       }
       if (child.name && child.name.includes("areas")) areasMesh = child;
@@ -632,6 +665,9 @@ onMounted(async () => {
       beam.position.set(0, 0, 0);
       beam.target.position.set(Math.sin(-Math.PI / 2) * 1.5, -0.5, Math.cos(-Math.PI / 2) * 1.5);
       beam.castShadow = true;
+      // Headlight shadow map optimization
+      beam.shadow.mapSize.set(1024, 1024);
+      beam.shadow.bias = -0.0001;
       headlightMesh.add(beam); headlightMesh.add(beam.target);
     }
 
@@ -641,7 +677,7 @@ onMounted(async () => {
     }
 
     terrain = new Terrain(scene);
-    await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png");
+    await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png", manager);
 
     // // Initialize Needle Engine Context for the Inspector Extension to detect the scene
     // const { Context } = await import("@needle-tools/engine");
@@ -668,6 +704,11 @@ onMounted(async () => {
       grassInstance = useGrass(scene, {
         splatTexture: terrain.splatTexture,
         interactionTexture: interactionInstance.texture,
+        terrainSize: terrain.size,
+      });
+
+      slabsInstance = useSlabs(scene, {
+        splatTexture: terrain.splatTexture,
         terrainSize: terrain.size,
       });
     }
@@ -705,6 +746,7 @@ onUnmounted(() => {
   skyInstance?.dispose();
   waterInstance?.dispose();
   grassInstance?.dispose();
+  slabsInstance?.dispose();
   interactionInstance?.dispose();
   chimneySteam.dispose();
   renderer?.dispose();

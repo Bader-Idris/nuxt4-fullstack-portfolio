@@ -34,9 +34,9 @@ export function useTrainPhysics() {
   const wheels: WheelConfig[] = [
     { name: 'SmallWheels1', radius: 0.71, isBigWheel: false, rotationAxis: 'y', spinDirection: 1 },
     { name: 'SmallWheels_2', radius: 0.71, isBigWheel: false, rotationAxis: 'z', spinDirection: -1 },
-    { name: 'BigWheels3002', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
-    { name: 'BigWheels3001', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
-    { name: 'BigWheels3', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
+    { name: 'BigWheels_3', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
+    { name: 'BigWheels_2', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
+    { name: 'BigWheels_1', radius: 1.0, isBigWheel: true, rotationAxis: 'z', spinDirection: 1 },
   ]
 
   const trainBodyRef = { body: null as RAPIER.RigidBody | null }
