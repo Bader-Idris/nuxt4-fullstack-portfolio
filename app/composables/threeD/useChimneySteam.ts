@@ -106,7 +106,7 @@ export const useChimneySteam = () => {
         // --- PARTICLE SIZE ---
         // Base radius of the smoke puffs.
         // Small (0.05) = wispy steam, Large (0.3) = heavy coal clouds.
-        uParticleSize: { value: 0.15 },
+        uParticleSize: { value: 0.40 },
         // --- SMOKE COLOR ---
         // Warm gray: rgb(217, 209, 204)
         uColor: { value: new THREE.Color(0.85, 0.82, 0.8) },
@@ -124,6 +124,8 @@ export const useChimneySteam = () => {
     smokeParticles = new THREE.Points(particleGeo, smokeMaterial);
     smokeParticles.position.set(0, 0.12, 0);
     smokeParticles.frustumCulled = false;
+    // IMPORTANT: Higher renderOrder ensures smoke renders over other transparent shaders like water/slabs
+    smokeParticles.renderOrder = 10; 
     chimneyMesh.add(smokeParticles);
   };
 

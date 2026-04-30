@@ -34,7 +34,7 @@ export function useWater(
     terrainSize,
   } = options;
 
-  const geometry = new THREE.PlaneGeometry(size, size, 1, 1);
+  const geometry = new THREE.PlaneGeometry(size, size, 32, 32);
   geometry.rotateX(-Math.PI * 0.5);
 
   const material = new THREE.ShaderMaterial({

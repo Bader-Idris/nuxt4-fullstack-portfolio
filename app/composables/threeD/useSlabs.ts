@@ -66,6 +66,12 @@ export function useSlabs(
   });
 
   const mesh = new THREE.Mesh(geometry, material);
+  /**
+   * IMPORTANT: Fixing transparency issue where smoke becomes invisible.
+   * By setting slabs to a negative order to render it first as the "background".
+   * This matches the approach used in useWater.ts.
+   */
+  mesh.renderOrder = -1;
   scene.add(mesh);
 
   return {

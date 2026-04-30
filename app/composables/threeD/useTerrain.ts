@@ -243,6 +243,13 @@ export class Terrain {
     const intersects = this.raycaster.intersectObject(this.mesh, true)
     return intersects.length > 0 ? intersects[0].point.y : 0
   }
+
+  getNormalAt(x: number, z: number): THREE.Vector3 | null {
+    if (!this.mesh) return null
+    this.raycaster.set(new THREE.Vector3(x, 100, z), this.down)
+    const intersects = this.raycaster.intersectObject(this.mesh, true)
+    return intersects.length > 0 && intersects[0].face ? intersects[0].face.normal.clone() : null
+  }
 }
 
 export function useTerrain() {

@@ -13,7 +13,7 @@ export interface GrassOptions {
 
 export interface GrassInstance {
   mesh: THREE.Mesh;
-  update: (elapsed: number) => void;
+  update: (elapsed: number, cameraPos?: THREE.Vector3) => void;
   dispose: () => void;
 }
 
