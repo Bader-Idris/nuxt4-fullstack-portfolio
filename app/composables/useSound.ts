@@ -23,23 +23,23 @@ const sounds = {
 
   // Locomotive sounds - Ensure these files exist in public/sounds/
   trainHorn: new Howl({
-    src: ["/sounds/train-horn.wav"],
+    src: ["/sounds/train-horn.mp3"],
     volume: 0.7,
     // rate: 0.9,
   }),
-  brickHit: new Howl({ src: ["/sounds/brick-hit.wav"], volume: 0.45 }),
+  brickHit: new Howl({ src: ["/sounds/brick-hit.mp3"], volume: 0.45 }),
   trainBrakes: new Howl({
-    src: ["/sounds/train-brakes.wav"],
+    src: ["/sounds/train-brakes.mp3"],
     volume: 0.4,
     loop: false,
   }),
   trainWheels: new Howl({
-    src: ["/sounds/train-wheels.wav"],
+    src: ["/sounds/train-wheels.mp3"],
     volume: 0.0,
     loop: true,
   }),
   trainEngine: new Howl({
-    src: ["/sounds/train-engine.wav"],
+    src: ["/sounds/train-engine.mp3"],
     volume: 0.3,
     loop: true,
   }),

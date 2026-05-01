@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import type RAPIER from '@dimforge/rapier3d-compat'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
 
 export class Terrain {
   scene: THREE.Scene
@@ -51,35 +52,51 @@ export class Terrain {
     this.gradientTexture.colorSpace = THREE.SRGBColorSpace
   }
 
-  async load(glbUrl: string, splatUrl: string, manager?: THREE.LoadingManager) {
+  async load(glbUrl: string, splatUrl: string, renderer?: THREE.WebGLRenderer, manager?: THREE.LoadingManager) {
+    // 1. Texture Loading (with KTX2 support if possible)
     const textureLoader = new THREE.TextureLoader(manager)
     this.splatTexture = await textureLoader.loadAsync(splatUrl)
     this.splatTexture.colorSpace = THREE.NoColorSpace
     this.splatTexture.wrapS = THREE.RepeatWrapping
     this.splatTexture.wrapT = THREE.RepeatWrapping
 
+    // 2. GLB Loading (with Draco and KTX2 support)
     const loader = new GLTFLoader(manager)
+    
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/assets/three/draco/gltf/')
     loader.setDRACOLoader(dracoLoader)
 
-    const gltf = await loader.loadAsync(glbUrl)
-    const terrainModel = gltf.scene
-    
-    terrainModel.traverse((child) => {
-      if (child instanceof THREE.Mesh && !this.mesh) {
-        this.mesh = child
-      }
-    })
+    if (renderer) {
+      const ktx2Loader = new KTX2Loader()
+      ktx2Loader.setTranscoderPath('/assets/three/basis/')
+      ktx2Loader.detectSupport(renderer)
+      loader.setKTX2Loader(ktx2Loader)
+    }
 
-    // Align 320-unit Blender geometry to 512-unit world size
-    // if (this.mesh) {
-    //   const originalBlenderSize = 512
-    //   const scaleFactor = this.size / originalBlenderSize
-    //   // Scale the geometry itself to ensure raycaster and physics use updated bounds
-    //   this.mesh.geometry.scale(scaleFactor, 1, scaleFactor)
-    //   this.mesh.updateMatrixWorld()
-    // }
+    // Use compressed version in production if it exists
+    const isProd = process.env.NODE_ENV === 'production'
+    const targetGlb = isProd ? glbUrl.replace('.glb', '-compressed.glb') : glbUrl
+
+    try {
+      const gltf = await loader.loadAsync(targetGlb)
+      const terrainModel = gltf.scene
+      
+      terrainModel.traverse((child) => {
+        if (child instanceof THREE.Mesh && !this.mesh) {
+          this.mesh = child
+        }
+      })
+    } catch (error) {
+      console.warn(`Failed to load ${targetGlb}, falling back to ${glbUrl}`, error)
+      const gltf = await loader.loadAsync(glbUrl)
+      const terrainModel = gltf.scene
+      terrainModel.traverse((child) => {
+        if (child instanceof THREE.Mesh && !this.mesh) {
+          this.mesh = child
+        }
+      })
+    }
 
     if (this.world && this.rapier && this.mesh) {
       this.setPhysical(this.mesh.geometry)

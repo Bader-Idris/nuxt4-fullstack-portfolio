@@ -1138,7 +1138,7 @@ onMounted(async () => {
     }
 
     terrain = new Terrain(scene);
-    await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png", manager);
+    await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png", renderer, manager);
 
     // // Initialize Needle Engine Context for the Inspector Extension to detect the scene
     // const { Context } = await import("@needle-tools/engine");
