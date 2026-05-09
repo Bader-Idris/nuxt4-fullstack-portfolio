@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "Bader Idris - Full-Stack Developer Portfolio",
+    "title": "Home",
     "description": "Explore Bader Idris's portfolio as a full-stack developer specializing in Vue, Nuxt, Express.js, and modern web technologies. Crafting responsive, dynamic web experiences.",
     "greeting": "Hi all. I am",
     "name": "Bader Idris",
@@ -28,10 +28,10 @@
     "contact": "_contact-me"
   },
   "about": {
-    "title": "About my career",
+    "title": "About Me",
     "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions.",
     "personal": {
-      "title": "About my career, being a full-stack developer",
+      "title": "About Me",
       "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Express.js, and more. Turning ideas into innovative digital solutions.",
       "experienceDuration": "{years} years and {months} months",
       "createdTimeAgo": "created {time}",
@@ -53,12 +53,12 @@
     }
   },
   "projects": {
-    "title": "Projects I created during my career",
+    "title": "Projects",
     "description": "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Express.js, and more.",
     "caution": "Please select a programming tool to view my projects. \n Your choice is crucial to proceed."
   },
   "contact": {
-    "title": "Get in Touch with Bader Idris, via multiple approaches",
+    "title": "Contact Me",
     "description": "Connect with Bader Idris for collaborations or tech innovations. Reach out via email, phone call, or GitHub to bring your ideas to life with a full-stack expert.",
     "admin": {
       "title": "Admin Emails | Bader Idris",

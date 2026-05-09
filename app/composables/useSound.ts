@@ -1,54 +1,95 @@
 import { Howl, Howler } from "howler";
 
-// Define sound files - place these in your public directory (e.g., public/sounds)
-const sounds = {
-  connect: new Howl({ src: ["/sounds/water-drip.mp3"], volume: 0.5 }),
-  // disconnect: new Howl({ src: ["/sounds/Disconnect.mp3"], volume: 0.3 }),
-  // reconnect: new Howl({ src: ["/sounds/reconnect.mp3"], volume: 0.3 }),
-  // userJoin: new Howl({ src: ["/sounds/user-join.mp3"], volume: 0.2 }),
-  // userLeave: new Howl({ src: ["/sounds/user-leave.mp3"], volume: 0.2 }),
-  newMessage: new Howl({ src: ["/sounds/new-message.mp3"], volume: 0.4 }),
-  // sendMessage: new Howl({ src: ["/sounds/send-message.mp3"], volume: 0.2 }), // More subtle sound for sending
-  // kicked: new Howl({ src: ["/sounds/kicked.mp3"], volume: 0.5 }),
-  // error: new Howl({ src: ["/sounds/error.mp3"], volume: 0.5 }),
+// Define sound configurations
+const soundConfigs = {
+  connect: { src: ["/sounds/water-drip.mp3"], volume: 0.5 },
+  // disconnect: { src: ["/sounds/Disconnect.mp3"], volume: 0.3 },
+  // reconnect: { src: ["/sounds/reconnect.mp3"], volume: 0.3 },
+  // userJoin: { src: ["/sounds/user-join.mp3"], volume: 0.2 },
+  // userLeave: { src: ["/sounds/user-leave.mp3"], volume: 0.2 },
+  newMessage: { src: ["/sounds/new-message.mp3"], volume: 0.4 },
+  // sendMessage: { src: ["/sounds/send-message.mp3"], volume: 0.2 }, // More subtle sound for sending
+  // kicked: { src: ["/sounds/kicked.mp3"], volume: 0.5 },
+  // error: { src: ["/sounds/error.mp3"], volume: 0.5 },
   // Add other game sounds (e.g., turn start, correct answer, incorrect answer)
-  // gameStart: new Howl({ src: ['/sounds/game-start.mp3'], volume: 0.5 }),
-  // correctAnswer: new Howl({ src: ["/sounds/correct.mp3"], volume: 0.5 }),
-  // wrongAnswer: new Howl({ src: ["/sounds/wrong-answer.mp3"], volume: 0.5 }),
-  // gameStart: new Howl({ src: ["/sounds/water-drip.mp3"], volume: 0.5 }),
-  // buzzer_hit_success_own_team: new Howl({
+  // gameStart: { src: ['/sounds/game-start.mp3'], volume: 0.5 },
+  // correctAnswer: { src: ["/sounds/correct.mp3"], volume: 0.5 },
+  // wrongAnswer: { src: ["/sounds/wrong-answer.mp3"], volume: 0.5 },
+  // gameStart: { src: ["/sounds/water-drip.mp3"], volume: 0.5 },
+  // buzzer_hit_success_own_team: {
   //   src: ["/sounds/buzzer.mp3"],
   //   volume: 0.5,
-  // }),
+  // },
 
   // Locomotive sounds - Ensure these files exist in public/sounds/
-  trainHorn: new Howl({
-    src: ["/sounds/train-horn.mp3"],
-    volume: 0.7,
-    // rate: 0.9,
-  }),
-  brickHit: new Howl({ src: ["/sounds/brick-hit.mp3"], volume: 0.45 }),
-  trainBrakes: new Howl({
+  trainHorn: { src: ["/sounds/train-horn.mp3"], volume: 0.7 },
+  brickHit: { src: ["/sounds/brick-hit.mp3"], volume: 0.45 },
+  trainBrakes: {
     src: ["/sounds/train-brakes.mp3"],
     volume: 0.4,
     loop: false,
-  }),
-  trainWheels: new Howl({
+  },
+  trainWheels: {
     src: ["/sounds/train-wheels.mp3"],
     volume: 0.0,
     loop: true,
-  }),
-  trainEngine: new Howl({
+  },
+  trainEngine: {
     src: ["/sounds/train-engine.mp3"],
     volume: 0.3,
     loop: true,
-  }),
+  },
 };
 
+// Lazy-loaded sound instances
+const sounds: Record<string, Howl> = {};
+
+/**
+ * Gets or creates a Howl instance for a given sound name.
+ */
+function getSoundInstance(name: keyof typeof soundConfigs): Howl | null {
+  if (!import.meta.client) return null;
+
+  if (!sounds[name] && soundConfigs[name]) {
+    sounds[name] = new Howl(soundConfigs[name]);
+  }
+  return sounds[name] || null;
+}
+
+/**
+ * Automatically attempts to resume the AudioContext on the first user gesture.
+ * This satisfies browser auto-play policies.
+ */
+if (import.meta.client) {
+  const resumeAudio = () => {
+    if (Howler.ctx && Howler.ctx.state === "suspended") {
+      Howler.ctx.resume().catch((err) => {
+        console.warn("Failed to resume AudioContext:", err);
+      });
+    }
+    // Remove listeners once the context is running or we've tried to resume
+    if (Howler.ctx && Howler.ctx.state === "running") {
+      window.removeEventListener("click", resumeAudio);
+      window.removeEventListener("touchstart", resumeAudio);
+      window.removeEventListener("keydown", resumeAudio);
+    }
+  };
+
+  window.addEventListener("click", resumeAudio);
+  window.addEventListener("touchstart", resumeAudio);
+  window.addEventListener("keydown", resumeAudio);
+}
+
 export function useSound() {
-  const playSound = (name: keyof typeof sounds) => {
-    if (sounds[name]) {
-      sounds[name].play();
+  const playSound = (name: keyof typeof soundConfigs) => {
+    const sound = getSoundInstance(name);
+    if (sound) {
+      // If the context is still suspended, Howler will handle it (usually by not playing),
+      // but we try to resume just in case this call itself is part of a gesture.
+      if (Howler.ctx && Howler.ctx.state === "suspended") {
+        Howler.ctx.resume().catch(() => {});
+      }
+      sound.play();
     } else {
       console.warn(`Sound "${name}" not found.`);
     }
@@ -59,12 +100,15 @@ export function useSound() {
    * Useful for avoiding "machine-gun" effect on repetitive sounds like brick hits.
    */
   const playWithVariation = (
-    name: keyof typeof sounds,
+    name: keyof typeof soundConfigs,
     rateRange = 0.2,
     volRange = 0.1
   ) => {
-    const sound = sounds[name];
+    const sound = getSoundInstance(name);
     if (sound) {
+      if (Howler.ctx && Howler.ctx.state === "suspended") {
+        Howler.ctx.resume().catch(() => {});
+      }
       const id = sound.play();
       // Randomize rate (pitch) around 1.0
       sound.rate(1.0 + (Math.random() - 0.5) * rateRange, id);
@@ -76,21 +120,25 @@ export function useSound() {
   /**
    * Returns the Howl instance directly for advanced control (e.g. updating volume/rate in a loop)
    */
-  const getSound = (name: keyof typeof sounds) => sounds[name];
+  const getSound = (name: keyof typeof soundConfigs) => getSoundInstance(name);
 
   const useContinuous = (
-    name: keyof typeof sounds,
+    name: keyof typeof soundConfigs,
     rateRange = 0.05,
     volRange = 0.05
   ) => {
-    const sound = sounds[name];
+    const sound = getSoundInstance(name);
     let soundId: number | null = null;
     let isHeld = false;
-    const baseVolume = sound.volume() as number;
+    const baseVolume = sound ? (sound.volume() as number) : 0;
 
     const start = () => {
       if (isHeld || !sound) return;
       isHeld = true;
+
+      if (Howler.ctx && Howler.ctx.state === "suspended") {
+        Howler.ctx.resume().catch(() => {});
+      }
 
       if (soundId !== null) sound.stop(soundId);
       sound.loop(true); // Ensure the sound loops while held
@@ -108,7 +156,7 @@ export function useSound() {
     };
 
     const stop = () => {
-      if (!isHeld || soundId === null) return;
+      if (!isHeld || !sound || soundId === null) return;
       isHeld = false;
 
       const id = soundId;

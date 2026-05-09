@@ -1,6 +1,8 @@
 <template>
   <div class="train-page" :class="{ 'page-fullscreen': isFullscreen }">
-    <ThreeLocomotive v-model:fullscreen="isFullscreen" />
+    <ClientOnly>
+      <ThreeLocomotive v-model:fullscreen="isFullscreen" />
+    </ClientOnly>
   </div>
 </template>
 
@@ -11,7 +13,7 @@ const runtimeConfig = useRuntimeConfig();
 const trainTitle = "3D Train Locomotive Project";
 const trainDescription =
   "Interactive 3D train locomotive scene built with Nuxt 4, Three.js, custom GLSL smoke particles, and a procedural sky shader.";
-const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-04-13.png`;
+const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-05-5.png`;
 
 useSeoMeta({
   title: trainTitle,
@@ -21,7 +23,24 @@ useSeoMeta({
   ogImage: trainSeoImage,
   ogImageWidth: 1200,
   ogImageHeight: 630,
+  ogType: 'article',
+  twitterCard: 'summary_large_image',
+  twitterTitle: trainTitle,
+  twitterDescription: trainDescription,
+  twitterImage: trainSeoImage,
 });
+
+useSchemaOrg([
+  defineArticle({
+    headline: trainTitle,
+    description: trainDescription,
+    image: trainSeoImage,
+    datePublished: '2026-04-13',
+    author: [
+      { name: 'Bader Idris', url: 'https://baderidris.com' }
+    ]
+  })
+])
 
 // Initialize from URL on client to avoid hydration mismatch
 const isFullscreen = ref(false);

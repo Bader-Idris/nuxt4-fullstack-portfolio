@@ -1,9 +1,13 @@
 # This is the custom nginx Dockerfile that fetches the static files from the Nuxt build output
 # and serves them using nginx.
-FROM baderidris/nuxt-portfolio:3.3.1-testing-prod AS builder
+# FROM baderidris/nuxt-portfolio:3.3.2-testing-prod AS builder
+FROM baderidris/nuxt-portfolio:3.3.2-production-slim AS builder
+# FROM baderidris/nuxt-portfolio:3.2.6-testing-prod
 # FROM baderidris/nuxt-portfolio:3.2.6-testing-bun-prod AS builder
 # FROM baderidris/nuxt-portfolio:3.2.5-testing-deno-prod AS builder
 
 FROM nginx:stable-alpine
-COPY --from=builder .output/public /var/www/html
-COPY ./server/config/nginx/default.conf /etc/nginx/conf.d/default.conf:ro
+# Debug: Verify copied assets during build
+# RUN [ "ls", "-R", "/var/www/html" ]
+COPY --from=builder /app/.output/public /var/www/html
+COPY ./server/config/nginx/default.conf /etc/nginx/conf.d/default.conf

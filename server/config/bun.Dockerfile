@@ -2,7 +2,7 @@
 FROM oven/bun:1.3.13-alpine AS base
 
 # Install Python and build tools for native dependencies (Alpine version)
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
 
 WORKDIR /app
 

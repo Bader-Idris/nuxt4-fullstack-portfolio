@@ -33,11 +33,60 @@ import { useColorMode } from '@vueuse/core'
 import { useSound } from '@/composables/useSound'
 
 useHead({
-  // link: []
-  // bodyAttrs: {
-  //   class: 'test'
-  // },
-  // script: [{ innerHTML: 'console.log(\'Hello world\')' }]
+  titleTemplate: (titleChunk) => {
+    return titleChunk ? `${titleChunk} | Bader Idris` : 'Bader Idris - Full Stack Developer';
+  },
+  meta: [
+    // PWA / mobile app meta
+    { name: "apple-mobile-web-app-capable", content: "yes" },
+    {
+      name: "apple-mobile-web-app-status-bar-style",
+      content: "black-translucent",
+    },
+    { name: "mobile-web-app-capable", content: "yes" },
+    // ✅ Added: pairs with apple-mobile-web-app-status-bar-style
+    { name: "theme-color", content: "#000000" },
+  ],
+  link: [
+    {
+      rel: "icon",
+      type: "image/x-icon",
+      sizes: "48x48",
+      href: "/favicon.ico",
+    },
+    {
+      rel: "icon",
+      type: "image/png",
+      sizes: "16x16",
+      href: "/favicon-16x16.png",
+    },
+    {
+      rel: "icon",
+      type: "image/png",
+      sizes: "32x32",
+      href: "/favicon-32x32.png",
+    },
+    {
+      rel: "apple-touch-icon",
+      type: "image/png",
+      sizes: "180x180", // ✅ Fixed: was commented out
+      href: "/apple-touch-icon.png",
+    },
+    {
+      rel: "icon",
+      type: "image/webp",
+      sizes: "192x192",
+      href: "/icon-192.webp",
+    },
+    {
+      rel: "icon",
+      type: "image/webp",
+      sizes: "128x128",
+      href: "/icon-128.webp",
+    },
+    // ✅ Optional but recommended for PWA
+    // { rel: "manifest", href: "/site.webmanifest" },
+  ],
 })
 
 const route = useRoute()
@@ -121,7 +170,7 @@ const initializeMainApp = async () => {
     })
   }
 
-  if (Capacitor.isNativePlatform()) {
+  if (config.public.isCapacitor && Capacitor.isNativePlatform()) {
     // Initialize each plugin separately so that if one fails, others can still work
     try {
       await initCapacitorPlatform();
@@ -145,12 +194,20 @@ const initializeMainApp = async () => {
     } catch (error) {
       console.error("Error initializing push notifications:", error);
     }
-  } else {
-    try {
-      await initNetworkListener();
-    } catch (error) {
-      console.error("Error initializing network listener:", error);
+  } else if (import.meta.client) {
+    // Web-native network listener
+    const updateOnlineStatus = () => {
+      isOffline.value = !navigator.onLine
+      if (isOffline.value) {
+        notifyUserIsOffline()
+      }
     }
+
+    window.addEventListener('online', updateOnlineStatus)
+    window.addEventListener('offline', updateOnlineStatus)
+
+    // Initial check
+    updateOnlineStatus()
   }
 }
 

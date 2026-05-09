@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { glob } from 'glob'
+import { glob as globPkg } from 'glob'
 import sharp from 'sharp'
-import ttf2woff2 from 'ttf2woff2'
+// import ttf2woff2 from 'ttf2woff2'
 import fs from 'node:fs/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -32,7 +32,7 @@ async function runCommand(command: string, args: string[]) {
  */
 async function optimizeModels() {
   console.log('--- Optimizing Models ---')
-  const files = await glob('**/*.glb', {
+  const files = await globPkg('**/*.glb', {
     cwd: rootDir,
     ignore: ['node_modules/**', 'dist/**', '.nuxt/**', '**/*-compressed.glb', 'android/**', 'ios/**']
   })
@@ -68,7 +68,7 @@ async function optimizeModels() {
 async function optimizeTextures() {
   console.log('--- Optimizing Textures ---')
   
-  const files = await glob('public/**/*.{png,jpg}', {
+  const files = await globPkg('public/**/*.{png,jpg}', {
     cwd: rootDir,
     ignore: ['**/ui/**', '**/favicons/**', '**/social/**']
   })
@@ -105,7 +105,7 @@ async function optimizeTextures() {
   }
 
   // UI images to WebP
-  const uiFiles = await glob('public/ui/**/*.{png,jpg}', { cwd: rootDir })
+  const uiFiles = await globPkg('public/ui/**/*.{png,jpg}', { cwd: rootDir })
   for (const file of uiFiles) {
     const input = path.join(rootDir, file)
     const output = input.replace(/\.(png|jpg)$/, '.webp')
@@ -119,11 +119,11 @@ async function optimizeTextures() {
  */
 async function optimizeFonts() {
   console.log('--- Optimizing Fonts ---')
-  const fontDirs = await glob('public/fonts/*/', { cwd: rootDir })
+  const fontDirs = await globPkg('public/fonts/*/', { cwd: rootDir })
   
   for (const dir of fontDirs) {
     const fullDir = path.join(rootDir, dir)
-    const ttfFiles = await glob('*.ttf', { cwd: fullDir })
+    const ttfFiles = await globPkg('*.ttf', { cwd: fullDir })
     
     for (const ttfFile of ttfFiles) {
       const inputPath = path.join(fullDir, ttfFile)
@@ -135,7 +135,7 @@ async function optimizeFonts() {
     }
 
     // Purge legacy formats
-    const legacyFiles = await glob('*.{eot,svg,woff,ttf}', { cwd: fullDir })
+    const legacyFiles = await globPkg('*.{eot,svg,woff,ttf}', { cwd: fullDir })
     for (const legacy of legacyFiles) {
       if (!legacy.endsWith('.woff2')) {
         await fs.unlink(path.join(fullDir, legacy))
@@ -146,7 +146,7 @@ async function optimizeFonts() {
 
   // Update all CSS/SCSS files in the project to point to woff2 only
   console.log('--- Updating Font References in Stylesheets ---')
-  const stylesheetFiles = await glob('**/*.{css,scss}', {
+  const stylesheetFiles = await globPkg('**/*.{css,scss}', {
     cwd: rootDir,
     ignore: ['node_modules/**', 'dist/**', '.nuxt/**']
   })

@@ -21,31 +21,45 @@ RUN --mount=type=cache,target=/root/.npm npm install --force
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 
+# ktx-tools provides the `toktx` binary used by scripts/compress.ts at build time.
+# It is NOT needed at runtime — we install it here in the builder stage only.
+# On Alpine, ktx-tools is available in the community repository.
+# RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community ktx-tools || \
+#     echo "[Dockerfile] WARNING: ktx-tools not found in Alpine repos — compress.ts will fall back to WebP for textures."
+
 COPY . .
 
 # Ensure production environment is set for optimal build and compression
-ENV NODE_ENV=production
+ARG NODE_ENV=production
+ARG PORT=3000
+ENV NODE_ENV=${NODE_ENV}
+ENV PORT=${PORT}
+ENV NUXT_TELEMETRY_DISABLED=1
+
 RUN npm run build
 
-# Stage 4: Production runner
+# Stage 4: Production runner — lean image, no build tools needed
 FROM node:24.15-alpine AS runner
 
 WORKDIR /app
 
-# RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache \
+    vips \
+    dumb-init
 
-# Copy only the necessary production dependencies
-# COPY --from=deps /app/node_modules ./node_modules
 # Copy the built output from the builder stage
-
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
 
+# Switch to non-root user for security
 USER node
 
-# Expose the port and define the command to run the app
-ENV PORT 3000
-EXPOSE $PORT
-# EXPOSE 3000
-# CMD [ "node", ".output/server/index.mjs" ]
-CMD ["npm", "start"]
+ARG PORT=3000
+ENV PORT=${PORT}
+ENV NODE_ENV=production
+ENV NUXT_TELEMETRY_DISABLED=1
+
+EXPOSE ${PORT}
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", ".output/server/index.mjs"]

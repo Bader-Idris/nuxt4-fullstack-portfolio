@@ -3,39 +3,37 @@
     <ThreeTrainLoader :loading="isLoading" :progress="loadProgress" />
     <canvas ref="canvasRef" />
 
-    <div class="controls-container">
-      <!-- Blocks toggle – requires physics to be initialised first -->
-      <button
-        class="control-btn"
-        :class="{ active: showBlocks }"
-        :aria-label="showBlocks ? 'Hide blocks' : 'Show blocks'"
-        :disabled="!physicsMode"
-        @click="toggleBlocks"
-      >
-        <Icon name="mdi:cube-outline" size="24" />
-        <span class="btn-text">{{
-          showBlocks ? "Blocks ON" : "Blocks OFF"
-        }}</span>
-      </button>
+    <ClientOnly>
+      <div class="controls-container">
+        <button
+          class="control-btn"
+          :class="{ active: showBlocks }"
+          :aria-label="showBlocks ? 'Hide blocks' : 'Show blocks'"
+          :disabled="!physicsMode"
+          @click="toggleBlocks"
+        >
+          <Icon name="mdi:cube-outline" size="24" />
+          <span class="btn-text">{{
+            showBlocks ? "Blocks ON" : "Blocks OFF"
+          }}</span>
+        </button>
 
-      <!-- Wheel-spin mode: makes wheels spin in place without moving the train -->
-      <button
-        class="control-btn"
-        :class="{ active: wheelSpinMode, warning: wheelSpinMode }"
-        :aria-label="wheelSpinMode ? 'Stop wheel spin' : 'Spin wheels only'"
-        @click="toggleWheelSpin"
-      >
-        <Icon
-          :name="wheelSpinMode ? 'mdi:stop' : 'mdi:speedometer'"
-          size="24"
-        />
-        <span class="btn-text">{{
-          wheelSpinMode ? "STOP SPIN" : "WHEEL SPIN"
-        }}</span>
-      </button>
+        <button
+          class="control-btn"
+          :class="{ active: wheelSpinMode, warning: wheelSpinMode }"
+          :aria-label="wheelSpinMode ? 'Stop wheel spin' : 'Spin wheels only'"
+          @click="toggleWheelSpin"
+        >
+          <Icon
+            :name="wheelSpinMode ? 'mdi:stop' : 'mdi:speedometer'"
+            size="24"
+          />
+          <span class="btn-text">{{
+            wheelSpinMode ? "STOP SPIN" : "WHEEL SPIN"
+          }}</span>
+        </button>
 
-      <!-- Gear cycling – always visible once a gear is defined -->
-      <button
+         <button
         v-if="currentGear"
         class="control-btn primary"
         :aria-label="`Change train gear. Current gear ${currentGear.label}`"
@@ -46,47 +44,48 @@
         <span class="btn-text"
           >GEAR: {{ currentGear.label.toUpperCase() }}</span
         >
-      </button>
+      </button>   
 
-      <!-- Speed / RPM overlay: always shown once physics is running -->
-      <div v-if="currentGear" class="speed-display">
-        <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
-        <div class="speed-label">RPM</div>
-        <div v-if="wheelSpinMode" class="speed-mode">WHEEL SPIN</div>
-        <div v-else-if="physicsMode" class="speed-mode">
-          GEAR {{ currentGear.label.toUpperCase() }}
+        <div v-if="currentGear" class="speed-display">
+          <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
+          <div class="speed-label">RPM</div>
+          <div v-if="wheelSpinMode" class="speed-mode">WHEEL SPIN</div>
+          <div v-else-if="physicsMode" class="speed-mode">
+            GEAR {{ currentGear.label.toUpperCase() }}
+          </div>
         </div>
-      </div>
- 
-      <!-- Terrain Only Collision Mode: Debug helper -->
-       <button
+
+         <button
         class="control-btn warning"
         :class="{ active: terrainOnlyMode }"
         aria-label="Toggle terrain-only collision"
         :disabled="!physicsMode"
         @click="toggleTerrainOnly"
       >
-        <Icon :name="terrainOnlyMode ? 'mdi:terrain' : 'mdi:layers-outline'" size="24" />
+        <Icon
+          :name="terrainOnlyMode ? 'mdi:terrain' : 'mdi:layers-outline'"
+          size="24"
+        />
         <span class="btn-text">{{
           terrainOnlyMode ? "TERRAIN ONLY" : "ALL COLLISIONS"
         }}</span>
-      </button>  
-
-    </div>
-    <button
-      class="fullscreen-btn"
-      :aria-label="modelFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-      @click="toggleFullscreen"
-    >
-      <Icon
-        :name="
-          modelFullscreen
-            ? 'material-symbols-light:fullscreen-exit'
-            : 'material-symbols:fullscreen'
-        "
-        size="28"
-      />
-    </button>
+      </button>   
+      </div>
+      <button
+        class="fullscreen-btn"
+        :aria-label="modelFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+        @click="toggleFullscreen"
+      >
+        <Icon
+          :name="
+            modelFullscreen
+              ? 'material-symbols-light:fullscreen-exit'
+              : 'material-symbols:fullscreen'
+          "
+          size="28"
+        />
+      </button>
+    </ClientOnly>
   </div>
 </template>
 
@@ -96,9 +95,11 @@ import * as THREE from "three";
 // use then one in camera instead!!
 // import { RuntimeInspector } from "@needle-tools/engine";
 
-import type {  OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+// the same path!
+// import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+
 import { useFullscreen } from "@vueuse/core";
 import { useSound } from "@/composables/useSound";
 import { useTerrain } from "@/composables/threeD/useTerrain";
@@ -111,9 +112,15 @@ import { useSky } from "@/composables/threeD/useSky";
 import { useChimneySteam } from "@/composables/threeD/useChimneySteam";
 import { useInteraction } from "@/composables/threeD/useInteraction";
 import { useCamera } from "@/composables/threeD/useCamera";
+import { remapClamp } from "~/utils/maths";
 
 const chimneySteam = useChimneySteam();
-const { smokeBendAngle, smokeLifeSpeed, SMOKE_BEND_ANGLE_BY_GEAR, SMOKE_LIFE_SPEED_BY_GEAR } = chimneySteam;
+const {
+  smokeBendAngle,
+  smokeLifeSpeed,
+  SMOKE_BEND_ANGLE_BY_GEAR,
+  SMOKE_LIFE_SPEED_BY_GEAR,
+} = chimneySteam;
 
 const isLoading = ref(true);
 const loadProgress = ref(0);
@@ -166,25 +173,23 @@ let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let cameraInstance: ReturnType<typeof useCamera> | null = null;
 let renderer: THREE.WebGLRenderer;
-let controls: OrbitControls;
+let controls: any;
 let locomotive: THREE.Object3D;
 let areas: THREE.Group;
 let colarCargo: THREE.Group;
-let _areasMesh: THREE.Object3D | null = null;
 let animationId: number;
 let skyMesh: THREE.Mesh | null = null;
 let skyInstance: ReturnType<typeof useSky> | null = null;
-// let smokeInstance: ReturnType<typeof useSmokeParticles> | null = null;
 let waterInstance: ReturnType<typeof useWater> | null = null;
 let grassInstance: ReturnType<typeof useGrass> | null = null;
 let slabsInstance: ReturnType<typeof useSlabs> | null = null;
 let interactionInstance: ReturnType<typeof useInteraction> | null = null;
 let terrainNormalHelper: THREE.ArrowHelper | null = null;
+let dracoLoader: DRACOLoader | null = null;
 
 let trainCurve: THREE.CatmullRomCurve3 | null = null;
 let trainProgress = 0;
 let trainCurveLength = 0;
-const _trainOrientation = new THREE.Quaternion();
 
 // let inspector: any = null;
 let resizeObserver: ResizeObserver | null = null;
@@ -214,10 +219,23 @@ let smoothedQuatReady = false;
 // imperfectly sorted rail_sleeper path and correct them before they are applied.
 const prevSmoothTangent = new THREE.Vector3(0, 0, 1);
 const trainFocusPoint = new THREE.Vector3();
-const _trainStartPosition = new THREE.Vector3(20, 0, 0);
 
-const GROUND_Y = 0;
-const _TRACK_CENTER_Z = 0;
+const suspension = {
+  front: { height: 0, velocity: 0, target: 0 },
+  rear: { height: 0, velocity: 0, target: 0 },
+  pitch: 0,
+  pitchVelocity: 0,
+  initialized: false,
+};
+const banking = { roll: 0, rollVelocity: 0 };
+const SUSPENSION_STIFFNESS = 80;
+const SUSPENSION_DAMPING = 16;
+const BOGEY_OFFSET_Z = 2.2;
+const BANKING_STIFFNESS = 28;
+const BANKING_DAMPING = 8;
+const MAX_BANK_RAD = THREE.MathUtils.degToRad(3.0);
+const RAY_LIFT = 1.5;
+const RAY_DIST = 4.5;
 
 // Physics engine instance – world management only (bricks managed by trainBricks)
 const trainPhysics = useTrainPhysics();
@@ -242,7 +260,6 @@ const updateTrainFocusPoint = () => {
   trainFocusPoint.copy(locomotive.position).add(trainBodyOffset);
 };
 
-// was completely removed, maybe moved to useCamera!?
 const syncCameraToTrain = (followMotion: boolean = false) => {
   if (!cameraInstance || !locomotive) return;
   updateTrainFocusPoint();
@@ -263,13 +280,18 @@ const syncTrainBodyFromVisual = () => {
 const syncLocomotiveFromPhysics = () => {
   if (!locomotive || !trainPhysicsBody) return;
   const physicsPos = trainPhysicsBody.translation();
-  locomotive.position.set(
-    physicsPos.x - trainBodyOffset.x,
-    physicsPos.y - trainBodyOffset.y,
-    physicsPos.z - trainBodyOffset.z
-  );
-  const physicsRot = trainPhysicsBody.rotation();
-  locomotive.quaternion.set(physicsRot.x, physicsRot.y, physicsRot.z, physicsRot.w);
+  // locomotive.position.set(
+  //   physicsPos.x - trainBodyOffset.x,
+  //   physicsPos.y - trainBodyOffset.y,
+  //   physicsPos.z - trainBodyOffset.z
+  // );
+  // const physicsRot = trainPhysicsBody.rotation();
+  // locomotive.quaternion.set(
+  //   physicsRot.x,
+  //   physicsRot.y,
+  //   physicsRot.z,
+  //   physicsRot.w
+  // );
   updateTrainFocusPoint();
 };
 
@@ -279,16 +301,14 @@ const trainOrientationCorrection = new THREE.Quaternion();
 
 const placeLocomotiveOnTrack = () => {
   if (!locomotive) return;
-  
-  // Store original model transform from Blender once
+
   if (locomotiveInitialPos.lengthSq() === 0) {
     locomotiveInitialPos.copy(locomotive.position);
     locomotiveInitialQuat.copy(locomotive.quaternion);
-    console.log("Locomotive loaded at:", locomotiveInitialPos);
+    // console.log("Locomotive loaded at:", locomotiveInitialPos);
   }
 
   if (trainCurve) {
-    // Find the closest point on the curve to its Blender position to avoid jumps
     let minD = Infinity;
     let bestT = 0;
     const samples = 200;
@@ -302,7 +322,7 @@ const placeLocomotiveOnTrack = () => {
       }
     }
     trainProgress = bestT;
-    
+
     const snappedPos = trainCurve.getPointAt(trainProgress);
     // Wide-window tangent: sample ±2.5 % of the curve around the snap point
     // so local vertex jitter in the rail_sleeper mesh doesn't skew the initial facing.
@@ -318,121 +338,58 @@ const placeLocomotiveOnTrack = () => {
     // geometry underground. We compute how high the empty sat above the rail in
     // Blender and preserve that offset for the entire journey.
     heightAboveRail = locomotiveInitialPos.y - snappedPos.y;
-    locomotive.position.set(snappedPos.x, snappedPos.y + heightAboveRail, snappedPos.z);
-    
+
     // Calculate relative orientation correction
     // We want to preserve the model's Blender rotation relative to the track tangent
+    locomotive.position.set(
+      snappedPos.x,
+      snappedPos.y + heightAboveRail,
+      snappedPos.z
+    );
+
     const lookAtMatrix = new THREE.Matrix4().lookAt(
-      new THREE.Vector3(0, 0, 0), 
-      tangent, 
+      new THREE.Vector3(0, 0, 0),
+      tangent,
       new THREE.Vector3(0, 1, 0)
     );
-    const tangentQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
-    
-    // correction = tangentInv * initialModelQuat
-    // This way: currentTangentQuat * correction = initialModelQuat (at t=bestT)
-    trainOrientationCorrection.copy(tangentQuat).invert().multiply(locomotiveInitialQuat);
-
-    // Apply initial orientation
-    locomotive.quaternion.copy(tangentQuat).multiply(trainOrientationCorrection);
-
-    // Detect which direction to traverse the path.
-    // The angular sort produces a counter-clockwise loop; the locomotive's
-    // Blender-authored forward (-Z in Three.js lookAt convention) may point
-    // WITH or AGAINST increasing-t.  Measure the dot product and store the sign
-    // so the animate loop always moves the train in the correct direction and
-    // orients it to face the direction of travel.
-    // User hint: forward is decreasing Z. In Three.js, forward is usually (0, 0, -1).
-    const modelFwd = new THREE.Vector3(0, 0, 0).applyQuaternion(locomotiveInitialQuat);
-    pathDirectionSign = modelFwd.dot(tangent) >= 0 ? 1 : -1;
-    console.log(
-      `Path direction sign: ${pathDirectionSign}`,
-      `(model·tangent = ${modelFwd.dot(tangent).toFixed(3)})`
+    const tangentQuat = new THREE.Quaternion().setFromRotationMatrix(
+      lookAtMatrix
     );
+    trainOrientationCorrection
+      .copy(tangentQuat)
+      .invert()
+      .multiply(locomotiveInitialQuat);
 
-    // Reset orientation smoother so it re-initialises from the correct placement
-    // rather than slewing from an old value when the scene is re-entered.
+    locomotive.quaternion
+      .copy(tangentQuat)
+      .multiply(trainOrientationCorrection);
+
+    const modelFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(
+      locomotiveInitialQuat
+    );
+    pathDirectionSign = modelFwd.dot(tangent) >= 0 ? 1 : -1;
+
     smoothedQuatReady = false;
     prevSmoothTangent.copy(tangent.clone().multiplyScalar(pathDirectionSign));
-    
-    // Calculate body offset for focus point and physics
+
     const modelBounds = new THREE.Box3().setFromObject(locomotive);
     const modelCenter = modelBounds.getCenter(new THREE.Vector3());
     trainBodyOffset.copy(modelCenter).sub(locomotive.position);
-    
+
     const placedSize = modelBounds.getSize(new THREE.Vector3());
-    trainBodyHalfExtents.set(
-      Math.max(placedSize.x * 0.48, 0.6),
-      Math.max(placedSize.y * 0.48, 0.4),
-      Math.max(placedSize.z * 0.42, 0.35)
-    );
-  } else {
-    // Fallback: Stay at Blender position, just handle terrain height
-    const terrainHeight = terrain
-      ? terrain.getHeightAt(locomotiveInitialPos.x, locomotiveInitialPos.z)
-      : 0;
-    
-    locomotive.position.y = (locomotiveInitialPos.y || GROUND_Y) + terrainHeight;
-    locomotive.quaternion.copy(locomotiveInitialQuat);
-    
-    const modelBounds = new THREE.Box3().setFromObject(locomotive);
-    const modelCenter = modelBounds.getCenter(new THREE.Vector3());
-    const placedSize = modelBounds.getSize(new THREE.Vector3());
-    
-    trainBodyOffset.copy(modelCenter).sub(locomotive.position);
     trainBodyHalfExtents.set(
       Math.max(placedSize.x * 0.48, 0.6),
       Math.max(placedSize.y * 0.48, 0.4),
       Math.max(placedSize.z * 0.42, 0.35)
     );
   }
-  updateTrainFocusPoint();
 };
 
 const horn = useContinuous("trainHorn");
-
-// Kept for reference – replaced by tracks embedded in areas.glb
-const _createTrainTracks = () => {
-  const railGeometry = new THREE.BoxGeometry(500, 0.1, 0.1);
-  const railMaterial = new THREE.MeshStandardMaterial({
-    color: 0x888888,
-    roughness: 0.4,
-    metalness: 0.8,
-  });
-  const leftRail = new THREE.Mesh(railGeometry, railMaterial);
-  leftRail.position.set(0, 0.05, -0.3);
-  leftRail.receiveShadow = true;
-  scene.add(leftRail);
-  const rightRail = new THREE.Mesh(railGeometry, railMaterial);
-  rightRail.position.set(0, 0.05, 0.3);
-  rightRail.receiveShadow = true;
-  scene.add(rightRail);
-  const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.8);
-  const sleeperMaterial = new THREE.MeshStandardMaterial({
-    color: 0x8b4513,
-    roughness: 0.9,
-    metalness: 0.0,
-  });
-  for (let i = -250; i < 250; i += 1.5) {
-    const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
-    sleeper.position.set(i, 0.02, 0);
-    sleeper.receiveShadow = true;
-    scene.add(sleeper);
-  }
-};
-
-// Fullscreen toggle – delegates to VueUse useFullscreen
 const toggleFullscreen = async () => await toggle();
-
-// Rail sleeper meshes: used for path extraction + static physics trimesh colliders
 const railSleeperMeshes: THREE.Mesh[] = [];
-// Rapier colliders for rail meshes – stored for cleanup on physics reset
 const railColliders = ref<any[]>([]);
 
-/**
- * Auto-initialises physics once after models load.
- * Physics is ALWAYS active – no manual toggle needed.
- */
 const initPhysicsMode = async () => {
   if (physicsMode.value) return; // Already initialised
 
@@ -448,37 +405,54 @@ const initPhysicsMode = async () => {
         if (terrain.collider) {
           const { COLLISION_GROUPS } = trainPhysics;
           terrain.collider.setCollisionGroups(
-            (COLLISION_GROUPS.TERRAIN << 16) | COLLISION_GROUPS.TRAIN | COLLISION_GROUPS.BRICK
+            (COLLISION_GROUPS.TERRAIN << 16) |
+              COLLISION_GROUPS.TRAIN |
+              COLLISION_GROUPS.BRICK
           );
         }
       }
 
       if (!trainPhysicsBody) {
-        // Fall back to a flat ground plane if terrain has no physics collider
         if (!terrain || !terrain.collider) {
           trainPhysics.createGroundCollider(trainPhysics.physicsWorld);
         }
         trainPhysicsBody = trainPhysics.createTrainBody(
           trainPhysics.physicsWorld,
           locomotive.position.clone().add(trainBodyOffset),
-          { halfExtents: trainBodyHalfExtents.clone() }
+          {
+            halfExtents: trainBodyHalfExtents.clone(),
+            skipCuboidCollider: true,
+          }
         );
       }
 
-      // Sync visual transform → physics body (includes rotation, preventing snap)
       syncTrainBodyFromVisual();
 
-      // Create static trimesh colliders for all rail sleeper meshes
-      // so bricks can land and slide on the rails naturally
+      if (trainPhysicsBody && trainPhysics.wheelMeshesRef.meshes.length > 0) {
+        trainPhysics.addWheelColliders(
+          trainPhysics.physicsWorld,
+          trainPhysicsBody,
+          locomotive,
+          trainBodyOffset
+        );
+      }
+
       railSleeperMeshes.forEach((mesh) => {
         if (trainPhysics.physicsWorld) {
-          const collider = trainPhysics.createStaticTrimesh(trainPhysics.physicsWorld, mesh);
+          const collider = trainPhysics.createStaticTrimesh(
+            trainPhysics.physicsWorld,
+            mesh
+          );
           railColliders.value.push(collider);
         }
       });
 
-      // Place 5 brick walls along the journey path for an amusing ride
-      if (showBlocks.value && physicsBlocksGroup && trainCurve && trainPhysics.rapier) {
+      if (
+        showBlocks.value &&
+        physicsBlocksGroup &&
+        trainCurve &&
+        trainPhysics.rapier
+      ) {
         const trackY = trainCurve.getPointAt(0).y;
         trainBricks.createBrickSetsAlongPath(
           trainPhysics.physicsWorld,
@@ -488,12 +462,9 @@ const initPhysicsMode = async () => {
           physicsBlocksGroup,
           trackY
         );
-        const speedFactor = Math.min(Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED, 1);
-        trainBricks.setBlockBounceProfile(trainBricks.blocksRef.blocks, speedFactor);
       }
 
       physicsMode.value = true;
-      console.log("Physics initialised – locomotive is on rails.");
     }
   } catch (error) {
     console.error("Failed to initialise physics:", error);
@@ -501,11 +472,16 @@ const initPhysicsMode = async () => {
 };
 
 const toggleBlocks = () => {
-  if (!physicsMode.value || !trainPhysics.physicsWorld || !locomotive || !physicsBlocksGroup) return;
+  if (
+    !physicsMode.value ||
+    !trainPhysics.physicsWorld ||
+    !locomotive ||
+    !physicsBlocksGroup
+  )
+    return;
   showBlocks.value = !showBlocks.value;
 
   if (showBlocks.value) {
-    // Recreate brick walls along the path
     if (trainCurve && trainPhysics.rapier) {
       const trackY = trainCurve.getPointAt(0).y;
       trainBricks.createBrickSetsAlongPath(
@@ -516,11 +492,8 @@ const toggleBlocks = () => {
         physicsBlocksGroup,
         trackY
       );
-      const speedFactor = Math.min(Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED, 1);
-      trainBricks.setBlockBounceProfile(trainBricks.blocksRef.blocks, speedFactor);
     }
   } else {
-    // Remove all bricks from scene and physics world
     trainBricks.clearAllBlocks(physicsBlocksGroup, trainPhysics.physicsWorld);
   }
 };
@@ -542,7 +515,10 @@ const toggleWheelSpin = () => {
     currentGearIndex.value = 0;
     wheelSpeed.value = 90;
     locomotiveSpeed.value = 0;
-    wheelSpinGSAPRef.ref = trainPhysics.startWheelSpin(locomotive, wheelSpeed.value);
+    wheelSpinGSAPRef.ref = trainPhysics.startWheelSpin(
+      locomotive,
+      wheelSpeed.value
+    );
     return;
   }
   wheelSpeed.value = 0;
@@ -561,49 +537,62 @@ const cycleGear = () => {
   motionTweens.lifeSpeed?.kill();
   const duration = 4.5;
   const ease = "power1.inOut";
-  motionTweens.speed = useGSAP().to(locomotiveSpeed, { value: newSpeed, duration, ease });
-  motionTweens.rpm = useGSAP().to(wheelSpeed, { value: currentGear.value.rpm, duration, ease });
-  const targetBend = THREE.MathUtils.degToRad(SMOKE_BEND_ANGLE_BY_GEAR[currentGear.value.key]);
-  motionTweens.bend = useGSAP().to(smokeBendAngle, { value: targetBend, duration, ease });
+  motionTweens.speed = useGSAP().to(locomotiveSpeed, {
+    value: newSpeed,
+    duration,
+    ease,
+  });
+  motionTweens.rpm = useGSAP().to(wheelSpeed, {
+    value: currentGear.value.rpm,
+    duration,
+    ease,
+  });
+  const targetBend = THREE.MathUtils.degToRad(
+    SMOKE_BEND_ANGLE_BY_GEAR[currentGear.value.key]
+  );
+  motionTweens.bend = useGSAP().to(smokeBendAngle, {
+    value: targetBend,
+    duration,
+    ease,
+  });
   const targetLifeSpeed = SMOKE_LIFE_SPEED_BY_GEAR[currentGear.value.key];
-  motionTweens.lifeSpeed = useGSAP().to(smokeLifeSpeed, { value: targetLifeSpeed, duration, ease });
-  const speedFactor = Math.min(Math.abs(currentGear.value.speed) / MAX_GEAR_ABS_SPEED, 1);
-  // Adjust brick bounce profile to match new speed
-  trainBricks.setBlockBounceProfile(trainBricks.blocksRef.blocks, speedFactor);
+  motionTweens.lifeSpeed = useGSAP().to(smokeLifeSpeed, {
+    value: targetLifeSpeed,
+    duration,
+    ease,
+  });
 };
 
 let knotMesh: THREE.Object3D | null = null;
 const knotInitialPosition = new THREE.Vector3();
 
-// ... (other refs)
-
 const updateKnotSmoothly = () => {
   if (!knotMesh || trainPhysics.wheelMeshesRef.meshes.length === 0) return;
-  
-  const smallWheel = trainPhysics.wheelMeshesRef.meshes.find(w => w.wheel.name === 'SmallWheels_2');
+  const smallWheel = trainPhysics.wheelMeshesRef.meshes.find(
+    (w) => w.wheel.name === "SmallWheels_2"
+  );
   if (smallWheel) {
     const angle = smallWheel.mesh.rotation.z;
-    const amplitude = 0.235; 
-    
-    // We use GSAP to set the values for slightly better interpolation/sub-frame consistency 
-    // although for physics we might still stay frame-bound.
+    const amplitude = 0.235;
     useGSAP().set(knotMesh.position, {
       x: knotInitialPosition.x + Math.cos(angle) * amplitude,
       y: knotInitialPosition.y - Math.sin(angle) * amplitude,
-      overwrite: 'auto'
+      overwrite: "auto",
     });
   }
 };
 
 const animate = (elapsedMs: number) => {
+  if (!isMounted) return;
   animationId = requestAnimationFrame(animate);
   ticker.update(elapsedMs);
 
-  const camDist = locomotive ? camera.position.distanceTo(locomotive.position) : 0;
+  const camDist = locomotive
+    ? camera.position.distanceTo(locomotive.position)
+    : 0;
   const isFar = camDist > 50;
   const isVeryFar = camDist > 120;
 
-  // Update interaction texture - only if close enough to see effects clearly
   if (interactionInstance && locomotive && !isVeryFar) {
     interactionInstance.update(locomotive.position);
   }
@@ -613,7 +602,7 @@ const animate = (elapsedMs: number) => {
     const absSpeed = Math.abs(locomotiveSpeed.value);
     wheelSound.volume(
       THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0, 0.3)
-    ); // TODO: was 6 but too
+    );
     wheelSound.rate(
       THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0.5, 1.1)
     );
@@ -635,186 +624,224 @@ const animate = (elapsedMs: number) => {
     engineSound.volume(targetVol);
   }
 
-  // Update smoke and sky
-  // THROTTLE: Only update smoke logic fully if not very far
-  chimneySteam.update(ticker.elapsed, ticker.delta, locomotiveSpeed.value, camDist);
-
+  chimneySteam.update(
+    ticker.elapsed,
+    ticker.delta,
+    locomotiveSpeed.value,
+    camDist
+  );
   if (skyMesh) skyMesh.position.copy(camera.position);
 
-  // Animate Knot mechanical linkage smoothly
-  // CPU OPTIMIZATION: Skip linkage animation if far away
-  if (!isFar) {
-    updateKnotSmoothly();
-  }
+  if (!isFar) updateKnotSmoothly();
 
   if (physicsMode.value && trainPhysics.physicsWorld && trainPhysicsBody) {
-    trainPhysics.stepPhysics(trainPhysics.physicsWorld, ticker.delta, (stepDt) => {
-      // distanceDelta is positive for forward movement
-      const distanceDelta = locomotiveSpeed.value * stepDt;
+    trainPhysics.stepPhysics(
+      trainPhysics.physicsWorld,
+      ticker.delta,
+      (stepDt) => {
+        const distanceDelta = locomotiveSpeed.value * stepDt;
 
-      if (!wheelSpinMode.value) {
-        // ── Advance curve progress when moving ──────────────────────────────
-        // pathDirectionSign flips the increment direction so the locomotive
-        // always moves forward (in its authored facing direction) when speed > 0.
-        // We only advance progress if NOT in terrain-only debug mode OR if we want to follow the loop path at ground level.
-        // The user wants to know if it moves in the "correct direction", so moving along the curve is still useful,
-        // but let's make it follow the terrain height.
-        if (Math.abs(distanceDelta) > 0.0001 && trainCurve && trainCurveLength > 0) {
-          trainProgress += pathDirectionSign * distanceDelta / trainCurveLength;
-          // Wrap around for a continuous loop
-          while (trainProgress < 0) trainProgress += 1;
-          while (trainProgress > 1) trainProgress -= 1;
-        }
-
-        // ── Always lock kinematic body to the curve (even at idle) ──────────
-        // This prevents the body from drifting when syncLocomotiveFromPhysics
-        // reads it back, which would cause a snap to identity rotation.
-        if (trainCurve && trainCurveLength > 0 && !terrainOnlyMode.value) {
-          const targetPos = trainCurve.getPointAt(trainProgress);
-
-          // ── Position ────────────────────────────────────────────────────────
-          // The empty sits heightAboveRail above the rail; add that before trainBodyOffset
-          // so the physics body centre lands at the correct world-space height.
-          const bodyTargetPos = new THREE.Vector3(
-            targetPos.x + trainBodyOffset.x,
-            targetPos.y + heightAboveRail + trainBodyOffset.y,
-            targetPos.z + trainBodyOffset.z
-          );
-          trainPhysicsBody.setNextKinematicTranslation(bodyTargetPos);
-
-          // ── Orientation (wide-window tangent + direction sign + flip guard + slerp) ──
-          // Sample the curve ±TD on either side of the current position and use
-          // the chord as the tangent.  This averages out vertex-level jitter from
-          // the imperfect rail_sleeper path extraction so the locomotive faces the
-          // "major" track direction rather than per-point noise.
-          const TD = 0.025; // look-ahead/behind window (2.5 % of full curve)
-          const pAhead  = trainCurve.getPointAt(Math.min(0.999, trainProgress + TD));
-          const pBehind = trainCurve.getPointAt(Math.max(0.001, trainProgress - TD));
-          // Raw chord (always points in increasing-t direction)
-          const rawTangent = pAhead.clone().sub(pBehind).normalize();
-          // Apply path direction so this always points in the direction of travel
-          const wideTangent = rawTangent.multiplyScalar(pathDirectionSign);
-
-          //Flip guard: a sudden 180° reversal is a path-ordering artifact, not a
-          // real track bend.  Negate the tangent to keep the heading continuous.
-          if (smoothedQuatReady && prevSmoothTangent.dot(wideTangent) < 0) {
-            wideTangent.negate();
-          }
-          prevSmoothTangent.copy(wideTangent);
-
-          // Build the raw target quaternion from the wide tangent
-          const lookAtMatrix = new THREE.Matrix4().lookAt(
-            new THREE.Vector3(0, 0, 0),
-            wideTangent,
-            new THREE.Vector3(0, 1, 0)
-          );
-          const targetQuat = new THREE.Quaternion()
-            .setFromRotationMatrix(lookAtMatrix)
-            .multiply(trainOrientationCorrection);
-
-          // Initialise on first valid frame, then slerp each step.
-          // Rate = 5 rad/s → ~8 % progress per frame at 60 fps – smooth but
-          // responsive enough to track gentle curves without visual lag.
-          if (!smoothedQuatReady) {
-            smoothedBodyQuat.copy(targetQuat);
-            smoothedQuatReady = true;
-          } else {
-            smoothedBodyQuat.slerp(targetQuat, 1 - Math.exp(-5.0 * stepDt));
-          }
-          trainPhysicsBody.setNextKinematicRotation(smoothedBodyQuat);
-
-          // Spin wheels proportional to distance travelled
-          if (Math.abs(distanceDelta) > 0.0001) {
-            trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta);
-          }
-        } else if (terrainOnlyMode.value) {
-          // ── TERRAIN ONLY DEBUG MODE ──
-          // Moves strictly along its authored forward axis at the terrain height.
-          // Includes smoothed gravity to avoid trembling on downhill slopes.
-          const currentPos = trainPhysicsBody.translation();
-          const currentRot = trainPhysicsBody.rotation();
-          const currentQuat = new THREE.Quaternion(currentRot.x, currentRot.y, currentRot.z, currentRot.w);
-          
-          // Authored forward is -Z
-          const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(currentQuat).normalize();
-          
-          const nextX = currentPos.x + forward.x * distanceDelta;
-          const nextZ = currentPos.z + forward.z * distanceDelta;
-          const terrainY = terrain ? terrain.getHeightAt(nextX, nextZ) : 0;
-          
-          // Gravity and Fall Smoothing logic
-          // Persist vertical state on ticker to avoid losing it across turns
-          if (ticker.verticalVelocity === undefined) (ticker as any).verticalVelocity = 0;
-          if ((ticker as any).storedFall === undefined) (ticker as any).storedFall = 0;
-
-          const G = 9.81;
-          const groundedY = terrainY + trainBodyOffset.y;
-          const currentY = currentPos.y;
-          
-          if (currentY > groundedY + 0.01) {
-            // Falling state: accumulate fall speed but smooth it
-            const targetFall = -G * stepDt;
-            ticker.storedFall = THREE.MathUtils.lerp(ticker.storedFall, targetFall, 0.1);
-            ticker.verticalVelocity += ticker.storedFall;
-          } else {
-            // Grounded state - snap or gently push up
-            ticker.verticalVelocity = 0;
-            ticker.storedFall = 0;
+        if (!wheelSpinMode.value) {
+          if (
+            Math.abs(distanceDelta) > 0.0001 &&
+            trainCurve &&
+            trainCurveLength > 0
+          ) {
+            trainProgress +=
+              (pathDirectionSign * distanceDelta) / trainCurveLength;
+            while (trainProgress < 0) trainProgress += 1;
+            while (trainProgress > 1) trainProgress -= 1;
           }
 
-          let nextY = currentY + ticker.verticalVelocity;
-          
-          // Downhill snapping: prevent floating when ground drops away
-          if (nextY < groundedY || (currentY <= groundedY + 0.05)) {
-             nextY = THREE.MathUtils.lerp(nextY, groundedY, 0.2);
-          }
+          if (trainCurve && trainCurveLength > 0 && !terrainOnlyMode.value) {
+            const targetPos = trainCurve.getPointAt(trainProgress);
+            const TD = 0.025;
+            const pAhead = trainCurve.getPointAt(
+              Math.min(0.999, trainProgress + TD)
+            );
+            const pBehind = trainCurve.getPointAt(
+              Math.max(0.001, trainProgress - TD)
+            );
+            const rawTangent = pAhead.clone().sub(pBehind).normalize();
+            const wideTangent = rawTangent
+              .clone()
+              .multiplyScalar(pathDirectionSign);
 
-          trainPhysicsBody.setNextKinematicTranslation({
-            x: nextX,
-            y: nextY,
-            z: nextZ
-          });
-          
-          if (Math.abs(distanceDelta) > 0.0001) {
-            trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta);
-          }
-        } else {
-          // ── Fallback: straight-line movement along initial forward direction ─
-          if (Math.abs(distanceDelta) > 0.0001) {
-            const physicsPos = trainPhysicsBody.translation();
-            // Authored forward is -Z
-            const forward = new THREE.Vector3(0, 0, -1)
-              .applyQuaternion(locomotiveInitialQuat)
-              .normalize();
-            trainPhysicsBody.setNextKinematicTranslation({
-              x: physicsPos.x + forward.x * distanceDelta,
-              y: (terrain
-                ? terrain.getHeightAt(
-                    physicsPos.x + forward.x * distanceDelta,
-                    physicsPos.z + forward.z * distanceDelta
-                  )
-                : 0) + trainBodyOffset.y,
-              z: physicsPos.z + forward.z * distanceDelta,
+            if (smoothedQuatReady && prevSmoothTangent.dot(wideTangent) < 0)
+              wideTangent.negate();
+
+            const tangentCross = new THREE.Vector3().crossVectors(
+              prevSmoothTangent,
+              wideTangent
+            );
+            const curvatureSign = Math.sign(tangentCross.y);
+            const curvatureRate =
+              tangentCross.length() / Math.max(stepDt, 0.001);
+            const absSpeedForBank = Math.abs(locomotiveSpeed.value);
+            const bankTarget = remapClamp(
+              curvatureSign *
+                curvatureRate *
+                absSpeedForBank *
+                absSpeedForBank *
+                0.06,
+              -MAX_BANK_RAD,
+              MAX_BANK_RAD,
+              -MAX_BANK_RAD,
+              MAX_BANK_RAD
+            );
+
+            prevSmoothTangent.copy(wideTangent);
+            const lookAtMatrix = new THREE.Matrix4().lookAt(
+              new THREE.Vector3(0, 0, 0),
+              wideTangent,
+              new THREE.Vector3(0, 1, 0)
+            );
+            const curveQuat = new THREE.Quaternion()
+              .setFromRotationMatrix(lookAtMatrix)
+              .multiply(trainOrientationCorrection);
+
+            if (!smoothedQuatReady) {
+              smoothedBodyQuat.copy(curveQuat);
+              smoothedQuatReady = true;
+            } else {
+              const orientAlpha = remapClamp(
+                absSpeedForBank,
+                0,
+                MAX_GEAR_ABS_SPEED,
+                4.0,
+                7.0
+              );
+              smoothedBodyQuat.slerp(
+                curveQuat,
+                1 - Math.exp(-orientAlpha * stepDt)
+              );
+            }
+
+            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(
+              smoothedBodyQuat
+            );
+            const fwdVector = new THREE.Vector3(0, 0, -1).applyQuaternion(
+              smoothedBodyQuat
+            );
+            const frontOrigin = targetPos
+              .clone()
+              .add(fwdVector.clone().multiplyScalar(BOGEY_OFFSET_Z))
+              .add(upVector.clone().multiplyScalar(RAY_LIFT));
+            const rearOrigin = targetPos
+              .clone()
+              .add(fwdVector.clone().multiplyScalar(-BOGEY_OFFSET_Z))
+              .add(upVector.clone().multiplyScalar(RAY_LIFT));
+            const downDir = { x: -upVector.x, y: -upVector.y, z: -upVector.z };
+
+            const frontHit = trainPhysics.castRay(
+              trainPhysics.physicsWorld!,
+              frontOrigin,
+              downDir,
+              RAY_DIST
+            );
+            const rearHit = trainPhysics.castRay(
+              trainPhysics.physicsWorld!,
+              rearOrigin,
+              downDir,
+              RAY_DIST
+            );
+            const frontFallbackY = terrain
+              ? terrain.getHeightAt(frontOrigin.x, frontOrigin.z)
+              : targetPos.y;
+            const rearFallbackY = terrain
+              ? terrain.getHeightAt(rearOrigin.x, rearOrigin.z)
+              : targetPos.y;
+
+            suspension.front.target = frontHit
+              ? frontHit.point.y
+              : frontFallbackY;
+            suspension.rear.target = rearHit ? rearHit.point.y : rearFallbackY;
+
+            if (!suspension.initialized) {
+              suspension.front.height = suspension.front.target;
+              suspension.rear.height = suspension.rear.target;
+              banking.roll = bankTarget;
+              suspension.initialized = true;
+            }
+
+            const dynamicStiffness = remapClamp(
+              absSpeedForBank,
+              0,
+              MAX_GEAR_ABS_SPEED,
+              SUSPENSION_STIFFNESS * 0.7,
+              SUSPENSION_STIFFNESS * 1.35
+            );
+            const dynamicDamping = remapClamp(
+              absSpeedForBank,
+              0,
+              MAX_GEAR_ABS_SPEED,
+              SUSPENSION_DAMPING * 0.75,
+              SUSPENSION_DAMPING * 1.25
+            );
+
+            [suspension.front, suspension.rear].forEach((s) => {
+              const force =
+                dynamicStiffness * (s.target - s.height) -
+                dynamicDamping * s.velocity;
+              s.velocity += force * stepDt;
+              s.height += s.velocity * stepDt;
             });
-            trainPhysicsBody.setNextKinematicRotation(locomotiveInitialQuat);
-            trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta);
+
+            const avgHeight =
+              (suspension.front.height + suspension.rear.height) / 2;
+            const heightDiff = suspension.front.height - suspension.rear.height;
+            const targetPitchOffset = -Math.atan2(
+              heightDiff,
+              BOGEY_OFFSET_Z * 2
+            );
+            const pitchForce =
+              dynamicStiffness * 0.45 * (targetPitchOffset - suspension.pitch) -
+              dynamicDamping * 0.5 * suspension.pitchVelocity;
+            suspension.pitchVelocity += pitchForce * stepDt;
+            suspension.pitch += suspension.pitchVelocity * stepDt;
+
+            const bankForce =
+              BANKING_STIFFNESS * (bankTarget - banking.roll) -
+              BANKING_DAMPING * banking.rollVelocity;
+            banking.rollVelocity += bankForce * stepDt;
+            banking.roll += banking.rollVelocity * stepDt;
+
+            trainPhysicsBody.setNextKinematicTranslation({
+              x: targetPos.x + trainBodyOffset.x,
+              y: avgHeight + heightAboveRail + trainBodyOffset.y,
+              z: targetPos.z + trainBodyOffset.z,
+            });
+
+            const pitchQuat = new THREE.Quaternion().setFromAxisAngle(
+              new THREE.Vector3(1, 0, 0),
+              suspension.pitch
+            );
+            const bankQuat = new THREE.Quaternion().setFromAxisAngle(
+              new THREE.Vector3(0, 0, 1),
+              banking.roll
+            );
+            const finalQuat = smoothedBodyQuat
+              .clone()
+              .multiply(pitchQuat)
+              .multiply(bankQuat);
+            trainPhysicsBody.setNextKinematicRotation(finalQuat);
+
+            if (Math.abs(distanceDelta) > 0.0001)
+              trainPhysics.rotateWheelsByDistance(locomotive, distanceDelta);
           }
         }
+
+        trainBricks.applyTrainSeparationForces(
+          trainBricks.blocksRef.blocks,
+          trainPhysicsBody,
+          locomotiveSpeed.value,
+          stepDt,
+          () => playWithVariation("brickHit")
+        );
       }
+    );
 
-      // Apply wake turbulence impulses to bricks the train has just passed
-      trainBricks.applyTrainSeparationForces(
-        trainBricks.blocksRef.blocks,
-        trainPhysicsBody,
-        locomotiveSpeed.value,
-        stepDt,
-        () => playWithVariation("brickHit")
-      );
-    });
-
-    // Sync instanced-mesh matrices to physics body transforms
     trainBricks.updatePhysicsBlocks(trainBricks.blocksRef.blocks);
-    // Read back physics body position/rotation → visual locomotive
     syncLocomotiveFromPhysics();
     if (Math.abs(locomotiveSpeed.value) > 0.0001) syncCameraToTrain(true);
   }
@@ -823,78 +850,76 @@ const animate = (elapsedMs: number) => {
   renderer.render(scene, camera);
   skyInstance?.update(camera);
   waterInstance?.update(ticker.elapsed, camera);
-
-  // updateTrainFocusPoint();
-  // cameraInstance.update(trainFocusPoint, Math.abs(locomotiveSpeed.value) > 0.0001);
-
-  // renderer.render(scene, cameraInstance.camera);
-  // skyInstance?.update(cameraInstance.camera);
-  // waterInstance?.update(ticker.elapsed, cameraInstance.camera);
   grassInstance?.update(ticker.elapsed, camera.position);
 };
 
 const handleResize = () => {
   if (!containerRef.value || !renderer || !camera) return;
-  // if (!containerRef.value || !renderer || !cameraInstance) return;
-  const width = containerRef.value.clientWidth, height = containerRef.value.clientHeight;
+  const width = containerRef.value.clientWidth,
+    height = containerRef.value.clientHeight;
   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2);
   sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  // cameraInstance.handleResize(width, height);
   renderer.setSize(width, height);
   renderer.setPixelRatio(sizes.pixelRatio);
-
-  // Update shader uniform
   chimneySteam.updateResolution(sizes.resolution);
 };
 
-const handleKeydown = (e: KeyboardEvent) => { if (!e.repeat && e.key.toLowerCase() === "h") horn.start(); };
-const handleKeyup = (e: KeyboardEvent) => { if (e.key.toLowerCase() === "h") horn.stop(); };
+const handleKeydown = (e: KeyboardEvent) => {
+  if (!e.repeat && e.key.toLowerCase() === "h") horn.start();
+};
+const handleKeyup = (e: KeyboardEvent) => {
+  if (e.key.toLowerCase() === "h") horn.stop();
+};
+
+let isMounted = false;
 
 onMounted(async () => {
+  isMounted = true;
   if (!containerRef.value || !canvasRef.value) return;
   window.addEventListener("keydown", handleKeydown);
   window.addEventListener("keyup", handleKeyup);
   getSound("trainWheels")?.play();
 
-  const container = containerRef.value, canvas = canvasRef.value;
   scene = new THREE.Scene();
-  skyInstance = useSky(scene, { sunDirection: new THREE.Vector3(-0.5, 0.15, -0.5).normalize() });
+  skyInstance = useSky(scene, {
+    sunDirection: new THREE.Vector3(-0.5, 0.15, -0.5).normalize(),
+  });
   if (skyInstance) skyMesh = skyInstance.mesh;
 
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  const width = container.clientWidth, height = container.clientHeight;
-  sizes.width = width; sizes.height = height;
+  renderer = new THREE.WebGLRenderer({
+    canvas: canvasRef.value!,
+    antialias: true,
+  });
+
+  dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath("/assets/three/draco/");
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.setDRACOLoader(dracoLoader);
+
+  const width = containerRef.value.clientWidth,
+    height = containerRef.value.clientHeight;
+  sizes.width = width;
+  sizes.height = height;
   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2);
   sizes.resolution.set(width * sizes.pixelRatio, height * sizes.pixelRatio);
   renderer.setSize(width, height);
   renderer.setPixelRatio(sizes.pixelRatio);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoftShadowMap is deprecated in latest Three.js
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 
-  // Enhanced Atmospheric Fog
-  // We use linear fog to strictly hide the terrain edges at a certain distance
-  // while keeping the foreground clear.
-  const fogColor = new THREE.Color("#735233"); // Matches sky horizon
-  scene.fog = new THREE.Fog(fogColor, 10, 250); // Start at 10, total fog at 250
-  scene.background = fogColor; // Set background to fog color for seamless blend
+  const fogColor = new THREE.Color("#735233");
+  scene.fog = new THREE.Fog(fogColor, 10, 250);
+  scene.background = fogColor;
 
   cameraInstance = useCamera({
-    canvas,
+    canvas: canvasRef.value,
     width,
     height,
     pixelRatio: sizes.pixelRatio,
   });
-  
-  // Apply Azimuth (horizontal) limits to lock the "sides" 
-  // so the user stays focused on the track and beautiful terrain.
-  if (cameraInstance.controls) {
-    cameraInstance.controls.minAzimuthAngle = -Math.PI * 0.85; // Limit rotation to ~300 degrees
-    cameraInstance.controls.maxAzimuthAngle = Math.PI * 0.85;
-  }
-
   camera = cameraInstance.camera;
   controls = cameraInstance.controls;
 
@@ -914,9 +939,7 @@ onMounted(async () => {
 
   const manager = new THREE.LoadingManager();
   manager.onProgress = (url, itemsLoaded, itemsTotal) => {
-    if (itemsTotal > 0) {
-      loadProgress.value = (itemsLoaded / itemsTotal) * 100;
-    }
+    if (itemsTotal > 0) loadProgress.value = (itemsLoaded / itemsTotal) * 100;
   };
   manager.onLoad = () => {
     setTimeout(() => {
@@ -924,24 +947,25 @@ onMounted(async () => {
     }, 500);
   };
 
-  const loader = new GLTFLoader(manager), dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath("/assets/three/draco/gltf/");
-  loader.setDRACOLoader(dracoLoader);
-
-  // Directional Light Helper to visualize sun position
-  // const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
-  // scene.add(lightHelper);
-
   try {
-    // Parallel loading of locomotive and areas for better performance and clean orchestration
     const [locomotiveGltf, areasGltf, colarGltf] = await Promise.all([
-      // loader.loadAsync("/assets/three/resources/Locomotive.glb"),
-      loader.loadAsync("/train/locomotive.glb"),
-      loader.loadAsync("/areas/areas.glb"),
-      loader.loadAsync("/train/colar.glb"),
+      new Promise<any>((resolve) => {
+        gltfLoader.load("/train/locomotive.glb", (gltf) => resolve(gltf), undefined, () => resolve(null));
+      }),
+      new Promise<any>((resolve) => {
+        gltfLoader.load("/areas/areas.glb", (gltf) => resolve(gltf), undefined, () => resolve(null));
+      }),
+      new Promise<any>((resolve) => {
+        gltfLoader.load("/train/colar.glb", (gltf) => resolve(gltf), undefined, () => resolve(null));
+      }),
     ]);
 
-    // Apply shadows to every mesh in the GLTF hierarchy before adding to scene
+    if (!isMounted) return;
+
+    if (!locomotiveGltf || !areasGltf || !colarGltf) {
+       throw new Error("One or more essential models failed to load.");
+    }
+
     locomotiveGltf.scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
@@ -955,14 +979,10 @@ onMounted(async () => {
     // the wrong curve point. The named object carries the correct Blender
     // world-space position – exactly where it sits on the rail_sleeper track.
     const locomotiveNode = locomotiveGltf.scene.getObjectByName("Locomotive");
-    console.log("locomotiveNode: ", locomotiveNode);
-    if (!locomotiveNode) {
-      console.warn("'Locomotive' object not found in locomotive.glb – falling back to scene root");
-    }
+    // locomotiveNode.rotation.y = -180; // TODO: I've rotated it after its useTrainPhysics ruined its position
     locomotive = locomotiveNode ?? locomotiveGltf.scene;
 
     areas = areasGltf.scene;
-
     scene.add(areas);
 
     colarCargo = colarGltf.scene;
@@ -974,38 +994,22 @@ onMounted(async () => {
     });
     scene.add(colarCargo);
 
-    // Extract path from the 'rail_sleeper' mesh or collection
     const pathPoints: THREE.Vector3[] = [];
     const processedPathMeshes = new Set<THREE.Object3D>();
-
-    // Tracks which rail_sleeper Groups have already contributed path points.
-    // The rail_sleeper Group from Blender's array+mirror modifier exports with
-    // two material-split children (Cube040 and Cube040_1) sharing the same
-    // geometry. Extracting path points from only the FIRST child prevents
-    // duplicate/zigzag curve points that would break the CatmullRomCurve3.
     const pathExtractedGroups = new Set<THREE.Object3D>();
 
     areas.traverse((child) => {
       const isRailSleeper = child.name?.includes("rail_sleeper") ?? false;
-      const isRailway     = child.name?.includes("railway")      ?? false;
-
+      const isRailway = child.name?.includes("railway") ?? false;
       if (isRailSleeper || isRailway) {
-        // Handle Groups by traversing their mesh descendants
         child.traverse((node) => {
           if (node instanceof THREE.Mesh && !processedPathMeshes.has(node)) {
             processedPathMeshes.add(node);
-            // Always add ALL child meshes to railSleeperMeshes for physics colliders
             railSleeperMeshes.push(node);
-
-            // Only extract path points from the FIRST mesh in this Group.
-            // Subsequent material-split siblings (e.g. Cube040_1) have identical
-            // vertex positions and would double – then zigzag – the path points.
             if (!pathExtractedGroups.has(child)) {
               pathExtractedGroups.add(child);
-
               const pos = node.geometry.attributes.position;
               node.updateMatrixWorld(true);
-
               if (pos.count > 300) {
                 // ── Angular-sort path extraction ──────────────────────────────────
                 // Problem: GLTF vertex buffers are NOT ordered along the track.
@@ -1020,26 +1024,33 @@ onMounted(async () => {
 
                 const allVerts: THREE.Vector3[] = [];
                 for (let j = 0; j < pos.count; j++) {
-                  const v = new THREE.Vector3().fromBufferAttribute(pos, j);
-                  allVerts.push(v.applyMatrix4(node.matrixWorld));
+                  allVerts.push(
+                    new THREE.Vector3()
+                      .fromBufferAttribute(pos, j)
+                      .applyMatrix4(node.matrixWorld)
+                  );
                 }
-
-                // Centroid in the XZ plane (Y = height, not useful for angle)
-                let cx = 0, cz = 0;
-                for (const v of allVerts) { cx += v.x; cz += v.z; }
-                cx /= allVerts.length; cz /= allVerts.length;
-
-                // Sort by polar angle around the loop centre
-                allVerts.sort((a, b) =>
-                  Math.atan2(a.z - cz, a.x - cx) - Math.atan2(b.z - cz, b.x - cx)
+                let cx = 0,
+                  cz = 0;
+                for (const v of allVerts) {
+                  cx += v.x;
+                  cz += v.z;
+                }
+                cx /= allVerts.length;
+                cz /= allVerts.length;
+                allVerts.sort(
+                  (a, b) =>
+                    Math.atan2(a.z - cz, a.x - cx) -
+                    Math.atan2(b.z - cz, b.x - cx)
                 );
-
-                // Chunk-average the angularly-ordered verts → 200 centerline points
                 const chunkCount = 200;
-                const vpc = Math.max(1, Math.floor(allVerts.length / chunkCount));
+                const vpc = Math.max(
+                  1,
+                  Math.floor(allVerts.length / chunkCount)
+                );
                 for (let i = 0; i < chunkCount; i++) {
-                  const s = i * vpc;
-                  const e = Math.min(s + vpc, allVerts.length);
+                  const s = i * vpc,
+                    e = Math.min(s + vpc, allVerts.length);
                   if (s >= allVerts.length) break;
                   const avgPos = new THREE.Vector3();
                   for (let j = s; j < e; j++) avgPos.add(allVerts[j]!);
@@ -1047,7 +1058,6 @@ onMounted(async () => {
                   pathPoints.push(avgPos);
                 }
               } else {
-                // Small mesh (e.g. a single sleeper): use world-space centre
                 const worldPos = new THREE.Vector3();
                 node.getWorldPosition(worldPos);
                 pathPoints.push(worldPos);
@@ -1056,21 +1066,17 @@ onMounted(async () => {
           }
         });
       }
-
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
-      if (child.name && child.name.includes("areas")) _areasMesh = child;
     });
 
     if (pathPoints.length > 1) {
-      // Sort points by proximity to ensure a smooth continuous curve
       for (let i = 0; i < pathPoints.length - 1; i++) {
         let nearestIdx = i + 1;
         const currentPoint = pathPoints[i];
         if (!currentPoint) continue;
-        
         let minDist = currentPoint.distanceTo(pathPoints[nearestIdx]!);
         for (let j = i + 2; j < pathPoints.length; j++) {
           const nextPoint = pathPoints[j];
@@ -1081,37 +1087,25 @@ onMounted(async () => {
             nearestIdx = j;
           }
         }
-        
-        // Swap
         const temp = pathPoints[i + 1]!;
         pathPoints[i + 1] = pathPoints[nearestIdx]!;
         pathPoints[nearestIdx] = temp;
       }
-
       trainCurve = new THREE.CatmullRomCurve3(pathPoints);
       trainCurveLength = trainCurve.getLength();
-      console.log(
-        `Train path initialized with ${pathPoints.length} points, length:`,
-        trainCurveLength
-      );
     }
 
-    // locomotive.scale.setScalar(3 / Math.max(size.x, size.y, size.z));
     placeLocomotiveOnTrack();
-    
-    // Initialize wheel meshes for linkage animation
     trainPhysics.collectWheelMeshes(locomotive);
 
     let headlightMesh: any = null;
     let chimneySteamPipeMesh: any = null;
     locomotive.traverse((child) => {
       if (child.name) {
-        // Robust name matching with includes to handle potential prefixes or hierarchy changes
         if (child.name.includes("Forward-light")) headlightMesh = child;
         if (child.name.includes("chimney")) chimneySteamPipeMesh = child;
         if (child.name.includes("knot")) {
           knotMesh = child;
-          // TODO: hide it for now, nla is much better!!
           knotMesh.visible = false;
           knotInitialPosition.copy(child.position);
         }
@@ -1120,25 +1114,28 @@ onMounted(async () => {
 
     if (headlightMesh && headlightMesh instanceof THREE.Mesh) {
       const mat = headlightMesh.material as THREE.MeshStandardMaterial;
-      if (mat.emissive) { mat.emissiveIntensity = 1.0; mat.envMapIntensity = 0.8; }
+      if (mat.emissive) {
+        mat.emissiveIntensity = 1.0;
+        mat.envMapIntensity = 0.8;
+      }
       const beam = new THREE.SpotLight(0xffeedd, 80, 8, Math.PI / 8, 0.1, 1.5);
       beam.position.set(0, 0, 0);
-      beam.target.position.set(Math.sin(-Math.PI / 2) * 1.5, -0.5, Math.cos(-Math.PI / 2) * 1.5);
+      beam.target.position.set(
+        Math.sin(-Math.PI / 2) * 1.5,
+        -0.5,
+        Math.cos(-Math.PI / 2) * 1.5
+      );
       beam.castShadow = true;
-      // Headlight shadow map optimization
       beam.shadow.mapSize.set(1024, 1024);
       beam.shadow.bias = -0.0001;
       headlightMesh.add(beam);
       headlightMesh.add(beam.target);
     }
 
-    // Create smoke particle system at chimney position
-    if (chimneySteamPipeMesh) {
+    if (chimneySteamPipeMesh)
       chimneySteam.init(chimneySteamPipeMesh, sizes.resolution);
-    }
 
     terrain = new Terrain(scene);
-    await terrain.load("/terrain/terrain.glb", "/terrain/terrain.png", renderer, manager);
 
     // // Initialize Needle Engine Context for the Inspector Extension to detect the scene
     // const { Context } = await import("@needle-tools/engine");
@@ -1150,13 +1147,17 @@ onMounted(async () => {
     // });
     // // @ts-ignore
     // needleContext.start();
+    await terrain.load(
+      "/terrain/terrain.glb",
+      "/terrain/terrain.png",
+      renderer,
+      manager
+    );
+
+    if (!isMounted) return;
 
     if (terrain.splatTexture) {
-      interactionInstance = useInteraction({
-        size: terrain.size,
-        renderer,
-      });
-
+      interactionInstance = useInteraction({ size: terrain.size, renderer });
       waterInstance = useWater(scene, {
         splatTexture: terrain.splatTexture,
         terrainSize: terrain.size,
@@ -1185,31 +1186,24 @@ onMounted(async () => {
 
     // Pass loaded terrain to camera instance for altitude constraints
     if (cameraInstance) cameraInstance.setTerrain(terrain);
-
-    // Auto-initialise physics – always active, no manual toggle needed
     await initPhysicsMode();
 
-    if (terrain && terrain.collider) {
-      const { COLLISION_GROUPS } = trainPhysics;
-      terrain.collider.setCollisionGroups(
-        (COLLISION_GROUPS.TERRAIN << 16) | COLLISION_GROUPS.TRAIN | COLLISION_GROUPS.BRICK
-      );
-    }
-
-  } catch (error) { console.error("Error loading locomotive model:", error); }
+    if (!isMounted) return;
+  } catch (error) {
+    console.error("Error loading locomotive model:", error);
+  }
 
   syncCameraToTrain();
-
-  // Terrain position test!
-  // console.log(terrain.mesh.getWorldPosition(new THREE.Vector3()));
-
-  resizeObserver = new ResizeObserver(handleResize);
-  resizeObserver.observe(container);
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(containerRef.value);
+  }
   window.addEventListener("resize", handleResize);
   animate(0);
 });
 
 onUnmounted(() => {
+  isMounted = false;
   cancelAnimationFrame(animationId);
   window.removeEventListener("keydown", handleKeydown);
   window.removeEventListener("keyup", handleKeyup);
@@ -1224,22 +1218,30 @@ onUnmounted(() => {
   interactionInstance?.dispose();
   chimneySteam.dispose();
   renderer?.dispose();
-  // Clear bricks BEFORE freeing the physics world to avoid dangling handles
-  if (physicsBlocksGroup && trainPhysics.physicsWorld) {
+  if (physicsBlocksGroup && trainPhysics.physicsWorld)
     trainBricks.clearAllBlocks(physicsBlocksGroup, trainPhysics.physicsWorld);
-  }
   trainPhysics.cleanup();
+  dracoLoader?.dispose();
   window.removeEventListener("resize", handleResize);
 });
 </script>
 
 <style lang="scss" scoped>
 div {
-  width: 100%; height: 80dvh; position: relative; transition: all 0.3s ease;
-  &.is-fullscreen { position: fixed; top: 0; left: 0; width: 100dvw; height: 100dvh; z-index: 9999; background: #228b22; }
-  // @include mobile { overflow-y: scroll; padding-bottom: 10dvh; }
+  width: 100%;
+  height: 80dvh;
+  position: relative;
+  transition: all 0.3s ease;
+  &.is-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100dvw;
+    height: 100dvh;
+    z-index: 9999;
+    background: #228b22;
+  }
 }
-
 canvas {
   display: block;
   width: 100%;
@@ -1250,7 +1252,6 @@ canvas {
     position: fixed;
   }
 }
-
 .fullscreen-btn {
   position: absolute;
   bottom: 16px;
@@ -1269,21 +1270,16 @@ canvas {
   cursor: pointer;
   transition: background 0.2s ease;
   backdrop-filter: blur(4px);
-
   @include mobile {
     bottom: 10px;
-    // should be hidden after 5 seconds on focused
   }
-
   &:hover {
     background: rgba(0, 0, 0, 0.8);
   }
-
   &:active {
     background: rgba(0, 0, 0, 0.9);
   }
 }
-
 .controls-container {
   position: absolute;
   bottom: 16px;
@@ -1295,7 +1291,6 @@ canvas {
   justify-content: flex-start;
   align-items: flex-end;
   height: 50px;
-
   .speed-display {
     text-align: center;
     background: rgba(0, 0, 0, 0.6);
@@ -1307,7 +1302,6 @@ canvas {
     max-width: 45px;
     line-height: 25px;
   }
-
   @include mobile {
     left: 8px;
     bottom: 10px;
@@ -1315,7 +1309,6 @@ canvas {
     gap: 4px;
   }
 }
-
 .control-btn {
   display: flex;
   align-items: center;
@@ -1331,57 +1324,47 @@ canvas {
   font-size: 14px;
   font-weight: 500;
   pointer-events: auto;
-
   &:hover:not(:disabled) {
     background: rgba(0, 0, 0, 0.8);
   }
-
   &:active:not(:disabled) {
     background: rgba(0, 0, 0, 0.9);
   }
-
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
-
   &.active {
     background: rgba(0, 128, 255, 0.6);
-
     &:hover:not(:disabled) {
       background: rgba(0, 128, 255, 0.8);
     }
   }
-
   &.primary {
     background: rgba(0, 200, 83, 0.7);
-
     &:hover:not(:disabled) {
       background: rgba(0, 200, 83, 0.9);
     }
   }
-
   &.warning {
     background: rgba(255, 152, 0, 0.7);
-    &:hover:not(:disabled) { background: rgba(255, 152, 0, 0.9); }
+    &:hover:not(:disabled) {
+      background: rgba(255, 152, 0, 0.9);
+    }
   }
-
   .btn-text {
     @include mobile {
       display: none;
     }
   }
 }
-
 body.fullscreen-active {
   overflow: hidden !important;
-
   ::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     background: transparent !important;
   }
-
   scrollbar-width: none;
   -ms-overflow-style: none;
 }

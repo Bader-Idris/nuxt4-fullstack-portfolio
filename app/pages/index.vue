@@ -246,7 +246,7 @@ useSeoMeta({
   description: t('home.description'),
   ogDescription: t('home.description'),
   ogUrl: useRuntimeConfig().public.originUrl,
-  ogSiteName: 'Bader Idris Portfolio',
+  ogSiteName: 'Bader Idris - Fullstack Developer Portfolio',
   ogImage: optimizedThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,

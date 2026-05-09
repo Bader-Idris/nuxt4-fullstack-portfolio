@@ -1,0 +1,50 @@
+# Bader Idris Portfolio
+
+Expert Fullstack Engineering with a focus on immersive 3D web experiences, cross-platform architecture, and robust production DevOps.
+
+## Tech Stack
+
+- **Framework**: Nuxt 4 (SSR enabled)
+- **Frontend**: Vue 3, GSAP (Motions), Sass (Styling)
+- **3D Engine**: Three.js (WebGL)
+- **Physics**: Rapier (via @dimforge/rapier3d-compat)
+- **Cross-Platform**: Capacitor (Mobile), Electron (Desktop)
+- **Database/Backend**: Prisma, Node.js, Socket.io
+- **DevOps**: Docker, Nginx, Fail2Ban security jails
+- **SEO**: @nuxtjs/seo (Schema.org, Robots, Sitemaps)
+
+## Architecture Conventions
+
+### Resource Loading
+- Decentralized loading within components and composables (e.g., `Locomotive.vue`, `useTerrain.ts`) using standard Three.js loaders.
+- Supports Draco mesh compression with local decoders.
+- Implements non-blocking promise handling (`Promise.all`) to ensure scene interactivity even during partial load failures.
+- Uses First-Party proxying for third-party scripts via @nuxt/scripts.
+
+### Scene Composition
+- 3D components like `Locomotive.vue` use dynamic composition to remain interactive even if individual assets fail to load.
+- Terrain is managed by `useTerrain.ts`, utilizing splat maps with `NoColorSpace` for data integrity.
+
+### Asset Pipeline
+- Automated asset optimization (textures to .webp, mesh compression) integrated into the development and build process.
+- Native Nitro compression (Gzip/Brotli) for all public assets via `nuxt.config.ts`.
+
+## Key Directories
+
+- `/app`: Nuxt 4 source directory (SRC dir pattern).
+- `/app/components/three`: Immersive 3D UI and scene components.
+- `/app/composables/threeD`: Core 3D business logic and service layers.
+- `/server`: Nitro server-side logic, sockets, and Prisma models.
+- `/public/assets/three/draco`: Local Draco decoders (gltf variant).
+
+## Development Workflows
+
+- `bun run dev`: Standard development mode.
+- `bun run build`: Production build (Node/Nitro).
+- `bun run typecheck`: Verify structural integrity.
+
+## SEO & Discoverability
+
+- Fully optimized via `@nuxtjs/seo`.
+- Automated Schema.org injection for Identity, WebSite, and Technical Articles.
+- Multilingual support via `@nuxtjs/i18n`.

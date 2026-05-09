@@ -15,15 +15,26 @@ export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
   compatibilityDate: "2026-04-28",
-  devtools: { enabled: true },
-  srcDir: path.resolve(__dirname, "./app"),
-  alias: {
-    "@": path.resolve(__dirname, "./app"),
-    "@server": path.resolve(__dirname, "./server"),
+  devtools: {
+    enabled: true,
+
+    timeline: {
+      enabled: true,
+    },
   },
-  serverDir: path.resolve(__dirname, "./server"),
+  srcDir: path.join(__dirname, "./app"),
+  alias: {
+    "@": path.join(__dirname, "./app"),
+    // "~": path.join(__dirname, "./app"),
+    "@server": path.join(__dirname, "./server"),
+  },
+  serverDir: path.join(__dirname, "./server"),
   future: {
     compatibilityVersion: 5,
+  },
+  experimental: {
+    normalizeComponentNames: true,
+    // appManifest: false,
   },
   nitro: {
     // // Fix for Windows path resolution in prerenderer
@@ -65,11 +76,11 @@ export default defineNuxtConfig({
     },
     routeRules: {
       // this is critical for production version of electron, otherwise you'll lose index.html file
-      ...(process.env.IS_ELECTRON === "true") && {
+      ...((process.env.IS_ELECTRON === "true") && {
         "/": {
           prerender: true,
         },
-      },
+      }),
       // Static assets and public files
       "/_nuxt/**": {
         cache: {
@@ -113,10 +124,55 @@ export default defineNuxtConfig({
       websocket: true,
       // asyncContext: true,
     },
+    externals: {
+      // TODO: for code inside /server, but let's check if this could fix some bugs!
+      inline: [],
+      external: [
+        'sharp',
+        'ttf2woff2',
+      ]
+    }
   },
 
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
   vite: {
+    optimizeDeps: {
+      include: [
+        '@tiptap/extension-code-block-lowlight',
+        'lowlight',
+        '@capacitor/core',
+        '@capacitor/app',
+        '@capacitor/status-bar',
+        '@capacitor/app-launcher',
+        '@capacitor/splash-screen',
+        '@capacitor/toast',
+        '@capacitor/network',
+        '@capacitor/push-notifications',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@capacitor/keyboard',
+        'capacitor-plugin-safe-area',
+        '@capacitor/device',
+        'vue3-toastify',
+        '@capacitor/browser',
+        'howler', // CJS
+        'socket.io-client',
+        '@rive-app/canvas', // CJS
+        'gsap/all',
+        '@capacitor/haptics',
+        '@capacitor/local-notifications',
+        'canvas-confetti',
+        'sharp', // CJS
+        '@unhead/schema-org/vue',
+        'three/addons/loaders/GLTFLoader.js',
+        'three/examples/jsm/loaders/DRACOLoader.js',
+        'three/examples/jsm/loaders/GLTFLoader.js',
+        'gsap',
+        'three',
+        'three/examples/jsm/controls/OrbitControls.js',
+      ],
+      exclude: ['@dimforge/rapier3d-compat']
+    },
     plugins: [
             // legacy({
       //   targets: ['defaults', 'not IE 11'],
@@ -128,8 +184,8 @@ export default defineNuxtConfig({
           '**/*.glsl',
           '**/*.vert',
           '**/*.frag',
-          '**/*.vs',
-          '**/*.fs',
+          // '**/*.vs',
+          // '**/*.fs',
         ],
         exclude: [],
         warnDuplicatedImports: true,
@@ -139,7 +195,7 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@use "~/assets/scss/index.scss" as *;`,
+          additionalData: `@use "${fileURLToPath(new URL('./app/assets/scss/index.scss', import.meta.url))}" as *;`,
           silenceDeprecations: ["legacy-js-api"],
         },
       },
@@ -240,7 +296,7 @@ export default defineNuxtConfig({
             resolve: {
               alias: {
                 '~/': path.join(__dirname, 'app/'),
-                "@/": path.resolve(__dirname, "app/"),
+                "@/": path.join(__dirname, "app/"),
                 '@server/': path.join(__dirname, 'server/'),
               },
             },
@@ -476,50 +532,7 @@ export default defineNuxtConfig({
     head: {
       charset: "utf-8",
       viewport:
-        "viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no",
-      meta: [
-        { name: "apple-mobile-web-app-capable", content: "yes" },
-        { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-        { name: "mobile-web-app-capable", content: "yes" },
-      ],
-      link: [
-        {
-          rel: "icon",
-          type: "image/x-icon",
-          sizes: "48x48",
-          href: "/favicon.ico",
-        },
-        {
-          rel: "icon",
-          type: "image/png",
-          sizes: "16x16",
-          href: "/favicon-16x16.png",
-        },
-        {
-          rel: "icon",
-          type: "image/png",
-          sizes: "32x32",
-          href: "/favicon-32x32.png",
-        },
-        {
-          rel: "apple-touch-icon",
-          type: "image/png",
-          // sizes:
-          href: "/apple-touch-icon.png",
-        },
-        {
-          rel: "icon",
-          type: "image/webp",
-          sizes: "192x192",
-          href: "/icon-192.webp",
-        },
-        {
-          rel: "icon",
-          type: "image/webp",
-          sizes: "128x128",
-          href: "/icon-128.webp",
-        },
-      ],
+        "viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=3.0, user-scalable=yes",
     },
   },
   ogImage: {
@@ -529,30 +542,33 @@ export default defineNuxtConfig({
   // ...(process.env.IS_ELECTRON === "false") && {
   sitemap: {
     enabled: process.env.IS_ELECTRON !== "true",
+    // discoverImages: true,
   },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
     url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
     name: "Bader Idris", // ! Causes stupid duplicate head.title
+    description: "Full stack developer specializing in Vue, Nuxt, Node, and DevOps.",
     defaultLocale: "en",
     indexable: process.env.IS_ELECTRON !== "true"
   },
-  ...(process.env.IS_ELECTRON === "false") && {
+  ...((process.env.IS_ELECTRON === "false") && {
     schemaOrg: {
-      // or defineOrganization, TODO: check the docs: https://nuxtseo.com/docs/schema-org/guides/setup-identity#organization
       identity: definePerson({
         name: "Bader Idris",
         image: "/imgs/meTwentyFour.jpg",
-        description: "Full stack developer",
-        url: "baderidris.com",
+        description: "Full stack developer specializing in Vue, Nuxt, Node, and DevOps.",
+        url: "https://baderidris.com",
         sameAs: [
-          "https://www.facebook.com/Bader.Idris.developer",
-          "https://github.com/bader-idris",
+            "https://www.facebook.com/Bader.Idris.developer",
+            "https://github.com/bader-idris",
+            "https://linkedin.com/in/bader-idrees",
         ],
+        jobTitle: "Full Stack Developer",
       }),
     },
-  },
+  }),
   robots: {
     disallow: ["/contact/admin"],
     sitemap: [
@@ -594,18 +610,6 @@ export default defineNuxtConfig({
         // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
       },
       // }
-      scripts: {
-        googleTagManager: {
-          // .env
-          // NUXT_PUBLIC_SCRIPTS_GOOGLE_TAG_MANAGER_ID=<your-id>
-          id: process.env.GOOGLE_TAG_MANAGER_ID,
-        },
-        googleAnalytics: {
-          // .env
-          // NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID=<your-id>
-          id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
-        }
-      }
     },
     mailHost: process.env.MAIL_HOST,
     mailUser: process.env.MAIL_USER,
@@ -626,6 +630,13 @@ export default defineNuxtConfig({
     vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
     contactEmail: process.env.CONTACT_EMAIL,
     redisUrl: process.env.REDIS_URL,
+    fcmServiceAccount: process.env.FCM_SERVICE_ACCOUNT,
+    firebaseRefreshToken: process.env.FIREBASE_REFRESH_TOKEN,
+    firebaseDatabaseUrl: process.env.FIREBASE_DATABASE_URL,
+    apnKey: process.env.APN_KEY,
+    apnKeyId: process.env.APN_KEY_ID,
+    apnTeamId: process.env.APN_TEAM_ID,
+    apnBundleId: process.env.APN_BUNDLE_ID,
   },
   content: { // check out content.config.ts file
     experimental: { nativeSqlite: true },
@@ -653,10 +664,14 @@ export default defineNuxtConfig({
     registry: {
       googleAnalytics: {
         id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+        // have to install nuxtjs/partytown for this option,
+        // but it stops promise crashes due to these 3rd parties
+        partytown: true,
         trigger: 'onNuxtReady'
       },
       googleTagManager: {
         id: process.env.GOOGLE_TAG_MANAGER_ID,
+        partytown: true,
         trigger: 'onNuxtReady'
       }, // more robust with var for docker image building
       // ? check https://scripts.nuxt.com/scripts/tracking/google-tag-manager#loading-globally
@@ -667,4 +682,3 @@ export default defineNuxtConfig({
     },
   },
 });
-

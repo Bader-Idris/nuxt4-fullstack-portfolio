@@ -1,8 +1,7 @@
 import * as THREE from 'three'
 import type RAPIER from '@dimforge/rapier3d-compat'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 
 export class Terrain {
   scene: THREE.Scene
@@ -52,46 +51,39 @@ export class Terrain {
     this.gradientTexture.colorSpace = THREE.SRGBColorSpace
   }
 
+  /**
+   * Loads terrain assets with Draco compression.
+   */
   async load(glbUrl: string, splatUrl: string, renderer?: THREE.WebGLRenderer, manager?: THREE.LoadingManager) {
-    // 1. Texture Loading (with KTX2 support if possible)
-    const textureLoader = new THREE.TextureLoader(manager)
-    this.splatTexture = await textureLoader.loadAsync(splatUrl)
-    this.splatTexture.colorSpace = THREE.NoColorSpace
-    this.splatTexture.wrapS = THREE.RepeatWrapping
-    this.splatTexture.wrapT = THREE.RepeatWrapping
-
-    // 2. GLB Loading (with Draco and KTX2 support)
-    const loader = new GLTFLoader(manager)
-    
     const dracoLoader = new DRACOLoader()
-    dracoLoader.setDecoderPath('/assets/three/draco/gltf/')
-    loader.setDRACOLoader(dracoLoader)
+    dracoLoader.setDecoderPath('/assets/three/draco/')
+    
+    const gltfLoader = new GLTFLoader(manager)
+    gltfLoader.setDRACOLoader(dracoLoader)
 
-    if (renderer) {
-      const ktx2Loader = new KTX2Loader()
-      ktx2Loader.setTranscoderPath('/assets/three/basis/')
-      ktx2Loader.detectSupport(renderer)
-      loader.setKTX2Loader(ktx2Loader)
+    const textureLoader = new THREE.TextureLoader(manager)
+
+    // Parallel load textures and models with robust promise handling
+    const [splatTexture, glbData] = await Promise.all([
+      new Promise<THREE.Texture | null>((resolve) => {
+        textureLoader.load(splatUrl, (texture) => {
+          texture.colorSpace = THREE.NoColorSpace
+          texture.wrapS = THREE.RepeatWrapping
+          texture.wrapT = THREE.RepeatWrapping
+          resolve(texture)
+        }, undefined, () => resolve(null))
+      }),
+      new Promise<any>((resolve) => {
+        gltfLoader.load(glbUrl, (gltf) => resolve(gltf), undefined, () => resolve(null))
+      })
+    ])
+
+    if (splatTexture) {
+      this.splatTexture = splatTexture
     }
 
-    // Use compressed version in production if it exists
-    const isProd = process.env.NODE_ENV === 'production'
-    const targetGlb = isProd ? glbUrl.replace('.glb', '-compressed.glb') : glbUrl
-
-    try {
-      const gltf = await loader.loadAsync(targetGlb)
-      const terrainModel = gltf.scene
-      
-      terrainModel.traverse((child) => {
-        if (child instanceof THREE.Mesh && !this.mesh) {
-          this.mesh = child
-        }
-      })
-    } catch (error) {
-      console.warn(`Failed to load ${targetGlb}, falling back to ${glbUrl}`, error)
-      const gltf = await loader.loadAsync(glbUrl)
-      const terrainModel = gltf.scene
-      terrainModel.traverse((child) => {
+    if (glbData) {
+      glbData.scene.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh && !this.mesh) {
           this.mesh = child
         }
@@ -103,6 +95,8 @@ export class Terrain {
     }
 
     this.setVisual()
+    
+    dracoLoader.dispose()
   }
 
   setVisual() {
@@ -223,15 +217,20 @@ export class Terrain {
     if (!this.world || !this.rapier) return
 
     const positionAttribute = geometry.attributes.position
+    if (!positionAttribute) {
+      console.warn('[Terrain] Geometry has no position attribute')
+      return
+    }
+
     const totalCount = positionAttribute.count
     const rowsCount = Math.sqrt(totalCount)
     const heights = new Float32Array(totalCount)
     const halfExtent = this.size / 2
 
     for (let i = 0; i < totalCount; i++) {
-      const x = positionAttribute.array[i * 3 + 0]
-      const y = positionAttribute.array[i * 3 + 1]
-      const z = positionAttribute.array[i * 3 + 2]
+      const x = positionAttribute.getX(i)
+      const y = positionAttribute.getY(i)
+      const z = positionAttribute.getZ(i)
       
       const indexX = Math.round(((x / (halfExtent * 2)) + 0.5) * (rowsCount - 1))
       const indexZ = Math.round(((z / (halfExtent * 2)) + 0.5) * (rowsCount - 1))
@@ -258,14 +257,15 @@ export class Terrain {
     if (!this.mesh) return 0
     this.raycaster.set(new THREE.Vector3(x, 100, z), this.down)
     const intersects = this.raycaster.intersectObject(this.mesh, true)
-    return intersects.length > 0 ? intersects[0].point.y : 0
+    return intersects[0]?.point?.y ?? 0
   }
 
   getNormalAt(x: number, z: number): THREE.Vector3 | null {
     if (!this.mesh) return null
     this.raycaster.set(new THREE.Vector3(x, 100, z), this.down)
     const intersects = this.raycaster.intersectObject(this.mesh, true)
-    return intersects.length > 0 && intersects[0].face ? intersects[0].face.normal.clone() : null
+    const face = intersects[0]?.face
+    return face ? face.normal.clone() : null
   }
 }
 
