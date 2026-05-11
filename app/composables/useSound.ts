@@ -140,11 +140,15 @@ export function useSound() {
         Howler.ctx.resume().catch(() => {});
       }
 
-      if (soundId !== null) sound.stop(soundId);
-      sound.loop(true); // Ensure the sound loops while held
+      if (soundId !== null) {
+        sound.off("fade", undefined, soundId);
+        sound.stop(soundId);
+        soundId = null;
+      }
 
       const id = sound.play();
       soundId = id;
+      sound.loop(true, id); // Ensure the sound loops while held
 
       // Apply variation logic for organic feel
       sound.rate(1.0 + (Math.random() - 0.5) * rateRange, id);
@@ -161,15 +165,26 @@ export function useSound() {
 
       const id = soundId;
       const currentVol = sound.volume(id) as number;
-      sound.fade(currentVol, 0, 300, id); // Howler handles the smooth fade natively
+
+      if (currentVol <= 0) {
+        sound.off("fade", undefined, id);
+        sound.stop(id);
+        if (soundId === id) soundId = null;
+        return;
+      }
+
+      sound.fade(currentVol, 0, 300, id);
 
       sound.once(
         "fade",
         () => {
-          sound.stop(id);
-          sound.loop(false); // Reset loop for future use
-          soundId = null;
-          sound.volume(baseVolume); // reset for next play
+          // Break the recursion by ensuring this only runs if it's still the active sound
+          // and by clearing the listener before stopping.
+          if (!isHeld && soundId === id) {
+            sound.off("fade", undefined, id);
+            sound.stop(id);
+            soundId = null;
+          }
         },
         id
       );

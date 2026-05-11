@@ -1,7 +1,7 @@
 <template>
   <div class="terms-conditions">
     <h1>Terms and Conditions</h1>
-    <p class="last-updated">Last updated: January 18, 2026</p>
+    <p class="last-updated">Last updated: May 10, 2026</p>
 
     <section>
       <h2>1. Introduction</h2>
@@ -157,10 +157,10 @@
       <p>For questions about these Terms, please contact us:</p>
       <ul>
         <li>Email: <a
-            href="mailto:contact@baderidirs.com">contact@baderidirs.com</a></li>
+            href="mailto:contact@baderidris.com">contact@baderidris.com</a></li>
         <li>Phone: +970595744368</li>
         <li>Contact Page: <a
-            href="https://baderidirs.com/contact">baderidirs.com/contact</a>
+          href="https://baderidris.com/contact">baderidris.com/contact</a>
         </li>
       </ul>
     </section>

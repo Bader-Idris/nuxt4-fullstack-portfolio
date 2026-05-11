@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "Inicio",
+    "title": "Bader Idris - Desarrollador Full-Stack",
     "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
     "greeting": "Hola a todos. Soy",
     "name": "Bader Idris",
@@ -28,11 +28,11 @@
     "contact": "_contacto"
   },
   "about": {
-    "title": "Sobre Mí",
+    "title": "sobre mi carrera",
     "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
     "personal": {
-      "title": "Sobre Mí",
-      "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
+      "title": "Sobre Mí en Detalles",
+      "description": "Explora el portafolio de Bader Idris como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
       "experienceDuration": "{years} años y {months} meses",
       "createdTimeAgo": "creado hace {time}",
       "bio": "Comencé mi viaje en la programación el 15 de junio de 2022, lo que significa que he estado perfeccionando mis habilidades durante {experience}.\n\nDesde entonces, he adquirido una sólida experiencia en:\n✅ **Desarrollo Web**: Dominé HTML5, CSS3 y JavaScript para construir sitios web dinámicos y responsivos. Luego me expandí a **Vue.js (API de Composición y Vue Router 4)**, para crear aplicaciones front-end sofisticadas.\n\n✅ **Desarrollo Backend**: Construí cinco proyectos de backend utilizando **Node.js, Express.js y MongoDB** como parte del currículo de FreeCodeCamp. Este viaje me ayudó a obtener una base sólida en la creación de APIs RESTful y en el despliegue de aplicaciones de pila completa.\n\n✅ **Gestión de Bases de Datos**: Después de aprender **MongoDB**, amplié mis conocimientos con **PostgreSQL (PSQL)**, centrándome en soluciones de datos escalables y seguras.\n\n✅ **DevOps y Despliegue**: Me volví competente en **Docker**, desplegando aplicaciones en contenedores y configurando servidores con **Nginx**. También he adquirido habilidades en flujos de trabajo de **DevOps** para automatizar, optimizar y gestionar despliegues de manera eficiente.\n\n✅ **Desarrollo Multiplataforma**: Aproveché **Capacitor.js** and **Electron** para construir aplicaciones que funcionan sin problemas en la web, móvil (iOS/Android) y de escritorio (Windows/Mac/Linux).\n\nComo desarrollador full-stack versátil, combino mi conocimiento técnico con creatividad para ofrecer soluciones escalables, seguras y eficientes para los desafíos digitales modernos. ¡Colaboremos para dar vida a tus ideas!",
@@ -53,12 +53,12 @@
     }
   },
   "projects": {
-    "title": "Proyectos",
+    "title": "Proyectos que he creado durante mi carrera",
     "description": "Aqui puedes ver mis proyectos como desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive.",
     "caution": "Por favor, selecciona una herramienta de programación\n para ver mis proyectos. Tu elección es crucial para continuar."
   },
   "contact": {
-    "title": "Contacto",
+    "title": "Habla con Bader Idris, mediante multiples enlaces",
     "description": "encontrarse con Bader Idris para colaboraciones o innovaciones tecnologicas. comuniquese a traves de email, llamada telefonica o github para llevar sus ideas a vida con un experto full-stack.",
     "admin": {
       "title": "Administración de emails | Bader Idris",
@@ -92,6 +92,8 @@
       "unexpected": "Error de red inesperado."
     },
     "backToExit": "doble click para salir",
+    "updateAvailable": "¡Una nueva versión está disponible!",
+    "refresh": "Actualizar ahora",
     "thank_you": {
       "emailMsg": "Tu mensaje ha sido aceptado. Te responderemos muy pronto!"
     }

@@ -41,11 +41,11 @@
 import { Howl } from 'howler'
 import { useI18n } from 'vue-i18n'
 import { useIntervalFn, useEventListener, useTimeoutFn } from '@vueuse/core'
-import eatingSound from '~/assets/sounds/swallow.wav'
-import victorySound from '~/assets/sounds/victory.wav'
-import wallHitSound from '~/assets/sounds/wall-hit.wav'
-import snakeHissing from '~/assets/sounds/snake-hissing.wav'
-import ouch from '~/assets/sounds/ouch.wav'
+import eatingSound from '@/assets/sounds/swallow.mp3'
+import victorySound from '@/assets/sounds/victory.mp3'
+import wallHitSound from '@/assets/sounds/wall-hit.mp3'
+import snakeHissing from '@/assets/sounds/snake-hissing.mp3'
+import ouch from '@/assets/sounds/ouch.mp3'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Capacitor } from '@capacitor/core'
@@ -152,7 +152,6 @@ const { pause, resume } = useIntervalFn(() => {
 onMounted(() => {
   if (!isClient) return
 
-  initializeSounds()
   food.value = generateFood()
 
   // Update snake head style
@@ -338,6 +337,7 @@ function triggerStartAnimation(element: any) {
 }
 
 function handleStartClick(event: MouseEvent) {
+  initializeSounds()
   triggerStartAnimation(event.currentTarget as HTMLElement);
 }
 
@@ -452,6 +452,7 @@ function handleInput(code: string) {
   if (!isClient) return
 
   if ((gameOver.value || !gameStarted.value) && code === 'Space') {
+    initializeSounds()
     triggerStartAnimation(board.value)
   } else if (gameStarted.value) {
     switch (code) {// event.key is too specific and bad with i18n, requires you to use these two for one keyCode

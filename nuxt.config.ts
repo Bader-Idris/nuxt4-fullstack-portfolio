@@ -1,3 +1,4 @@
+import { defineNuxtConfig } from "nuxt/config";
 import { definePerson } from "nuxt-schema-org/schema";
 // for electron
 import path, { dirname } from 'path';
@@ -14,7 +15,7 @@ const __dirname = dirname(__filename);
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-04-28",
+  compatibilityDate: "2026-05-10",
   devtools: {
     enabled: true,
 
@@ -22,6 +23,7 @@ export default defineNuxtConfig({
       enabled: true,
     },
   },
+  debug: process.env.IS_DEBUGGING !== "false",
   srcDir: path.join(__dirname, "./app"),
   alias: {
     "@": path.join(__dirname, "./app"),
@@ -85,7 +87,7 @@ export default defineNuxtConfig({
       "/_nuxt/**": {
         cache: {
           maxAge: 86400 * 30, // 30 days
-          swr: true,
+          swr: true, // Investigate this one!
           staleMaxAge: 86400 * 7, // 1 week fallback
         },
       },
@@ -200,6 +202,11 @@ export default defineNuxtConfig({
         },
       },
     },
+    build: {
+      sourcemap: 'hidden' // test if this hides: #14 7.356  WARN  
+      // [plugin nuxt: components - loader]Sourcemap is likely to be incorrect: a plugin(nuxt: components- loader) was used to transform files,
+      // but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help (x25)
+    }
   },
   typescript: {
     tsConfig: {
@@ -220,6 +227,7 @@ export default defineNuxtConfig({
     ...(process.env.IS_ELECTRON === "true" ? ["nuxt-electron"] : []),
     "@nuxtjs/device",
     "@nuxtjs/seo",
+    "nuxt-skew-protection",
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     "@vueuse/nuxt",
@@ -229,10 +237,23 @@ export default defineNuxtConfig({
     "nuxt-tiptap-editor",
     "@nuxt/eslint",
     "@nuxt/scripts",
+    "@nuxt/eslint",
     "v-gsap-nuxt",
     // "@teages/nuxt-legacy", // Removed: using @vitejs/plugin-legacy directly in vite config
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
+  // skewProtection: {
+  //   // Persistent storage for build assets ensures Googlebot and users on old tabs don't hit 404/500s.
+  //   // Using Redis as the backend for cross-deployment persistence in Docker/Cluster environments.
+  //   storage: process.env.REDIS_URL ? {
+  //     driver: 'redis',
+  //     options: {
+  //       url: process.env.REDIS_URL,
+  //     }
+  //   } : {
+  //     driver: 'fs',
+  //   },
+  // },
   ...(process.env.IS_ELECTRON === "true" && {
     router: {
       options: {
@@ -548,7 +569,7 @@ export default defineNuxtConfig({
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
     url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
-    name: "Bader Idris", // ! Causes stupid duplicate head.title
+    name: "Bader Idris Portfolio", // ! Causes stupid duplicate head.title
     description: "Full stack developer specializing in Vue, Nuxt, Node, and DevOps.",
     defaultLocale: "en",
     indexable: process.env.IS_ELECTRON !== "true"

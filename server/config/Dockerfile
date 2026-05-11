@@ -13,8 +13,17 @@ WORKDIR /app
 # This layer is cached as long as package.json doesn't change
 FROM base AS deps
 COPY package*.json bun.lock* ./
+
+ARG CACHEBUST=0
+
 # We force install to ensure all peer dependencies are handled correctly in the alpine environment
 RUN --mount=type=cache,target=/root/.npm npm install --force
+
+# # Clean install + clear cache for maximum reliability
+# RUN --mount=type=cache,target=/root/.npm \
+#     rm -rf node_modules && \
+#     npm ci --force && \
+#     npm cache clean --force
 
 # Stage 3: Build the Nuxt application
 # This layer is cached as long as source code doesn't change
@@ -30,9 +39,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Ensure production environment is set for optimal build and compression
-ARG NODE_ENV=production
+# ARG NODE_ENV=production
 ARG PORT=3000
-ENV NODE_ENV=${NODE_ENV}
+# ENV NODE_ENV=${NODE_ENV}
 ENV PORT=${PORT}
 ENV NUXT_TELEMETRY_DISABLED=1
 
@@ -51,12 +60,13 @@ RUN apk add --no-cache \
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
 
+RUN chown -R node:node /app/.output
 # Switch to non-root user for security
 USER node
 
 ARG PORT=3000
 ENV PORT=${PORT}
-ENV NODE_ENV=production
+# ENV NODE_ENV=production
 ENV NUXT_TELEMETRY_DISABLED=1
 
 EXPOSE ${PORT}

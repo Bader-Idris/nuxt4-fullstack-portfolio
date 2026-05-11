@@ -79,13 +79,48 @@ const { t } = useI18n()
 definePageMeta({
   middleware: [
     (to) => {
+      // Skip during initial client hydration to avoid
+      // "Error preloading payload" and routing paralysis
+      const nuxtApp = useNuxtApp()
+      if (
+        import.meta.client &&
+        nuxtApp.isHydrating &&
+        nuxtApp.payload.serverRendered
+      ) {
+        return
+      }
+
       const localePath = useLocalePath()
-      if (to.path === localePath('/about') || to.path === '/about') {
+      // if (to.path === localePath('/about') || to.path === '/about') {
+      //   return navigateTo(localePath('/about/personal'), { replace: true })
+      // }
+
+      if (to.path.replace(/\/$/, '') === localePath('/about').replace(/\/$/, '')) {
         return navigateTo(localePath('/about/personal'), { replace: true })
       }
     },
   ],
 })
+// we can put it as a middleware file: app/middleware/about-redirect.ts
+/* 
+// app/middleware/about-redirect.ts
+export default defineNuxtRouteMiddleware((to) => {
+  const localePath = useLocalePath()
+  const aboutPath = localePath('/about')
+  const aboutPersonalPath = localePath('/about/personal')
+
+  if (to.path === aboutPath || to.path === '/about') {
+    return navigateTo(aboutPersonalPath, { replace: true })
+  }
+})
+*/
+// then use it as:
+/*
+definePageMeta({
+  middleware: ['about-redirect'],
+})
+*/
+
 
 const route = useRoute()
 const router = useRouter()
@@ -107,33 +142,17 @@ const checkScreenSize = () => {
 const contInfo = ['contact@baderidris.com', '+970595744368']
 const showIcon = ref([false, false])
 
-const openMailTo = (index: number): void => {
-  if (import.meta.client) {
-    const email = contInfo[index]
-    if (email) {
-      window.location.href = `mailto:${email}`
-    }
-    else {
-      console.error('Email not found at the specified index')
-    }
-  }
+const openMailTo = (index: number) => {
+  if (import.meta.client) window.location.href = `mailto:${contInfo[index]}`
 }
 
-const copyToClipboard = async (index: number): Promise<void> => {
-  if (import.meta.client) {
-    try {
-      await navigator.clipboard.writeText(contInfo[index])
-
-      // Show icon for 1 second
-      showIcon.value = showIcon.value.map((value, i) => (i === index ? true : value))
-      setTimeout(() => {
-        showIcon.value = showIcon.value.map((value, i) => (i === index ? false : value))
-      }, 1000)
-    }
-    catch (error) {
-      console.error('Failed to copy to clipboard: ', error)
-    }
-  }
+const copyToClipboard = async (index: number) => {
+  if (!import.meta.client) return
+  try {
+    await navigator.clipboard.writeText(contInfo[index])
+    showIcon.value[index] = true
+    setTimeout(() => { showIcon.value[index] = false }, 1000)
+  } catch (e) { console.error(e) }
 }
 
 const icons = useState('aboutIcons', () => [
@@ -192,21 +211,20 @@ if (import.meta.server) {
   }
 }
 
-const toggleHobbies = () => {
-  isHobbiesHidden.value = !isHobbiesHidden.value
+const toggleHobbies = () => { isHobbiesHidden.value = !isHobbiesHidden.value }
+const toggleContact = () => { isContactHidden.value = !isContactHidden.value }
+const setActiveHobby = (index: number) => { activeHobbyIndex.value = index }
+
+// FIX: navigate only, don't set state (watcher is single source of truth)
+const setActiveIcon = (index: number) => {
+  navigateTo(localePath(`/about/${icons.value[index].path}`))
 }
 
-const setActiveIcon = async (index: number) => {
-  activeIconIndex.value = index
-  await navigateTo(localePath(`/about/${icons.value[index].path}`))
-}
-
-const setActiveHobby = (index: number) => {
-  activeHobbyIndex.value = index
-}
-
-const toggleContact = () => {
-  isContactHidden.value = !isContactHidden.value
+// FIX: client-only, exact segment match instead of includes()
+const syncActiveIcon = (path: string) => {
+  const segment = path.split('/').filter(Boolean).at(-1) ?? ''
+  const index = icons.value.findIndex(icon => icon.path === segment)
+  if (index !== -1) activeIconIndex.value = index
 }
 
 const displayContactInfo = computed(() => {
@@ -215,23 +233,14 @@ const displayContactInfo = computed(() => {
     : [contInfo[0].slice(0, -10) + ' ...', contInfo[1]]
 })
 
-// Update activeIconIndex when route changes
-watch(() => route.path, (newPath) => {
-  const index = icons.value.findIndex(icon => newPath.includes(icon.path))
-  if (index !== -1) {
-    activeIconIndex.value = index
-  }
-}, { immediate: true })
-
 onMounted(() => {
+  syncActiveIcon(route.path)
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
 })
 
 onUnmounted(() => {
-  if (import.meta.client) {
-    window.removeEventListener('resize', checkScreenSize)
-  }
+  window.removeEventListener('resize', checkScreenSize)
 })
 </script>
 

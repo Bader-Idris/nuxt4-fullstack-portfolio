@@ -225,8 +225,8 @@ onMounted(async () => {
 // const thumbnailAr = img('/thumbnail-ar.png', nuxtImgOptions)
 
 const thumbnailEn = `${useRuntimeConfig().public.originUrl}/thumbnail.webp`
-const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.png`
-const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.png`
+const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.webp`
+const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.webp`
 
 // Create a computed property to determine which thumbnail to use
 const optimizedThumbnail = computed(() => {

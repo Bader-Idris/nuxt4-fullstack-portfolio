@@ -9,10 +9,10 @@
         v-for="localeItem in allLocales"
         :key="localeItem.code"
         :value="localeItem.code"
-        :disabled="localeItem.code === locale.value"
+        :disabled="localeItem.code === (locale as any).value"
       >
-        {{ getFlagEmoji(localeItem.iso) }} {{ localeItem.name }}
-        {{ localeItem.code === locale.value ? ' (current)' : '' }}
+        {{ getFlagEmoji(localeItem.iso as string) }} {{ localeItem.name }}
+        {{ localeItem.code === (locale as any).value ? ' (current)' : '' }}
       </option>
     </select>
   </div>
@@ -23,12 +23,14 @@ const { locale, locales } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 
 // Get region code from ISO (e.g., 'en-US' -> 'US')
-const getRegionCode = (iso: string) => {
+const getRegionCode = (iso?: string) => {
+  if (!iso) return ''
   const parts = iso.split('-')
   return parts.length > 1 ? parts[1] : parts[0] // Fallback to the full code if no region is found
 }
 
-const getFlagEmoji = (iso: string) => {
+// Generate flag emoji from ISO code, with safety check for undefined/empty strings
+const getFlagEmoji = (iso?: string) => {
   const regionCode = getRegionCode(iso)
   if (!regionCode) return '' // Return empty string if no region code is found
   return String.fromCodePoint(...[...regionCode.toUpperCase()].map(c => 0x1F1A5 + c.charCodeAt(0)))
@@ -40,35 +42,30 @@ const allLocales = computed(() => {
 })
 
 // Initialize with current locale
-const selectedLocale = ref(locale.value)
+const selectedLocale = ref((locale as any).value)
 
-// Reactive HTML lang attribute
-const htmlAttrs = ref({
-  lang: locale.value,
+// Use useLocaleHead for robust SEO attributes (hreflang, link tags)
+// We keep this to avoid hydration/prerender issues with link tags
+const i18nHead = useLocaleHead({
+  dir: false, // Prevents global RTL, matching our manual CSS approach
+  seo: true
 })
 
-// Reactive link attributes for SEO (hreflang)
-const linkAttrs = computed(() => {
-  return locales.value.map(loc => ({
-    rel: 'alternate',
-    hrefLang: loc.iso,
-    href: switchLocalePath(loc.code)
-  }))
-})
-
-// Use useHead with reactive objects
+// Use useHead with manual htmlAttrs to match previous behavior and avoid global RTL side effects
 useHead({
-  htmlAttrs: htmlAttrs.value,
-  link: linkAttrs
+  htmlAttrs: {
+    lang: computed(() => (locale as any).value)
+  },
+  link: i18nHead.value.link,
+  meta: i18nHead.value.meta
 })
 
-// Watch for locale changes and update the HTML lang attribute and selected locale
+// Watch for locale changes and update the selected locale
 watch(locale, (newLocale) => {
   if (newLocale) {
-    htmlAttrs.value.lang = newLocale
-    selectedLocale.value = newLocale
+    selectedLocale.value = (newLocale as any).value || newLocale
   }
-})
+}, { immediate: true })
 
 // Handle locale change by navigating to the new locale path
 const handleLocaleChange = () => {

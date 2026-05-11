@@ -58,7 +58,7 @@
   {
     "title": "Arabic characters game",
     "url": "http://letters-game.online",
-    "img": "/imgs/letters-game-image.png",
+    "img": "/imgs/letters-game-image.webp",
     "imgAlt": "Arabic characters game img",
     "desc": "A competitive game based on Arabic letters using websocket, an advanced deep project built in two months of development. Developed over 250 hours, utilizing Docker, Docker Compose, Nginx, Redis, MongoDB, Nuxt 3, and Nitro 2, with deep experience in Socket.io and Websockets. The project includes SCSS, HTML5, CSS3, and TLS layer management, along with Pinia for state management, totaling around 10,000 lines of code primarily focused on Socket.io, Pinia, and the backend with Nitro 2 and MongoDB.",
     "tags": ["Docker", "Typescript", "Nginx", "Nuxt", "Sass"]

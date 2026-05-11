@@ -13,7 +13,7 @@ const runtimeConfig = useRuntimeConfig();
 const trainTitle = "3D Train Locomotive Project";
 const trainDescription =
   "Interactive 3D train locomotive scene built with Nuxt 4, Three.js, custom GLSL smoke particles, and a procedural sky shader.";
-const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-05-5.png`;
+const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-05-5.webp`;
 
 useSeoMeta({
   title: trainTitle,

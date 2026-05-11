@@ -33,7 +33,7 @@
           }}</span>
         </button>
 
-         <button
+         <!-- <button
         v-if="currentGear"
         class="control-btn primary"
         :aria-label="`Change train gear. Current gear ${currentGear.label}`"
@@ -44,7 +44,7 @@
         <span class="btn-text"
           >GEAR: {{ currentGear.label.toUpperCase() }}</span
         >
-      </button>   
+      </button>    -->
 
         <div v-if="currentGear" class="speed-display">
           <div class="speed-value">{{ wheelSpeed.toFixed(1) }}</div>
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-         <button
+         <!-- <button
         class="control-btn warning"
         :class="{ active: terrainOnlyMode }"
         aria-label="Toggle terrain-only collision"
@@ -69,7 +69,7 @@
         <span class="btn-text">{{
           terrainOnlyMode ? "TERRAIN ONLY" : "ALL COLLISIONS"
         }}</span>
-      </button>   
+      </button>    -->
       </div>
       <button
         class="fullscreen-btn"

@@ -8,6 +8,12 @@
     />
 
     <template v-if="showMainContent || !config.public.isCapacitor">
+      <!-- <SkewNotification v-slot="{ isCurrentChunksOutdated, reload }">
+        <div v-if="isCurrentChunksOutdated" class="update-notification">
+          <span>{{ t('messages.updateAvailable', 'A new version is available!') }}</span>
+          <button @click="reload">{{ t('messages.refresh', 'Refresh') }}</button>
+        </div>
+      </SkewNotification> -->
       <NuxtLayout>
         <NuxtPage v-slot="{ Component }">
           <Transition
@@ -395,4 +401,49 @@ body {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* .update-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background-color: $primary2;
+  color: $secondary1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 1px solid $accent1;
+
+  span {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  button {
+    background-color: $accent1;
+    color: $primary1;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: color-mix(in srgb, $accent1, white 10%);
+    }
+  }
+
+  @include mobile {
+    width: calc(100% - 40px);
+    top: 10px;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+  }
+} */
 </style>
