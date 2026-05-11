@@ -84,13 +84,13 @@ export default defineNuxtConfig({
         },
       }),
       // Static assets and public files
-      "/_nuxt/**": {
-        cache: {
-          maxAge: 86400 * 30, // 30 days
-          swr: true, // Investigate this one!
-          staleMaxAge: 86400 * 7, // 1 week fallback
-        },
-      },
+      // "/_nuxt/**": {
+      //   cache: {
+      //     maxAge: 86400 * 30, // 30 days
+      //     swr: true, // Investigate this one!
+      //     staleMaxAge: 86400 * 7, // 1 week fallback
+      //   },
+      // },
       "/socket.io/**": {
         cache: false,
         prerender: false,
@@ -133,7 +133,14 @@ export default defineNuxtConfig({
         'sharp',
         'ttf2woff2',
       ]
-    }
+    },
+
+    serveStatic: (process.env.NODE_ENV === "production" && process.env.NUXT_SSR !== "false" && process.env.IS_ELECTRON !== "true" && process.env.IS_CAPACITOR !== "true") ? false : true,
+    // publicAssets: {
+    //   baseURL: '_nuxt',
+    //   dir: '.output/public/_nuxt',
+    //   maxAge: 60 * 60 * 24 * 365, // 1 year (immutable hashed files)
+    // },
   },
 
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],

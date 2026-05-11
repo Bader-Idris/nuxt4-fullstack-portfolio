@@ -40,7 +40,7 @@ export default {
       class="internal-link"
       :href="href"
       :class="isExactActive ? '' : inactiveClass"
-      @click.prevent="navigateTo(href, { external: false, redirectCode: 301 })">
+      @click.prevent="navigateTo(href, { external: false, redirectCode: 302 })">
       <slot />
       <!-- TODO: if external false doesn't work, force it with true on prod!!, if it does issue a bug saying the boolean is underfined causing the app to paralize -->
     </a>

@@ -1,6 +1,6 @@
 {
   "name": "nuxt4-fullstack-portfolio",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "private": true,
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",
   "author": "Bader Idris <contact@baderidris.com> (http://baderidris.com/)",
@@ -34,7 +34,7 @@
     "//resolutions is for pnpm / yarn, overrides is for npm and bun": "null"
   },
   "dependencies": {
-    "@capgo/capacitor-social-login": "^8.3.20",
+    "@capgo/capacitor-social-login": "^8.3.22",
     "@dimforge/rapier3d-compat": "^0.19.3",
     "@nuxt/content": "3.13.0",
     "@nuxt/icon": "^2.2.2",
