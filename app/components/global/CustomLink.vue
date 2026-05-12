@@ -31,7 +31,7 @@ export default {
   <!-- Internal link using NuxtLink -->
   <NuxtLink
     v-else
-    v-slot="{ href, isExactActive }"
+    v-slot="{ href, navigate, isExactActive }"
     v-bind="$props"
     :to="localePath(to)"
     custom >
@@ -40,7 +40,7 @@ export default {
       class="internal-link"
       :href="href"
       :class="isExactActive ? '' : inactiveClass"
-      @click.prevent="navigateTo(href, { external: false, redirectCode: 302 })">
+      @click="navigate">
       <slot />
       <!-- TODO: if external false doesn't work, force it with true on prod!!, if it does issue a bug saying the boolean is underfined causing the app to paralize -->
     </a>

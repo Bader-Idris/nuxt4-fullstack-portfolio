@@ -59,6 +59,24 @@ function createWindow() {
     console.log("[Electron Main] Resources base:", resourcesBase);
     console.log("[Electron Main] Unpacked base:", unpackedBase);
 
+    // Dynamically build the list of app assets from the public directory
+    const appAssetPatterns = ['_nuxt/', 'builds/', '__nuxt_content/', 'favicon'];
+    try {
+      const publicDir = process.env.VITE_PUBLIC;
+      if (publicDir && fs.existsSync(publicDir)) {
+        const items = fs.readdirSync(publicDir);
+        items.forEach(item => {
+          try {
+            const isDir = fs.statSync(path.join(publicDir, item)).isDirectory();
+            appAssetPatterns.push(isDir ? `${item}/` : item);
+          } catch (e) { /* ignore */ }
+        });
+      }
+    } catch (e) {
+      console.error("[Electron Main] Failed to read public assets:", e);
+    }
+    const isAppAssetList = [...new Set(appAssetPatterns.map(p => p.toLowerCase()))];
+
     // Set up file protocol interceptor for app assets
     // This intercepts requests for /imgs/, /_nuxt/, etc. and serves them from unpacked directory or ASAR
     session.defaultSession.protocol.interceptFileProtocol('file', (request, callback) => {
@@ -81,11 +99,7 @@ function createWindow() {
       // Normalize for comparison by converting backslashes and lowercase
       const normalizedPath = pathname.replace(/\\/g, '/').toLowerCase();
       
-      // App asset patterns - these should be served from our app resources
-      const isAppAsset = [
-        'imgs/', '_nuxt/', 'fonts/', 'sounds/', 
-        'favicon', 'builds/', '__nuxt_content/'
-      ].some(pattern => {
+      const isAppAsset = isAppAssetList.some(pattern => {
         // Handle both absolute paths (/imgs/) and Windows paths (C:/imgs/)
         const cleanNormalized = normalizedPath.replace(/^[a-z]:\//, '');
         return cleanNormalized.startsWith(pattern) || normalizedPath.startsWith('/' + pattern);
