@@ -1,49 +1,82 @@
-import { ipcMain, shell, dialog, type IpcMainInvokeEvent, type FileFilter } from 'electron'
+import { ipcMain, shell, dialog, type IpcMainInvokeEvent, type FileFilter, BrowserWindow, app } from 'electron'
 import Constants from './utils/Constants'
 
 /**
  * IPC Communications
  */
-export default class IPCs {
-  static initialize(): void {
-    // Get application version
-    ipcMain.handle('msgRequestGetVersion', () => {
-      return Constants.APP_VERSION
-    })
+export function initializeIPCs(): void {
+  // Get application version
+  ipcMain.handle('msgRequestGetVersion', () => {
+    return Constants.APP_VERSION
+  })
 
-    // Handle external link opening
-    ipcMain.handle('msgOpenExternalLink', async (event: IpcMainInvokeEvent, url: string) => {
-      await shell.openExternal(url)
-    })
+  // Get application name
+  ipcMain.handle('msgRequestGetAppName', () => {
+    return Constants.APP_NAME
+  })
 
-    // Handle file opening with dialog
-    ipcMain.handle('msgOpenFile', async (event: IpcMainInvokeEvent, filter: string) => {
-      const filters: FileFilter[] = []
-      if (filter === 'text') {
-        filters.push({ name: 'Text', extensions: ['txt', 'json'] })
-      } else if (filter === 'zip') {
-        filters.push({ name: 'Zip', extensions: ['zip'] })
-      }
-      const dialogResult = await dialog.showOpenDialog({
-        properties: ['openFile'],
-        filters
-      })
-      return dialogResult
-    })
+  // Handle external link opening
+  ipcMain.handle('msgOpenExternalLink', async (_event: IpcMainInvokeEvent, url: string) => {
+    await shell.openExternal(url)
+  })
 
-    // ipcMain.handle('window-control', (event, action) => {
-    //   if (!mainWindow) return
-    //   switch (action) {
-    //     case 'minimize':
-    //       mainWindow.minimize()
-    //       break
-    //     case 'maximize':
-    //       mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize()
-    //       break
-    //     case 'close':
-    //       mainWindow.close()
-    //       break
-    //   }
-    // })
-  }
+  // Handle file opening with dialog
+  ipcMain.handle('msgOpenFile', async (_event: IpcMainInvokeEvent, filter: string) => {
+    const filters: FileFilter[] = []
+    if (filter === 'text') {
+      filters.push({ name: 'Text', extensions: ['txt', 'json'] })
+    } else if (filter === 'zip') {
+      filters.push({ name: 'Zip', extensions: ['zip'] })
+    }
+    
+    const focusedWindow = BrowserWindow.getFocusedWindow()
+    if (!focusedWindow) return null
+
+    const dialogResult = await dialog.showOpenDialog(focusedWindow, {
+      properties: ['openFile'],
+      filters
+    })
+    return dialogResult
+  })
+
+  // Window controls
+  ipcMain.handle('window-control', (event, action) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) return
+
+    switch (action) {
+      case 'minimize':
+        window.minimize()
+        break
+      case 'maximize':
+        if (window.isMaximized()) {
+          window.unmaximize()
+        } else {
+          window.maximize()
+        }
+        break
+      case 'close':
+        window.close()
+        break
+      case 'hide':
+        window.hide()
+        break
+      case 'show':
+        window.show()
+        break
+    }
+  })
+
+  // App controls
+  ipcMain.handle('app-control', (_event, action) => {
+    switch (action) {
+      case 'quit':
+        app.quit()
+        break
+      case 'relaunch':
+        app.relaunch()
+        app.exit()
+        break
+    }
+  })
 }
