@@ -1,3 +1,5 @@
+packages:
+  - "."
 allowBuilds:
   '@firebase/util': true
   '@parcel/watcher': true

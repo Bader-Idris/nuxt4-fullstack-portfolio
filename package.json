@@ -2,6 +2,7 @@
   "name": "nuxt4-fullstack-portfolio",
   "version": "3.3.3",
   "private": true,
+  "packageManager": "pnpm@10.3.0",
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",
   "author": "Bader Idris <contact@baderidris.com> (http://baderidris.com/)",
   "main": "dist-electron/main/index.js",
@@ -177,13 +178,15 @@
     "nitropack": "2.x.x",
     "vue-router": "5.0.7",
     "nuxi": "3.x.x",
-    "vue": "3.5.34"
+    "vue": "3.5.34",
+    "@intlify/shared": "11.4.2"
   },
   "overrides": {
     "nitropack": "2.x.x",
     "vue-router": "5.0.7",
     "nuxi": "3.x.x",
-    "vue": "3.5.34"
+    "vue": "3.5.34",
+    "@intlify/shared": "11.4.2"
   },
   "appId": "com.baderidris.www"
 }
