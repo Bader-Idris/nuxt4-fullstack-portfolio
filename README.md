@@ -33,6 +33,7 @@ A comprehensive full-stack portfolio application built with Nuxt 4, featuring re
 - [Mobile Application](#mobile-application)
 - [Electron Application](#electron-application)
 - [Production Deployment](#production-deployment)
+- [Mail Server](#mail-server)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
 
@@ -371,6 +372,12 @@ crontab -e
 #### Post-Deployment Certificate Setup
 
 After the initial deployment, you will need to force Certbot to renew the certificates to remove the `--staging` flag. It is recommended to create a separate compose file for this purpose and for future renewals.
+
+## Mail Server
+
+The project includes a fully functional mail server setup running at `mail.baderidris.com`. It is built using Docker Mailserver and supports DKIM, SPF, DMARC, and MTA-STS.
+
+For detailed instructions on how to configure and manage the mail server, including DNS records and user management, please refer to the [Mail Server Setup Script](./server/config/mailserver/whatToDoOnMailserver.sh) and the [detailed documentation](./docs/README.md).
 
 ## Security
 

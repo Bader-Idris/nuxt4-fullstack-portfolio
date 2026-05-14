@@ -10,24 +10,38 @@ declare global {
 let prisma: PrismaClient | undefined
 let pool: Pool | undefined
 
-if (process.env.PSQL_URL) {
-  pool = new Pool({
-    connectionString: process.env.PSQL_URL,
-  })
-  const adapter = new PrismaPg(pool)
+if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+  if (process.env.PSQL_URL) {
+    try {
+      pool = new Pool({
+        connectionString: process.env.PSQL_URL,
+      })
+      
+      // Basic connectivity check to catch SSL/Auth errors early
+      pool.on('error', (err) => {
+        console.error('❌ Unexpected error on idle client', err)
+      })
 
-  if (process.env.NODE_ENV === 'development') {
-    if (!global.prisma) {
-      global.prisma = new PrismaClient({ adapter })
+      const adapter = new PrismaPg(pool)
+
+      if (process.env.NODE_ENV === 'development') {
+        if (!global.prisma) {
+          global.prisma = new PrismaClient({ adapter })
+        }
+        prisma = global.prisma
+      } else {
+        prisma = new PrismaClient({ adapter })
+      }
+
+      console.log('✅ Prisma client initialized.')
+    } catch (e) {
+      console.error('❌ Failed to initialize Prisma Client:', e.message)
     }
-    prisma = global.prisma
   } else {
-    prisma = new PrismaClient({ adapter })
+    console.log('⚠️ Skipping Prisma client initialization (no PSQL_URL provided)')
   }
-
-  console.log('✅ Prisma client initialized.')
 } else {
-  console.log('⚠️ Skipping Prisma client initialization (no PSQL_URL provided)')
+  console.log('⚠️ Skipping Prisma connection during build phase')
 }
 
 export default defineNitroPlugin(async (nitroApp) => {

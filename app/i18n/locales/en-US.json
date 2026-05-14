@@ -1,7 +1,7 @@
 {
   "home": {
-    "title": "Home - Full-Stack Developer Portfolio",
-    "description": "Explore Bader Idris's portfolio as a full-stack developer specializing in Vue, Nuxt, and modern web technologies. Crafting responsive, dynamic web experiences.",
+    "title": "Bader Idris - Full Stack Developer | Portfolio",
+    "description": "Portfolio of Bader Idris, a Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Building interactive web experiences.",
     "greeting": "Hi all. I am",
     "name": "Bader Idris",
     "name2": "Bader-Idris",
@@ -28,14 +28,14 @@
     "contact": "_contact-me"
   },
   "about": {
-    "title": "About my career, being a full-stack developer",
-    "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Nest.js, and more. Turning ideas into innovative digital solutions.",
+    "title": "About Bader Idris - Full Stack Developer Career",
+    "description": "Learn about Bader Idris, a Full Stack Developer experienced in Nuxt, Node, DevOps, and GSAP. Discover my journey in building modern web apps.",
     "personal": {
-      "title": "About Me in details",
-      "description": "Meet Bader Idris, a skilled full-stack developer excelling in web and app development with Nuxt.js, Nest.js, and more. Turning ideas into innovative digital solutions.",
+      "title": "Bader Idris - Personal Bio & Experience",
+      "description": "Discover my journey as a Full Stack Developer, from early learning to mastering Nuxt, Node, and DevOps to build scalable digital solutions.",
       "experienceDuration": "{years} years and {months} months",
       "createdTimeAgo": "created {time}",
-      "bio": "I started my programming journey on June 15, 2022, which means I've been honing my skills for {experience}.\n\nSince then, I've gained solid expertise in:\n✅ **Web Development**: Mastered HTML5, CSS3, and JavaScript to build dynamic, responsive websites. I then expanded into **Vue.js (Composition API and Vue Router 4)**, to create sophisticated front-end applications.\n\n✅ **Backend Development**: I built five back-end projects using **Node.js, Express.js, and MongoDB** as part of the FreeCodeCamp curriculum. This journey helped me gain a strong foundation in creating RESTful APIs and deploying full-stack applications.\n\n✅ **Database Management**: After learning **MongoDB**, I furthered my knowledge with **PostgreSQL (PSQL)**, focusing on scalable and secure data solutions.\n\n✅ **DevOps & Deployment**: I became proficient with **Docker**, deploying containerized applications, and configuring servers with **Nginx**. I've also gained skills in **DevOps** workflows to automate, optimize, and manage deployments efficiently.\n\n✅ **Cross-Platform Development**: I leveraged **Capacitor.js** and **Electron** to build applications that work seamlessly across web, mobile (iOS/Android), and desktop (Windows/Mac/Linux).\n\nAs a versatile full-stack developer, I combine my technical knowledge with creativity to deliver scalable, secure, and efficient solutions for modern digital challenges. Let's collaborate to bring your ideas to life!",
+      "bio": "I started my programming journey on June 15, 2022, which means I've been honing my skills for {experience}.\n\nSince then, I've gained solid expertise in:\n✅ **Web Development**: Mastered HTML5, CSS3, and JavaScript to build dynamic, responsive websites. I then expanded into **Vue.js (Composition API and Vue Router 4)**, to create sophisticated front-end applications.\n\n✅ **Backend Development**: I built five back-end projects using **Node.js, Express.js, and MongoDB** as part of the FreeCodeCamp curriculum. This journey helped me gain a strong foundation in creating RESTful APIs and deploying full-stack applications.\n\n✅ **Database Management**: After learning **MongoDB**, furthered my knowledge with **PostgreSQL (PSQL)**, focusing on scalable and secure data solutions.\n\n✅ **DevOps & Deployment**: I became proficient with **Docker**, deploying containerized applications, and configuring servers with **Nginx**. I've also gained skills in **DevOps** workflows to automate, optimize, and manage deployments efficiently.\n\n✅ **Cross-Platform Development**: I leveraged **Capacitor.js** and **Electron** to build applications that work seamlessly across web, mobile (iOS/Android), and desktop (Windows/Mac/Linux).\n\nAs a versatile full-stack developer, I combine my technical knowledge with creativity to deliver scalable, secure, and efficient solutions for modern digital challenges. Let's collaborate to bring your ideas to life!",
       "schema": {
         "name": "About Bader Idris",
         "description": "Learn more about Bader Idris, a full-stack developer.",
@@ -53,13 +53,13 @@
     }
   },
   "projects": {
-    "title": "Projects I created during my career",
-    "description": "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, and stunning agency web apps. Powered by Nuxt.js, Vue.js, TypeScript, Nest.js, and more.",
+    "title": "Bader Idris - Full Stack & Interactive Projects",
+    "description": "Explore my portfolio of Full Stack projects built with Nuxt, Vue, Node, GSAP, and Three.js. Showcasing responsive design and interactive tools.",
     "caution": "Please select a programming tool to view my projects. \n Your choice is crucial to proceed."
   },
   "contact": {
-    "title": "Contact - Get in Touch with Bader Idris, via multiple approaches",
-    "description": "Connect with Bader Idris for collaborations or tech innovations. Reach out via email, phone call, or GitHub to bring your ideas to life with a full-stack expert.",
+    "title": "Contact Bader Idris - Full Stack Developer",
+    "description": "Get in touch with Bader Idris for collaborations on Full Stack, DevOps, or GSAP/Three.js projects. Reach out via email, phone, or LinkedIn.",
     "admin": {
       "title": "Admin Emails | Bader Idris",
       "description": "Exclusive to admins only"

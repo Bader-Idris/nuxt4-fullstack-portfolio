@@ -33,6 +33,7 @@ Una aplicación completa de portafolio full-stack construida con Nuxt 4, que inc
 - [Aplicación móvil](#aplicación-móvil)
 - [Aplicación Electron](#aplicación-electron)
 - [Despliegue en producción](#despliegue-en-producción)
+- [Servidor de correo](#servidor-de-correo)
 - [Seguridad](#seguridad)
 - [Solución de problemas](#solución-de-problemas)
 
@@ -371,6 +372,12 @@ crontab -e
 #### Configuración de certificado posterior al despliegue
 
 Después del despliegue inicial, necesitará forzar a Certbot a renovar los certificados para eliminar la bandera `--staging`. Se recomienda crear un archivo compose separado para este propósito y para futuras renovaciones.
+
+## Servidor de correo
+
+El proyecto incluye una configuración completa de servidor de correo que se ejecuta en `mail.baderidris.com`. Está construido utilizando Docker Mailserver y es compatible con DKIM, SPF, DMARC y MTA-STS.
+
+Para obtener instrucciones detalladas sobre cómo configurar y administrar el servidor de correo, incluidos los registros DNS y la gestión de usuarios, consulte el [script de configuración del servidor de correo](./server/config/mailserver/whatToDoOnMailserver.sh) y la [documentación detallada](./docs/README.md).
 
 ## Seguridad
 

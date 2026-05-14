@@ -132,7 +132,18 @@ const activeHobbyIndex = ref(0)
 useSeoMeta({
   title: t('about.title'),
   description: t('about.description'),
+  ogTitle: t('about.title'),
+  ogDescription: t('about.description'),
 })
+
+useSchemaOrg([
+  {
+    "@type": "WebPage",
+    name: t('about.title'),
+    description: t('about.description'),
+    dateModified: new Date().toISOString(),
+  }
+])
 
 const isMobile = useMobile()
 const checkScreenSize = () => {

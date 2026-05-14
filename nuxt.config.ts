@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 export default defineNuxtConfig({
   ssr: process.env.NUXT_SSR !== "false",
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-05-10",
+  compatibilityDate: "2026-05-14",
   devtools: {
     enabled: true,
 
@@ -199,12 +199,12 @@ export default defineNuxtConfig({
         exclude: [],
         warnDuplicatedImports: true,
         defaultExtension: 'glsl',
-      }),
+      }) as any,
     ],
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@use "${fileURLToPath(new URL('./app/assets/scss/index.scss', import.meta.url))}" as *;`,
+          additionalData: `@use "${path.join(__dirname, 'app/assets/scss/index.scss').replace(/\\/g, '/')}" as *;`,
           silenceDeprecations: ["legacy-js-api"],
         },
       },
@@ -576,8 +576,8 @@ export default defineNuxtConfig({
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
     url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
-    name: "Bader Idris Portfolio", // ! Causes stupid duplicate head.title
-    description: "Full stack developer specializing in Vue, Nuxt, Node, and DevOps.",
+    name: "Bader Idris", // ! Causes stupid duplicate head.title
+    description: "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
     defaultLocale: "en",
     indexable: process.env.IS_ELECTRON !== "true"
   },
@@ -586,14 +586,20 @@ export default defineNuxtConfig({
       identity: definePerson({
         name: "Bader Idris",
         image: "/imgs/meTwentyFour.jpg",
-        description: "Full stack developer specializing in Vue, Nuxt, Node, and DevOps.",
+        description: "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js.",
         url: "https://baderidris.com",
         sameAs: [
-            "https://www.facebook.com/Bader.Idris.developer",
             "https://github.com/bader-idris",
             "https://linkedin.com/in/bader-idrees",
+            "https://www.facebook.com/Bader.Idris.developer",
         ],
         jobTitle: "Full Stack Developer",
+        worksFor: {
+          "@id": "https://baderidris.com/#organization",
+          "@type": "Organization",
+          name: "Bader Idris Portfolio",
+          url: "https://baderidris.com"
+        }
       }),
     },
   }),
@@ -637,6 +643,23 @@ export default defineNuxtConfig({
         baseUrl: process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
         // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
       },
+      scripts: {
+        googleTagManager: {
+          // .env
+          // NUXT_PUBLIC_SCRIPTS_GOOGLE_TAG_MANAGER_ID=<your-id>
+          id: process.env.GOOGLE_TAG_MANAGER_ID,
+        },
+        googleAnalytics: {
+          // .env
+          // NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID=<your-id>
+          id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
+        },
+        clarity: {
+          // .env
+          // NUXT_PUBLIC_SCRIPTS_CLARITY_ID=<your-id>
+          id: process.env.CLARITY_ID,
+        }
+      }
       // }
     },
     mailHost: process.env.MAIL_HOST,
@@ -707,6 +730,17 @@ export default defineNuxtConfig({
       //   client: process.env.GOOGLE_ADSENSE_ID || "", // AdSense Publisher ID
       //   autoAds: true, // Enable Auto Ads
       // },
+      clarity: {
+        id: process.env.CLARITY_ID,
+        partytown: true,
+        trigger: 'onNuxtReady',
+      },
+      // metaPixel: {
+      //   id: process.env.META_PIXEL_ID,
+      //   partytown: true,
+      //   trigger: 'onNuxtReady',
+      // }
+      
     },
   },
 });

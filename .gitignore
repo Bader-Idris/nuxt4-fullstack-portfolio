@@ -21,6 +21,7 @@ pnpm-lock.yaml
 logs
 *.log
 .eslintcache
+tsconfig.tsbuildinfo
 
 # Misc
 .DS_Store

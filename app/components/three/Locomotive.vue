@@ -186,6 +186,7 @@ let slabsInstance: ReturnType<typeof useSlabs> | null = null;
 let interactionInstance: ReturnType<typeof useInteraction> | null = null;
 let terrainNormalHelper: THREE.ArrowHelper | null = null;
 let dracoLoader: DRACOLoader | null = null;
+let directionalLight: THREE.DirectionalLight | null = null;
 
 let trainCurve: THREE.CatmullRomCurve3 | null = null;
 let trainProgress = 0;
@@ -632,6 +633,17 @@ const animate = (elapsedMs: number) => {
   );
   if (skyMesh) skyMesh.position.copy(camera.position);
 
+  // TWEAK: Make directional light follow the locomotive to keep it within the high-quality shadow frustum
+  // This eliminates the "rectangle cuts" seen when the train moves far from the origin.
+  if (directionalLight && locomotive) {
+    directionalLight.position.set(
+      locomotive.position.x + 30,
+      locomotive.position.y + 60,
+      locomotive.position.z - 180
+    );
+    directionalLight.target.position.copy(locomotive.position);
+  }
+
   if (!isFar) updateKnotSmoothly();
 
   if (physicsMode.value && trainPhysics.physicsWorld && trainPhysicsBody) {
@@ -924,7 +936,7 @@ onMounted(async () => {
   controls = cameraInstance.controls;
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
   directionalLight.position.set(30, 60, -180);
   directionalLight.castShadow = true;
   // Professional Shadow Tuning: High resolution and tight frustum for crisp terrain/train shadows
@@ -933,9 +945,21 @@ onMounted(async () => {
   directionalLight.shadow.camera.right = 150;
   directionalLight.shadow.camera.top = 150;
   directionalLight.shadow.camera.bottom = -150;
-  directionalLight.shadow.camera.far = 500;
-  directionalLight.shadow.bias = -0.0005; // Reduce shadow acne
+  
+  // TWEAK: Depth Precision & Acne Mitigation
+  // Tightening near/far planes increases the precision of the depth buffer.
+  // Since the light follows the train at a fixed distance (~192 units), 
+  // we can use a much tighter range than the default 0.5 - 500.
+  directionalLight.shadow.camera.near = 50; 
+  directionalLight.shadow.camera.far = 400;
+
+  // bias: shifts the shadow slightly away from the surface to prevent self-shadowing (acne)
+  // normalBias: offsets the shadow along the surface normal, extremely effective for GLB models
+  directionalLight.shadow.bias = -0.0005;
+  directionalLight.shadow.normalBias = 0.1; 
+  
   scene.add(directionalLight);
+  scene.add(directionalLight.target); // TWEAK: Required for directionalLight to point at moving target
 
   const manager = new THREE.LoadingManager();
   manager.onProgress = (url, itemsLoaded, itemsTotal) => {
@@ -970,6 +994,8 @@ onMounted(async () => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+        // TWEAK: Using FrontSide for shadows minimizes acne artifacts on curved GLB surfaces
+        if (child.material) child.material.shadowSide = THREE.FrontSide;
       }
     });
     scene.add(locomotiveGltf.scene);
@@ -990,6 +1016,8 @@ onMounted(async () => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+        // TWEAK: Consistent shadow behavior for cargo components
+        if (child.material) child.material.shadowSide = THREE.FrontSide;
       }
     });
     scene.add(colarCargo);
@@ -1069,6 +1097,8 @@ onMounted(async () => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+        // TWEAK: Prevents terrain and track acne by ensuring standard shadow side rendering
+        if (child.material) child.material.shadowSide = THREE.FrontSide;
       }
     });
 
@@ -1128,6 +1158,7 @@ onMounted(async () => {
       beam.castShadow = true;
       beam.shadow.mapSize.set(1024, 1024);
       beam.shadow.bias = -0.0001;
+      beam.shadow.normalBias = 0.02; // TWEAK: Prevents acne in the small beam
       headlightMesh.add(beam);
       headlightMesh.add(beam.target);
     }
@@ -1229,9 +1260,16 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 div {
   width: 100%;
-  height: 80dvh;
   position: relative;
   transition: all 0.3s ease;
+
+  @include mobile {
+    height: calc(100vh - 180px);
+  }
+  @include tablet-to-up {
+    height: calc(100vh - 180px);
+  }
+
   &.is-fullscreen {
     position: fixed;
     top: 0;
@@ -1271,7 +1309,7 @@ canvas {
   transition: background 0.2s ease;
   backdrop-filter: blur(4px);
   @include mobile {
-    bottom: 10px;
+    bottom: 20px;
   }
   &:hover {
     background: rgba(0, 0, 0, 0.8);
@@ -1304,7 +1342,7 @@ canvas {
   }
   @include mobile {
     left: 8px;
-    bottom: 10px;
+    bottom: 20px;
     height: 60px;
     gap: 4px;
   }

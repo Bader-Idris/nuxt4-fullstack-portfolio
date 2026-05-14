@@ -78,6 +78,7 @@ services:
 
     depends_on:
       - mongo
+      - postgres
     command: bun start
     networks:
       - app-network

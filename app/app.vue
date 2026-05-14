@@ -38,10 +38,23 @@ import type { URLOpenListenerEvent } from '@capacitor/app'
 import { useColorMode } from '@vueuse/core'
 import { useSound } from '@/composables/useSound'
 
+const { t } = useI18n({ useScope: 'global' })
+const config = useRuntimeConfig()
+
+useSeoMeta({
+  titleTemplate: '%s | Bader Idris',
+  ogSiteName: 'Bader Idris - Portfolio',
+  ogType: 'website',
+  ogUrl: config.public.originUrl,
+  twitterCard: 'summary_large_image',
+  twitterSite: '@bader_idri8628',
+  appleMobileWebAppCapable: 'yes',
+  appleMobileWebAppStatusBarStyle: 'black-translucent',
+  mobileWebAppCapable: 'yes',
+  themeColor: '#01080E',
+})
+
 useHead({
-  titleTemplate: (titleChunk) => {
-    return titleChunk ? `${titleChunk} | Bader Idris` : 'Bader Idris - Full Stack Developer';
-  },
   meta: [
     // PWA / mobile app meta
     { name: "apple-mobile-web-app-capable", content: "yes" },
@@ -50,8 +63,6 @@ useHead({
       content: "black-translucent",
     },
     { name: "mobile-web-app-capable", content: "yes" },
-    // ✅ Added: pairs with apple-mobile-web-app-status-bar-style
-    { name: "theme-color", content: "#000000" },
   ],
   link: [
     {
@@ -75,7 +86,7 @@ useHead({
     {
       rel: "apple-touch-icon",
       type: "image/png",
-      sizes: "180x180", // ✅ Fixed: was commented out
+      sizes: "180x180",
       href: "/apple-touch-icon.png",
     },
     {
@@ -97,8 +108,6 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n({ useScope: 'global' })
-const config = useRuntimeConfig()
 
 // --- State ---
 const showRiveSplash = ref(false)

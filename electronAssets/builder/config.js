@@ -89,7 +89,8 @@ const baseConfig = {
   ],
   // extends: null,
   compression: 'maximum',
-  artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${platform}_${arch}.${ext}', // ! can't read them with template strings!
+  // Fixed: use target OS macro (${os}), not the host platform (resolves to win/mac/linux)
+  artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${os}_${arch}.${ext}', // ! can't read them with template strings!
   directories: {
     output: './release/${version}'
   },

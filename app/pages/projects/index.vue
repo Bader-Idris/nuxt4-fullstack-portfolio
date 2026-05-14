@@ -39,18 +39,12 @@ useSeoMeta({
   ogImageHeight: 630,
 })
 
-// defineOgImageComponent('projectsThumbnail', {
-//   url: optimizedProjectsThumbnail,
-//   width: 1200,
-//   height: 630,
-//   alt: t('projects.title'),
-// })
-
 useSchemaOrg([
   {
     "@type": "CollectionPage",
-    name: "Projects I created during my career",
-    description: "Explore a diverse collection of projects by Bader Idris, featuring full-stack applications, responsive web designs, and interactive tools built with Vue.js, Nuxt, TypeScript, and more.",
+    name: t('projects.title'),
+    description: t('projects.description'),
+    dateModified: new Date().toISOString(),
     itemListElement: projects.map((project, index) => ({
       "@type": "ListItem",
       position: index + 1,

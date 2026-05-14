@@ -42,7 +42,6 @@ export default {
       :class="isExactActive ? '' : inactiveClass"
       @click="navigate">
       <slot />
-      <!-- TODO: if external false doesn't work, force it with true on prod!!, if it does issue a bug saying the boolean is underfined causing the app to paralize -->
     </a>
   </NuxtLink>
 </template>
