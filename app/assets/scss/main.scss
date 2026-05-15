@@ -8,9 +8,14 @@
 }
 html {
   scroll-behavior: smooth;
+  color-scheme: dark light;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
 }
 body {
   font-family: 'cairo', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 a {
   text-decoration: none;
@@ -54,26 +59,27 @@ ul {
 /* Custom scrollbar styles */
 @include mobile {
   ::-webkit-scrollbar {
-    color: transparent;
+    display: none; // cleaner for mobile
   }
 }
 
 @include tablet-to-up {
   ::-webkit-scrollbar {
-    width: 20px;
+    width: 12px;
   }
 
   ::-webkit-scrollbar-track {
-    background: $primary2;
+    background: var(--scrollbar-track);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba($primary2, 0.8); // Equivalent to a darker version
-    border-left: 1px solid $lines;
+    background: var(--scrollbar-thumb);
+    border: 3px solid var(--scrollbar-track);
+    border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba($primary2, 0.6); // Equivalent to a lighter version
+    background: var(--scrollbar-thumb-hover);
   }
 }
 /* End custom scrollbar styles */

@@ -131,6 +131,7 @@ $popupMainBackgroundColor: rgba(245, 245, 245, 0.9); // From target style
 
 // :global(.dark) {
 html.dark {
+  color-scheme: dark;
   // Dark Theme overrides
   --bg-primary: #{$dark-primary1};
   --bg-secondary: #{$dark-primary2};
@@ -183,6 +184,7 @@ html.dark {
   --scrollbar-border: #{$dark-lines};
 }
 html.light {// for light theme, if needed
+  color-scheme: light;
   --bg-primary: #{$light-primary1};
   --bg-secondary: #{$light-primary2};
   --bg-tertiary: #{$light-primary3};

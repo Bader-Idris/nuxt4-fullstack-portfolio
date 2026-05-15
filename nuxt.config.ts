@@ -529,16 +529,27 @@ export default defineNuxtConfig({
   postcss: {
     plugins: {
       "postcss-flexbugs-fixes": {},
+      "postcss-nesting": {},
+      "postcss-custom-properties": {
+        preserve: false,
+      },
+      "postcss-custom-media": {},
+      // this supports newly released features in older browsers
       "postcss-preset-env": {
         autoprefixer: {
           grid: "autoplace",
           flexbox: "no-2009",
         },
         features: {
-          "custom-properties": false,
-          "nesting-rules": true,
+          "custom-properties": false, // Handled by standalone plugin
+          "nesting-rules": false,      // Handled by standalone plugin
+          "color-function": true,
+          "oklab-function": true,
+          "custom-media-queries": false, // Handled by standalone plugin
+          "color-mix": true,
+          "relative-color-syntax": true,
         },
-        stage: 3,
+        stage: 4,// 0:Aspirational(Experimental), 1:Experimental, 2:Allowable (Default), 3:Embraced, 4:Standardized
       },
       "postcss-pxtorem": {
         rootValue: 16,
@@ -548,11 +559,6 @@ export default defineNuxtConfig({
         minPixelValue: 0,
       },
       "postcss-focus": {},
-      "postcss-custom-media": {},
-      "postcss-nesting": {},
-      "postcss-custom-properties": {
-        preserve: false, // Set to false to replace variables with their values
-      },
     },
   },
   // buildDir: "./dist", // Useful to change for electron/capacitor builds
