@@ -38,7 +38,7 @@ export const attachCookiesToResponse = (
     secure: config.nodeEnv === "production",
     expires: new Date(Date.now() + oneDay),
     // signed: true is not needed as cookies are signed by default in Nitro 2
-    sameSite: "strict",
+    sameSite: "lax",// more flexable with 3rd party redirection than "strict"
   });
 
   setCookie(event, "refreshToken", refreshTokenJWT, {
@@ -46,6 +46,6 @@ export const attachCookiesToResponse = (
     httpOnly: true,
     secure: config.nodeEnv === "production",
     expires: new Date(Date.now() + longerExp),
-    sameSite: "strict",
+    sameSite: "lax",
   });
 };
