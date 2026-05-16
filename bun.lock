@@ -127,9 +127,9 @@
         "oxfmt": "^0.50.0",
         "oxlint": "^1.65.0",
         "patch-package": "^8.0.1",
+        "postcss": "^8.5.14",
         "postcss-custom-media": "^12.0.1",
         "postcss-custom-properties": "^15.0.1",
-        "postcss-flexbugs-fixes": "^5.0.2",
         "postcss-focus": "^7.0.0",
         "postcss-nesting": "^14.0.0",
         "postcss-preset-env": "^11.3.0",
@@ -3503,8 +3503,6 @@
     "postcss-discard-overridden": ["postcss-discard-overridden@7.0.3", "", { "peerDependencies": { "postcss": "^8.5.13" } }, "sha512-aNovXo9UsZuRNLzHJtp13lHIvinDPfiXBPePpXkSjCbgp++iU2FqE+YxvjIsg6EdyPZsASFbfu+JcBFVsErXIQ=="],
 
     "postcss-double-position-gradients": ["postcss-double-position-gradients@7.0.1", "", { "dependencies": { "@csstools/postcss-progressive-custom-properties": "^5.1.0", "@csstools/utilities": "^3.0.0", "postcss-value-parser": "^4.2.0" }, "peerDependencies": { "postcss": "^8.4" } }, "sha512-M69I4EolEGwiYa0KmxKWg4zZp2DxhlNM0Bz12OvHCj930GXDVCvFhdWNGsRscz6BIijN6tFryzSFsy8kMLyD5Q=="],
-
-    "postcss-flexbugs-fixes": ["postcss-flexbugs-fixes@5.0.2", "", { "peerDependencies": { "postcss": "^8.1.4" } }, "sha512-18f9voByak7bTktR2QgDveglpn9DTbBWPUzSOe9g0N4WR/2eSt6Vrcbf0hmspvMI6YWGywz6B9f7jzpFNJJgnQ=="],
 
     "postcss-focus": ["postcss-focus@7.0.0", "", { "peerDependencies": { "postcss": "^8.1.0" } }, "sha512-yX7TJK3cNiBLzjT0Psmk0mWjD8+v/FbcBOJ5mg5JX2+8uIjI7zewPgkGOocYzE81+aBHWXrw+BSstsp3Bl3UaA=="],
 

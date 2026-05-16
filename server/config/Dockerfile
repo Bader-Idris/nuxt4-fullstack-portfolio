@@ -45,6 +45,11 @@ ARG PORT=3000
 ENV PORT=${PORT}
 ENV NUXT_TELEMETRY_DISABLED=1
 
+# Increase memory limit for the build process to prevent OOM errors
+# Architecture: Leverages high host memory (32GB) to allow memory-intensive Nuxt builds to succeed.
+# Product: Ensures CI/CD reliability and prevents deployment bottlenecks.
+ENV NODE_OPTIONS="--max-old-space-size=16384"
+
 RUN npm run build
 
 # Stage 4: Production runner — lean image, no build tools needed

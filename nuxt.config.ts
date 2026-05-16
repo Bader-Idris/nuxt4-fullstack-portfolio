@@ -528,12 +528,12 @@ export default defineNuxtConfig({
   // },
   postcss: {
     plugins: {
-      "postcss-flexbugs-fixes": {},
-      "postcss-nesting": {},
+      // "postcss-nesting": {}, // it's already applied in scss
+      // https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-nesting#readme
       "postcss-custom-properties": {
         preserve: false,
       },
-      "postcss-custom-media": {},
+      "postcss-custom-media": {}, // simular to scss resuable media queries
       // this supports newly released features in older browsers
       "postcss-preset-env": {
         autoprefixer: {
@@ -541,15 +541,17 @@ export default defineNuxtConfig({
           flexbox: "no-2009",
         },
         features: {
-          "custom-properties": false, // Handled by standalone plugin
-          "nesting-rules": false,      // Handled by standalone plugin
+          "custom-properties": {
+            preserve: true,
+          },
+          "nesting-rules": true,
+          "custom-media-queries": true,
           "color-function": true,
           "oklab-function": true,
-          "custom-media-queries": false, // Handled by standalone plugin
           "color-mix": true,
           "relative-color-syntax": true,
         },
-        stage: 4,// 0:Aspirational(Experimental), 1:Experimental, 2:Allowable (Default), 3:Embraced, 4:Standardized
+        stage: 2, // 0:Aspirational(Experimental), 1:Experimental, 2:Allowable (Default), 3:Embraced, 4:Standardized
       },
       "postcss-pxtorem": {
         rootValue: 16,

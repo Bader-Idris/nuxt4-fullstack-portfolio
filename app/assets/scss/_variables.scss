@@ -249,4 +249,10 @@ html.light {// for light theme, if needed
 :root {
   // used in game phase and similar components, might change it to blue for instance
   --accent-color: #{$accent1}; // Default accent color
+
+  /* Default scrollbar variables (fallback to dark theme values) */
+  --scrollbar-track: #{$dark-primary2};
+  --scrollbar-thumb: #{$dark-accent1};
+  --scrollbar-thumb-hover: #{$dark-accent5};
+  --scrollbar-border: #{$dark-lines};
 }

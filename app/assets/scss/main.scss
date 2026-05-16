@@ -1,5 +1,4 @@
-@use '../scss/' as *;
-@use './variables' as *;
+@use './index' as *;
 @use 'sass:map';
 
 /* Global Rules */
@@ -9,9 +8,12 @@
 html {
   scroll-behavior: smooth;
   color-scheme: dark light;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  
+  /* Standard properties (Supported by all major browsers in 2026) */
   scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
+
 body {
   font-family: 'cairo', sans-serif;
   background-color: var(--bg-primary);
@@ -28,8 +30,12 @@ ul {
 }
 @include mobile {
   * {
-    -webkit-tap-highlight-color: transparent;
-    -ms-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+  }
+  
+  html {
+    /* Hide scrollbar on mobile */
+    scrollbar-width: none;
   }
 }
 /* End Global Rules */
@@ -57,32 +63,9 @@ ul {
 /* End screen sizes */
 
 /* Custom scrollbar styles */
-@include mobile {
-  ::-webkit-scrollbar {
-    display: none; // cleaner for mobile
-  }
-}
-
 @include tablet-to-up {
-  ::-webkit-scrollbar {
-    width: 12px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border: 3px solid var(--scrollbar-track);
-    border-radius: 10px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
-  }
+  /* Standard scrollbar properties are used in html block above. */
 }
-/* End custom scrollbar styles */
 
 /* custom selection */
 ::selection {

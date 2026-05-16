@@ -1,18 +1,17 @@
 @font-face {
   font-family: 'Fira Code';
-  
   font-weight: 300;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
   src: url('/fonts/FiraCode/FiraCode-Light.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'Fira Code';
-  
   /* Variable font */
   font-weight: 100 900;
   font-style: normal;
-  font-display: block;
-  src: url('/fonts/FiraCode/FiraCode-VariableFont_wght.woff2') format('woff2');
+  font-display: swap;
+  src: url('/fonts/FiraCode/FiraCode-VariableFont_wght.woff2') format('woff2'),
+       url('/fonts/FiraCode/FiraCode_wght_.woff2') format('woff2');
 }

@@ -594,22 +594,24 @@ onBeforeUnmount(() => {
         }
       }
     }
+  }
 
-    .received-to-admin {
-      margin-top: 50px;
+.received-to-admin {
+  @include mobile {
+    width: calc(100vw - 60px);
+    margin-top: 50px;
+  }
+  @include tablet-to-up {
+    margin-top: 50px;
+    padding-left: 20px;
+  }
 
-      @include tablet-to-up {
-        width: fit-content;
-        padding-left: 20px;
-        margin-top: 50px;
-      }
-      >button {
-        margin-bottom: 20px;
-      margin-left: 15px;
-      @include mobile {
-          width: calc(100% - 20px);
-        }
-      }
+  >button {
+    margin-bottom: 20px;
+  margin-left: 15px;
+  @include mobile {
+      width: calc(100% - 20px);
     }
   }
+}
 </style>
