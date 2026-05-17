@@ -3,7 +3,7 @@ import { Howl, Howler } from "howler";
 // Define sound configurations
 const soundConfigs = {
   connect: { src: ["/sounds/water-drip.mp3"], volume: 0.5 },
-  // disconnect: { src: ["/sounds/Disconnect.mp3"], volume: 0.3 },
+  disconnect: { src: ["/sounds/disconnect.mp3"], volume: 0.3 },
   // reconnect: { src: ["/sounds/reconnect.mp3"], volume: 0.3 },
   // userJoin: { src: ["/sounds/user-join.mp3"], volume: 0.2 },
   // userLeave: { src: ["/sounds/user-leave.mp3"], volume: 0.2 },

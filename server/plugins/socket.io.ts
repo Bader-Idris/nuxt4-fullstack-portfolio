@@ -1,7 +1,7 @@
 import type { NitroApp } from "nitropack";
 import { Server as Engine } from "engine.io";
 import { Server } from "socket.io";
-import { defineEventHandler, createError } from "h3";
+import { defineEventHandler } from "h3";
 import { isTokenValid } from "../utils/jwt";
 import { Message, Token } from "../models/mongo";
 import { getContacts } from "../utils/getContacts";
@@ -19,8 +19,11 @@ import { sendAPN, sendFCM } from "../utils/push";
 
 // let Engine: any; // if we want to use dynamic import below, as it differs in bun, but not functional yet with bun 1.3.6
 
-export default defineNitroPlugin(async (nitroApp: NitroApp) => { 
-  if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
+export default defineNitroPlugin(async (nitroApp: NitroApp) => {
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "production"
+  ) {
     // --- START: Production-Ready Rate Limiters ---
     const maxPointsPerSecond = 5; // General limit per IP per second
     const maxPointsPerMinute = 50; // Stricter limit for expensive actions
@@ -28,7 +31,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     // 1. Connection Rate Limiter (per IP)
     // Limits how many times a single IP can attempt to connect per second.
     // This is your first defense against connection floods.
-    const connectionLimiter = new RateLimiterRedis({
+    const _connectionLimiter = new RateLimiterRedis({
       storeClient: redisClient,
       keyPrefix: "limit_conn_ip",
       points: maxPointsPerSecond,
@@ -39,7 +42,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     // 2. High-Cost Action Limiter (per User ID)
     // Stricter limit for resource-intensive events like creating or starting a game.
     // We use the User ID to prevent one user from spamming these actions.
-    const gameActionLimiter = new RateLimiterRedis({
+    const _gameActionLimiter = new RateLimiterRedis({
       storeClient: redisClient,
       keyPrefix: "limit_game_action_user",
       points: 5, // Only 5 expensive actions...
@@ -48,7 +51,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
     // 3. General Event Limiter (per User ID)
     // A more lenient limiter for frequent events like chat messages or hitting the buzzer.
-    const generalEventLimiter = new RateLimiterRedis({
+    const _generalEventLimiter = new RateLimiterRedis({
       storeClient: redisClient,
       keyPrefix: "limit_event_user",
       points: maxPointsPerMinute,
@@ -119,7 +122,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           cookieHeader.split(";").map((c) => {
             const [key, ...v] = c.trim().split("=");
             return [key, v.join("=")];
-          })
+          }),
         );
 
         const accessToken = parsedCookies["accessToken"];
@@ -132,7 +135,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
               socket.data.user = payload.user;
               return next();
             }
-          } catch (error) {
+          } catch {
             // Access token invalid or expired, proceed to check refresh token
           }
         }
@@ -152,7 +155,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
                 return next();
               }
             }
-          } catch (error) {
+          } catch {
             // Refresh token invalid or expired
           }
         }
@@ -172,16 +175,18 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
     // Helper functions for Redis-based online users management
     const getOnlineUsersFromRedis = async () => {
       try {
-        const data = await redisClient.hgetall(UNIQUE_ONLINE_USERS_KEY);
+        const data = await redisClient!.hgetall(UNIQUE_ONLINE_USERS_KEY);
         // We still return an array for the Socket.IO emit, but the logic is managed in Redis
-        return Object.values(data).map((userDataStr: string) => {
-          try {
-            return JSON.parse(userDataStr);
-          } catch (e) {
-            console.error(`Error parsing online user data:`, e);
-            return null;
-          }
-        }).filter(u => u !== null);
+        return Object.values(data)
+          .map((userDataStr: string) => {
+            try {
+              return JSON.parse(userDataStr);
+            } catch (e) {
+              console.error(`Error parsing online user data:`, e);
+              return null;
+            }
+          })
+          .filter((u) => u !== null);
       } catch (error) {
         console.error("Error fetching online users from Redis:", error);
         return [];
@@ -190,7 +195,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
     const isUserOnline = async (userId: string) => {
       try {
-        const count = await redisClient.hget(USER_CONN_COUNT_KEY, userId);
+        const count = await redisClient!.hget(USER_CONN_COUNT_KEY, userId);
         return parseInt(count || "0") > 0;
       } catch (error) {
         console.error(`Error checking if user ${userId} is online:`, error);
@@ -200,7 +205,11 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
     // ADDED: socketId as field to allow multiple connections per user
     // Returns the new connection count for the user
-    const addOnlineUserToRedis = async (user, socketId, deviceId?: string) => {
+    const addOnlineUserToRedis = async (
+      user: any,
+      socketId: string,
+      deviceId?: string,
+    ) => {
       try {
         const userData = {
           socketId: socketId,
@@ -211,12 +220,20 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           connectedAt: Date.now(),
         };
         const userDataStr = JSON.stringify(userData);
-        
+
         // Use Redis to manage the state
-        await redisClient.hset(ONLINE_USERS_KEY, socketId, userDataStr);
-        await redisClient.hset(UNIQUE_ONLINE_USERS_KEY, user.userId, userDataStr);
-        const newCount = await redisClient.hincrby(USER_CONN_COUNT_KEY, user.userId, 1);
-        
+        await redisClient!.hset(ONLINE_USERS_KEY, socketId, userDataStr);
+        await redisClient!.hset(
+          UNIQUE_ONLINE_USERS_KEY,
+          user.userId,
+          userDataStr,
+        );
+        const newCount = await redisClient!.hincrby(
+          USER_CONN_COUNT_KEY,
+          user.userId,
+          1,
+        );
+
         return newCount;
       } catch (error) {
         console.error("Error adding user to Redis:", error);
@@ -226,15 +243,19 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
     // ADDED: removed based on socketId and userId
     // Returns true if this was the last connection for the user
-    const removeOnlineUserFromRedis = async (userId, socketId) => {
+    const removeOnlineUserFromRedis = async (userId: string, socketId: string) => {
       try {
-        await redisClient.hdel(ONLINE_USERS_KEY, socketId);
-        let remainingCount = await redisClient.hincrby(USER_CONN_COUNT_KEY, userId, -1);
-        
+        await redisClient!.hdel(ONLINE_USERS_KEY, socketId);
+        const remainingCount = await redisClient!.hincrby(
+          USER_CONN_COUNT_KEY,
+          userId,
+          -1,
+        );
+
         // Safety check: ensure count doesn't go below 0
         if (remainingCount <= 0) {
-          await redisClient.hdel(UNIQUE_ONLINE_USERS_KEY, userId);
-          await redisClient.hdel(USER_CONN_COUNT_KEY, userId);
+          await redisClient!.hdel(UNIQUE_ONLINE_USERS_KEY, userId);
+          await redisClient!.hdel(USER_CONN_COUNT_KEY, userId);
           return true; // Last connection removed
         }
         return false; // Still has other connections
@@ -255,13 +276,17 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
           ?.split("=")[1];
 
         if (!user || !user.userId) {
-          console.warn(`Connection rejected: Missing user data. Socket ID: ${socket.id}`);
+          console.warn(
+            `Connection rejected: Missing user data. Socket ID: ${socket.id}`,
+          );
           socket.disconnect();
           return;
         }
 
         // TODO: get rid of these logs in prod!
-        console.log(`User connected: ${user.name} (${user.userId}) from device: ${deviceId}`);
+        console.log(
+          `User connected: ${user.name} (${user.userId}) from device: ${deviceId}`,
+        );
 
         // Add user to Redis and get the new connection count
         const newCount = await addOnlineUserToRedis(user, socket.id, deviceId);
@@ -286,7 +311,9 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
         // Send current online users list to the newly connected user
         const currentOnlineUsers = await getOnlineUsersFromRedis();
-        const filteredOnlineUsers = currentOnlineUsers.filter(u => u.userId !== user.userId); // Exclude current user
+        const filteredOnlineUsers = currentOnlineUsers.filter(
+          (u) => u.userId !== user.userId,
+        ); // Exclude current user
         socket.emit("online-users", filteredOnlineUsers);
 
         // Join rooms based on user role
@@ -299,14 +326,19 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
         socket.on("disconnect", async (reason) => {
           const disconnectedUser = socket.data?.user;
           if (disconnectedUser && disconnectedUser.userId) {
-            console.log(`User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId}) - Reason: ${reason}`);
-            
+            console.log(
+              `User disconnected: ${disconnectedUser.name} (${disconnectedUser.userId}) - Reason: ${reason}`,
+            );
+
             // Remove from Redis and check if this was the last connection
-            const isLastConnection = await removeOnlineUserFromRedis(disconnectedUser.userId, socket.id);
-            
+            const isLastConnection = await removeOnlineUserFromRedis(
+              disconnectedUser.userId,
+              socket.id,
+            );
+
             if (isLastConnection) {
-               // Notify all other users that this user has left ONLY if they have no more active connections
-               socket.broadcast.emit("user-left", disconnectedUser.userId);
+              // Notify all other users that this user has left ONLY if they have no more active connections
+              socket.broadcast.emit("user-left", disconnectedUser.userId);
             }
           }
         });
@@ -361,7 +393,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
             io.to(`user-${to}`).emit("call-declined", {
               from: user.userId,
               fromName: user.name,
-              reason
+              reason,
             });
           }
         });
@@ -418,7 +450,9 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
             console.log(`Message delivered to ${to} via Socket.IO`);
           } else {
             // User is offline, send a push notification
-            console.log(`User ${to} is offline, attempting to send push notification.`);
+            console.log(
+              `User ${to} is offline, attempting to send push notification.`,
+            );
             try {
               // Web push
               const subscription = await getSubscription(redisClient, to);
@@ -428,9 +462,9 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
                   JSON.stringify({
                     title: `New message from ${fromUser.name}`,
                     body: message,
-                    url: '/dashboard',
-                    data: { action: 'open_chat', fromUserId: fromUser.userId },
-                  })
+                    url: "/dashboard",
+                    data: { action: "open_chat", fromUserId: fromUser.userId },
+                  }),
                 );
                 console.log(`Push notification sent successfully to ${to}`);
               } else {
@@ -438,7 +472,10 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
               }
 
               // Capacitor push
-              const capacitorSubscription = await getCapacitorSubscription(redisClient, to);
+              const capacitorSubscription = await getCapacitorSubscription(
+                redisClient,
+                to,
+              );
               if (capacitorSubscription) {
                 const { token, platform } = capacitorSubscription;
                 const payload = {
@@ -446,14 +483,18 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
                   body: message,
                   from: fromUser.userId,
                 };
-                if (platform === 'ios') {
+                if (platform === "ios") {
                   await sendAPN(token, payload);
-                } else if (platform === 'android') {
+                } else if (platform === "android") {
                   await sendFCM(token, payload);
                 }
-                console.log(`Capacitor push notification sent successfully to ${to}`);
+                console.log(
+                  `Capacitor push notification sent successfully to ${to}`,
+                );
               } else {
-                console.log(`No Capacitor push subscription found for user ${to}`);
+                console.log(
+                  `No Capacitor push subscription found for user ${to}`,
+                );
               }
             } catch (err) {
               console.error(`Failed to send push notification to ${to}:`, err);
@@ -491,15 +532,17 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
               .lean(); // Use lean for better performance
 
             // Reverse the messages to show the latest at the bottom
-            const formattedMessages = messages.reverse().map(msg => ({
+            const formattedMessages = messages.reverse().map((msg) => ({
               ...msg,
               fromName: (msg.from as any).name, // Extract populated name
               id: msg._id.toString(),
             }));
 
-            socket.emit("message-history", { recipientId, messages: formattedMessages });
+            socket.emit("message-history", {
+              recipientId,
+              messages: formattedMessages,
+            });
             if (callback) callback({ messages: formattedMessages });
-
           } catch (error) {
             console.error("Error fetching messages:", error);
             if (callback) callback({ error: "Failed to fetch messages" });
@@ -580,11 +623,11 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
             engine.onWebSocket(
               peer._internal.nodeReq,
               peer._internal.nodeReq.socket,
-              peer.websocket
+              peer.websocket,
             );
           },
         },
-      })
+      }),
     );
   } else {
     console.log("⚠️ Skipping Socket io connection during build phase");

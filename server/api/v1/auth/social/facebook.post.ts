@@ -1,11 +1,14 @@
 import { defineEventHandler, readBody, createError, getRequestHeader, getRequestIP } from 'h3';
-import { User, Token } from '../../../../models/mongo';
+import { Token } from '../../../../models/mongo';
 import crypto from 'node:crypto';
 import { createTokenUser, attachCookiesToResponse } from '../../../../utils';
+import { validateFacebookToken, findOrCreateSocialUser } from '../../../../utils/socialAuth';
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
+    console.log('--- Facebook Social Auth Start ---');
+    console.log('Request Body:', JSON.stringify(body, null, 2));
     
     const { accessToken } = body;
     
@@ -16,51 +19,9 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Validate the Facebook access token
-    const fbValidationRes = await fetch(
-      `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`
-    );
+    const profile = await validateFacebookToken(accessToken);
+    const user = await findOrCreateSocialUser(profile, 'facebook');
 
-    if (!fbValidationRes.ok) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Invalid Facebook access token'
-      });
-    }
-
-    const fbUser = await fbValidationRes.json();
-
-    if (!fbUser || !fbUser.email) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Invalid Facebook user data'
-      });
-    }
-
-    // Find or create user
-    let user = await User.findOne({ email: fbUser.email });
-
-    if (!user) {
-      user = new User({
-        name: fbUser.name,
-        email: fbUser.email,
-        emailVerified: true,
-        provider: 'facebook',
-        providerAccountId: fbUser.id,
-        avatar: fbUser.picture?.data?.url,
-      });
-      await user.save();
-    } else {
-      // Update user with latest Facebook info
-      user.provider = 'facebook';
-      user.providerAccountId = fbUser.id;
-      user.name = fbUser.name || user.name;
-      user.avatar = fbUser.picture?.data?.url || user.avatar;
-      user.emailVerified = true;
-      await user.save();
-    }
-
-    // --- UNIFIED TOKEN AND COOKIE LOGIC ---
     const tokenUser = createTokenUser(user);
     let refreshToken = "";
     const existingToken = await Token.findOne({ user: user._id });
@@ -78,8 +39,8 @@ export default defineEventHandler(async (event) => {
     }
 
     attachCookiesToResponse(event, tokenUser, refreshToken);
-    // --- END OF UNIFIED LOGIC ---
-
+    
+    console.log('--- Facebook Social Auth Success ---');
     return {
       user: {
         name: tokenUser.name,
@@ -88,11 +49,12 @@ export default defineEventHandler(async (event) => {
       },
       message: 'Successfully authenticated with Facebook',
     };
-  } catch (error) {
-    console.error('Facebook social auth error:', error);
+  } catch (error: any) {
+    console.error('--- Facebook social auth error ---');
+    console.error(error);
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Facebook authentication failed',
+      statusCode: error.statusCode || 401,
+      statusMessage: error.statusMessage || error.message || 'Facebook authentication failed',
     });
   }
 });

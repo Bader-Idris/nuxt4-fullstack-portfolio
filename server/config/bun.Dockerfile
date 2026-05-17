@@ -26,8 +26,17 @@ COPY . .
 ENV PRISMA_GEN_PATH=./generated/prisma/client
 RUN bun run prisma:generate
 
+# Ensure production environment is set for optimal build and compression
+# ARG NODE_ENV=production
+ARG PORT=3000
+# ENV NODE_ENV=${NODE_ENV}
+ENV PORT=${PORT}
+ENV NUXT_TELEMETRY_DISABLED=1
+
 # TODO: read https://nitro.build/config
 ENV NITRO_PRESET=bun
+ENV NODE_OPTIONS="--max-old-space-size=16384"
+
 RUN bun --smol run build
 
 # Stage 4: Production runner

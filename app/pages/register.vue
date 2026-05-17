@@ -50,8 +50,8 @@
 
     <div v-if="showPrompt" class="prompt">
       <CustomButton button-type="ghost">
-        <CustomLink aria-label="login page" to="/login" class="internal-link">
-          login page
+        <CustomLink aria-label="login page" :to="localePath('/login')" class="internal-link">
+          Go to login page
         </CustomLink>
       </CustomButton>
     </div>
@@ -122,6 +122,7 @@ const register = async (): Promise<void> => {
   }
 
   loading.value = true;
+  showPrompt.value = false;
 
   const url = `/api/v1/auth/register`;
   const data = {
@@ -155,11 +156,16 @@ const register = async (): Promise<void> => {
       const redirectPath = (route.query.redirect as string) || '/dashboard';
       await navigateTo(localePath(redirectPath));
     }
-  } catch (error) {
+  } catch (error: any) {
     // Handle network or unexpected errors
-    console.error('Registration error:', error);
-    // @ts-expect-error type safety for error
-    const msg = error.data?.message || 'Network error. Please try again.';
+    console.error('Registration error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    const msg = error.data?.message || error.data?.statusMessage || 'Network error. Please try again.';
+    
+    // If email already exists, show the login prompt
+    if (msg.toLowerCase().includes('exists')) {
+      showPrompt.value = true;
+    }
+
     toast(msg, {
       theme: 'dark',
       type: 'error',
@@ -202,97 +208,49 @@ const socialLogin = async (provider: string) => {
 // Google authentication function for Capacitor devices during registration using @capgo/capacitor-social-login
 const googleRegister = async () => {
   loading.value = true;
+  console.log('--- googleRegister Native Start ---');
 
   try {
-    // Dynamically import the social login plugin
+    const config = useRuntimeConfig();
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
-    const config = useRuntimeConfig()
-
-    // Initialize the social login plugin with Google configuration
-    await SocialLogin.initialize({
-      google: {
-        webClientId: config.public.googleClientId, // Required for Android and Web
-        // iOSClientId: 'YOUR_IOS_CLIENT_ID',         // Required for iOS
-        // iOSServerClientId: 'YOUR_WEB_CLIENT_ID',   // Required for iOS offline mode and server authorization (same as webClientId)
-        mode: 'online',  // 'online' or 'offline'
-      }
-    });
-
-    // Perform Google sign-in
+    
+    console.log('Calling SocialLogin.login for Google...');
     const result = await SocialLogin.login({
       provider: 'google',
-      // only with online mode!
       options: {
-        scopes: ['openid','email', 'profile'],
+        scopes: ['openid', 'email', 'profile'],
       },
     });
-    // TODO: just have the online approach, commit it, then offline if better!
+    console.log('SocialLogin.login result received:', JSON.stringify(result, null, 2));
 
     if (!result.accessToken) {
       throw new Error('No access token received from Google');
     }
 
     // Use the dedicated Google social auth endpoint for Capacitor
-    const response = await $fetch('/api/v1/auth/social/google', {
+    const socialUrl = '/api/v1/auth/social/google';
+    console.log('Calling server social endpoint:', socialUrl);
+    
+    const response = await $fetch<any>(socialUrl, {
       method: 'POST',
       body: {
         accessToken: result.accessToken,
-        profile: {
-          name: result.profile?.name || result.profile?.displayName,
-          email: result.profile?.email,
-          id: result.profile?.id
-        }
+        idToken: result.idToken,
       },
-      baseURL: useRuntimeConfig().public.originUrl,
+      baseURL: config.public.originUrl,
       credentials: 'include',
     });
+    console.log('Server response received:', JSON.stringify(response, null, 2));
 
-    // The server sets cookies, but for Capacitor we need to sync them
-    if (import.meta.client && (await useCapacitorDevice())) {
-      // Wait a bit for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const cookies = await CapacitorCookies.getCookies();
-      console.log('🎈Google register cookies:🎈', cookies);
-      if (cookies.accessToken) {
-        accessToken.value = cookies.accessToken;
-      }
-    }
-
-    // Get user info from the response
     if (response && response.user) {
-      useUserStore().setUser({
-        username: response.user.name,
-        userId: response.user.userId,
-        role: response.user.role,
-      });
-
-      toast('Successfully registered/logged in with Google', {
-        theme: 'auto',
-        type: 'success',
-        position: 'top-center',
-        dangerouslyHTMLString: true,
-      });
-
-      const redirectPath = (route.query.redirect as string) || '/dashboard';
-      await navigateTo(localePath(redirectPath));
+      await handleSocialRegisterSuccess(response, 'Google');
     } else {
       throw new Error('User data not received from server');
     }
-  } catch (error) {
-    console.error('Google registration error:', error);
-    toast('Google sign-up failed, please try again', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-    });
-
-    // Fallback: If native fails, attempt web flow
-    if (import.meta.client) {
-      console.log('Falling back to web flow');
-      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/google`;
-    }
+  } catch (error: any) {
+    handleSocialRegisterError(error, 'Google');
   } finally {
+    console.log('--- googleRegister Native End ---');
     loading.value = false;
   }
 };
@@ -300,86 +258,104 @@ const googleRegister = async () => {
 // Facebook authentication function for Capacitor devices during registration using @capgo/capacitor-social-login
 const facebookRegister = async () => {
   loading.value = true;
+  console.log('--- facebookRegister Native Start ---');
 
   try {
-    // Dynamically import the social login plugin
+    const config = useRuntimeConfig();
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
 
-    // Perform Facebook sign-in
+    console.log('Calling SocialLogin.login for Facebook...');
     const result = await SocialLogin.login({
       provider: 'facebook',
       options: {
-        // Add any specific Facebook permissions here if needed
-        permissions: ['public_profile', 'user_friends', 'email'],
+        permissions: ['public_profile', 'email'],
       }
     });
+    console.log('SocialLogin.login result:', JSON.stringify(result, null, 2));
 
     if (!result.accessToken) {
       throw new Error('No access token received from Facebook');
     }
 
-    // Process the Facebook registration using the dedicated Facebook social auth endpoint
-    const response = await $fetch('/api/v1/auth/social/facebook', {
+    const socialUrl = '/api/v1/auth/social/facebook';
+    const response = await $fetch<any>(socialUrl, {
       method: 'POST',
       body: {
         accessToken: result.accessToken,
-        profile: {
-          name: result.profile?.name || result.profile?.displayName,
-          email: result.profile?.email,
-          id: result.profile?.id
-        }
       },
-      baseURL: useRuntimeConfig().public.originUrl,
+      baseURL: config.public.originUrl,
       credentials: 'include',
     });
 
-    // The server sets cookies, but for Capacitor we need to sync them
-    if (import.meta.client && (await useCapacitorDevice())) {
-      // Wait a bit for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('Server response received:', JSON.stringify(response, null, 2));
 
-      const cookies = await CapacitorCookies.getCookies();
-      console.log('🎈Facebook register cookies:🎈', cookies);
-      if (cookies.accessToken) {
-        accessToken.value = cookies.accessToken;
-      }
-    }
-
-    // Get user info from the response
     if (response && response.user) {
-      useUserStore().setUser({
-        username: response.user.name,
-        userId: response.user.userId,
-        role: response.user.role,
-      });
-
-      toast('Successfully registered/logged in with Facebook', {
-        theme: 'auto',
-        type: 'success',
-        position: 'top-center',
-        dangerouslyHTMLString: true,
-      });
-
-      const redirectPath = (route.query.redirect as string) || '/dashboard';
-      await navigateTo(localePath(redirectPath));
+      await handleSocialRegisterSuccess(response, 'Facebook');
     } else {
       throw new Error('User data not received from server');
     }
-  } catch (error) {
-    console.error('Facebook registration error:', error);
-    toast('Facebook sign-up failed, please try again', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-    });
-
-    // Fallback: If native fails, attempt web flow
-    if (import.meta.client) {
-      console.log('Falling back to web flow');
-      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/facebook`;
-    }
+  } catch (error: any) {
+    handleSocialRegisterError(error, 'Facebook');
   } finally {
+    console.log('--- facebookRegister Native End ---');
     loading.value = false;
+  }
+};
+
+// Helper to handle successful social registration/login
+const handleSocialRegisterSuccess = async (response: any, provider: string) => {
+  console.log(`${provider} auth successful, setting user store...`);
+
+  // Sync cookies for Capacitor
+  if (import.meta.client && (await useCapacitorDevice())) {
+    console.log('Capacitor device detected, syncing cookies...');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const cookies = await CapacitorCookies.getCookies();
+    console.log('Synced Cookies:', JSON.stringify(cookies, null, 2));
+    if (cookies.accessToken) {
+      accessToken.value = cookies.accessToken;
+    }
+  }
+
+  useUserStore().setUser({
+    username: response.user.name,
+    userId: response.user.userId,
+    role: response.user.role,
+  });
+
+  toast(`Successfully authenticated with ${provider}`, {
+    theme: 'auto',
+    type: 'success',
+    position: 'top-center',
+    dangerouslyHTMLString: true,
+  });
+
+  const redirectPath = (route.query.redirect as string) || '/dashboard';
+  console.log('Navigating to:', redirectPath);
+  await navigateTo(localePath(redirectPath));
+};
+
+// Helper to handle social registration errors
+const handleSocialRegisterError = (error: any, provider: string) => {
+  console.error(`--- ${provider} Registration Error ---`);
+  // Fix for [object Object] logging
+  console.error('Error Details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  
+  if (error.response) {
+    console.error('Response Data:', JSON.stringify(error.response._data, null, 2));
+  }
+  
+  toast(`${provider} sign-up failed. Please try again or use email.`, {
+    theme: 'dark',
+    type: 'error',
+    position: 'top-center',
+  });
+
+  // Fallback to web flow if appropriate
+  const isCapacitor = useRuntimeConfig().public.isCapacitor;
+  if (import.meta.client && !isCapacitor) {
+    console.log('FALLBACK: Attempting web-based auth flow');
+    window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider.toLowerCase()}`;
   }
 };
 </script>

@@ -3,6 +3,9 @@
 
 import type { CapacitorConfig } from '@capacitor/cli'
 import packageJson from './package.json'
+import 'dotenv/config'
+
+const domain = process.env.DOMAIN_NAME?.replace('https://', '') || 'baderidris.com';
 
 const config: CapacitorConfig = {
   appId: "com.baderidris.portfolio",
@@ -10,12 +13,14 @@ const config: CapacitorConfig = {
   webDir: "./.output/public",
   loggingBehavior: "production",
   appVersion: packageJson.version,
-  // server: {
-  //   hostname: 'localhost', // Default hostname used by Capacitor
-  //   androidScheme: 'https', // Ensures HTTPS for Android WebView
-  //   iosScheme: 'capacitor', // Ensures iOS uses 'capacitor' scheme
-  //   cleartext: true // Allows HTTP (non-secure) communication in dev mode. Disable in production!
-  // },
+  server: {
+    // Professional approach for Capacitor 7/8:
+    // Setting hostname to your domain ensures cookies are shared between
+    // the app WebView and your web server seamlessly.
+    hostname: domain,
+    androidScheme: 'https',
+    iosScheme: 'capacitor',
+  },
   plugins: {
     // docs: https://github.com/capacitor-community/sqlite
     CapacitorSQLite: {

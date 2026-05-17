@@ -1,19 +1,19 @@
-import { defineStore } from 'pinia';
-import { io, type Socket } from 'socket.io-client';
-import { Capacitor, CapacitorCookies } from '@capacitor/core';
-import { useOnlineUsersStore } from './useOnlineUsersStore';
-import { useMessagesStore } from './useMessagesStore';
-import { useSound } from '~/composables/useSound';
-import { useUserStore } from './useUserSocket';
+import { defineStore } from "pinia";
+import { io, type Socket } from "socket.io-client";
+import { Capacitor, CapacitorCookies } from "@capacitor/core";
+import { useOnlineUsersStore } from "./useOnlineUsersStore";
+import { useMessagesStore } from "./useMessagesStore";
+import { useSound } from "~/composables/useSound";
+import { useUserStore } from "./useUserSocket";
 
 export interface SocketCurrentUser {
   userId: string;
   name: string;
   socketId: string;
-  role: 'admin' | 'user' | 'guest';
+  role: "admin" | "user" | "guest";
 }
 
-export const useSocketStore = defineStore('socket', () => {
+export const useSocketStore = defineStore("socket", () => {
   // --- DEPENDENCIES ---
   const onlineUsersStore = useOnlineUsersStore();
   const sound = useSound();
@@ -25,22 +25,24 @@ export const useSocketStore = defineStore('socket', () => {
   const isConnecting = ref(false);
   const connectionError = ref<string | null>(null);
   const currentUser = ref<SocketCurrentUser | null>(null);
-  const transport = ref<'polling' | 'websocket' | 'webtransport' | 'N/A'>('N/A');
+  const transport = ref<"polling" | "websocket" | "webtransport" | "N/A">(
+    "N/A",
+  );
 
   // --- GETTERS ---
   const getConnectionStatus = computed(() => isConnected.value);
 
   // --- HELPERS ---
-  async function getCookieStringForCapacitor(): Promise<string> {
-    if (!Capacitor.isNativePlatform()) return '';
+  async function _getCookieStringForCapacitor(): Promise<string> {
+    if (!Capacitor.isNativePlatform()) return "";
     try {
       const cookies = await CapacitorCookies.getCookies();
       return Object.entries(cookies)
         .map(([key, value]) => `${key}=${value}`)
-        .join('; ');
+        .join("; ");
     } catch (e) {
-      console.error('Error getting cookies in Capacitor:', e);
-      return '';
+      console.error("Error getting cookies in Capacitor:", e);
+      return "";
     }
   }
 
@@ -53,7 +55,7 @@ export const useSocketStore = defineStore('socket', () => {
       return;
     }
 
-    console.log('Initializing new socket instance...');
+    console.log("Initializing new socket instance...");
     isConnecting.value = true;
 
     const options: any = {
@@ -75,80 +77,81 @@ export const useSocketStore = defineStore('socket', () => {
   function bindBaseEvents() {
     if (!socket.value) return;
 
-    socket.value.on('connect', () => {
-      console.log('Socket connected successfully!');
+    socket.value.on("connect", () => {
+      console.log("Socket connected successfully!");
       isConnected.value = true;
       isConnecting.value = false;
       connectionError.value = null;
       transport.value = socket.value?.io.engine.transport.name as any;
-      sound.playSound('connect');
+      sound.playSound("connect");
     });
 
-    socket.value.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+    socket.value.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
       isConnected.value = false;
       isConnecting.value = false;
-      transport.value = 'N/A';
-      
+      transport.value = "N/A";
+
       // CRITICAL FIX: Only clear the user session if the server explicitly kicks them out.
       // This prevents logging out on a temporary network failure.
-      if (reason === 'io server disconnect') {
-        console.error('Disconnected by server, session is likely invalid.');
-        connectionError.value = 'Disconnected by server. Your session may have expired.';
+      if (reason === "io server disconnect") {
+        console.error("Disconnected by server, session is likely invalid.");
+        connectionError.value =
+          "Disconnected by server. Your session may have expired.";
         currentUser.value = null;
         onlineUsersStore.clearUsers();
-        
+
         // Use the user store to properly clear the user session.
         const userStore = useUserStore();
         userStore.clearUser();
       }
       // For other reasons like 'transport close', we just show 'Disconnected' and allow auto-reconnect.
-      sound.playSound('disconnect');
+      sound.playSound("disconnect");
     });
 
-    socket.value.on('connect_error', (error) => {
-      console.error('Socket connection error:', error.message);
+    socket.value.on("connect_error", (error) => {
+      console.error("Socket connection error:", error.message);
       isConnected.value = false;
       isConnecting.value = false;
       connectionError.value = error.message;
-      sound.playSound('error');
+      // sound.playSound("error");
       // A failed socket connection should not automatically log the user out.
       // The UI should display the connection error, and socket.io will handle reconnection attempts.
     });
 
-    socket.value.on('connection-established', (data: SocketCurrentUser) => {
+    socket.value.on("connection-established", (data: SocketCurrentUser) => {
       currentUser.value = data;
     });
-    
-    socket.value.on('online-users', (users) => {
+
+    socket.value.on("online-users", (users) => {
       onlineUsersStore.setUsers(users);
     });
 
-    socket.value.on('user-joined', (user) => {
+    socket.value.on("user-joined", (user) => {
       onlineUsersStore.addUser(user);
     });
 
-    socket.value.on('user-left', (userId) => {
+    socket.value.on("user-left", (userId) => {
       onlineUsersStore.removeUser(userId);
     });
 
     const messagesStore = useMessagesStore();
-    socket.value.on('private-message', (message) => {
+    socket.value.on("private-message", (message) => {
       messagesStore.addMessage(message);
       const userStore = useUserStore();
       if (message.from !== userStore.getUserId) {
-        sound.playSound('newMessage');
+        sound.playSound("newMessage");
       }
     });
 
-    socket.value.on('message-history', ({ recipientId, messages }) => {
+    socket.value.on("message-history", ({ recipientId, messages }) => {
       messagesStore.setMessages(recipientId, messages);
     });
   }
 
   function disconnectSocket() {
     if (socket.value) {
-      console.log('Disconnecting socket manually...');
+      console.log("Disconnecting socket manually...");
       socket.value.disconnect();
     }
     socket.value = null;
@@ -159,11 +162,19 @@ export const useSocketStore = defineStore('socket', () => {
   }
 
   function sendPrivateMessage(recipientId: string, message: string) {
-    socket.value?.emit('private-message', { to: recipientId, message, timestamp: new Date().toISOString() });
+    socket.value?.emit("private-message", {
+      to: recipientId,
+      message,
+      timestamp: new Date().toISOString(),
+    });
   }
 
-  function fetchMessageHistory(recipientId: string, page: number, limit: number) {
-    socket.value?.emit('get-message-history', { recipientId, page, limit });
+  function fetchMessageHistory(
+    recipientId: string,
+    page: number,
+    limit: number,
+  ) {
+    socket.value?.emit("get-message-history", { recipientId, page, limit });
   }
 
   return {
@@ -172,6 +183,7 @@ export const useSocketStore = defineStore('socket', () => {
     connectionError,
     currentUser,
     socket,
+    transport,
     initializeSocket,
     disconnectSocket,
     sendPrivateMessage,

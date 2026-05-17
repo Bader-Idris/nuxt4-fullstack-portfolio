@@ -7,16 +7,24 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
     const { provider, profile, accessToken, idToken } = body;
+    console.log('--- Social Auth Callback Start ---');
+    console.log('Provider:', provider);
+    console.log('Profile:', JSON.stringify(profile, null, 2));
 
     if (!provider || !profile) {
+      console.error('Error: Provider and profile are required');
       throw createError({
         statusCode: 400,
         statusMessage: "Provider and profile are required",
       });
     }
 
-    // Find or create user based on the provider
     let user = await User.findOne({ email: profile.email });
+    if (user) {
+      console.log('Found existing user:', user.email, 'Current Provider:', user.provider);
+    } else {
+      console.log('Creating new user for:', profile.email);
+    }
 
     if (!user) {
       // Create new user
@@ -29,20 +37,21 @@ export default defineEventHandler(async (event) => {
       });
       await user.save();
     } else {
-      // Update existing user with provider info if needed
       if (user.provider !== provider) {
+        console.log(`Updating provider from ${user.provider} to ${provider}`);
         user.provider = provider;
-        user.password = undefined; // Clear password if they switch to OAuth
+        user.password = undefined; 
+        user.isVerified = true;
         await user.save();
       }
     }
 
-    // --- UNIFIED TOKEN AND COOKIE LOGIC ---
     const tokenUser = createTokenUser(user);
     let refreshToken = "";
     const existingToken = await Token.findOne({ user: user._id });
 
     if (existingToken && existingToken.isValid) {
+      console.log('Using existing refresh token');
       refreshToken = existingToken.refreshToken;
     } else {
       if (existingToken) {
@@ -52,19 +61,21 @@ export default defineEventHandler(async (event) => {
       const userAgent = getRequestHeader(event, "user-agent") || "";
       const ip = getRequestIP(event, { xForwardedFor: true });
       await Token.create({ refreshToken, ip, userAgent, user: user._id });
+      console.log('New refresh token saved to DB');
     }
 
+    console.log('Attaching cookies...');
     attachCookiesToResponse(event, tokenUser, refreshToken);
-    // --- END OF UNIFIED LOGIC ---
-
-    // Return user data instead of redirecting for the Capacitor flow
+    
+    console.log('--- Social Auth Callback Success ---');
     return { user: tokenUser };
 
-  } catch (error) {
-    console.error("Social auth callback error:", error);
+  } catch (error: any) {
+    console.error("--- Social auth callback error CRASH ---");
+    console.error("Error details:", error);
     throw createError({
-      statusCode: 500,
-      statusMessage: "Social authentication failed",
+      statusCode: error.statusCode || 500,
+      statusMessage: error.statusMessage || "Social authentication failed",
     });
   }
 });

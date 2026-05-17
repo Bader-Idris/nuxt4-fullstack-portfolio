@@ -52,6 +52,14 @@
         />
       </button>
     </div>
+
+    <div v-if="userNotFound" class="prompt">
+      <CustomButton button-type="ghost">
+        <CustomLink aria-label="register page" :to="localePath('/register')" class="internal-link">
+          No account found? Register here
+        </CustomLink>
+      </CustomButton>
+    </div>
   </div>
 </template>
 
@@ -87,6 +95,7 @@ const password = ref<string>('');
 const loading = ref<boolean>(false);
 const googleLoading = ref<boolean>(false); // Specific loading state for Google auth
 const facebookLoading = ref<boolean>(false); // Specific loading state for Facebook auth
+const userNotFound = ref<boolean>(false); // State to show registration link
 // Access token from cookie
 const accessToken = useCookie<string | undefined>('accessToken')
 const isCapacitorDevice: Promise<boolean> = useCapacitorDevice()
@@ -115,6 +124,7 @@ interface User {
 // Function to handle login
 const login = async (): Promise<void> => {
   loading.value = true;
+  userNotFound.value = false;
 
   const url = `/api/v1/auth/login`;
   const data = {
@@ -153,10 +163,15 @@ const login = async (): Promise<void> => {
     // await navigateTo(localePath('/dashboard'), {
     //   redirectCode: 302,
     // });
-
-  } catch (error) {
-    console.error('Login error: ', error);
+  } catch (error: any) {
+    console.error('Login error: ', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     const friendlyMessage = getFriendlyErrorMessage(error);
+    
+    // Check if error is specifically about non-existent user (401 is general, but often implies no match)
+    if (error.status === 401 || error.status === 404) {
+      userNotFound.value = true;
+    }
+
     toast(friendlyMessage, {
       theme: 'dark',
       type: 'error',
@@ -199,91 +214,56 @@ const socialLogin = async (provider: string) => {
 // Google authentication function for Capacitor devices using @capgo/capacitor-social-login
 const google = async () => {
   googleLoading.value = true;
+  console.log('--- googleLogin Native Start ---');
 
   try {
     // Dynamically import the social login plugin
+    const config = useRuntimeConfig();
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
-
-    const config = useRuntimeConfig()
-
-    // Perform Google sign-in
+    
+    console.log('Calling SocialLogin.login for Google...');
     const result = await SocialLogin.login({
       provider: 'google',
       options: {
-        webClientId: config.public.googleClientId,
-        offlineAccess: false, // Set to false for online mode
+        scopes: ['openid', 'profile', 'email'],
       }
     });
+    console.log('SocialLogin.login result:', JSON.stringify(result, null, 2));
 
     if (!result.accessToken) {
       throw new Error('No access token received from Google');
     }
 
     // Use the dedicated Google social auth endpoint for Capacitor
-    const response = await $fetch('/api/v1/auth/social/google', {
+    const socialUrl = '/api/v1/auth/social/google';
+    console.log('Sending token to server:', socialUrl);
+    
+    const response = await $fetch<any>(socialUrl, {
       method: 'POST',
       body: {
         accessToken: result.accessToken,
-        profile: {
-          name: result.profile?.name || result.profile?.displayName,
-          email: result.profile?.email,
-          id: result.profile?.id
-        }
+        // profile: {
+        //   name: result.profile?.name || result.profile?.displayName,
+        //   email: result.profile?.email,
+        //   id: result.profile?.id
+        // }
+        idToken: result.idToken, // Optional, but good for extra validation if server supports it
       },
-      baseURL: useRuntimeConfig().public.originUrl,
+      baseURL: config.public.originUrl,
       credentials: 'include',
     });
+    
+    console.log('Server response:', JSON.stringify(response, null, 2));
 
-    // The server sets cookies, but for Capacitor we need to sync them
-    if (import.meta.client && (await isCapacitorDevice)) {
-      // Wait a bit for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const cookies = await CapacitorCookies.getCookies();
-      console.log('🎈Google cookies:🎈', cookies);
-      if (cookies.accessToken) {
-        accessToken.value = cookies.accessToken;
-      }
-    }
-
-    // Set user in store using response data
     if (response && response.user) {
-      const userData = {
-        username: response.user.name,
-        userId: response.user.userId,
-        role: response.user.role,
-      };
-      userStore.setUser(userData);
-
-      // Display success toast message
-      toast('Successfully logged in with Google', {
-        theme: 'auto',
-        type: 'success',
-        position: 'top-center',
-        dangerouslyHTMLString: true,
-      });
-
-      // Navigate to dashboard
-      await navigateTo(localePath('/dashboard'), {
-        redirectCode: 302,
-      });
+      await handleSocialLoginSuccess(response, 'Google');
     } else {
       throw new Error('User data not received from server');
     }
-  } catch (error) {
-    console.error('Google authentication error:', error);
-    toast('Google sign-in failed, please try again', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-    });
-
-    // Fallback: If native fails, attempt web flow
-    if (import.meta.client) {
-      console.log('Falling back to web flow');
-      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/google`;
-    }
+  } catch (error: any) {
+    handleSocialLoginError(error, 'Google');
   } finally {
+    console.log('--- googleLogin Native End ---');
     googleLoading.value = false;
   }
 };
@@ -291,92 +271,113 @@ const google = async () => {
 // Facebook authentication function for Capacitor devices using @capgo/capacitor-social-login
 const facebook = async () => {
   facebookLoading.value = true;
+  console.log('--- facebookLogin Native Start ---');
 
   try {
     // Dynamically import the social login plugin
+    const config = useRuntimeConfig();
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
 
-    // Perform Facebook sign-in
+    console.log('Calling SocialLogin.login for Facebook...');
     const result = await SocialLogin.login({
       provider: 'facebook',
       options: {
-        // Add any specific Facebook permissions here if needed
-        permissions: ['public_profile', 'user_friends', 'email'],
+        permissions: ['public_profile', 'email'],
       }
     });
+    console.log('SocialLogin.login result:', JSON.stringify(result, null, 2));
 
     if (!result.accessToken) {
       throw new Error('No access token received from Facebook');
     }
 
-    // Use the dedicated Facebook social auth endpoint for Capacitor
-    const response = await $fetch('/api/v1/auth/social/facebook', {
+    const socialUrl = '/api/v1/auth/social/facebook';
+    console.log('Sending token to server:', socialUrl);
+
+    const response = await $fetch<any>(socialUrl, {
       method: 'POST',
       body: {
         accessToken: result.accessToken,
-        profile: {
-          name: result.profile?.name || result.profile?.displayName,
-          email: result.profile?.email,
-          id: result.profile?.id
-        }
+        // profile: {
+        //   name: result.profile?.name || result.profile?.displayName,
+        //   email: result.profile?.email,
+        //   id: result.profile?.id
+        // }
       },
-      baseURL: useRuntimeConfig().public.originUrl,
+      baseURL: config.public.originUrl,
       credentials: 'include',
     });
 
-    // The server sets cookies, but for Capacitor we need to sync them
-    let accessTokenFromCookie = null;
-    if (import.meta.client && (await isCapacitorDevice)) {
-      // Wait a bit for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('Server response:', JSON.stringify(response, null, 2));
 
-      const cookies = await CapacitorCookies.getCookies();
-      console.log('🎈Facebook cookies:🎈', cookies);
-      if (cookies.accessToken) {
-        accessToken.value = cookies.accessToken;
-        accessTokenFromCookie = cookies.accessToken;
-      }
-    }
-
-    // Set user in store using response data
     if (response && response.user) {
-      const userData = {
-        username: response.user.name,
-        userId: response.user.userId,
-        role: response.user.role,
-      };
-      userStore.setUser(userData);
-
-      // Display success toast message
-      toast('Successfully logged in with Facebook', {
-        theme: 'auto',
-        type: 'success',
-        position: 'top-center',
-        dangerouslyHTMLString: true,
-      });
-
-      // Navigate to dashboard
-      await navigateTo(localePath('/dashboard'), {
-        redirectCode: 302,
-      });
+      await handleSocialLoginSuccess(response, 'Facebook');
     } else {
       throw new Error('User data not received from server');
     }
-  } catch (error) {
-    console.error('Facebook authentication error:', error);
-    toast('Facebook sign-in failed, please try again', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
-    });
-
-    // Fallback: If native fails, attempt web flow
-    if (import.meta.client) {
-      console.log('Falling back to web flow');
-      window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/facebook`;
-    }
+  } catch (error: any) {
+    handleSocialLoginError(error, 'Facebook');
   } finally {
+    console.log('--- facebookLogin Native End ---');
     facebookLoading.value = false;
+  }
+};
+
+// Helper to handle successful social login
+const handleSocialLoginSuccess = async (response: any, provider: string) => {
+  console.log(`${provider} auth successful, setting user store...`);
+  
+  // Sync cookies for Capacitor
+  if (import.meta.client && (await isCapacitorDevice)) {
+    console.log('Capacitor device detected, syncing cookies...');
+    await new Promise(resolve => setTimeout(resolve, 800)); // Wait for cookies to be set
+    const cookies = await CapacitorCookies.getCookies();
+    console.log('Synced Cookies:', JSON.stringify(cookies, null, 2));
+    if (cookies.accessToken) {
+      accessToken.value = cookies.accessToken;
+    }
+  }
+
+  const userData = {
+    username: response.user.name,
+    userId: response.user.userId,
+    role: response.user.role,
+  };
+  userStore.setUser(userData);
+
+  toast(`Successfully logged in with ${provider}`, {
+    theme: 'auto',
+    type: 'success',
+    position: 'top-center',
+    dangerouslyHTMLString: true,
+  });
+
+  console.log('Navigating to dashboard...');
+  await navigateTo(localePath('/dashboard'), {
+    redirectCode: 302,
+  });
+};
+
+// Helper to handle social login errors
+const handleSocialLoginError = (error: any, provider: string) => {
+  console.error(`--- ${provider} Authentication Error ---`);
+  // Fix for [object Object] logging
+  console.error('Error Details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  
+  if (error.response) {
+    console.error('Response Data:', JSON.stringify(error.response._data, null, 2));
+  }
+
+  toast(`${provider} sign-in failed. Please try again or use email.`, {
+    theme: 'dark',
+    type: 'error',
+    position: 'top-center',
+  });
+
+  // Fallback to web flow if appropriate
+  if (import.meta.client && !isCapacitorDevice) {
+    console.log('FALLBACK: Attempting web-based auth flow');
+    window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider.toLowerCase()}`;
   }
 };
 </script>

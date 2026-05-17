@@ -1,6 +1,6 @@
 {
   "name": "nuxt4-fullstack-portfolio",
-  "version": "3.3.3",
+  "version": "3.3.4",
   "private": true,
   "packageManager": "pnpm@10.3.0",
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",
@@ -170,7 +170,7 @@
     "prisma": "^7.8.0",
     "sass": "^1.99.0",
     "terser": "^5.47.1",
-    "tsx": "^4.22.0",
+    "tsx": "^4.22.1",
     "typescript": "^6.0.3",
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.7",
@@ -197,5 +197,8 @@
     "last 2 versions",
     "not dead",
     "not ie 11"
+  ],
+  "workspaces": [
+    "."
   ]
 }
