@@ -1,8 +1,5 @@
 <template>
-  <button
-    :class="['button-style', buttonType]"
-    draggable="false"
-  >
+  <button :class="['button-style', buttonType]" draggable="false">
     <slot />
   </button>
   <!-- use as <CustomButton button-type="ghost">txt</CustomButton>  -->
@@ -10,11 +7,11 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  buttonType?: 'primary' | 'default' | 'ghost' // Define allowed types
-}>()
+  buttonType?: "primary" | "default" | "ghost"; // Define allowed types
+}>();
 
 // Use props in your script to avoid the 'unused variable' error
-const buttonType = props.buttonType || 'default' // Default to "default" if not provided
+const buttonType = props.buttonType || "default"; // Default to "default" if not provided
 </script>
 
 <style lang="scss">

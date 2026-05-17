@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { Schema, model } from "mongoose";
 
 const TokenSchema = new Schema<IToken>(
   {
@@ -8,12 +8,12 @@ const TokenSchema = new Schema<IToken>(
     isValid: { type: Boolean, default: true },
     user: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       index: true,
     },
   },
   { timestamps: true },
-)
+);
 
-export const Token = model<IToken>('Token', TokenSchema)
+export const Token = model<IToken>("Token", TokenSchema);

@@ -31,11 +31,14 @@
       </p>
       <ul>
         <li>Name and contact details (e.g., email address, phone number)</li>
-        <li>Billing information (e.g., payment method details, billing address)
+        <li>
+          Billing information (e.g., payment method details, billing address)
         </li>
         <li>Account credentials (e.g., username, password)</li>
-        <li>Project-related information (e.g., specifications, feedback, or
-          content provided for custom development)</li>
+        <li>
+          Project-related information (e.g., specifications, feedback, or
+          content provided for custom development)
+        </li>
       </ul>
       <h3>2.2 Usage Data</h3>
       <p>
@@ -43,10 +46,13 @@
         Services, including:
       </p>
       <ul>
-        <li>Device information (e.g., IP address, browser type, operating
-          system)</li>
-        <li>Usage patterns (e.g., pages visited, time spent, clicks, and
-          navigation paths)</li>
+        <li>
+          Device information (e.g., IP address, browser type, operating system)
+        </li>
+        <li>
+          Usage patterns (e.g., pages visited, time spent, clicks, and
+          navigation paths)
+        </li>
         <li>Analytics data (e.g., session duration, feature usage)</li>
       </ul>
       <h3>2.3 Cookies and Tracking Technologies</h3>
@@ -55,12 +61,18 @@
         experience and analyze usage. These may include:
       </p>
       <ul>
-        <li><strong>Necessary Cookies:</strong> Enable core functionality, such
-          as authentication and session management.</li>
-        <li><strong>Functionality Cookies:</strong> Remember your preferences
-          (e.g., language settings).</li>
-        <li><strong>Analytics Cookies:</strong> Track usage trends to improve
-          our Services.</li>
+        <li>
+          <strong>Necessary Cookies:</strong> Enable core functionality, such as
+          authentication and session management.
+        </li>
+        <li>
+          <strong>Functionality Cookies:</strong> Remember your preferences
+          (e.g., language settings).
+        </li>
+        <li>
+          <strong>Analytics Cookies:</strong> Track usage trends to improve our
+          Services.
+        </li>
       </ul>
       <p>
         You can manage cookie preferences through your browser settings, but
@@ -81,41 +93,50 @@
         including:
       </p>
       <ul>
-        <li>Delivering custom development projects, digital goods, and online
-          courses.</li>
+        <li>
+          Delivering custom development projects, digital goods, and online
+          courses.
+        </li>
         <li>Processing payments and fulfilling orders.</li>
         <li>Authenticating users and securing accounts.</li>
-        <li>Communicating with you about your account, projects, or updates.
+        <li>
+          Communicating with you about your account, projects, or updates.
         </li>
         <li>Analyzing usage to optimize performance and user experience.</li>
-        <li>Marketing our Services, with your consent where required (e.g.,
-          newsletters).</li>
+        <li>
+          Marketing our Services, with your consent where required (e.g.,
+          newsletters).
+        </li>
         <li>Complying with legal obligations or resolving disputes.</li>
       </ul>
     </section>
 
     <section>
       <h2>4. Sharing Your Information</h2>
-      <p>
-        We may share your information in the following circumstances:
-      </p>
+      <p>We may share your information in the following circumstances:</p>
       <ul>
-        <li><strong>With Service Providers:</strong> We use trusted third-party
+        <li>
+          <strong>With Service Providers:</strong> We use trusted third-party
           providers (e.g., payment processors like PayPal or Stripe, hosting
           services) to facilitate our Services. These providers are bound by
-          confidentiality agreements.</li>
-        <li><strong>For Legal Purposes:</strong> We may disclose data to comply
+          confidentiality agreements.
+        </li>
+        <li>
+          <strong>For Legal Purposes:</strong> We may disclose data to comply
           with legal obligations, respond to government requests, or protect our
-          rights, users, or the public.</li>
-        <li><strong>In Business Transfers:</strong> If we undergo a merger,
+          rights, users, or the public.
+        </li>
+        <li>
+          <strong>In Business Transfers:</strong> If we undergo a merger,
           acquisition, or asset sale, your data may be transferred, with notice
-          provided where feasible.</li>
-        <li><strong>With Your Consent:</strong> We may share data for other
-          purposes if you explicitly agree.</li>
+          provided where feasible.
+        </li>
+        <li>
+          <strong>With Your Consent:</strong> We may share data for other
+          purposes if you explicitly agree.
+        </li>
       </ul>
-      <p>
-        We do not sell your personal information to third parties.
-      </p>
+      <p>We do not sell your personal information to third parties.</p>
     </section>
 
     <section>
@@ -141,9 +162,7 @@
 
     <section>
       <h2>7. Your Privacy Rights</h2>
-      <p>
-        Depending on your jurisdiction, you may have rights to:
-      </p>
+      <p>Depending on your jurisdiction, you may have rights to:</p>
       <ul>
         <li>Access or receive a copy of your personal data.</li>
         <li>Correct inaccurate or incomplete data.</li>
@@ -198,10 +217,13 @@
       <h2>12. Contact Us</h2>
       <p>If you have questions about this Privacy Policy, please contact us:</p>
       <ul>
-        <li>Email: <a
-            href="mailto:contact@baderidris.com">contact@baderidris.com</a></li>
-        <li>Contact Page: <a
-            href="https://baderidris.com/contact">baderidris.com/contact</a>
+        <li>
+          Email:
+          <a href="mailto:contact@baderidris.com">contact@baderidris.com</a>
+        </li>
+        <li>
+          Contact Page:
+          <a href="https://baderidris.com/contact">baderidris.com/contact</a>
         </li>
         <li>Phone: +970595744368</li>
       </ul>
@@ -211,9 +233,10 @@
 
 <script setup>
 useSeoMeta({
-  title: 'Privacy Policy - Bader Idris Portfolio',
-  description: 'Learn how Bader Idris Portfolio collects, uses, and protects your data when using our full-stack development services, digital products, and online courses.'
-})
+  title: "Privacy Policy - Bader Idris Portfolio",
+  description:
+    "Learn how Bader Idris Portfolio collects, uses, and protects your data when using our full-stack development services, digital products, and online courses.",
+});
 </script>
 
 <style lang="scss" scoped>
@@ -222,7 +245,7 @@ useSeoMeta({
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   color: #333;
 
   h1 {

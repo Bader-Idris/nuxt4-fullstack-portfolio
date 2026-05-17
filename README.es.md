@@ -2,18 +2,18 @@
 
 <div align="left">
 
-**Idioma:** 
+**Idioma:**
 <a href="./README.md">
-  <img src="https://flagcdn.com/16x12/us.png" alt="English" width="16" height="12">
-  English
-</a> | 
+<img src="https://flagcdn.com/16x12/us.png" alt="English" width="16" height="12">
+English
+</a> |
 <a href="./README.ar.md">
-  <img src="https://flagcdn.com/16x12/sa.png" alt="العربية" width="16" height="12">
-  العربية
-</a> | 
+<img src="https://flagcdn.com/16x12/sa.png" alt="العربية" width="16" height="12">
+العربية
+</a> |
 <a href="./README.es.md">
-  <img src="https://flagcdn.com/16x12/es.png" alt="Español" width="16" height="12">
-  Español
+<img src="https://flagcdn.com/16x12/es.png" alt="Español" width="16" height="12">
+Español
 </a>
 
 </div>
@@ -338,7 +338,6 @@ Para crear una compilación de producción para Electron:
    ```
 
 2. Use los siguientes comandos para compilar la aplicación Electron:
-
    - `bun run build:electron`: Compilar para la plataforma actual
    - `bun run build:electron:all`: Compilar para Windows, macOS y Linux
    - `bun run build:electron:win`: Compilar solo para Windows

@@ -2,25 +2,25 @@
 
 <div align="left">
 
-**اللغة:** 
+**اللغة:**
 <a href="./README.md">
-  <img src="https://flagcdn.com/16x12/us.png" alt="English" width="16" height="12">
-  English
-</a> | 
+<img src="https://flagcdn.com/16x12/us.png" alt="English" width="16" height="12">
+English
+</a> |
 <a href="./README.ar.md">
-  <img src="https://flagcdn.com/16x12/sa.png" alt="العربية" width="16" height="12">
-  العربية
-</a> | 
+<img src="https://flagcdn.com/16x12/sa.png" alt="العربية" width="16" height="12">
+العربية
+</a> |
 <a href="./README.es.md">
-  <img src="https://flagcdn.com/16x12/es.png" alt="Español" width="16" height="12">
-  Español
+<img src="https://flagcdn.com/16x12/es.png" alt="Español" width="16" height="12">
+Español
 </a>
 
 </div>
 
 [![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt3-fullstack-portfolio/26e3f86aaa361639f25b0ce933df59ea982e5e41/client/public/thumbnail-ar.png)](https://baderidris.com)
 
-تطبيق شامل متعدد الطبقات والميزات مبني باستخدام Nuxt 4، يحتوي على ميزات الاتصال الفوري (websocket)، التحقق من المستخدم (auth)، ويدعم العديد من  المنصات. لمزيد من المعلومات التفصيلية، راجع [وثائق Nuxt](https://nuxt.com/docs/getting-started/introduction).
+تطبيق شامل متعدد الطبقات والميزات مبني باستخدام Nuxt 4، يحتوي على ميزات الاتصال الفوري (websocket)، التحقق من المستخدم (auth)، ويدعم العديد من المنصات. لمزيد من المعلومات التفصيلية، راجع [وثائق Nuxt](https://nuxt.com/docs/getting-started/introduction).
 
 ## فهرس المحتويات
 
@@ -250,7 +250,7 @@ docker compose -f ./a.prod-certbot.yml up -d --build
 # حول ملف داكر إلى نسختك الخاصة
 cp ./compose.prod.test.yaml.example ./compose.prod.test.yaml
 # ومن ثم أوقف نسخة التطوير وابدأ في بناء المشروع
-docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d redis postgres mongo ; docker compose -f compose.prod.test.yaml build --progress=plain app; docker compose -f compose.prod.test.yaml up -d 
+docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d redis postgres mongo ; docker compose -f compose.prod.test.yaml build --progress=plain app; docker compose -f compose.prod.test.yaml up -d
 ```
 
 > [!CAUTION]  
@@ -338,7 +338,6 @@ bunx capacitor-assets generate --assetPath "./assets" --ios --android
    ```
 
 2. استخدم الأوامر التالية لبناء تطبيق Electron:
-
    - `bun run build:electron`: بناء للمنصة الحالية
    - `bun run build:electron:all`: بناء لـ Windows وmacOS وLinux
    - `bun run build:electron:win`: بناء لـ Windows فقط

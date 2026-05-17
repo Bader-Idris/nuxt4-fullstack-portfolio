@@ -17,28 +17,27 @@ the [Basis GitHub repository](https://github.com/BinomialLLC/basis_universal).
 
 The folder contains two files required for transcoding `.basis` or `.ktx2` textures:
 
-* `basis_transcoder.js` — JavaScript wrapper for the WebAssembly transcoder.
-* `basis_transcoder.wasm` — WebAssembly transcoder.
+- `basis_transcoder.js` — JavaScript wrapper for the WebAssembly transcoder.
+- `basis_transcoder.wasm` — WebAssembly transcoder.
 
 Both are dependencies of `KTX2Loader`:
 
 ```js
 const ktx2Loader = new KTX2Loader();
-ktx2Loader.setTranscoderPath( 'examples/jsm/libs/basis/' );
-ktx2Loader.detectSupport( renderer );
-ktx2Loader.load( 'diffuse.ktx2', function ( texture ) {
-
-	const material = new THREE.MeshStandardMaterial( { map: texture } );
-
-}, function () {
-
-	console.log( 'onProgress' );
-
-}, function ( e ) {
-
-	console.error( e );
-
-} );
+ktx2Loader.setTranscoderPath("examples/jsm/libs/basis/");
+ktx2Loader.detectSupport(renderer);
+ktx2Loader.load(
+  "diffuse.ktx2",
+  function (texture) {
+    const material = new THREE.MeshStandardMaterial({ map: texture });
+  },
+  function () {
+    console.log("onProgress");
+  },
+  function (e) {
+    console.error(e);
+  },
+);
 ```
 
 ## License

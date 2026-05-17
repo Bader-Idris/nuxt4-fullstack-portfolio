@@ -1,34 +1,41 @@
-import crypto from 'node:crypto'
-import { User, Token } from '../../../models/mongo/index'
-import { createTokenUser, attachCookiesToResponse } from '../../../utils'
-import { validateGoogleToken, validateFacebookToken, findOrCreateSocialUser } from '../../../utils/socialAuth'
+import crypto from "node:crypto";
+import { User, Token } from "../../../models/mongo/index";
+import { createTokenUser, attachCookiesToResponse } from "../../../utils";
+import {
+  validateGoogleToken,
+  validateFacebookToken,
+  findOrCreateSocialUser,
+} from "../../../utils/socialAuth";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { email, name, password, provider, profile, accessToken, idToken } = body
+  const body = await readBody(event);
+  const { email, name, password, provider, profile, accessToken, idToken } =
+    body;
 
   // --- Capacitor Social Login handling ---
-  if (provider && provider !== 'email') {
+  if (provider && provider !== "email") {
     console.log(`--- Capacitor Social Registration Start (${provider}) ---`);
-    
+
     try {
       let socialProfile;
-      if (provider === 'google') {
+      if (provider === "google") {
         socialProfile = await validateGoogleToken(accessToken, idToken);
-      } else if (provider === 'facebook') {
+      } else if (provider === "facebook") {
         socialProfile = await validateFacebookToken(accessToken);
       } else {
-        console.warn(`Validation not implemented for provider: ${provider}. Using provided profile.`);
+        console.warn(
+          `Validation not implemented for provider: ${provider}. Using provided profile.`,
+        );
         socialProfile = profile;
       }
 
       if (!socialProfile) {
-        throw new Error('Social authentication failed');
+        throw new Error("Social authentication failed");
       }
 
       const user = await findOrCreateSocialUser(socialProfile, provider);
       const tokenUser = createTokenUser(user);
-      
+
       let refreshToken = "";
       const existingToken = await Token.findOne({ user: user._id });
 
@@ -43,27 +50,32 @@ export default defineEventHandler(async (event) => {
       }
 
       attachCookiesToResponse(event, tokenUser, refreshToken);
-      console.log(`--- Capacitor Social Registration Success (${provider}) ---`);
+      console.log(
+        `--- Capacitor Social Registration Success (${provider}) ---`,
+      );
       return {
         user: tokenUser,
         message: `Successfully authenticated with ${provider}`,
-      }
+      };
     } catch (error: any) {
-      console.error(`--- Capacitor Social Registration Error (${provider}) ---`, error);
+      console.error(
+        `--- Capacitor Social Registration Error (${provider}) ---`,
+        error,
+      );
       throw createError({
         statusCode: 401,
-        statusMessage: error.message || 'Social authentication failed',
+        statusMessage: error.message || "Social authentication failed",
       });
     }
   }
   // --- End of Capacitor Social Login handling ---
 
-  const emailAlreadyExists = await User.findOne({ email })
+  const emailAlreadyExists = await User.findOne({ email });
   if (emailAlreadyExists) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Email already exists',
-    })
+      statusMessage: "Email already exists",
+    });
     /*
     if (emailAlreadyExists) {
       return {
@@ -74,9 +86,9 @@ export default defineEventHandler(async (event) => {
     */
   }
 
-  const isFirstAccount = (await User.countDocuments({})) === 0
-  const role = isFirstAccount ? 'admin' : 'user'
-  const verificationToken = crypto.randomBytes(40).toString('hex')
+  const isFirstAccount = (await User.countDocuments({})) === 0;
+  const role = isFirstAccount ? "admin" : "user";
+  const verificationToken = crypto.randomBytes(40).toString("hex");
 
   const user = await User.create({
     name,
@@ -84,7 +96,7 @@ export default defineEventHandler(async (event) => {
     password,
     role,
     verificationToken,
-  })
+  });
 
   await sendVerificationEmail({
     name: user.name,
@@ -92,10 +104,10 @@ export default defineEventHandler(async (event) => {
     // @ts-ignore fix its types
     verificationToken: user.verificationToken,
     origin: useRuntimeConfig().originUrl,
-  })
+  });
 
   return {
     statusCode: 201,
-    message: 'Success! Please check your email to verify account',
-  }
-})
+    message: "Success! Please check your email to verify account",
+  };
+});

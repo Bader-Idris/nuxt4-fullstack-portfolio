@@ -9,24 +9,24 @@
     <div class="container">
       <section>
         <div class="info">
-          <span class="greeting" >{{ $t('home.greeting') }}</span>
+          <span class="greeting">{{ $t("home.greeting") }}</span>
           <!-- :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" -->
-          <h1 class="name">{{ $t('home.name') }}</h1>
-          <p class="role">{{ $t('home.role') }}</p>
+          <h1 class="name">{{ $t("home.name") }}</h1>
+          <p class="role">{{ $t("home.role") }}</p>
         </div>
         <div class="task">
-          <p>{{ $t('home.task') }}</p>
-          <p>{{ $t('home.github') }}</p>
+          <p>{{ $t("home.task") }}</p>
+          <p>{{ $t("home.github") }}</p>
         </div>
         <div class="github-repo">
-          <p>{{ $t('home.pageMobile') }}</p>
+          <p>{{ $t("home.pageMobile") }}</p>
           <span>const</span> <span>githubLink</span> <em>= </em>
           <CustomLink
             aria-label="go to my github page"
             :to="localePath('https://github.com/bader-idris')"
             class="external-link"
           >
-            {{ $t('home.profile') }}
+            {{ $t("home.profile") }}
           </CustomLink>
         </div>
       </section>
@@ -38,20 +38,20 @@
 </template>
 
 <script setup lang="ts">
-import { SplitText } from 'gsap/all';
+import { SplitText } from "gsap/all";
 
-const { t, locale } = useI18n()
-const localePath = useLocalePath()
+const { t, locale } = useI18n();
+const localePath = useLocalePath();
 // const img = useImage()
 
-const windowWidth = ref(500)
-const windowHeight = ref(500)
+const windowWidth = ref(500);
+const windowHeight = ref(500);
 // const riveSource = 'assets/lottieToRive.riv'
 // const riveSource = '/lottieToRive.riv' // Note the leading slash
 
 // Function to set the dir attribute for child elements
 const setInfoDirection = () => {
-  const infoEl = document.querySelector('.info') as HTMLElement | null;
+  const infoEl = document.querySelector(".info") as HTMLElement | null;
 
   if (infoEl) {
     const children = infoEl.children; // Get all children of .info
@@ -61,10 +61,10 @@ const setInfoDirection = () => {
       const child = children[i] as HTMLElement; // Type assertion to HTMLElement
 
       // Set the dir attribute based on the current locale
-      if (locale.value === 'ar') {
-        child.setAttribute('dir', 'rtl');
+      if (locale.value === "ar") {
+        child.setAttribute("dir", "rtl");
       } else {
-        child.setAttribute('dir', 'ltr');
+        child.setAttribute("dir", "ltr");
       }
     }
   }
@@ -76,27 +76,29 @@ watch(locale, () => {
 
 onMounted(async () => {
   if (import.meta.client) {
-    windowWidth.value = window.innerWidth
-    windowHeight.value = window.innerHeight
-    
+    windowWidth.value = window.innerWidth;
+    windowHeight.value = window.innerHeight;
+
     await document.fonts.ready;
     // await fontReadyPromise;
     await nextTick();
     useGSAP().registerPlugin(SplitText);
     setInfoDirection();
 
-    const isMobileWidth = useMobile()
+    const isMobileWidth = useMobile();
 
-    if (import.meta.dev) console.log('THIS IS EXCLUSIVE TO DEV MODE, ON PROD IT FUNCTIONS PROPERLY');
-    const splitGreeting = SplitText.create(".info .greeting",
-      {
-        type: "words",
-        // revertOnLoad: true
-        // you can do this instead of separating them:
-        // onSplit: (self) => {
-        //   useGSAP().to(self.words, {/* settings */})
-        // }
-      });
+    if (import.meta.dev)
+      console.log(
+        "THIS IS EXCLUSIVE TO DEV MODE, ON PROD IT FUNCTIONS PROPERLY",
+      );
+    const splitGreeting = SplitText.create(".info .greeting", {
+      type: "words",
+      // revertOnLoad: true
+      // you can do this instead of separating them:
+      // onSplit: (self) => {
+      //   useGSAP().to(self.words, {/* settings */})
+      // }
+    });
 
     // const greetingEl = document.querySelector('.greeting') as HTMLElement | null
 
@@ -113,103 +115,96 @@ onMounted(async () => {
       //   from: 'start'
       // },
       delay: 0.6,
-      ease: 'sine.inOut',
-    })
+      ease: "sine.inOut",
+    });
 
-    const splitName = SplitText.create(".info .name",
-      {type: "lines,words",}
-    );
+    const splitName = SplitText.create(".info .name", { type: "lines,words" });
 
     // check: https://gsap.com/docs/v3/GSAP/Timeline
-    useGSAP().timeline()
-      .from(splitName.lines, {
-        rotationX: 100,
-        transformOrigin: "-50% -50% -160px",
-        autoAlpha: 0,
-        visibility: 'hidden',
-        duration: 0.8,
-        ease: "power3",
-        stagger: 0.25,
-        delay: 0.4,
-        // onComplete: () => {// if we animate arabic letters as flowing down we can add chars type above then do this
-        //   splitName.revert()
-        // }
-      })
-      // .to(splitName.words, {
-      //   yPercent: "random([-50, 50])",
-      //   rotation: "random(-30, 30)",
-      //   repeat: -1,
-      //   yoyo: true,
-      //   autoAlpha: 1,
-      //   stagger: 0.05,
-      //   // stagger: {
-      //   //   each: 0.05,
-      //   //   from: 'start'
-      //   // },
-      //   delay: 0.6,
-      //   // repeat: -1
-      //   ease: 'power1.in'
-      // })
+    useGSAP().timeline().from(splitName.lines, {
+      rotationX: 100,
+      transformOrigin: "-50% -50% -160px",
+      autoAlpha: 0,
+      visibility: "hidden",
+      duration: 0.8,
+      ease: "power3",
+      stagger: 0.25,
+      delay: 0.4,
+      // onComplete: () => {// if we animate arabic letters as flowing down we can add chars type above then do this
+      //   splitName.revert()
+      // }
+    });
+    // .to(splitName.words, {
+    //   yPercent: "random([-50, 50])",
+    //   rotation: "random(-30, 30)",
+    //   repeat: -1,
+    //   yoyo: true,
+    //   autoAlpha: 1,
+    //   stagger: 0.05,
+    //   // stagger: {
+    //   //   each: 0.05,
+    //   //   from: 'start'
+    //   // },
+    //   delay: 0.6,
+    //   // repeat: -1
+    //   ease: 'power1.in'
+    // })
 
-    const splitRole = SplitText.create(".info .role",
-      {type: "lines,words",}
-    );
+    const splitRole = SplitText.create(".info .role", { type: "lines,words" });
 
     // separating mobiles from desktop
-    const tl = useGSAP().timeline()
-      .from(splitRole.lines, {
+    const tl = useGSAP().timeline().from(splitRole.lines, {
+      rotationX: -100,
+      transformOrigin: "50% 50% -160px",
+      autoAlpha: 0,
+      visibility: "hidden",
+      duration: 1,
+      ease: "power3",
+      stagger: 0.25,
+      delay: 0.4,
+    });
+
+    if (!isMobileWidth.value) {
+      tl.from(".task > p:first-of-type", {
         rotationX: -100,
         transformOrigin: "50% 50% -160px",
         autoAlpha: 0,
-        visibility: 'hidden',
         duration: 1,
         ease: "power3",
         stagger: 0.25,
-        delay: 0.4
-      })
-
-      if (!isMobileWidth.value) {
-        tl.from('.task > p:first-of-type', {
-          rotationX: -100,
-          transformOrigin: "50% 50% -160px",
-          autoAlpha: 0,
-          duration: 1,
-          ease: "power3",
-          stagger: 0.25,
-        })
-        .from('.task > p:nth-of-type(2)', {
-          rotationX: -100,
-          transformOrigin: "50% 50% -160px",
-          autoAlpha: 0,
-          duration: 1,
-          ease: "power3",
-          stagger: 0.25,
-        })
-      }
-      // tl.from('.github-repo p:first-of-type', {
-      if (!isMobileWidth.value) {
-        tl.from('.github-repo', {
-          rotationX: -100,
-          transformOrigin: "50% 50% -160px",
-          autoAlpha: 0,
-          duration: 1,
-          ease: "power3",
-          stagger: 0.25,
-          // delay: 0.4
-        })
-      } else {
-        tl.from('.github-repo > *', {
-          rotationX: -100,
-          transformOrigin: "50% 50% -160px",
-          autoAlpha: 0,
-          duration: 1,
-          ease: "power3",
-          stagger: 0.25,
-          // delay: 0.4
-        })
-      }
+      }).from(".task > p:nth-of-type(2)", {
+        rotationX: -100,
+        transformOrigin: "50% 50% -160px",
+        autoAlpha: 0,
+        duration: 1,
+        ease: "power3",
+        stagger: 0.25,
+      });
+    }
+    // tl.from('.github-repo p:first-of-type', {
+    if (!isMobileWidth.value) {
+      tl.from(".github-repo", {
+        rotationX: -100,
+        transformOrigin: "50% 50% -160px",
+        autoAlpha: 0,
+        duration: 1,
+        ease: "power3",
+        stagger: 0.25,
+        // delay: 0.4
+      });
+    } else {
+      tl.from(".github-repo > *", {
+        rotationX: -100,
+        transformOrigin: "50% 50% -160px",
+        autoAlpha: 0,
+        duration: 1,
+        ease: "power3",
+        stagger: 0.25,
+        // delay: 0.4
+      });
+    }
   }
-})
+});
 
 // TODO: the whole nuxt/image locally added package doesn't work!
 // const nuxtImgOptions = {
@@ -224,54 +219,56 @@ onMounted(async () => {
 // const thumbnailEs = img('/thumbnail-es.png', nuxtImgOptions)
 // const thumbnailAr = img('/thumbnail-ar.png', nuxtImgOptions)
 
-const thumbnailEn = `${useRuntimeConfig().public.originUrl}/thumbnail.webp`
-const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.webp`
-const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.webp`
+const thumbnailEn = `${useRuntimeConfig().public.originUrl}/thumbnail.webp`;
+const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.webp`;
+const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.webp`;
 
 // Create a computed property to determine which thumbnail to use
 const optimizedThumbnail = computed(() => {
   switch (locale.value) {
-    case 'es':
-      return thumbnailEs
-    case 'ar':
-      return thumbnailAr
+    case "es":
+      return thumbnailEs;
+    case "ar":
+      return thumbnailAr;
     default:
-      return thumbnailEn
+      return thumbnailEn;
   }
-})
+});
 
 useSeoMeta({
-  title: t('home.title'),
-  ogTitle: t('home.title'),
-  description: t('home.description'),
-  ogDescription: t('home.description'),
+  title: t("home.title"),
+  ogTitle: t("home.title"),
+  description: t("home.description"),
+  ogDescription: t("home.description"),
   ogUrl: useRuntimeConfig().public.originUrl,
   ogImage: optimizedThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,
-  ogType: 'website',
-  twitterCard: 'summary_large_image',
-  twitterTitle: t('home.title'),
-  twitterDescription: t('home.description'),
+  ogType: "website",
+  twitterCard: "summary_large_image",
+  twitterTitle: t("home.title"),
+  twitterDescription: t("home.description"),
   twitterImage: optimizedThumbnail,
-  twitterSite: '@bader_idri8628',
+  twitterSite: "@bader_idri8628",
   // fbAppId: 'YOUR_FACEBOOK_APP_ID', // Add your Facebook App ID here
-  appleMobileWebAppStatusBarStyle: 'black-translucent',
-  articleAuthor: ['https://baderidris.com/contact'],
-  viewport: 'width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes',
-  mobileWebAppCapable: 'yes',
-  themeColor: '#01080E',
-  keywords: "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
-})
+  appleMobileWebAppStatusBarStyle: "black-translucent",
+  articleAuthor: ["https://baderidris.com/contact"],
+  viewport:
+    "width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes",
+  mobileWebAppCapable: "yes",
+  themeColor: "#01080E",
+  keywords:
+    "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
+});
 
 useSchemaOrg([
   {
     "@type": "WebPage",
-    name: t('home.title'),
-    description: t('home.description'),
+    name: t("home.title"),
+    description: t("home.description"),
     dateModified: new Date().toISOString(),
-  }
-])
+  },
+]);
 </script>
 
 <style lang="scss" scoped>
@@ -328,7 +325,7 @@ useSchemaOrg([
         margin: 20px 0;
 
         &::before {
-          content: '';
+          content: "";
           position: absolute;
           box-shadow: 0 0 120px 100px rgba(67, 217, 173, 0.4);
           top: 10%;
@@ -340,7 +337,7 @@ useSchemaOrg([
         }
 
         &::after {
-          content: '';
+          content: "";
           width: 0;
           height: 100px;
           position: absolute;
@@ -487,7 +484,7 @@ useSchemaOrg([
         }
 
         & > a::before {
-          content: '“';
+          content: "“";
           position: absolute;
           width: 100%;
           height: 100%;
@@ -506,7 +503,7 @@ useSchemaOrg([
         }
 
         & > a::after {
-          content: '”';
+          content: "”";
           position: fixed;
         }
 
@@ -582,5 +579,4 @@ html[lang="ar-PS"] {
     }
   }
 }
-
 </style>

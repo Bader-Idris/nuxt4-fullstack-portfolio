@@ -4,7 +4,10 @@ import Redis from "ioredis";
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 let redisClient: Redis | null = null;
 
-if ( process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" ) {
+if (
+  process.env.NODE_ENV === "development" ||
+  process.env.NODE_ENV === "production"
+) {
   try {
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,

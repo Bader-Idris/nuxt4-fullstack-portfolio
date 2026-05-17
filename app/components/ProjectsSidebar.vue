@@ -1,30 +1,34 @@
 <template>
   <div class="projects-sidebar" :class="{ hidden: isSidebarHidden }">
     <div v-for="item in list" :key="item.title">
-      <label 
-        tabindex="0" 
+      <label
+        tabindex="0"
         role="checkbox"
-        :aria-labelledby="`label-${item.title}`" 
+        :aria-labelledby="`label-${item.title}`"
         :aria-checked="item.isActive"
-        @click.prevent="toggleActiveItem(item)">
+        @click.prevent="toggleActiveItem(item)"
+      >
         <span class="checkbox-icon" aria-hidden="true">
-          <Icon 
-            v-if="item.isActive" 
+          <Icon
+            v-if="item.isActive"
             name="fluent:checkbox-checked-24-filled"
-            width="35" />
+            width="35"
+          />
           <Icon v-else name="bxs:checkbox" width="35" />
         </span>
         <Icon
-          :name="getIconName(item.title)" 
-          width="2em" 
+          :name="getIconName(item.title)"
+          width="2em"
           height="2em"
-          style="color: #607b96" 
-          :alt="item.imgAlt" 
-          class="project-svg" />
-        <p 
-          :id="`label-${item.title}`" 
+          style="color: #607b96"
+          :alt="item.imgAlt"
+          class="project-svg"
+        />
+        <p
+          :id="`label-${item.title}`"
           class="project-item"
-          :class="{ active: item.isActive }">
+          :class="{ active: item.isActive }"
+        >
           {{ item.title }}
         </p>
       </label>
@@ -40,35 +44,35 @@ defineProps({
     deafault: () => [],
   },
   isSidebarHidden: Boolean,
-})
+});
 
-const emit = defineEmits(['toggle-active'])
+const emit = defineEmits(["toggle-active"]);
 
 // @ts-expect-error: item has an implicit any type
 const toggleActiveItem = (item) => {
-  emit('toggle-active', item)
-}
+  emit("toggle-active", item);
+};
 
 const getIconName = (title: string): string => {
   const iconMap: Record<string, string> = {
-    'HTML': 'ri:html5-fill',
-    'CSS': 'flowbite:css-solid',
-    'Javascript': 'teenyicons:javascript-solid',
-    'Vue': 'mdi:vuejs',
-    'Typescript': 'akar-icons:typescript-fill',
-    'Android': 'basil:android-solid',
-    'IOS': 'ic:baseline-apple',
-    'Docker': 'mdi:docker',
-    'Sass': 'fa6-brands:sass',
-    'Nginx': 'simple-icons:nginx',
-    'Nuxt': 'lineicons:nuxt',
-    'Electron': 'file-icons:electron',
-    'Bash': 'devicon-plain:bash',
-    'NestJs': 'file-icons:nestjs',
-  }
+    HTML: "ri:html5-fill",
+    CSS: "flowbite:css-solid",
+    Javascript: "teenyicons:javascript-solid",
+    Vue: "mdi:vuejs",
+    Typescript: "akar-icons:typescript-fill",
+    Android: "basil:android-solid",
+    IOS: "ic:baseline-apple",
+    Docker: "mdi:docker",
+    Sass: "fa6-brands:sass",
+    Nginx: "simple-icons:nginx",
+    Nuxt: "lineicons:nuxt",
+    Electron: "file-icons:electron",
+    Bash: "devicon-plain:bash",
+    NestJs: "file-icons:nestjs",
+  };
 
-  return iconMap[title] || 'mdi:code-tags' // Default icon if title not found
-}
+  return iconMap[title] || "mdi:code-tags"; // Default icon if title not found
+};
 </script>
 
 <style lang="scss">
@@ -87,13 +91,13 @@ const getIconName = (title: string): string => {
       visibility 0.5s ease;
   }
 
-  >div {
+  > div {
     label {
       @include flex-container(row, nowrap, flex-start, center);
       cursor: pointer;
       margin: 20px;
 
-      >* {
+      > * {
         margin: 0 10px;
       }
 

@@ -6,12 +6,12 @@
  *  SyntaxError: Cannot use import statement outside a module
  * and program may fail to start etc.
  * use 'require' instead.
- * 
+ *
  * NOTE that 'import' does not work, 'import type' DOES work.
  * probably typescript eliminates 'import type' on transpile.
  */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require("electron");
 
 // --------- Expose some API to the Renderer process ---------
 //
@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args: [string, (event: any, ...args: any[]) => void]) {
     const [channel, listener] = args;
     return ipcRenderer.on(channel, (event: any, ...args: any[]) =>
-      listener(event, ...args)
+      listener(event, ...args),
     );
   },
   off(...args: [string, ...any[]]) {

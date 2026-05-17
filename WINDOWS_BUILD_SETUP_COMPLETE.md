@@ -34,6 +34,7 @@ cd /home/bader/Desktop/portfolio
 ```
 
 This creates:
+
 - `electronAssets/builder/envs/Cert.pfx` - The certificate file
 - Password: `ChangeMeToASecurePassword123!`
 
@@ -62,11 +63,13 @@ Output will be in: `release/3.3.1/`
 ## 📁 Files Modified/Created
 
 ### Modified Files:
+
 - `electronAssets/builder/config.js` - Added `npmRebuild: false`, `nodeGypRebuild: false`
 - `electronAssets/builder/generate-self-signed-cert.sh` - Added code signing extension
 - `electronAssets/builder/envs/.env` - Removed `export` keywords
 
 ### Created Files:
+
 - `electronAssets/builder/WINDOWS_BUILD_FROM_LINUX.md` - Comprehensive guide
 - `electronAssets/builder/generate-self-signed-cert.sh` - Certificate generator
 - `electronAssets/README.md` - Complete reference
@@ -93,6 +96,7 @@ Output will be in: `release/3.3.1/`
 ### Error: `certificate.pfx doesn't exist`
 
 **Solution:** Check path in `.env` is absolute and file exists:
+
 ```bash
 ls -la /home/bader/Desktop/portfolio/electronAssets/builder/envs/Cert.pfx
 ```
@@ -135,12 +139,12 @@ DOMAIN_NAME=http://localhost:5000 SOCKET_URL=ws://localhost:5000 bun run build:e
 
 When users download your Windows app, they'll see a SmartScreen warning. The severity depends on your certificate:
 
-| Certificate Type | Warning Level | User Experience |
-|-----------------|---------------|-----------------|
-| **No certificate** | 🔴 **Red block** | "Windows protected your PC" - User must click "More info" → "Run anyway" |
-| **Self-signed certificate** | 🔴 **Red block** | "Windows protected your PC" - Same as no certificate |
-| **Trusted CA certificate (new)** | 🟡 **Yellow warning** | "Unknown publisher" - User can click "Run" directly |
-| **Trusted CA certificate (established)** | ✅ **No warning** | After building reputation, no warning appears |
+| Certificate Type                         | Warning Level         | User Experience                                                          |
+| ---------------------------------------- | --------------------- | ------------------------------------------------------------------------ |
+| **No certificate**                       | 🔴 **Red block**      | "Windows protected your PC" - User must click "More info" → "Run anyway" |
+| **Self-signed certificate**              | 🔴 **Red block**      | "Windows protected your PC" - Same as no certificate                     |
+| **Trusted CA certificate (new)**         | 🟡 **Yellow warning** | "Unknown publisher" - User can click "Run" directly                      |
+| **Trusted CA certificate (established)** | ✅ **No warning**     | After building reputation, no warning appears                            |
 
 ### Option 3: Purchase a Code Signing Certificate (Recommended for Production)
 
@@ -149,6 +153,7 @@ To get the **yellow warning** instead of red, you need a certificate from a trus
 #### Step 1: Purchase a Certificate
 
 Providers:
+
 - **SSL.com** - https://www.ssl.com/certificates/code-signing/ (~$50/year)
 - **Sectigo** - https://sectigo.com/
 - **DigiCert** - https://www.digiCert.com/
@@ -192,6 +197,7 @@ DOMAIN_NAME=http://localhost:5000 SOCKET_URL=ws://localhost:5000 bun run build:e
 #### Note on EV Certificates
 
 **EV (Extended Validation) certificates** provide immediate SmartScreen reputation but:
+
 - Cost more (~$400+/year)
 - Require hardware token (physical USB device)
 - Must sign on Windows machine with token attached
@@ -216,6 +222,7 @@ For most projects, a standard code signing certificate is sufficient.
 Current password: `ChangeMeToASecurePassword123!`
 
 To change it, regenerate the certificate with:
+
 ```bash
 WIN_CSC_KEY_PASSWORD="YourNewPassword123!" ./electronAssets/builder/generate-self-signed-cert.sh
 ```

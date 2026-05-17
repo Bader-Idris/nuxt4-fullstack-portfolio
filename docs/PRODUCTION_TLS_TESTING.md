@@ -3,6 +3,7 @@
 This guide explains how to test the production build with TLS (HTTPS) locally before deploying to the live domain `baderidris.com`.
 
 ## 1. Why Test TLS Locally?
+
 - **Mixed Content Errors:** Ensure no assets (like 3D models or textures) are being loaded over HTTP when the site is HTTPS.
 - **Service Workers / PWA:** Many modern web features (and some compression-aware loaders) require a secure context.
 - **Protocol-specific Bugs:** Some `fetch` and `promise` issues only appear under HTTP/2 or HTTPS.
@@ -12,6 +13,7 @@ This guide explains how to test the production build with TLS (HTTPS) locally be
 To simulate the production environment with TLS, you can use a local proxy or self-signed certificates.
 
 ### Option A: Using `mkcert` (Recommended)
+
 1. Install `mkcert` (e.g., `brew install mkcert` or `sudo apt install mkcert`).
 2. Generate certificates for localhost:
    ```bash
@@ -21,20 +23,22 @@ To simulate the production environment with TLS, you can use a local proxy or se
 3. Update your `compose.prod.test.yaml` to mount these certificates into an Nginx container.
 
 ### Option B: Node.js HTTPS Server
+
 You can run the built `.output` using a simple HTTPS wrapper:
+
 ```javascript
 // test-https.mjs
-import https from 'https';
-import fs from 'fs';
-import { handler } from './.output/server/index.mjs';
+import https from "https";
+import fs from "fs";
+import { handler } from "./.output/server/index.mjs";
 
 const options = {
-  key: fs.readFileSync('localhost-key.pem'),
-  cert: fs.readFileSync('localhost.pem'),
+  key: fs.readFileSync("localhost-key.pem"),
+  cert: fs.readFileSync("localhost.pem"),
 };
 
 https.createServer(options, handler).listen(443, () => {
-  console.log('Production preview running at https://localhost');
+  console.log("Production preview running at https://localhost");
 });
 ```
 
@@ -50,6 +54,7 @@ Once running under HTTPS, open Chrome DevTools (F12) and check the **Network Tab
 ## 4. Nuxt Production Testing Command
 
 Run the following to build and preview locally:
+
 ```bash
 # 1. Build for production
 bun run build
@@ -57,6 +62,7 @@ bun run build
 # 2. Preview (Nuxt default is HTTP)
 bun run preview
 ```
+
 To test with TLS, use a tool like `cloudflared` or `localtunnel` for a quick secure tunnel, or use the Nginx Docker setup.
 
 ## 5. Dockerized Production Robustness
@@ -68,6 +74,7 @@ The system is designed to be "fail-safe":
 - **Caching Logic:** We have configured `routeRules` to prevent caching of build-specific metadata, ensuring clients always fetch the latest routing information.
 
 ## 6. Pre-Nginx Checklist for baderidris.com
+
 - [ ] Verify `public/fonts/` contains `.woff2` files and CSS references are updated.
 - [ ] Ensure the Docker container has necessary libraries installed for SSR.
 - [ ] Test the `/api` routes under HTTPS to ensure no CORS or redirect loops.

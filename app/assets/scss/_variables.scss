@@ -44,9 +44,9 @@ $body-text-size: 18px;
 $labels-size: 16px;
 $code-snippets-size: 14px;
 
-$main-font: 'Fira Code', monospace;
+$main-font: "Fira Code", monospace;
 // $arabic-font: 'Galaxy', sans-serif;
-$spanish-font: 'Montserrat', sans-serif;
+$spanish-font: "Montserrat", sans-serif;
 
 // --------------------------------------------
 
@@ -183,7 +183,8 @@ html.dark {
   /* Yellow for hover contrast */
   --scrollbar-border: #{$dark-lines};
 }
-html.light {// for light theme, if needed
+html.light {
+  // for light theme, if needed
   color-scheme: light;
   --bg-primary: #{$light-primary1};
   --bg-secondary: #{$light-primary2};

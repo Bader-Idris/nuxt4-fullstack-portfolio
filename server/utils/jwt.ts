@@ -8,7 +8,10 @@ interface JWTCreateParams {
   payload: TokenPayload; // Adjust this based on your actual TokenPayload type
 }
 
-export const createJWT = ({ payload }: JWTCreateParams, signOptions?: SignOptions): string => {
+export const createJWT = (
+  { payload }: JWTCreateParams,
+  signOptions?: SignOptions,
+): string => {
   const token = jwt.sign(payload, config.jwtSecret, signOptions);
   return token;
 };
@@ -19,13 +22,13 @@ export const isTokenValid = (token: string): TokenPayload => {
 export const attachCookiesToResponse = (
   event: any,
   user: TokenUser,
-  refreshToken: string
+  refreshToken: string,
 ) => {
   const accessTokenJWT = createJWT(
     { payload: { user } },
     {
       expiresIn: config.jwtLifetime,
-    }
+    },
   );
 
   const refreshTokenJWT = createJWT({ payload: { user, refreshToken } });
@@ -38,7 +41,7 @@ export const attachCookiesToResponse = (
     secure: config.nodeEnv === "production",
     expires: new Date(Date.now() + oneDay),
     // signed: true is not needed as cookies are signed by default in Nitro 2
-    sameSite: "lax",// more flexable with 3rd party redirection than "strict"
+    sameSite: "lax", // more flexable with 3rd party redirection than "strict"
   });
 
   setCookie(event, "refreshToken", refreshTokenJWT, {

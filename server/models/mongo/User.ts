@@ -1,5 +1,5 @@
-import { Schema, model } from 'mongoose'
-import bcrypt from 'bcryptjs'
+import { Schema, model } from "mongoose";
+import bcrypt from "bcryptjs";
 // TODO: use the predefined bun hashing, check this: https://bun.sh/guides/util/hash-a-password
 
 const UserSchema = new Schema<IUser>(
@@ -29,12 +29,12 @@ const UserSchema = new Schema<IUser>(
     },
     provider: {
       type: String,
-      enum: ['email', 'google', 'facebook'],
-      default: 'email',
+      enum: ["email", "google", "facebook"],
+      default: "email",
     },
     role: {
       type: String,
-      enum: ["admin", "user", "premium", "editor" ],
+      enum: ["admin", "user", "premium", "editor"],
       default: "user",
     },
     verificationToken: { type: String, index: true },
@@ -48,21 +48,21 @@ const UserSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-UserSchema.pre('save', async function () {
+UserSchema.pre("save", async function () {
   // Only hash the password if it has been modified (or is new) and the provider is email
-  if (!this.isModified('password') || this.provider !== 'email') return
-  const salt = await bcrypt.genSalt(10)
-  this.password = await bcrypt.hash(this.password as string, salt)
-})
+  if (!this.isModified("password") || this.provider !== "email") return;
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password as string, salt);
+});
 
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ) {
-  if (this.provider !== 'email') return false;
-  return await bcrypt.compare(candidatePassword, this.password)
-}
+  if (this.provider !== "email") return false;
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
-export const User = model<IUser>('User', UserSchema)
+export const User = model<IUser>("User", UserSchema);

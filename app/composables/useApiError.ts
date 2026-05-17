@@ -1,4 +1,4 @@
-import { FetchError } from 'ofetch';
+import { FetchError } from "ofetch";
 
 interface ApiErrorData {
   statusMessage?: string;
@@ -13,7 +13,7 @@ export const useApiError = () => {
     // Specifically handle Nuxt's FetchError
     if (error instanceof FetchError) {
       const apiError = error.data as ApiErrorData;
-      if (apiError && typeof apiError.statusMessage === 'string') {
+      if (apiError && typeof apiError.statusMessage === "string") {
         return apiError.statusMessage;
       }
     }
@@ -24,7 +24,7 @@ export const useApiError = () => {
     }
 
     // Generic fallback message
-    return 'An unexpected error occurred. Please try again.';
+    return "An unexpected error occurred. Please try again.";
   };
 
   return { getFriendlyErrorMessage };

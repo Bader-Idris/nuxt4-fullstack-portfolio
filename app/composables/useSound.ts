@@ -102,7 +102,7 @@ export function useSound() {
   const playWithVariation = (
     name: keyof typeof soundConfigs,
     rateRange = 0.2,
-    volRange = 0.1
+    volRange = 0.1,
   ) => {
     const sound = getSoundInstance(name);
     if (sound) {
@@ -125,7 +125,7 @@ export function useSound() {
   const useContinuous = (
     name: keyof typeof soundConfigs,
     rateRange = 0.05,
-    volRange = 0.05
+    volRange = 0.05,
   ) => {
     const sound = getSoundInstance(name);
     let soundId: number | null = null;
@@ -186,7 +186,7 @@ export function useSound() {
             soundId = null;
           }
         },
-        id
+        id,
       );
     };
 

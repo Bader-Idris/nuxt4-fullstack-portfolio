@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     if (!emails || emails.length === 0) {
       return {
         // No Content - still a success
-        statusCode: 204, 
+        statusCode: 204,
         data: [],
       };
     }

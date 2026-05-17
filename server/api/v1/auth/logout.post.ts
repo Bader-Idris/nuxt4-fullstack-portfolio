@@ -1,13 +1,13 @@
-import { Token } from '../../../models/mongo/index'
+import { Token } from "../../../models/mongo/index";
 
 export default defineEventHandler(async (event) => {
-  const user = event.context.user
+  const user = event.context.user;
   if (user) {
-    await Token.findOneAndDelete({ user: user.userId })
+    await Token.findOneAndDelete({ user: user.userId });
   }
 
-  deleteCookie(event, 'accessToken')
-  deleteCookie(event, 'refreshToken')
+  deleteCookie(event, "accessToken");
+  deleteCookie(event, "refreshToken");
 
-  return { message: 'User logged out!' }
-})
+  return { message: "User logged out!" };
+});

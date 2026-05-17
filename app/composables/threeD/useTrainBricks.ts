@@ -14,8 +14,8 @@
  *  - resetBlocks              : teleports all blocks back to spawn positions
  */
 
-import * as THREE from 'three'
-import type RAPIER from '@dimforge/rapier3d-compat'
+import * as THREE from "three";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -23,15 +23,15 @@ import type RAPIER from '@dimforge/rapier3d-compat'
 
 /** A single physics-simulated brick with its associated InstancedMesh render slot */
 export interface PhysicsBlock {
-  mesh: THREE.Object3D
-  body: RAPIER.RigidBody
-  collider: RAPIER.Collider
+  mesh: THREE.Object3D;
+  body: RAPIER.RigidBody;
+  collider: RAPIER.Collider;
   /** World-space spawn position – used by resetBlocks */
-  initialPos: THREE.Vector3
+  initialPos: THREE.Vector3;
   /** Index into the InstancedMesh for efficient per-instance matrix updates */
-  instanceIndex?: number
+  instanceIndex?: number;
   /** Timestamp (ms) of the last hit sound trigger – throttles audio spam */
-  lastHitTime?: number
+  lastHitTime?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,14 +40,14 @@ export interface PhysicsBlock {
 
 export function useTrainBricks() {
   /** Minimum milliseconds between hit-sound triggers per brick */
-  const BRICK_HIT_THROTTLE_MS = 120
+  const BRICK_HIT_THROTTLE_MS = 120;
 
   /**
    * Plain-object refs (not Vue reactives) for maximum performance in the
    * per-frame render loop.
    */
-  const blocksRef = { blocks: [] as PhysicsBlock[] }
-  const blockRenderMeshesRef = { meshes: [] as THREE.Object3D[] }
+  const blocksRef = { blocks: [] as PhysicsBlock[] };
+  const blockRenderMeshesRef = { meshes: [] as THREE.Object3D[] };
 
   // ──────────────────────────────────────────────────────────────────────────
   // Internal builder
@@ -68,69 +68,76 @@ export function useTrainBricks() {
     rapierApi: typeof RAPIER,
     centerPos: THREE.Vector3,
     trackTangent: THREE.Vector3,
-    group: THREE.Group
+    group: THREE.Group,
   ): PhysicsBlock[] {
-    const WALL_W = 7    // bricks per row
-    const WALL_H = 8    // rows (layers)
-    const BW = 0.45     // brick width
-    const BH = 0.2      // brick height
-    const BD = 0.24     // brick depth
+    const WALL_W = 7; // bricks per row
+    const WALL_H = 8; // rows (layers)
+    const BW = 0.45; // brick width
+    const BH = 0.2; // brick height
+    const BD = 0.24; // brick depth
 
     // Horizontal span direction = perpendicular to track (blocks the train)
-    const up = new THREE.Vector3(0, 1, 0)
-    const wallSpan = new THREE.Vector3().crossVectors(up, trackTangent).normalize()
-    const totalWidth = WALL_W * BW
+    const up = new THREE.Vector3(0, 1, 0);
+    const wallSpan = new THREE.Vector3()
+      .crossVectors(up, trackTangent)
+      .normalize();
+    const totalWidth = WALL_W * BW;
 
     // Random hue per wall for Lego-style colour variety (orange-red brick range)
-    const wallHue = 0.04 + Math.random() * 0.04
+    const wallHue = 0.04 + Math.random() * 0.04;
 
     type PendingBrick = {
-      position: THREE.Vector3
-      quaternion: THREE.Quaternion
-      color: THREE.Color
-      body: RAPIER.RigidBody
-      collider: RAPIER.Collider
-    }
+      position: THREE.Vector3;
+      quaternion: THREE.Quaternion;
+      color: THREE.Color;
+      body: RAPIER.RigidBody;
+      collider: RAPIER.Collider;
+    };
 
-    const pending: PendingBrick[] = []
+    const pending: PendingBrick[] = [];
 
     for (let layer = 0; layer < WALL_H; layer++) {
       // Alternate-row stagger for structural integrity (classic brick bond)
-      const stagger = layer % 2 === 0 ? 0 : BW * 0.5
-      const yCenter = centerPos.y + BH * 0.5 + layer * BH * 1.02
+      const stagger = layer % 2 === 0 ? 0 : BW * 0.5;
+      const yCenter = centerPos.y + BH * 0.5 + layer * BH * 1.02;
 
       for (let col = 0; col < WALL_W; col++) {
         // Local offset along wall span, centred on the track
-        const localX = -totalWidth * 0.5 + col * BW + stagger
+        const localX = -totalWidth * 0.5 + col * BW + stagger;
         const brickPos = new THREE.Vector3()
           .copy(centerPos)
           .addScaledVector(wallSpan, localX)
-          .setY(yCenter)
+          .setY(yCenter);
 
         // Face wall toward the oncoming train with slight random variance
-        const yaw = Math.atan2(trackTangent.x, trackTangent.z) + (Math.random() - 0.5) * 0.08
+        const yaw =
+          Math.atan2(trackTangent.x, trackTangent.z) +
+          (Math.random() - 0.5) * 0.08;
         const euler = new THREE.Euler(
           (Math.random() - 0.5) * 0.04,
           yaw,
-          (Math.random() - 0.5) * 0.03
-        )
-        const quat = new THREE.Quaternion().setFromEuler(euler)
+          (Math.random() - 0.5) * 0.03,
+        );
+        const quat = new THREE.Quaternion().setFromEuler(euler);
 
         const rigidBodyDesc = rapierApi.RigidBodyDesc.dynamic()
           .setTranslation(brickPos.x, brickPos.y, brickPos.z)
           .setRotation(quat)
           .setLinearDamping(0.14)
-          .setAngularDamping(0.22)
+          .setAngularDamping(0.22);
 
-        const body = world.createRigidBody(rigidBodyDesc)
+        const body = world.createRigidBody(rigidBodyDesc);
 
-        const colliderDesc = rapierApi.ColliderDesc
-          .cuboid(BW / 2, BH / 2, BD / 2)
+        const colliderDesc = rapierApi.ColliderDesc.cuboid(
+          BW / 2,
+          BH / 2,
+          BD / 2,
+        )
           .setDensity(0.72)
           .setRestitution(0.16)
-          .setFriction(0.9)
+          .setFriction(0.9);
 
-        const collider = world.createCollider(colliderDesc, body)
+        const collider = world.createCollider(colliderDesc, body);
 
         pending.push({
           position: brickPos.clone(),
@@ -138,32 +145,39 @@ export function useTrainBricks() {
           color: new THREE.Color().setHSL(
             wallHue,
             0.6 + Math.random() * 0.15,
-            0.38 + Math.random() * 0.12
+            0.38 + Math.random() * 0.12,
           ),
           body,
           collider,
-        })
+        });
       }
     }
 
     // Pack all bricks into one InstancedMesh for draw-call efficiency
-    const newBlocks: PhysicsBlock[] = []
+    const newBlocks: PhysicsBlock[] = [];
 
     if (pending.length > 0) {
-      const geometry = new THREE.BoxGeometry(BW, BH, BD)
-      const material = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0.01 })
-      const instanced = new THREE.InstancedMesh(geometry, material, pending.length)
-      instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-      instanced.castShadow = true
-      instanced.receiveShadow = true
+      const geometry = new THREE.BoxGeometry(BW, BH, BD);
+      const material = new THREE.MeshStandardMaterial({
+        roughness: 0.92,
+        metalness: 0.01,
+      });
+      const instanced = new THREE.InstancedMesh(
+        geometry,
+        material,
+        pending.length,
+      );
+      instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      instanced.castShadow = true;
+      instanced.receiveShadow = true;
 
-      const tmpMatrix = new THREE.Matrix4()
-      const tmpScale = new THREE.Vector3(1, 1, 1)
+      const tmpMatrix = new THREE.Matrix4();
+      const tmpScale = new THREE.Vector3(1, 1, 1);
 
       pending.forEach((p, idx) => {
-        tmpMatrix.compose(p.position, p.quaternion, tmpScale)
-        instanced.setMatrixAt(idx, tmpMatrix)
-        instanced.setColorAt(idx, p.color)
+        tmpMatrix.compose(p.position, p.quaternion, tmpScale);
+        instanced.setMatrixAt(idx, tmpMatrix);
+        instanced.setColorAt(idx, p.color);
 
         newBlocks.push({
           mesh: instanced,
@@ -171,17 +185,17 @@ export function useTrainBricks() {
           collider: p.collider,
           initialPos: p.position.clone(),
           instanceIndex: idx,
-        })
-      })
+        });
+      });
 
-      instanced.instanceMatrix.needsUpdate = true
-      if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true
+      instanced.instanceMatrix.needsUpdate = true;
+      if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
 
-      group.add(instanced)
-      blockRenderMeshesRef.meshes.push(instanced)
+      group.add(instanced);
+      blockRenderMeshesRef.meshes.push(instanced);
     }
 
-    return newBlocks
+    return newBlocks;
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -208,27 +222,33 @@ export function useTrainBricks() {
     curve: THREE.CatmullRomCurve3,
     setsCount: number = 5,
     group: THREE.Group,
-    trackY: number = 0
+    trackY: number = 0,
   ): PhysicsBlock[] {
-    const allBlocks: PhysicsBlock[] = []
+    const allBlocks: PhysicsBlock[] = [];
 
     for (let i = 0; i < setsCount; i++) {
       // Evenly spread from 10% to 90% of the path
-      const t = setsCount > 1 ? 0.1 + (i / (setsCount - 1)) * 0.8 : 0.5
+      const t = setsCount > 1 ? 0.1 + (i / (setsCount - 1)) * 0.8 : 0.5;
 
-      const pos = curve.getPointAt(t)
-      const tangent = curve.getTangentAt(t)
+      const pos = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t);
 
       // Snap wall base to the rail surface (avoids floating or buried bricks)
-      const wallBase = new THREE.Vector3(pos.x, trackY + 0.01, pos.z)
-      const wallBlocks = createBrickWallAtPoint(world, rapierApi, wallBase, tangent, group)
-      allBlocks.push(...wallBlocks)
+      const wallBase = new THREE.Vector3(pos.x, trackY + 0.01, pos.z);
+      const wallBlocks = createBrickWallAtPoint(
+        world,
+        rapierApi,
+        wallBase,
+        tangent,
+        group,
+      );
+      allBlocks.push(...wallBlocks);
     }
 
     // Accumulate into shared refs so the render loop can update them all at once
-    blocksRef.blocks.push(...allBlocks)
+    blocksRef.blocks.push(...allBlocks);
 
-    return allBlocks
+    return allBlocks;
   }
 
   /**
@@ -238,26 +258,26 @@ export function useTrainBricks() {
   function clearAllBlocks(group: THREE.Group, world: RAPIER.World): void {
     // Dispose Three.js GPU resources and detach from scene
     blockRenderMeshesRef.meshes.forEach((mesh) => {
-      group.remove(mesh)
+      group.remove(mesh);
       if (mesh instanceof THREE.Mesh || mesh instanceof THREE.InstancedMesh) {
-        mesh.geometry?.dispose()
-        const mat = (mesh as THREE.Mesh).material
-        if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
-        else mat?.dispose()
+        mesh.geometry?.dispose();
+        const mat = (mesh as THREE.Mesh).material;
+        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+        else mat?.dispose();
       }
-    })
+    });
 
     // Remove Rapier rigid bodies from simulation
     blocksRef.blocks.forEach((block) => {
       try {
-        world.removeRigidBody(block.body)
+        world.removeRigidBody(block.body);
       } catch {
         // Body may already be removed (e.g. fell out of world bounds)
       }
-    })
+    });
 
-    blocksRef.blocks = []
-    blockRenderMeshesRef.meshes = []
+    blocksRef.blocks = [];
+    blockRenderMeshesRef.meshes = [];
   }
 
   /**
@@ -265,29 +285,36 @@ export function useTrainBricks() {
    * Call once per frame AFTER world.step().
    */
   function updatePhysicsBlocks(blocks: PhysicsBlock[]): void {
-    const updatedMeshes = new Set<THREE.InstancedMesh>()
-    const tmpMatrix = new THREE.Matrix4()
-    const unitScale = new THREE.Vector3(1, 1, 1)
+    const updatedMeshes = new Set<THREE.InstancedMesh>();
+    const tmpMatrix = new THREE.Matrix4();
+    const unitScale = new THREE.Vector3(1, 1, 1);
 
     blocks.forEach((block) => {
-      const pos = block.body.translation()
-      const rot = block.body.rotation()
-      const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w)
+      const pos = block.body.translation();
+      const rot = block.body.rotation();
+      const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
 
-      if (block.mesh instanceof THREE.InstancedMesh && typeof block.instanceIndex === 'number') {
-        tmpMatrix.compose(new THREE.Vector3(pos.x, pos.y, pos.z), quat, unitScale)
-        block.mesh.setMatrixAt(block.instanceIndex, tmpMatrix)
-        updatedMeshes.add(block.mesh)
-        return
+      if (
+        block.mesh instanceof THREE.InstancedMesh &&
+        typeof block.instanceIndex === "number"
+      ) {
+        tmpMatrix.compose(
+          new THREE.Vector3(pos.x, pos.y, pos.z),
+          quat,
+          unitScale,
+        );
+        block.mesh.setMatrixAt(block.instanceIndex, tmpMatrix);
+        updatedMeshes.add(block.mesh);
+        return;
       }
 
       // Fallback for non-instanced meshes
-      block.mesh.position.set(pos.x, pos.y, pos.z)
-      block.mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w)
-    })
+      block.mesh.position.set(pos.x, pos.y, pos.z);
+      block.mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w);
+    });
 
     // Batch needsUpdate per InstancedMesh (not per individual brick)
-    updatedMeshes.forEach((mesh) => (mesh.instanceMatrix.needsUpdate = true))
+    updatedMeshes.forEach((mesh) => (mesh.instanceMatrix.needsUpdate = true));
   }
 
   /**
@@ -305,37 +332,37 @@ export function useTrainBricks() {
     trainBody: RAPIER.RigidBody,
     trainSpeed: number,
     deltaTime: number,
-    onBrickHit?: () => void
+    onBrickHit?: () => void,
   ): void {
-    const speed = Math.abs(trainSpeed)
-    if (speed <= 0.001) return
+    const speed = Math.abs(trainSpeed);
+    if (speed <= 0.001) return;
 
-    const trainPos = trainBody.translation()
-    const trainDirection = Math.sign(trainSpeed) || 1
+    const trainPos = trainBody.translation();
+    const trainDirection = Math.sign(trainSpeed) || 1;
     // Wake zone: bricks within this X range behind the train are affected
-    const WAKE_MIN_X = 0.35
-    const WAKE_MAX_X = 2.5
-    const INFLUENCE_Z = 2.2   // half-width of turbulence corridor
-    const MAX_SIDE_FORCE = 2
-    const now = Date.now()
+    const WAKE_MIN_X = 0.35;
+    const WAKE_MAX_X = 2.5;
+    const INFLUENCE_Z = 2.2; // half-width of turbulence corridor
+    const MAX_SIDE_FORCE = 2;
+    const now = Date.now();
 
     blocks.forEach((block) => {
-      const pos = block.body.translation()
-      const dx = pos.x - trainPos.x
-      const dz = pos.z - trainPos.z
+      const pos = block.body.translation();
+      const dx = pos.x - trainPos.x;
+      const dz = pos.z - trainPos.z;
 
       // Wake effect: only affect bricks the train has already passed
-      const behindTrain = dx * trainDirection < -WAKE_MIN_X
-      if (!behindTrain) return
+      const behindTrain = dx * trainDirection < -WAKE_MIN_X;
+      if (!behindTrain) return;
 
-      const wakeDist = Math.abs(dx)
-      if (wakeDist > WAKE_MAX_X) return
+      const wakeDist = Math.abs(dx);
+      if (wakeDist > WAKE_MAX_X) return;
 
       // Influence falls off with both longitudinal and lateral distance
-      const lonFactor = Math.max(0, 1 - wakeDist / WAKE_MAX_X)
-      const latFactor = Math.max(0, 1 - Math.abs(dz) / INFLUENCE_Z)
-      const influence = lonFactor * latFactor * latFactor
-      if (influence <= 0) return
+      const lonFactor = Math.max(0, 1 - wakeDist / WAKE_MAX_X);
+      const latFactor = Math.max(0, 1 - Math.abs(dz) / INFLUENCE_Z);
+      const influence = lonFactor * latFactor * latFactor;
+      if (influence <= 0) return;
 
       // Throttled hit-sound trigger
       if (
@@ -343,22 +370,23 @@ export function useTrainBricks() {
         influence > 0.45 &&
         (!block.lastHitTime || now - block.lastHitTime > BRICK_HIT_THROTTLE_MS)
       ) {
-        block.lastHitTime = now
-        onBrickHit()
+        block.lastHitTime = now;
+        onBrickHit();
       }
 
-      const sideSign = dz >= 0 ? 1 : -1
-      const speedFactor = THREE.MathUtils.clamp(speed / 7, 0, 1)
-      const sideForce = sideSign * MAX_SIDE_FORCE * influence * (0.25 + speedFactor * 0.35)
+      const sideSign = dz >= 0 ? 1 : -1;
+      const speedFactor = THREE.MathUtils.clamp(speed / 7, 0, 1);
+      const sideForce =
+        sideSign * MAX_SIDE_FORCE * influence * (0.25 + speedFactor * 0.35);
       // Small lift prevents sticky ground contacts while staying subtle
-      const liftForce = 0.9 * influence * (0.2 + speedFactor * 0.2)
+      const liftForce = 0.9 * influence * (0.2 + speedFactor * 0.2);
 
       // Scale by dt → total impulse per second is frame-rate-independent
       block.body.addForce(
         { x: 0, y: liftForce * deltaTime, z: sideForce * deltaTime },
-        true
-      )
-    })
+        true,
+      );
+    });
   }
 
   /**
@@ -367,10 +395,10 @@ export function useTrainBricks() {
    */
   function resetBlocks(blocks: PhysicsBlock[]): void {
     blocks.forEach((block) => {
-      block.body.setTranslation(block.initialPos, true)
-      block.body.setLinvel({ x: 0, y: 0, z: 0 }, true)
-      block.body.setAngvel({ x: 0, y: 0, z: 0 }, true)
-    })
+      block.body.setTranslation(block.initialPos, true);
+      block.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      block.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    });
   }
 
   /**
@@ -379,17 +407,20 @@ export function useTrainBricks() {
    *
    * @param speedFactor  Normalised 0 (idle) … 1 (max gear)
    */
-  function setBlockBounceProfile(blocks: PhysicsBlock[], speedFactor: number): void {
-    const clamped = THREE.MathUtils.clamp(speedFactor, 0, 1)
-    const restitution    = THREE.MathUtils.lerp(0.08, 0.6,  clamped)
-    const linearDamping  = THREE.MathUtils.lerp(0.26, 0.07, clamped)
-    const angularDamping = THREE.MathUtils.lerp(0.34, 0.1,  clamped)
+  function setBlockBounceProfile(
+    blocks: PhysicsBlock[],
+    speedFactor: number,
+  ): void {
+    const clamped = THREE.MathUtils.clamp(speedFactor, 0, 1);
+    const restitution = THREE.MathUtils.lerp(0.08, 0.6, clamped);
+    const linearDamping = THREE.MathUtils.lerp(0.26, 0.07, clamped);
+    const angularDamping = THREE.MathUtils.lerp(0.34, 0.1, clamped);
 
     blocks.forEach((block) => {
-      block.collider.setRestitution(restitution)
-      block.body.setLinearDamping(linearDamping)
-      block.body.setAngularDamping(angularDamping)
-    })
+      block.collider.setRestitution(restitution);
+      block.body.setLinearDamping(linearDamping);
+      block.body.setAngularDamping(angularDamping);
+    });
   }
 
   return {
@@ -406,5 +437,5 @@ export function useTrainBricks() {
     // Utilities
     resetBlocks,
     setBlockBounceProfile,
-  }
+  };
 }

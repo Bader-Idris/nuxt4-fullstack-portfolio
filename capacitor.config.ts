@@ -1,11 +1,12 @@
 /// <reference types="@capacitor/background-runner" />
 /// <reference types="@capacitor/status-bar" />
 
-import type { CapacitorConfig } from '@capacitor/cli'
-import packageJson from './package.json'
-import 'dotenv/config'
+import type { CapacitorConfig } from "@capacitor/cli";
+import packageJson from "./package.json";
+import "dotenv/config";
 
-const domain = process.env.DOMAIN_NAME?.replace('https://', '') || 'baderidris.com';
+const domain =
+  process.env.DOMAIN_NAME?.replace("https://", "") || "baderidris.com";
 
 const config: CapacitorConfig = {
   appId: "com.baderidris.portfolio",
@@ -18,8 +19,8 @@ const config: CapacitorConfig = {
     // Setting hostname to your domain ensures cookies are shared between
     // the app WebView and your web server seamlessly.
     hostname: domain,
-    androidScheme: 'https',
-    iosScheme: 'capacitor',
+    androidScheme: "https",
+    iosScheme: "capacitor",
   },
   plugins: {
     // docs: https://github.com/capacitor-community/sqlite
@@ -257,9 +258,9 @@ const config: CapacitorConfig = {
         google: true,
         facebook: true,
         // apple: true,      // Apple uses system APIs, no external deps
-        twitter: false   // false = disabled (not bundled)
+        twitter: false, // false = disabled (not bundled)
       },
-      logLevel: 1 // Warnings and errors only
+      logLevel: 1, // Warnings and errors only
     },
     // old approach
     // GoogleAuth: {
@@ -271,4 +272,4 @@ const config: CapacitorConfig = {
   },
 };
 
-export default config
+export default config;

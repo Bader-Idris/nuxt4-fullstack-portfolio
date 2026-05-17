@@ -37,7 +37,7 @@
     "img": "https://raw.githubusercontent.com/Bader-Idris/guru-agency-duplication-site/refs/heads/bader/brave_703HxjzGmt.png",
     "imgAlt": "designing agency web app",
     "desc": "A stunning web application designed for a designing agency, showcasing beautiful CSS interactions. The app features an innovative background color conversion effect on hover, as well as various text manipulation techniques, making it a visually appealing and engaging experience for users. As a full-stack developer, I would be delighted to help you bring such a project to life.",
-    "tags": ["html" , "sass", "Vue", "typescript"]
+    "tags": ["html", "sass", "Vue", "typescript"]
   },
   {
     "title": "Countries API",

@@ -14,31 +14,34 @@
 
 <script setup lang="ts">
 interface FoodItem {
-  eaten: boolean
+  eaten: boolean;
 }
 
 defineProps<{
-  foodLeft: FoodItem[]
-}>()
+  foodLeft: FoodItem[];
+}>();
 </script>
 
 <style lang="scss">
 @keyframes smooth-glow {
   0% {
     box-shadow:
-      0 0 0px 0px rgba(67, 217, 173, 0.3), // Start with a subtle glow
+      0 0 0px 0px rgba(67, 217, 173, 0.3),
+      // Start with a subtle glow
       0 0 0px 0px rgba(67, 217, 173, 0.2);
   }
 
   50% {
     box-shadow:
-      0 0 20px 10px rgba(67, 217, 173, 0.6), // Increase glow size and intensity
+      0 0 20px 10px rgba(67, 217, 173, 0.6),
+      // Increase glow size and intensity
       0 0 40px 20px rgba(67, 217, 173, 0.4);
   }
 
   100% {
     box-shadow:
-      0 0 0px 0px rgba(67, 217, 173, 0.3), // Return to subtle glow
+      0 0 0px 0px rgba(67, 217, 173, 0.3),
+      // Return to subtle glow
       0 0 0px 0px rgba(67, 217, 173, 0.2);
   }
 }
@@ -51,7 +54,7 @@ defineProps<{
   @include flex-container(column, wrap, space-around, stretch);
   align-content: space-around;
 
-  &>span {
+  & > span {
     width: 8px;
     height: 8px;
     background-color: $accent2;
@@ -60,7 +63,9 @@ defineProps<{
       0 0 0px 5px rgba(67, 217, 173, 0.4),
       0 0 0px 10px rgba(67, 217, 173, 0.2);
     margin: 15px;
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    transition:
+      transform 0.3s ease-in-out,
+      box-shadow 0.3s ease-in-out;
     animation: smooth-glow 3s ease-in-out infinite;
 
     &.eaten {

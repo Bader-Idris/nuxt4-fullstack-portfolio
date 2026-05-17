@@ -33,7 +33,7 @@
           }}</span>
         </button>
 
-         <!-- <button
+        <!-- <button
         v-if="currentGear"
         class="control-btn primary"
         :aria-label="`Change train gear. Current gear ${currentGear.label}`"
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-         <!-- <button
+        <!-- <button
         class="control-btn warning"
         :class="{ active: terrainOnlyMode }"
         aria-label="Toggle terrain-only collision"
@@ -95,7 +95,7 @@ import * as THREE from "three";
 // use then one in camera instead!!
 // import { RuntimeInspector } from "@needle-tools/engine";
 
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 // the same path!
 // import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
@@ -345,16 +345,16 @@ const placeLocomotiveOnTrack = () => {
     locomotive.position.set(
       snappedPos.x,
       snappedPos.y + heightAboveRail,
-      snappedPos.z
+      snappedPos.z,
     );
 
     const lookAtMatrix = new THREE.Matrix4().lookAt(
       new THREE.Vector3(0, 0, 0),
       tangent,
-      new THREE.Vector3(0, 1, 0)
+      new THREE.Vector3(0, 1, 0),
     );
     const tangentQuat = new THREE.Quaternion().setFromRotationMatrix(
-      lookAtMatrix
+      lookAtMatrix,
     );
     trainOrientationCorrection
       .copy(tangentQuat)
@@ -366,7 +366,7 @@ const placeLocomotiveOnTrack = () => {
       .multiply(trainOrientationCorrection);
 
     const modelFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(
-      locomotiveInitialQuat
+      locomotiveInitialQuat,
     );
     pathDirectionSign = modelFwd.dot(tangent) >= 0 ? 1 : -1;
 
@@ -381,7 +381,7 @@ const placeLocomotiveOnTrack = () => {
     trainBodyHalfExtents.set(
       Math.max(placedSize.x * 0.48, 0.6),
       Math.max(placedSize.y * 0.48, 0.4),
-      Math.max(placedSize.z * 0.42, 0.35)
+      Math.max(placedSize.z * 0.42, 0.35),
     );
   }
 };
@@ -408,7 +408,7 @@ const initPhysicsMode = async () => {
           terrain.collider.setCollisionGroups(
             (COLLISION_GROUPS.TERRAIN << 16) |
               COLLISION_GROUPS.TRAIN |
-              COLLISION_GROUPS.BRICK
+              COLLISION_GROUPS.BRICK,
           );
         }
       }
@@ -423,7 +423,7 @@ const initPhysicsMode = async () => {
           {
             halfExtents: trainBodyHalfExtents.clone(),
             skipCuboidCollider: true,
-          }
+          },
         );
       }
 
@@ -434,7 +434,7 @@ const initPhysicsMode = async () => {
           trainPhysics.physicsWorld,
           trainPhysicsBody,
           locomotive,
-          trainBodyOffset
+          trainBodyOffset,
         );
       }
 
@@ -442,7 +442,7 @@ const initPhysicsMode = async () => {
         if (trainPhysics.physicsWorld) {
           const collider = trainPhysics.createStaticTrimesh(
             trainPhysics.physicsWorld,
-            mesh
+            mesh,
           );
           railColliders.value.push(collider);
         }
@@ -461,7 +461,7 @@ const initPhysicsMode = async () => {
           trainCurve,
           5,
           physicsBlocksGroup,
-          trackY
+          trackY,
         );
       }
 
@@ -491,7 +491,7 @@ const toggleBlocks = () => {
         trainCurve,
         5,
         physicsBlocksGroup,
-        trackY
+        trackY,
       );
     }
   } else {
@@ -518,7 +518,7 @@ const toggleWheelSpin = () => {
     locomotiveSpeed.value = 0;
     wheelSpinGSAPRef.ref = trainPhysics.startWheelSpin(
       locomotive,
-      wheelSpeed.value
+      wheelSpeed.value,
     );
     return;
   }
@@ -549,7 +549,7 @@ const cycleGear = () => {
     ease,
   });
   const targetBend = THREE.MathUtils.degToRad(
-    SMOKE_BEND_ANGLE_BY_GEAR[currentGear.value.key]
+    SMOKE_BEND_ANGLE_BY_GEAR[currentGear.value.key],
   );
   motionTweens.bend = useGSAP().to(smokeBendAngle, {
     value: targetBend,
@@ -570,7 +570,7 @@ const knotInitialPosition = new THREE.Vector3();
 const updateKnotSmoothly = () => {
   if (!knotMesh || trainPhysics.wheelMeshesRef.meshes.length === 0) return;
   const smallWheel = trainPhysics.wheelMeshesRef.meshes.find(
-    (w) => w.wheel.name === "SmallWheels_2"
+    (w) => w.wheel.name === "SmallWheels_2",
   );
   if (smallWheel) {
     const angle = smallWheel.mesh.rotation.z;
@@ -602,10 +602,10 @@ const animate = (elapsedMs: number) => {
   if (wheelSound) {
     const absSpeed = Math.abs(locomotiveSpeed.value);
     wheelSound.volume(
-      THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0, 0.3)
+      THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0, 0.3),
     );
     wheelSound.rate(
-      THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0.5, 1.1)
+      THREE.MathUtils.mapLinear(absSpeed, 0, MAX_GEAR_ABS_SPEED, 0.5, 1.1),
     );
   }
 
@@ -629,7 +629,7 @@ const animate = (elapsedMs: number) => {
     ticker.elapsed,
     ticker.delta,
     locomotiveSpeed.value,
-    camDist
+    camDist,
   );
   if (skyMesh) skyMesh.position.copy(camera.position);
 
@@ -639,7 +639,7 @@ const animate = (elapsedMs: number) => {
     directionalLight.position.set(
       locomotive.position.x + 30,
       locomotive.position.y + 60,
-      locomotive.position.z - 180
+      locomotive.position.z - 180,
     );
     directionalLight.target.position.copy(locomotive.position);
   }
@@ -669,10 +669,10 @@ const animate = (elapsedMs: number) => {
             const targetPos = trainCurve.getPointAt(trainProgress);
             const TD = 0.025;
             const pAhead = trainCurve.getPointAt(
-              Math.min(0.999, trainProgress + TD)
+              Math.min(0.999, trainProgress + TD),
             );
             const pBehind = trainCurve.getPointAt(
-              Math.max(0.001, trainProgress - TD)
+              Math.max(0.001, trainProgress - TD),
             );
             const rawTangent = pAhead.clone().sub(pBehind).normalize();
             const wideTangent = rawTangent
@@ -684,7 +684,7 @@ const animate = (elapsedMs: number) => {
 
             const tangentCross = new THREE.Vector3().crossVectors(
               prevSmoothTangent,
-              wideTangent
+              wideTangent,
             );
             const curvatureSign = Math.sign(tangentCross.y);
             const curvatureRate =
@@ -699,14 +699,14 @@ const animate = (elapsedMs: number) => {
               -MAX_BANK_RAD,
               MAX_BANK_RAD,
               -MAX_BANK_RAD,
-              MAX_BANK_RAD
+              MAX_BANK_RAD,
             );
 
             prevSmoothTangent.copy(wideTangent);
             const lookAtMatrix = new THREE.Matrix4().lookAt(
               new THREE.Vector3(0, 0, 0),
               wideTangent,
-              new THREE.Vector3(0, 1, 0)
+              new THREE.Vector3(0, 1, 0),
             );
             const curveQuat = new THREE.Quaternion()
               .setFromRotationMatrix(lookAtMatrix)
@@ -721,19 +721,19 @@ const animate = (elapsedMs: number) => {
                 0,
                 MAX_GEAR_ABS_SPEED,
                 4.0,
-                7.0
+                7.0,
               );
               smoothedBodyQuat.slerp(
                 curveQuat,
-                1 - Math.exp(-orientAlpha * stepDt)
+                1 - Math.exp(-orientAlpha * stepDt),
               );
             }
 
             const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(
-              smoothedBodyQuat
+              smoothedBodyQuat,
             );
             const fwdVector = new THREE.Vector3(0, 0, -1).applyQuaternion(
-              smoothedBodyQuat
+              smoothedBodyQuat,
             );
             const frontOrigin = targetPos
               .clone()
@@ -749,13 +749,13 @@ const animate = (elapsedMs: number) => {
               trainPhysics.physicsWorld!,
               frontOrigin,
               downDir,
-              RAY_DIST
+              RAY_DIST,
             );
             const rearHit = trainPhysics.castRay(
               trainPhysics.physicsWorld!,
               rearOrigin,
               downDir,
-              RAY_DIST
+              RAY_DIST,
             );
             const frontFallbackY = terrain
               ? terrain.getHeightAt(frontOrigin.x, frontOrigin.z)
@@ -781,14 +781,14 @@ const animate = (elapsedMs: number) => {
               0,
               MAX_GEAR_ABS_SPEED,
               SUSPENSION_STIFFNESS * 0.7,
-              SUSPENSION_STIFFNESS * 1.35
+              SUSPENSION_STIFFNESS * 1.35,
             );
             const dynamicDamping = remapClamp(
               absSpeedForBank,
               0,
               MAX_GEAR_ABS_SPEED,
               SUSPENSION_DAMPING * 0.75,
-              SUSPENSION_DAMPING * 1.25
+              SUSPENSION_DAMPING * 1.25,
             );
 
             [suspension.front, suspension.rear].forEach((s) => {
@@ -804,7 +804,7 @@ const animate = (elapsedMs: number) => {
             const heightDiff = suspension.front.height - suspension.rear.height;
             const targetPitchOffset = -Math.atan2(
               heightDiff,
-              BOGEY_OFFSET_Z * 2
+              BOGEY_OFFSET_Z * 2,
             );
             const pitchForce =
               dynamicStiffness * 0.45 * (targetPitchOffset - suspension.pitch) -
@@ -826,11 +826,11 @@ const animate = (elapsedMs: number) => {
 
             const pitchQuat = new THREE.Quaternion().setFromAxisAngle(
               new THREE.Vector3(1, 0, 0),
-              suspension.pitch
+              suspension.pitch,
             );
             const bankQuat = new THREE.Quaternion().setFromAxisAngle(
               new THREE.Vector3(0, 0, 1),
-              banking.roll
+              banking.roll,
             );
             const finalQuat = smoothedBodyQuat
               .clone()
@@ -848,9 +848,9 @@ const animate = (elapsedMs: number) => {
           trainPhysicsBody,
           locomotiveSpeed.value,
           stepDt,
-          () => playWithVariation("brickHit")
+          () => playWithVariation("brickHit"),
         );
-      }
+      },
     );
 
     trainBricks.updatePhysicsBlocks(trainBricks.blocksRef.blocks);
@@ -945,19 +945,19 @@ onMounted(async () => {
   directionalLight.shadow.camera.right = 150;
   directionalLight.shadow.camera.top = 150;
   directionalLight.shadow.camera.bottom = -150;
-  
+
   // TWEAK: Depth Precision & Acne Mitigation
   // Tightening near/far planes increases the precision of the depth buffer.
-  // Since the light follows the train at a fixed distance (~192 units), 
+  // Since the light follows the train at a fixed distance (~192 units),
   // we can use a much tighter range than the default 0.5 - 500.
-  directionalLight.shadow.camera.near = 50; 
+  directionalLight.shadow.camera.near = 50;
   directionalLight.shadow.camera.far = 400;
 
   // bias: shifts the shadow slightly away from the surface to prevent self-shadowing (acne)
   // normalBias: offsets the shadow along the surface normal, extremely effective for GLB models
   directionalLight.shadow.bias = -0.0005;
-  directionalLight.shadow.normalBias = 0.1; 
-  
+  directionalLight.shadow.normalBias = 0.1;
+
   scene.add(directionalLight);
   scene.add(directionalLight.target); // TWEAK: Required for directionalLight to point at moving target
 
@@ -974,20 +974,35 @@ onMounted(async () => {
   try {
     const [locomotiveGltf, areasGltf, colarGltf] = await Promise.all([
       new Promise<any>((resolve) => {
-        gltfLoader.load("/train/locomotive.glb", (gltf) => resolve(gltf), undefined, () => resolve(null));
+        gltfLoader.load(
+          "/train/locomotive.glb",
+          (gltf) => resolve(gltf),
+          undefined,
+          () => resolve(null),
+        );
       }),
       new Promise<any>((resolve) => {
-        gltfLoader.load("/areas/areas.glb", (gltf) => resolve(gltf), undefined, () => resolve(null));
+        gltfLoader.load(
+          "/areas/areas.glb",
+          (gltf) => resolve(gltf),
+          undefined,
+          () => resolve(null),
+        );
       }),
       new Promise<any>((resolve) => {
-        gltfLoader.load("/train/colar.glb", (gltf) => resolve(gltf), undefined, () => resolve(null));
+        gltfLoader.load(
+          "/train/colar.glb",
+          (gltf) => resolve(gltf),
+          undefined,
+          () => resolve(null),
+        );
       }),
     ]);
 
     if (!isMounted) return;
 
     if (!locomotiveGltf || !areasGltf || !colarGltf) {
-       throw new Error("One or more essential models failed to load.");
+      throw new Error("One or more essential models failed to load.");
     }
 
     locomotiveGltf.scene.traverse((child) => {
@@ -1055,7 +1070,7 @@ onMounted(async () => {
                   allVerts.push(
                     new THREE.Vector3()
                       .fromBufferAttribute(pos, j)
-                      .applyMatrix4(node.matrixWorld)
+                      .applyMatrix4(node.matrixWorld),
                   );
                 }
                 let cx = 0,
@@ -1069,12 +1084,12 @@ onMounted(async () => {
                 allVerts.sort(
                   (a, b) =>
                     Math.atan2(a.z - cz, a.x - cx) -
-                    Math.atan2(b.z - cz, b.x - cx)
+                    Math.atan2(b.z - cz, b.x - cx),
                 );
                 const chunkCount = 200;
                 const vpc = Math.max(
                   1,
-                  Math.floor(allVerts.length / chunkCount)
+                  Math.floor(allVerts.length / chunkCount),
                 );
                 for (let i = 0; i < chunkCount; i++) {
                   const s = i * vpc,
@@ -1153,7 +1168,7 @@ onMounted(async () => {
       beam.target.position.set(
         Math.sin(-Math.PI / 2) * 1.5,
         -0.5,
-        Math.cos(-Math.PI / 2) * 1.5
+        Math.cos(-Math.PI / 2) * 1.5,
       );
       beam.castShadow = true;
       beam.shadow.mapSize.set(1024, 1024);
@@ -1182,7 +1197,7 @@ onMounted(async () => {
       "/terrain/terrain.glb",
       "/terrain/terrain.png",
       renderer,
-      manager
+      manager,
     );
 
     if (!isMounted) return;
@@ -1209,7 +1224,12 @@ onMounted(async () => {
     physicsBlocksGroup = new THREE.Group();
     scene.add(physicsBlocksGroup);
 
-    terrainNormalHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1, 0xffff00);
+    terrainNormalHelper = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 0),
+      1,
+      0xffff00,
+    );
     terrainNormalHelper.visible = false;
     scene.add(terrainNormalHelper);
 

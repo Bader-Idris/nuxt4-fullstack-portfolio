@@ -12,8 +12,8 @@
 </template>
 
 <script setup>
-const route = useRoute()
-const hideLayout = computed(() => route.meta.hideLayout || false)
+const route = useRoute();
+const hideLayout = computed(() => route.meta.hideLayout || false);
 </script>
 
 <style lang="scss">

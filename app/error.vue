@@ -1,33 +1,34 @@
 <script setup lang="ts">
-import type { NuxtError } from '#app'
-const localePath = useLocalePath()
+import type { NuxtError } from "#app";
+const localePath = useLocalePath();
 
 defineProps({
   error: {
     type: Object as () => NuxtError,
-    default: () => ({ statusCode: 404 })
-  }
-})
+    default: () => ({ statusCode: 404 }),
+  },
+});
 </script>
 
 <template>
   <NavBar />
   <div class="not-found">
     <h1 class="text">{{ error?.statusCode || 404 }}</h1>
-    <p>This page is not found <strong>{{ useRequestURL().pathname }}</strong></p>
+    <p>
+      This page is not found <strong>{{ useRequestURL().pathname }}</strong>
+    </p>
     <CustomLink
       aria-label="go to main page"
       :to="localePath('/')"
-      class="go-back">
+      class="go-back"
+    >
       <span> back to main page </span>
     </CustomLink>
   </div>
   <FooterComp />
 </template>
 
-
 <style lang="scss" scoped>
-
 .not-found {
   @include flex-container(column, wrap, center, center);
   @include mainMiddleSettings;

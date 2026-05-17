@@ -1,4 +1,4 @@
-import {  readBody, getRequestIP, createError } from "h3";
+import { readBody, getRequestIP, createError } from "h3";
 import { ReceivedEmail } from "../../models/mongo/index";
 
 export default defineEventHandler(async (event) => {

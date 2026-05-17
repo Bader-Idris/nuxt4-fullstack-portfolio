@@ -5,7 +5,10 @@ export default function (error: H3Error, event) {
   const statusMessage = error.statusMessage || "Internal Server Error";
 
   // Log the error for Docker production logs
-  console.error(`[Server Error] ${event.node.req.method} ${event.node.req.url} - ${statusCode}: ${error.message}`, error.cause || "");
+  console.error(
+    `[Server Error] ${event.node.req.method} ${event.node.req.url} - ${statusCode}: ${error.message}`,
+    error.cause || "",
+  );
 
   // Set the response status
   event.node.res.statusCode = statusCode;
@@ -14,9 +17,11 @@ export default function (error: H3Error, event) {
   // If it's a static asset request from _nuxt, we might want to be more careful,
   // but usually Nitro handles these before the error handler.
   // For API or unexpected errors, return JSON.
-  return error.data || { 
-    message: error.message,
-    statusCode,
-    statusMessage
-  };
+  return (
+    error.data || {
+      message: error.message,
+      statusCode,
+      statusMessage,
+    }
+  );
 }

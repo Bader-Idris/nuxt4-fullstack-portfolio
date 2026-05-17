@@ -1,24 +1,26 @@
-import { isTokenValid, attachCookiesToResponse } from '../utils/jwt';
-import { Token } from '../models/mongo';
+import { isTokenValid, attachCookiesToResponse } from "../utils/jwt";
+import { Token } from "../models/mongo";
 
 export default defineEventHandler(async (event) => {
   // Define protected API routes that require authentication
   const protectedRoutes = [
-    '/api/v1/auth/me',
-    '/api/v1/received_emails',
-    '/api/v1/push/subscribe',
-    '/api/v1/push/subscribe-capacitor'
+    "/api/v1/auth/me",
+    "/api/v1/received_emails",
+    "/api/v1/push/subscribe",
+    "/api/v1/push/subscribe-capacitor",
   ];
 
-  const isProtectedRoute = protectedRoutes.some(route => event.path.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    event.path.startsWith(route),
+  );
 
   // Only run authentication logic for protected routes
   if (!isProtectedRoute) {
     return;
   }
 
-  const accessToken = getCookie(event, 'accessToken');
-  const refreshTokenJWT = getCookie(event, 'refreshToken');
+  const accessToken = getCookie(event, "accessToken");
+  const refreshTokenJWT = getCookie(event, "refreshToken");
 
   if (accessToken) {
     try {
@@ -29,7 +31,7 @@ export default defineEventHandler(async (event) => {
       }
     } catch (error) {
       // Access token is invalid or expired, proceed to refresh token logic
-      console.log('Access Token invalid, attempting refresh...');
+      console.log("Access Token invalid, attempting refresh...");
     }
   }
 
@@ -55,11 +57,10 @@ export default defineEventHandler(async (event) => {
     // Issue new tokens
     attachCookiesToResponse(event, payload.user, existingToken.refreshToken);
     event.context.user = payload.user;
-    console.log('Token refreshed successfully');
-
+    console.log("Token refreshed successfully");
   } catch (error) {
     // Refresh token is invalid or expired
-    console.log('Refresh token invalid.');
+    console.log("Refresh token invalid.");
     return;
   }
 });

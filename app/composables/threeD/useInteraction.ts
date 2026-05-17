@@ -16,7 +16,7 @@ export function useInteraction(options: InteractionOptions) {
     size / 2,
     -size / 2,
     0.1,
-    10
+    10,
   );
   camera.position.set(0, 5, 0);
   camera.lookAt(0, 0, 0);
@@ -29,7 +29,7 @@ export function useInteraction(options: InteractionOptions) {
     type: THREE.HalfFloatType,
   });
   const rtB = rtA.clone();
-  
+
   let currentRT = rtA;
   let prevRT = rtB;
 
@@ -73,22 +73,22 @@ export function useInteraction(options: InteractionOptions) {
     update(position: THREE.Vector3) {
       // 1. Move brush to current position
       brush.position.set(position.x, 0, position.z);
-      
+
       // 2. Render fade (prevRT -> currentRT)
       fadeMaterial.uniforms.uTexture.value = prevRT.texture;
       renderer.setRenderTarget(currentRT);
       renderer.render(fadeScene, fadeCamera);
-      
+
       // 3. Render brush into currentRT (on top of faded previous content)
       renderer.autoClear = false;
       renderer.render(scene, camera);
       renderer.autoClear = true;
-      
+
       // 4. Swap ping-pong
       const temp = currentRT;
       currentRT = prevRT;
       prevRT = temp;
-      
+
       this.texture = prevRT.texture;
       renderer.setRenderTarget(null);
     },

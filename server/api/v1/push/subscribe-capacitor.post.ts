@@ -1,13 +1,12 @@
-
-import { CapacitorSubscription } from '../../../models/mongo/CapacitorSubscription';
-import { saveCapacitorSubscription as saveCapacitorSubscriptionToRedis } from '../../../utils/redisUtils';
-import { redisClient } from '../../../plugins/redis';
+import { CapacitorSubscription } from "../../../models/mongo/CapacitorSubscription";
+import { saveCapacitorSubscription as saveCapacitorSubscriptionToRedis } from "../../../utils/redisUtils";
+import { redisClient } from "../../../plugins/redis";
 
 export default defineEventHandler(async (event) => {
   if (!event.context.user) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      statusMessage: "Unauthorized",
     });
   }
 
@@ -16,7 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!token || !platform) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Bad Request: Missing token or platform details',
+      statusMessage: "Bad Request: Missing token or platform details",
     });
   }
 
@@ -32,15 +31,19 @@ export default defineEventHandler(async (event) => {
     );
 
     if (redisClient) {
-      await saveCapacitorSubscriptionToRedis(redisClient, event.context.user.userId, { token, platform });
+      await saveCapacitorSubscriptionToRedis(
+        redisClient,
+        event.context.user.userId,
+        { token, platform },
+      );
     }
 
-    return { message: 'Capacitor subscription saved successfully' };
+    return { message: "Capacitor subscription saved successfully" };
   } catch (error) {
-    console.error('Error saving Capacitor subscription:', error);
+    console.error("Error saving Capacitor subscription:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal Server Error: Could not save subscription',
+      statusMessage: "Internal Server Error: Could not save subscription",
     });
   }
 });

@@ -1,4 +1,4 @@
-import { SocialLogin } from '@capgo/capacitor-social-login';
+import { SocialLogin } from "@capgo/capacitor-social-login";
 
 export default defineNuxtPlugin(async () => {
   if (import.meta.server) return;
@@ -7,22 +7,22 @@ export default defineNuxtPlugin(async () => {
   const isCapacitor = config.public.isCapacitor;
 
   if (isCapacitor) {
-    console.log('--- SocialLogin Plugin Initialization ---');
+    console.log("--- SocialLogin Plugin Initialization ---");
     try {
       await SocialLogin.initialize({
         google: {
           webClientId: config.public.googleClientId,
           iOSServerClientId: config.public.googleClientId, // Often required for iOS to match webClientId
-          mode: 'online', // Using online mode for easier client-side session management
+          mode: "online", // Using online mode for easier client-side session management
         },
         facebook: {
           appId: config.public.facebookAppId as string,
         },
         // You can add apple, twitter etc. here if needed
       });
-      console.log('SocialLogin initialized successfully');
+      console.log("SocialLogin initialized successfully");
     } catch (error) {
-      console.error('SocialLogin initialization failed:', error);
+      console.error("SocialLogin initialization failed:", error);
     }
   }
 });

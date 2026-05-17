@@ -1,26 +1,35 @@
-import { defineEventHandler, readBody, createError, getRequestHeader, getRequestIP } from 'h3';
-import { Token } from '../../../../models/mongo';
-import crypto from 'node:crypto';
-import { createTokenUser, attachCookiesToResponse } from '../../../../utils';
-import { validateFacebookToken, findOrCreateSocialUser } from '../../../../utils/socialAuth';
+import {
+  defineEventHandler,
+  readBody,
+  createError,
+  getRequestHeader,
+  getRequestIP,
+} from "h3";
+import { Token } from "../../../../models/mongo";
+import crypto from "node:crypto";
+import { createTokenUser, attachCookiesToResponse } from "../../../../utils";
+import {
+  validateFacebookToken,
+  findOrCreateSocialUser,
+} from "../../../../utils/socialAuth";
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    console.log('--- Facebook Social Auth Start ---');
-    console.log('Request Body:', JSON.stringify(body, null, 2));
-    
+    console.log("--- Facebook Social Auth Start ---");
+    console.log("Request Body:", JSON.stringify(body, null, 2));
+
     const { accessToken } = body;
-    
+
     if (!accessToken) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Missing access token'
+        statusMessage: "Missing access token",
       });
     }
 
     const profile = await validateFacebookToken(accessToken);
-    const user = await findOrCreateSocialUser(profile, 'facebook');
+    const user = await findOrCreateSocialUser(profile, "facebook");
 
     const tokenUser = createTokenUser(user);
     let refreshToken = "";
@@ -39,22 +48,25 @@ export default defineEventHandler(async (event) => {
     }
 
     attachCookiesToResponse(event, tokenUser, refreshToken);
-    
-    console.log('--- Facebook Social Auth Success ---');
+
+    console.log("--- Facebook Social Auth Success ---");
     return {
       user: {
         name: tokenUser.name,
         userId: tokenUser.userId,
         role: tokenUser.role,
       },
-      message: 'Successfully authenticated with Facebook',
+      message: "Successfully authenticated with Facebook",
     };
   } catch (error: any) {
-    console.error('--- Facebook social auth error ---');
+    console.error("--- Facebook social auth error ---");
     console.error(error);
     throw createError({
       statusCode: error.statusCode || 401,
-      statusMessage: error.statusMessage || error.message || 'Facebook authentication failed',
+      statusMessage:
+        error.statusMessage ||
+        error.message ||
+        "Facebook authentication failed",
     });
   }
 });

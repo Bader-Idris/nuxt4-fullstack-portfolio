@@ -1,18 +1,16 @@
 <script setup lang="ts">
 const { title, description } = defineProps<{
-  title?: string
-  description?: string
-}>()
+  title?: string;
+  description?: string;
+}>();
 
-const siteConfig = useSiteConfig()
+const siteConfig = useSiteConfig();
 </script>
 
 <template>
   <div class="og-container">
     <div class="content">
-      <div class="brand">
-        &lt;Bader Idris /&gt;
-      </div>
+      <div class="brand">&lt;Bader Idris /&gt;</div>
       <h1 class="title">
         {{ title || siteConfig.name }}
       </h1>
@@ -20,7 +18,7 @@ const siteConfig = useSiteConfig()
         {{ description || siteConfig.description }}
       </p>
     </div>
-    
+
     <div class="footer">
       <div class="tags">
         <span>#Vue</span>
@@ -30,9 +28,7 @@ const siteConfig = useSiteConfig()
         <span>#GSAP</span>
         <span>#ThreeJS</span>
       </div>
-      <div class="domain">
-        baderidris.com
-      </div>
+      <div class="domain">baderidris.com</div>
     </div>
   </div>
 </template>
@@ -45,11 +41,11 @@ const siteConfig = useSiteConfig()
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #01080E;
-  color: #607B96;
-  font-family: 'Fira Code', monospace;
+  background-color: #01080e;
+  color: #607b96;
+  font-family: "Fira Code", monospace;
   padding: 80px;
-  border: 8px solid #1E2D3D;
+  border: 8px solid #1e2d3d;
   box-sizing: border-box;
 
   .content {
@@ -59,7 +55,7 @@ const siteConfig = useSiteConfig()
     width: 100%;
 
     .brand {
-      color: #43D9AD;
+      color: #43d9ad;
       font-size: 24px;
       margin-bottom: 16px;
     }
@@ -67,7 +63,7 @@ const siteConfig = useSiteConfig()
     .title {
       font-size: 72px;
       font-weight: 700;
-      color: #E5E9F0;
+      color: #e5e9f0;
       line-height: 1.1;
       margin-bottom: 32px;
       margin-top: 0;
@@ -75,7 +71,7 @@ const siteConfig = useSiteConfig()
 
     .description {
       font-size: 30px;
-      color: #607B96;
+      color: #607b96;
       line-height: 1.5;
       max-width: 90%;
       margin: 0;
@@ -92,12 +88,12 @@ const siteConfig = useSiteConfig()
     .tags {
       display: flex;
       gap: 24px;
-      color: #4D5BCE;
+      color: #4d5bce;
       font-size: 20px;
     }
 
     .domain {
-      color: #607B96;
+      color: #607b96;
       font-size: 20px;
     }
   }

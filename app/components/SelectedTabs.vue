@@ -1,12 +1,14 @@
 <template>
   <div class="selected-projects">
     <ul>
-      <li
-        v-for="(item, index) in activeItems"
-        :key="index"
-      >
+      <li v-for="(item, index) in activeItems" :key="index">
         {{ item }}
-        <Icon name="hugeicons:cancel-02" width="20" class="remove" @click="removeItem(item)" />
+        <Icon
+          name="hugeicons:cancel-02"
+          width="20"
+          class="remove"
+          @click="removeItem(item)"
+        />
       </li>
     </ul>
   </div>
@@ -18,14 +20,14 @@ defineProps({
     type: Array,
     required: true,
   },
-})
+});
 
-const emit = defineEmits(['removeItem'])
+const emit = defineEmits(["removeItem"]);
 
 // @ts-expect-error: item has an implicit any type
 const removeItem = (item) => {
-  emit('removeItem', item)
-}
+  emit("removeItem", item);
+};
 </script>
 
 <style lang="scss">

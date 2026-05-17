@@ -16,12 +16,12 @@ export interface SkyInstance {
 /**
  * useSky composable for Nuxt 4
  * Provides a GLSL-based sky sphere for Three.js scenes.
- * Purpose: Decouples sky logic from components, ensures SSR safety, 
+ * Purpose: Decouples sky logic from components, ensures SSR safety,
  * and provides a clean interface for sky updates and disposal.
  */
 export function useSky(
   scene: THREE.Scene,
-  options: SkyOptions = {}
+  options: SkyOptions = {},
 ): SkyInstance | null {
   // Ensure we only run on the client to avoid hydration errors and Three.js SSR issues
   if (import.meta.server) return null;
@@ -35,7 +35,7 @@ export function useSky(
   const skyGeo = new THREE.SphereGeometry(
     sphereRadius,
     sphereSegments.width,
-    sphereSegments.height
+    sphereSegments.height,
   );
 
   const uSunDir = { value: sunDirection.clone() };

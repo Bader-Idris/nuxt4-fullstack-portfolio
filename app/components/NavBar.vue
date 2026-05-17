@@ -1,8 +1,8 @@
 <template>
   <header>
     <div class="container">
-      <div class="name"  @click="handleTripleClick">
-        {{ t('home.name2') }}
+      <div class="name" @click="handleTripleClick">
+        {{ t("home.name2") }}
       </div>
       <nav class="nav">
         <CustomLink
@@ -10,21 +10,21 @@
           class="sub-navs"
           :class="{ active: $route.path === localePath('/') }"
         >
-          {{ t('home.hello') }}
+          {{ t("home.hello") }}
         </CustomLink>
         <CustomLink
           :to="localePath('/about')"
           class="sub-navs"
           :class="{ active: $route.path.startsWith(localePath('/about')) }"
         >
-          {{ t('home.about') }}
+          {{ t("home.about") }}
         </CustomLink>
         <CustomLink
           :to="localePath('/projects')"
           class="sub-navs"
           :class="{ active: $route.path.startsWith(localePath('/projects')) }"
         >
-          {{ t('home.projects') }}
+          {{ t("home.projects") }}
         </CustomLink>
       </nav>
       <!-- <ThemeMode /> -->
@@ -34,27 +34,22 @@
         class="contact sub-navs"
         :class="{ active: $route.path.startsWith(localePath('/contact')) }"
       >
-        {{ t('home.contact') }}
+        {{ t("home.contact") }}
       </CustomLink>
     </div>
-    <div
-      v-if="showBurgerNav"
-      class="burger-nav"
-      @click="togglePhoneMenu"
-    >
-      <span
-        v-for="i in 3"
-        :key="i"
-      />
+    <div v-if="showBurgerNav" class="burger-nav" @click="togglePhoneMenu">
+      <span v-for="i in 3" :key="i" />
     </div>
-    <div
-      v-show="showPhoneMenu"
-      class="phone-menu"
-    >
-      <Icon name="hugeicons:cancel-02" width="40" class="remove-phone-menu" @click="togglePhoneMenu" />
+    <div v-show="showPhoneMenu" class="phone-menu">
+      <Icon
+        name="hugeicons:cancel-02"
+        width="40"
+        class="remove-phone-menu"
+        @click="togglePhoneMenu"
+      />
       <div class="phone-body">
         <div class="name">
-          {{ t('home.name2') }}
+          {{ t("home.name2") }}
         </div>
         <ul>
           <CustomLink
@@ -63,7 +58,7 @@
             :class="{ active: $route.path === localePath('/') }"
             @click="togglePhoneMenu"
           >
-            {{ t('home.hello') }}
+            {{ t("home.hello") }}
           </CustomLink>
           <CustomLink
             :to="localePath('/about')"
@@ -71,7 +66,7 @@
             :class="{ active: $route.path.startsWith(localePath('/about')) }"
             @click="togglePhoneMenu"
           >
-            {{ t('home.about') }}
+            {{ t("home.about") }}
           </CustomLink>
           <CustomLink
             :to="localePath('/projects')"
@@ -79,7 +74,7 @@
             :class="{ active: $route.path.startsWith(localePath('/projects')) }"
             @click="togglePhoneMenu"
           >
-            {{ t('home.projects') }}
+            {{ t("home.projects") }}
           </CustomLink>
           <CustomLink
             :to="localePath('/contact')"
@@ -87,7 +82,7 @@
             :class="{ active: $route.path.startsWith(localePath('/contact')) }"
             @click="togglePhoneMenu"
           >
-            {{ t('home.contact') }}
+            {{ t("home.contact") }}
           </CustomLink>
         </ul>
       </div>
@@ -97,39 +92,38 @@
 </template>
 
 <script setup lang="ts">
-import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
-import { useI18n } from 'vue-i18n'
+import { useDebounceFn, useTimeoutFn } from "@vueuse/core";
+import { useI18n } from "vue-i18n";
 
-const { t } = useI18n({ useScope: 'global' })
-const localePath = useLocalePath()
-const route = useRoute()
+const { t } = useI18n({ useScope: "global" });
+const localePath = useLocalePath();
+const route = useRoute();
 const count = ref(0);
 const { start, stop } = useTimeoutFn(() => {
   count.value = 0;
 }, 5000);
 
-const showBurgerNav = ref(false)
-const showPhoneMenu = ref(false)
-const currentPath = ref('')
+const showBurgerNav = ref(false);
+const showPhoneMenu = ref(false);
+const currentPath = ref("");
 
 const handleResize = useDebounceFn(() => {
-  showBurgerNav.value = window.outerWidth <= 768
-}, 300) // Debounce with 300ms delay
+  showBurgerNav.value = window.outerWidth <= 768;
+}, 300); // Debounce with 300ms delay
 
 const togglePhoneMenu = () => {
-  const menu = document.querySelector('.phone-menu') // Select the menu
+  const menu = document.querySelector(".phone-menu"); // Select the menu
   if (showPhoneMenu.value) {
     // If menu is currently open, close it
-    menu?.classList.remove('open')
-    showPhoneMenu.value = false
-  }
-  else {
+    menu?.classList.remove("open");
+    showPhoneMenu.value = false;
+  } else {
     // If menu is closed, store the current path and open it
-    menu?.classList.add('open')
-    currentPath.value = route.fullPath
-    showPhoneMenu.value = true
+    menu?.classList.add("open");
+    currentPath.value = route.fullPath;
+    showPhoneMenu.value = true;
   }
-}
+};
 
 const handleTripleClick = () => {
   count.value++;
@@ -139,7 +133,7 @@ const handleTripleClick = () => {
   start();
 
   if (count.value === 5) {
-    navigateTo(localePath('/register'));
+    navigateTo(localePath("/register"));
     count.value = 0; // Reset counter immediately after triggering
     stop();
   }
@@ -149,10 +143,10 @@ onMounted(() => {
   if (import.meta.client) {
     // --------------------------------------------
     // START gsap underneath indicator for active nav
-    const navContainer = document.querySelector('header > .container');
+    const navContainer = document.querySelector("header > .container");
     if (!navContainer) return;
-    const indicator = document.createElement('div');
-    indicator.classList.add('indicator');
+    const indicator = document.createElement("div");
+    indicator.classList.add("indicator");
     navContainer.appendChild(indicator);
 
     const updateIndicator = (target: HTMLElement) => {
@@ -166,7 +160,7 @@ onMounted(() => {
         width: width,
         x: offset - 20,
         duration: 0.4,
-        ease: 'back.out(1.7)',
+        ease: "back.out(1.7)",
       });
     };
 
@@ -175,9 +169,8 @@ onMounted(() => {
       () => route.path,
       () => {
         nextTick(() => {
-          const activeTab = document.querySelector<HTMLElement>(
-            '.sub-navs.active',
-          );
+          const activeTab =
+            document.querySelector<HTMLElement>(".sub-navs.active");
           if (activeTab) {
             updateIndicator(activeTab);
           }
@@ -189,14 +182,14 @@ onMounted(() => {
     // --------------------------------------------
 
     showBurgerNav.value = window.outerWidth <= 768;
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
   }
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
+  window.removeEventListener("resize", handleResize);
   if (import.meta.client) stop();
-})
+});
 </script>
 
 <style lang="scss">
@@ -224,7 +217,7 @@ onUnmounted(() => {
   }
 
   &::after {
-    content: '';
+    content: "";
     border-color: $lines;
     border-width: 1px;
     height: 100%;
@@ -269,7 +262,7 @@ header {
 
       @include mobile {
         &::after {
-          content: '';
+          content: "";
           position: absolute;
           width: calc($full-viewport-width - 32px);
           height: 100%;
@@ -357,7 +350,7 @@ header {
       }
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         width: 100%;
         height: $full-viewport-height;
@@ -419,7 +412,7 @@ header {
 
             & > a {
               &::before {
-                content: '';
+                content: "";
                 position: absolute;
                 border-bottom: 1px solid $lines;
                 width: calc($full-viewport-width - 33px);

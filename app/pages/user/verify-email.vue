@@ -6,8 +6,8 @@
     <div v-else-if="verified" class="verify">
       <p>Your email has been verified</p>
       <p>
-        <span>{{ seconds < 10 ? '0' + seconds : seconds }}</span> seconds to go
-            to the main page
+        <span>{{ seconds < 10 ? "0" + seconds : seconds }}</span> seconds to go
+        to the main page
       </p>
     </div>
     <div v-else class="warn">
@@ -15,7 +15,8 @@
       <CustomButton
         class="go-back"
         button-type="primary"
-        aria-label="go to main page">
+        aria-label="go to main page"
+      >
         <CustomLink :to="localePath('/')">
           <span> or go back to main page </span>
         </CustomLink>
@@ -25,85 +26,94 @@
 </template>
 
 <script setup lang="ts">
-import { toast } from 'vue3-toastify'
-import 'vue3-toastify/dist/index.css'
-import { useIntervalFn } from '@vueuse/core'
-import { useRoute, useLocalePath, computed, ref, onMounted } from '#imports'
+import { toast } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
+import { useIntervalFn } from "@vueuse/core";
+import { useRoute, useLocalePath, computed, ref, onMounted } from "#imports";
 
-const localePath = useLocalePath()
-const route = useRoute()
+const localePath = useLocalePath();
+const route = useRoute();
 
 type VerifyEmailResponse = {
-  message: string
-}
+  message: string;
+};
 
-const seconds = ref(10)
-const verified = ref(false)
-const isLoading = ref(true)
-const errorMessage = ref<string | null>(null)
+const seconds = ref(10);
+const verified = ref(false);
+const isLoading = ref(true);
+const errorMessage = ref<string | null>(null);
 
 // Extract query parameters - reactive access
-const email = computed(() => route.query.email?.toString())
-const verificationToken = computed(() => route.query.verificationToken?.toString())
+const email = computed(() => route.query.email?.toString());
+const verificationToken = computed(() =>
+  route.query.verificationToken?.toString(),
+);
 
 // Verification function
 const verifyEmail = async () => {
   if (!email.value || !verificationToken.value) {
-    errorMessage.value = 'Missing verification parameters'
-    isLoading.value = false
-    return
+    errorMessage.value = "Missing verification parameters";
+    isLoading.value = false;
+    return;
   }
 
   try {
-    const data = await $fetch<VerifyEmailResponse>('/api/v1/auth/verify-email', {
-      baseURL: useRuntimeConfig().public.originUrl,
-      method: 'POST',
-      body: { email: email.value, verificationToken: verificationToken.value },
-    })
+    const data = await $fetch<VerifyEmailResponse>(
+      "/api/v1/auth/verify-email",
+      {
+        baseURL: useRuntimeConfig().public.originUrl,
+        method: "POST",
+        body: {
+          email: email.value,
+          verificationToken: verificationToken.value,
+        },
+      },
+    );
 
-    if (data.message === 'Email Verified') {
-      verified.value = true
+    if (data.message === "Email Verified") {
+      verified.value = true;
     }
   } catch (err: any) {
-    errorMessage.value = err.data?.message || err.message || 'Verification failed'
+    errorMessage.value =
+      err.data?.message || err.message || "Verification failed";
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
 // Verify immediately on component setup (works for both SSR and CSR)
-await verifyEmail()
+await verifyEmail();
 
 useSeoMeta({
-  title: 'Verify Email',
-  description: 'A redirect page for email verification via email',
-})
+  title: "Verify Email",
+  description: "A redirect page for email verification via email",
+});
 
 // Countdown timer
 const { pause } = useIntervalFn(() => {
-  seconds.value--
+  seconds.value--;
   if (seconds.value <= 0) {
-    pause()
-    if (verified.value) navigateTo(localePath('/'))
+    pause();
+    if (verified.value) navigateTo(localePath("/"));
   }
-}, 1000)
+}, 1000);
 
 // Client-side toast notifications and re-verification on mount
 onMounted(() => {
   if (import.meta.client) {
     // Re-verify on mount if query params exist (handles direct URL access)
     if (email.value && verificationToken.value && isLoading.value) {
-      verifyEmail()
+      verifyEmail();
     }
 
     // Show toast based on result
     if (verified.value) {
-      toast('Email verified successfully', { theme: 'dark', type: 'success' })
+      toast("Email verified successfully", { theme: "dark", type: "success" });
     } else if (errorMessage.value) {
-      toast(errorMessage.value, { theme: 'dark', type: 'error' })
+      toast(errorMessage.value, { theme: "dark", type: "error" });
     }
   }
-})
+});
 </script>
 
 <style lang="scss">

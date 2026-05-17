@@ -14,21 +14,21 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  initiallyFolded?: boolean // Optional prop to set initial folded state
-}>()
-const emit = defineEmits(['toggle'])
-const isToggled = ref(props.initiallyFolded || false) // Initialize based on prop
+  initiallyFolded?: boolean; // Optional prop to set initial folded state
+}>();
+const emit = defineEmits(["toggle"]);
+const isToggled = ref(props.initiallyFolded || false); // Initialize based on prop
 const toggleFolding = () => {
-  isToggled.value = !isToggled.value
-  emit('toggle')
-}
+  isToggled.value = !isToggled.value;
+  emit("toggle");
+};
 // Watch for changes in the initiallyFolded prop to update the toggled state
 watch(
   () => props.initiallyFolded,
   (newVal) => {
-    isToggled.value = newVal || false
+    isToggled.value = newVal || false;
   },
-)
+);
 </script>
 
 <style lang="scss" scoped>

@@ -35,6 +35,7 @@ win: {
 ```
 
 Key changes:
+
 - `certificateFile` → `cscLink`
 - `certificatePassword` → `cscKeyPassword`
 - Removed problematic `signtoolOptions` and `signDlls` properties
@@ -42,6 +43,7 @@ Key changes:
 ### Step 2: Certificate File Location
 
 Your certificate file `Cert.pfx` should be located at:
+
 ```
 electronAssets/builder/envs/Cert.pfx
 ```
@@ -65,22 +67,27 @@ WIN_CSC_KEY_PASSWORD=your_certificate_password_here
 If you need to install the Windows SDK to get signtool.exe, follow these steps:
 
 #### Option 1: Install Windows SDK via Visual Studio Installer
+
 1. Download and install Visual Studio Community (free) or Build Tools for Visual Studio
 2. During installation, select "Windows 10/11 SDK"
 3. This will install signtool.exe in the correct location
 
 #### Option 2: Install Windows SDK Standalone
+
 1. Go to the [Microsoft Windows SDK page](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
 2. Download and install the latest Windows SDK
 3. signtool.exe will be available in the Windows Kits directory
 
 #### Verify signtool Installation
+
 Open Command Prompt or PowerShell and run:
+
 ```cmd
 where signtool
 ```
 
 If found, you should see output similar to:
+
 ```
 C:\Program Files (x86)\Windows Kits\10\bin\10.0.xxxx.xxxxx\x64\signtool.exe
 ```
@@ -234,18 +241,19 @@ Update your `package.json` to use an appId without periods:
 Create a separate configuration file for AppX builds (e.g., `electronAssets/builder/config-appx.js`):
 
 ```javascript
-const baseConfig = require('./config.js');
+const baseConfig = require("./config.js");
 module.exports = {
   ...baseConfig,
-  appId: 'com_baderidris_www',  // appId without periods for AppX
+  appId: "com_baderidris_www", // appId without periods for AppX
   win: {
     ...baseConfig.win,
-    target: [{ target: 'appx', arch: 'x64' }]
-  }
+    target: [{ target: "appx", arch: "x64" }],
+  },
 };
 ```
 
 Then build AppX separately:
+
 ```bash
 electron-builder --config=electronAssets/builder/config-appx.js
 ```
@@ -254,7 +262,7 @@ electron-builder --config=electronAssets/builder/config-appx.js
 
 If you only need other Windows targets, you can modify your windowsTargets array to exclude AppX:
 
-```javascript
+````javascript
 const windowsTargets = [
   // { target: 'appx', arch: 'x64' }, // Commented out for now
   // { target: 'zip', arch: 'x64' }, // not worthy!
@@ -269,11 +277,12 @@ If you have the Windows SDK tools installed, you might also use:
 ```cmd
 makecert -r -pe -ss My -n "CN=Your Company Name" -sky signature -sv MyCert.pvk MyCert.cer
 pvk2pfx -pvk MyCert.pvk -spc MyCert.cer -pfx Cert.pfx
-```
+````
 
 ### Option 3: Production Certificate
 
 For production applications, you should purchase a code signing certificate from a trusted Certificate Authority (CA) like:
+
 - DigiCert
 - Sectigo (formerly Comodo)
 - GlobalSign
@@ -282,6 +291,7 @@ For production applications, you should purchase a code signing certificate from
 ## Using the Generated Certificate
 
 Once you have your certificate file:
+
 1. Place it at `electronAssets/builder/envs/Cert.pfx`
 2. Update your `.env` file with the correct password
 3. Make sure your `WIN_CSC_LINK` environment variable points to the correct path

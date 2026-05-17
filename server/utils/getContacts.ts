@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 // import { Message, User } from '../models/mongo';
-import { Message } from '../models/mongo';
+import { Message } from "../models/mongo";
 
 export async function getContacts(userId: string, page: number, limit: number) {
   const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -19,16 +19,16 @@ export async function getContacts(userId: string, page: number, limit: number) {
         $group: {
           _id: {
             $cond: {
-              if: { $eq: ['$from', userObjectId] },
-              then: '$to',
-              else: '$from',
+              if: { $eq: ["$from", userObjectId] },
+              then: "$to",
+              else: "$from",
             },
           },
-          lastMessage: { $first: '$$ROOT' },
+          lastMessage: { $first: "$$ROOT" },
         },
       },
       {
-        $sort: { 'lastMessage.timestamp': -1 },
+        $sort: { "lastMessage.timestamp": -1 },
       },
       {
         $skip: (page - 1) * limit,
@@ -38,26 +38,26 @@ export async function getContacts(userId: string, page: number, limit: number) {
       },
       {
         $lookup: {
-          from: 'users', // The name of the User collection in MongoDB
-          localField: '_id',
-          foreignField: '_id',
-          as: 'contactInfo',
+          from: "users", // The name of the User collection in MongoDB
+          localField: "_id",
+          foreignField: "_id",
+          as: "contactInfo",
         },
       },
       {
-        $unwind: '$contactInfo',
+        $unwind: "$contactInfo",
       },
       {
         $project: {
           _id: 0,
-          userId: '$contactInfo._id',
-          name: '$contactInfo.name',
+          userId: "$contactInfo._id",
+          name: "$contactInfo.name",
           lastMessage: {
-            id: '$lastMessage._id',
-            message: '$lastMessage.message',
-            timestamp: '$lastMessage.timestamp',
-            from: '$lastMessage.from',
-            to: '$lastMessage.to',
+            id: "$lastMessage._id",
+            message: "$lastMessage.message",
+            timestamp: "$lastMessage.timestamp",
+            from: "$lastMessage.from",
+            to: "$lastMessage.to",
           },
         },
       },
@@ -65,7 +65,7 @@ export async function getContacts(userId: string, page: number, limit: number) {
 
     return contacts;
   } catch (error) {
-    console.error('Error fetching contacts:', error);
-    throw new Error('Failed to fetch contacts');
+    console.error("Error fetching contacts:", error);
+    throw new Error("Failed to fetch contacts");
   }
 }

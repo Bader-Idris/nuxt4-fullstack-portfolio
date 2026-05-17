@@ -1,12 +1,9 @@
 <template>
   <div class="game-container">
     <div class="screws">
-      <span
-        v-for="i in 4"
-        :key="i"
-      >x</span>
+      <span v-for="i in 4" :key="i">x</span>
     </div>
-    <LazySnakeGame 
+    <LazySnakeGame
       hydrate-on-media-query="(min-width: 769px)"
       :food-left="foodLeft"
       :update-food-left="Object(updateFoodLeft)"
@@ -15,37 +12,52 @@
       @game-over="handleGameOver"
     />
     <div class="game-controller">
-      <span>{{ $t('home.gameTips_0') }}</span>
-      <span>{{ $t('home.gameTips_1') }}</span>
+      <span>{{ $t("home.gameTips_0") }}</span>
+      <span>{{ $t("home.gameTips_1") }}</span>
       <div class="board-arrows">
         <span @click="triggerKeyPress('ArrowDown')">
           <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" />
-      </span>
+        </span>
         <span @click="triggerKeyPress('ArrowRight')">
-          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" class="left" />
+          <Icon
+            name="bxs:up-arrow"
+            width="15"
+            height="15"
+            mode="svg"
+            class="left"
+          />
         </span>
         <span @click="triggerKeyPress('ArrowUp')">
-          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" class="down" />
+          <Icon
+            name="bxs:up-arrow"
+            width="15"
+            height="15"
+            mode="svg"
+            class="down"
+          />
         </span>
         <span @click="triggerKeyPress('ArrowLeft')">
-          <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" class="right" />
+          <Icon
+            name="bxs:up-arrow"
+            width="15"
+            height="15"
+            mode="svg"
+            class="right"
+          />
         </span>
       </div>
-      <span>{{ $t('home.foodLeft') }}</span>
-      <LazyFoodComp 
-      :food-left="foodLeft" 
-      hydrate-on-media-query="(min-width: 769px)"
+      <span>{{ $t("home.foodLeft") }}</span>
+      <LazyFoodComp
+        :food-left="foodLeft"
+        hydrate-on-media-query="(min-width: 769px)"
       />
       <CustomLink
         aria-label="about page"
         :to="localePath('/about')"
         class="internal-link"
       >
-        <CustomButton
-          button-type="ghost"
-          class="skip"
-        >
-          {{ $t('home.skip') }}
+        <CustomButton button-type="ghost" class="skip">
+          {{ $t("home.skip") }}
         </CustomButton>
       </CustomLink>
     </div>
@@ -54,60 +66,67 @@
 
 <script setup lang="ts">
 // Reactive state for food, typed as an array of FoodItem
-const foodLeft = ref<{ eaten: boolean }[]>(Array.from({ length: 10 }, () => ({ eaten: false })))
-const localePath = useLocalePath()
+const foodLeft = ref<{ eaten: boolean }[]>(
+  Array.from({ length: 10 }, () => ({ eaten: false })),
+);
+const localePath = useLocalePath();
 // const snakeGame = ref<any>(null) // Removed ref
-const triggerSignal = ref<{ code: string, timestamp: number } | undefined>(undefined)
+const triggerSignal = ref<{ code: string; timestamp: number } | undefined>(
+  undefined,
+);
 
 // Function to update foodLeft, based on the score
 function updateFoodLeft(score: number): void {
   for (let i = 0; i < score; ++i) {
     if (!foodLeft.value[i].eaten) {
-      foodLeft.value[i].eaten = true
+      foodLeft.value[i].eaten = true;
     }
   }
 }
 
 // Function to reset the foodLeft state to initial values
 function resetFoodLeft(): void {
-  foodLeft.value = Array.from({ length: 10 }, () => ({ eaten: false }))
+  foodLeft.value = Array.from({ length: 10 }, () => ({ eaten: false }));
 }
 
 // Function to trigger a keyboard event, with typed key parameter
 function triggerKeyPress(key: string): void {
-  triggerSignal.value = { code: key, timestamp: Date.now() }
+  triggerSignal.value = { code: key, timestamp: Date.now() };
 }
 
 // Function to handle food being eaten, updating foodLeft based on score
 function handleFoodEaten(score: number): void {
-  updateFoodLeft(score)
+  updateFoodLeft(score);
 }
 
 // Function to handle game over, resetting foodLeft state
 function handleGameOver(): void {
-  resetFoodLeft()
+  resetFoodLeft();
 }
 
 onMounted(() => {
   if (import.meta.client) {
-    useGSAP().set('.game-container', { x: 1500 });
-    useGSAP().to('.game-container', {
+    useGSAP().set(".game-container", { x: 1500 });
+    useGSAP().to(".game-container", {
       delay: 0.5,
       x: 0,
       duration: 0.5,
       zIndex: 1,
-      ease: 'back.out(1.7)'
+      ease: "back.out(1.7)",
     });
   }
-})
-
+});
 </script>
 
 <style lang="scss">
 .game-container {
   width: 510px;
   height: 475px;
-  background: linear-gradient(-28deg, #175553 0%, rgba(67, 217, 173, 0.13) 100%);
+  background: linear-gradient(
+    -28deg,
+    #175553 0%,
+    rgba(67, 217, 173, 0.13) 100%
+  );
   border-radius: 10px;
   position: relative;
   display: flex;
@@ -163,7 +182,7 @@ onMounted(() => {
   }
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     box-shadow: 0 0 240px 200px rgba(67, 217, 173, 0.4);
     top: 0%;
@@ -175,7 +194,7 @@ onMounted(() => {
   }
 
   &::after {
-    content: '';
+    content: "";
     width: 0;
     height: 200px;
     position: absolute;
@@ -244,7 +263,7 @@ onMounted(() => {
         & svg {
           top: 3px;
           position: relative;
-          
+
           & {
             font-size: 10px;
             color: $secondary4;
@@ -281,5 +300,4 @@ html[lang="es-ES"] {
     }
   }
 }
-
 </style>

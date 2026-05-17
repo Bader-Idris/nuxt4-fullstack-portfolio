@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { Schema, model } from "mongoose";
 
 const EmailSchema = new Schema(
   {
@@ -9,7 +9,7 @@ const EmailSchema = new Schema(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
-  }
+  },
 );
 
-export const ReceivedEmail = model('Email', EmailSchema)
+export const ReceivedEmail = model("Email", EmailSchema);

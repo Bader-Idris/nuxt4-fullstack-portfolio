@@ -7,17 +7,14 @@
         type="password"
         placeholder="Enter new password"
         required
-      >
+      />
       <input
         v-model="confirmPassword"
         type="password"
         placeholder="Confirm new password"
         required
-      >
-      <CustomButton
-        button-type="primary"
-        aria-label="Reset Password"
-      >
+      />
+      <CustomButton button-type="primary" aria-label="Reset Password">
         <span>Reset Password</span>
       </CustomButton>
     </form>
@@ -25,44 +22,44 @@
 </template>
 
 <script setup lang="ts">
-import { toast } from 'vue3-toastify'
-import 'vue3-toastify/dist/index.css'
+import { toast } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
 
 type ResetPasswordResponse = {
-  success: boolean
-  message?: string
-}
+  success: boolean;
+  message?: string;
+};
 
-const localePath = useLocalePath()
-const route = useRoute()
-const newPassword = ref('')
-const confirmPassword = ref('')
+const localePath = useLocalePath();
+const route = useRoute();
+const newPassword = ref("");
+const confirmPassword = ref("");
 
-const email = computed(() => route.query.email?.toString() || '')
+const email = computed(() => route.query.email?.toString() || "");
 // TODO: fix this token to be brought from the cookies, or should it be sent from server, check forgot password function
-const token = computed(() => route.query.token?.toString() || '')
+const token = computed(() => route.query.token?.toString() || "");
 
 async function resetPassword() {
   if (newPassword.value !== confirmPassword.value) {
-    toast('Passwords do not match', { theme: 'dark', type: 'error' })
-    return
+    toast("Passwords do not match", { theme: "dark", type: "error" });
+    return;
   }
 
   if (!newPassword.value) {
-    toast('Please enter a new password', { theme: 'dark', type: 'error' })
-    return
+    toast("Please enter a new password", { theme: "dark", type: "error" });
+    return;
   }
 
   if (!email.value || !token.value) {
-    toast('Invalid email or token', { theme: 'dark', type: 'error' })
-    return
+    toast("Invalid email or token", { theme: "dark", type: "error" });
+    return;
   }
 
   try {
     const { data } = await useFetch<ResetPasswordResponse>(
-      '/api/v1/auth/reset-password',
+      "/api/v1/auth/reset-password",
       {
-        method: 'POST',
+        method: "POST",
         body: {
           email: email.value,
           password: newPassword.value,
@@ -71,19 +68,18 @@ async function resetPassword() {
         baseURL: useRuntimeConfig().public.originUrl,
         server: false, // Ensure client-side only execution
       },
-    )
+    );
 
     if (data.value?.success) {
-      toast('Password reset successfully', { theme: 'dark', type: 'success' })
-      await navigateTo(localePath('/dashboard'), { replace: true })
+      toast("Password reset successfully", { theme: "dark", type: "success" });
+      await navigateTo(localePath("/dashboard"), { replace: true });
     }
-  }
-  catch (error: any) {
-    toast(error.data?.message || 'An error occurred', {
-      theme: 'dark',
-      type: 'error',
-    })
-    console.error('Password reset error:', error)
+  } catch (error: any) {
+    toast(error.data?.message || "An error occurred", {
+      theme: "dark",
+      type: "error",
+    });
+    console.error("Password reset error:", error);
   }
 }
 </script>

@@ -1,10 +1,10 @@
 <script lang="ts">
 // Client-side only imports to prevent SSR issues
-import { Capacitor } from '@capacitor/core'
+import { Capacitor } from "@capacitor/core";
 
 export default {
-  inheritAttrs: false
-}
+  inheritAttrs: false,
+};
 </script>
 
 <template>
@@ -13,7 +13,8 @@ export default {
     v-if="isExternalLink && isMobile"
     class="external-link"
     :href="String(to)"
-    @click.prevent="openInAppBrowser">
+    @click.prevent="openInAppBrowser"
+  >
     <slot />
   </a>
 
@@ -24,7 +25,8 @@ export default {
     class="external-link"
     :href="String(to)"
     target="_blank"
-    rel="noopener noreferrer">
+    rel="noopener noreferrer"
+  >
     <slot />
   </a>
 
@@ -34,13 +36,15 @@ export default {
     v-slot="{ href, navigate, isExactActive }"
     v-bind="$props"
     :to="localePath(to)"
-    custom >
+    custom
+  >
     <a
       v-bind="$attrs"
       class="internal-link"
       :href="href"
       :class="isExactActive ? '' : inactiveClass"
-      @click="navigate">
+      @click="navigate"
+    >
       <slot />
     </a>
   </NuxtLink>
@@ -49,40 +53,40 @@ export default {
 <script lang="ts" setup>
 // To ensure attributes are not inherited by default
 defineOptions({
-  inheritAttrs: false
-})
+  inheritAttrs: false,
+});
 
 const props = defineProps({
   to: {
     type: [String, Object],
-    required: true
+    required: true,
   },
   inactiveClass: {
     type: String,
-    default: 'inactive'
-  }
-})
+    default: "inactive",
+  },
+});
 
-const localePath = useLocalePath()
+const localePath = useLocalePath();
 
 const isExternalLink = computed(() => {
-  return typeof props.to === 'string' && props.to.startsWith('http')
-})
+  return typeof props.to === "string" && props.to.startsWith("http");
+});
 
 // Only check for mobile on client-side
 const isMobile = computed(() => {
-  return import.meta.client && Capacitor.isNativePlatform()
-})
+  return import.meta.client && Capacitor.isNativePlatform();
+});
 
 // Open the link in the in-app browser for mobile devices
 const openInAppBrowser = async () => {
-  if (import.meta.client && typeof props.to === 'string') {
-    const { Browser } = await import('@capacitor/browser')
+  if (import.meta.client && typeof props.to === "string") {
+    const { Browser } = await import("@capacitor/browser");
     await Browser.open({
       url: props.to,
-      toolbarColor: '#4d5bce',
-      presentationStyle: 'popover' // This keeps the user in your app context
-    })
+      toolbarColor: "#4d5bce",
+      presentationStyle: "popover", // This keeps the user in your app context
+    });
   }
-}
+};
 </script>

@@ -1,4 +1,4 @@
-@use './variables' as *;
+@use "./variables" as *;
 @mixin list-reset {
   padding: 0;
   margin: 0;
@@ -105,7 +105,12 @@
 }
 */
 
-@mixin flex-container($direction: row, $wrap: nowrap, $justify: flex-start, $align: stretch) {
+@mixin flex-container(
+  $direction: row,
+  $wrap: nowrap,
+  $justify: flex-start,
+  $align: stretch
+) {
   display: flex;
   flex-direction: $direction;
   flex-wrap: $wrap;

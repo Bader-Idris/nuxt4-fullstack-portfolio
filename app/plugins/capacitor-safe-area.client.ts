@@ -11,8 +11,8 @@ export default defineNuxtPlugin(async () => {
   // Cap specific for ios
   // ! Using this directly forces the option of Desktop site checklist to be true on mobiles!
   useSeoMeta({
-    viewport: 'viewport-fit=cover'
-  })
+    viewport: "viewport-fit=cover",
+  });
 
   const addSafeAreaStyles = () => {
     styleElement = document.createElement("style");
@@ -49,10 +49,10 @@ export default defineNuxtPlugin(async () => {
 
     const applySafeArea = async ({ insets }) => {
       // Detect if running on Android
-      const { Device } = await import('@capacitor/device');
+      const { Device } = await import("@capacitor/device");
       const deviceInfo = await Device.getInfo();
-      const isAndroid = deviceInfo.platform === 'android';
-      
+      const isAndroid = deviceInfo.platform === "android";
+
       // Calculate adjusted insets
       let bottomInset = insets.bottom;
       if (isAndroid) {
@@ -70,19 +70,19 @@ export default defineNuxtPlugin(async () => {
       // Set CSS variables
       document.documentElement.style.setProperty(
         "--safe-area-inset-top",
-        `${adjustedInsets.top}px`
+        `${adjustedInsets.top}px`,
       );
       document.documentElement.style.setProperty(
         "--safe-area-inset-bottom",
-        `${adjustedInsets.bottom}px`
+        `${adjustedInsets.bottom}px`,
       );
 
       // For full viewport elements
       document.documentElement.style.setProperty(
         "--viewport-height",
-        `calc(100vh - ${adjustedInsets.top}px - ${adjustedInsets.bottom}px)`
+        `calc(100vh - ${adjustedInsets.top}px - ${adjustedInsets.bottom}px)`,
       );
-      
+
       // Add Android-specific class if needed
       if (isAndroid) {
         document.body.classList.add("android-bottom-safe-area");

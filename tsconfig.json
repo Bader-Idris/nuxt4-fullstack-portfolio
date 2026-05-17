@@ -15,7 +15,5 @@
       "path": "./.nuxt/tsconfig.node.json"
     }
   ],
-  "include": [
-    "./app/types/electron-env.d.ts"
-  ],
+  "include": ["./app/types/electron-env.d.ts"]
 }

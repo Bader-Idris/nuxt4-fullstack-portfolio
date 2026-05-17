@@ -5,11 +5,10 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(['toggle-sidebar'])
+const emit = defineEmits(["toggle-sidebar"]);
 const toggleSidebar = () => {
-  emit('toggle-sidebar')
-}
+  emit("toggle-sidebar");
+};
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

@@ -23,8 +23,8 @@ useSeoMeta({
   ogImage: trainSeoImage,
   ogImageWidth: 1200,
   ogImageHeight: 630,
-  ogType: 'article',
-  twitterCard: 'summary_large_image',
+  ogType: "article",
+  twitterCard: "summary_large_image",
   twitterTitle: trainTitle,
   twitterDescription: trainDescription,
   twitterImage: trainSeoImage,
@@ -35,17 +35,15 @@ useSchemaOrg([
     headline: trainTitle,
     description: trainDescription,
     image: trainSeoImage,
-    datePublished: '2026-04-13',
-    author: [
-      { name: 'Bader Idris', url: 'https://baderidris.com' }
-    ]
-  })
-])
+    datePublished: "2026-04-13",
+    author: [{ name: "Bader Idris", url: "https://baderidris.com" }],
+  }),
+]);
 
 // Initialize from URL on client to avoid hydration mismatch
 const isFullscreen = ref(false);
 
-/* 
+/*
 // Example of how you can extend the Terrain class:
 import { Terrain } from '@/composables/threeD/useTerrain'
 class CustomTerrain extends Terrain {
@@ -81,7 +79,7 @@ watch(isFullscreen, (val) => {
     // overflow-y: hidden;
     margin-right: 0;
     padding: 0 0 10dvh 0;
-    
+
     @include phone-borders;
   }
 

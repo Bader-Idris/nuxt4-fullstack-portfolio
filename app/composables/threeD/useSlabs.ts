@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import vertexSlabs from "@/components/three/shaders/slabs/vertex.glsl"
-import fragmentSlabs from "@/components/three/shaders/slabs/fragment.glsl"
+import vertexSlabs from "@/components/three/shaders/slabs/vertex.glsl";
+import fragmentSlabs from "@/components/three/shaders/slabs/fragment.glsl";
 import slabsTextureUrl from "@/assets/three/resources/textures/slabs.png";
 
 export interface SlabsOptions {
@@ -25,7 +25,7 @@ export interface SlabsInstance {
  */
 export function useSlabs(
   scene: THREE.Scene,
-  options: SlabsOptions
+  options: SlabsOptions,
 ): SlabsInstance | null {
   if (import.meta.server) return null;
 
@@ -44,7 +44,12 @@ export function useSlabs(
   slabsTexture.wrapS = THREE.RepeatWrapping;
   slabsTexture.wrapT = THREE.RepeatWrapping;
 
-  const geometry = new THREE.PlaneGeometry(size, size, subdivisions, subdivisions);
+  const geometry = new THREE.PlaneGeometry(
+    size,
+    size,
+    subdivisions,
+    subdivisions,
+  );
   geometry.rotateX(-Math.PI * 0.5);
 
   const material = new THREE.ShaderMaterial({

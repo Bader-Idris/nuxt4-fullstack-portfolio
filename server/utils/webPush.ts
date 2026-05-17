@@ -17,18 +17,14 @@ export default function createWebPushInstance() {
 
   const mailTo = `mailto:${config.contactEmail}`;
 
-  webpush.setVapidDetails(
-    mailTo,
-    vapidKeys.publicKey,
-    vapidKeys.privateKey
-  );
+  webpush.setVapidDetails(mailTo, vapidKeys.publicKey, vapidKeys.privateKey);
 
   return webpush;
 }
 
 // export default webpush;
 
-/* 
+/*
 
 // Subscribe Route
 app.post("/subscribe", (req, res) => {

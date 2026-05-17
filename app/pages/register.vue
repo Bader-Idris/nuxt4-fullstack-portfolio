@@ -3,24 +3,36 @@
     <form class="form" @submit.prevent="register">
       <h1>Register</h1>
       <label for="user">user name</label>
-      <input v-model="user" name="user" type="text" class="input" >
+      <input v-model="user" name="user" type="text" class="input" />
       <label for="email">email</label>
-      <input v-model="email" name="email" type="email" class="input" >
+      <input v-model="email" name="email" type="email" class="input" />
       <label for="password">Password</label>
-      <input v-model="password" name="password" type="text" class="input" >
+      <input v-model="password" name="password" type="text" class="input" />
 
       <div class="policy-checklist">
         <label class="checkbox-label">
-          <input v-model="agreePolicies" type="checkbox">
-          I agree to the 
-          <CustomLink to="/legal/terms" target="_blank" aria-label="Terms and Conditions" class="policy-link">Terms and Conditions</CustomLink>
-          and 
-          <CustomLink to="/privacy/policy" target="_blank" aria-label="Privacy Policy" class="policy-link">Privacy Policy</CustomLink>
+          <input v-model="agreePolicies" type="checkbox" />
+          I agree to the
+          <CustomLink
+            to="/legal/terms"
+            target="_blank"
+            aria-label="Terms and Conditions"
+            class="policy-link"
+            >Terms and Conditions</CustomLink
+          >
+          and
+          <CustomLink
+            to="/privacy/policy"
+            target="_blank"
+            aria-label="Privacy Policy"
+            class="policy-link"
+            >Privacy Policy</CustomLink
+          >
         </label>
       </div>
 
       <button class="btn" :disabled="loading">
-        <span v-if="loading" class="loader" >
+        <span v-if="loading" class="loader">
           <CustomLoader />
         </span>
         <span v-else> Register </span>
@@ -29,8 +41,8 @@
 
     <div class="social-auth">
       <button class="btn social google" @click="socialLogin('google')">
-        <Icon 
-          name="flat-color-icons:google" 
+        <Icon
+          name="flat-color-icons:google"
           width="30"
           height="30"
           mode="svg"
@@ -38,10 +50,10 @@
         />
       </button>
       <button class="btn social facebook" @click="socialLogin('facebook')">
-        <Icon 
-          name="basil:facebook-solid" 
-          width="30" 
-          height="30" 
+        <Icon
+          name="basil:facebook-solid"
+          width="30"
+          height="30"
           mode="svg"
           class="fb"
         />
@@ -50,7 +62,11 @@
 
     <div v-if="showPrompt" class="prompt">
       <CustomButton button-type="ghost">
-        <CustomLink aria-label="login page" :to="localePath('/login')" class="internal-link">
+        <CustomLink
+          aria-label="login page"
+          :to="localePath('/login')"
+          class="internal-link"
+        >
           Go to login page
         </CustomLink>
       </CustomButton>
@@ -60,29 +76,30 @@
 
 <script setup lang="ts">
 // import { useUserStore } from '~/stores/UserNameStore'
-import { useUserStore } from '~/stores/useUserSocket';
-import { toast } from 'vue3-toastify'
-import 'vue3-toastify/dist/index.css'
-import { CapacitorCookies } from '@capacitor/core';
+import { useUserStore } from "~/stores/useUserSocket";
+import { toast } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
+import { CapacitorCookies } from "@capacitor/core";
 
 // Important for disabling layouts
 definePageMeta({
-  layout: 'default', // Specify the layout
-  hideLayout: true,  // This will be accessible via usePageMeta()
+  layout: "default", // Specify the layout
+  hideLayout: true, // This will be accessible via usePageMeta()
 });
 
 useSeoMeta({
-  title: 'Register page',
-  description: "Sign up on Bader Idris's platform to access exclusive content, resources, and services. Join a tech-savvy community led by a skilled full-stack developer.",
-})
+  title: "Register page",
+  description:
+    "Sign up on Bader Idris's platform to access exclusive content, resources, and services. Join a tech-savvy community led by a skilled full-stack developer.",
+});
 
-const localePath = useLocalePath()
-const user = ref<string>('')
-const email = ref<string>('')
-const password = ref<string>('')
-const agreePolicies = ref<boolean>(false)
-const loading = ref<boolean>(false)
-const showPrompt = ref<boolean>(false)
+const localePath = useLocalePath();
+const user = ref<string>("");
+const email = ref<string>("");
+const password = ref<string>("");
+const agreePolicies = ref<boolean>(false);
+const loading = ref<boolean>(false);
+const showPrompt = ref<boolean>(false);
 
 // const router = useRouter();
 const route = useRoute();
@@ -97,28 +114,28 @@ interface RegisterResponse {
 }
 
 // Access token from cookie
-const accessToken = useCookie<string | undefined>('accessToken')
+const accessToken = useCookie<string | undefined>("accessToken");
 
 const register = async (): Promise<void> => {
   // Input validation to avoid unnecessary API calls
   if (!user.value || !email.value || !password.value) {
-    toast('All fields are required.', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
+    toast("All fields are required.", {
+      theme: "dark",
+      type: "error",
+      position: "top-center",
       dangerouslyHTMLString: true,
     });
     return;
   }
 
   if (!agreePolicies.value) {
-    toast('You must agree to the Terms and Conditions and Privacy Policy.', {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
+    toast("You must agree to the Terms and Conditions and Privacy Policy.", {
+      theme: "dark",
+      type: "error",
+      position: "top-center",
       dangerouslyHTMLString: true,
-    })
-    return
+    });
+    return;
   }
 
   loading.value = true;
@@ -133,7 +150,7 @@ const register = async (): Promise<void> => {
 
   try {
     const response = await $fetch<RegisterResponse>(url, {
-      method: 'POST',
+      method: "POST",
       body: data,
       baseURL: useRuntimeConfig().public.originUrl,
     });
@@ -146,30 +163,39 @@ const register = async (): Promise<void> => {
         role: response.user.role,
       });
 
-      toast('Successfully Registered! Please check your email to verify your account.', {
-        theme: 'auto',
-        type: 'success',
-        position: 'top-center',
-        dangerouslyHTMLString: true,
-      });
+      toast(
+        "Successfully Registered! Please check your email to verify your account.",
+        {
+          theme: "auto",
+          type: "success",
+          position: "top-center",
+          dangerouslyHTMLString: true,
+        },
+      );
 
-      const redirectPath = (route.query.redirect as string) || '/dashboard';
+      const redirectPath = (route.query.redirect as string) || "/dashboard";
       await navigateTo(localePath(redirectPath));
     }
   } catch (error: any) {
     // Handle network or unexpected errors
-    console.error('Registration error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    const msg = error.data?.message || error.data?.statusMessage || 'Network error. Please try again.';
-    
+    console.error(
+      "Registration error:",
+      JSON.stringify(error, Object.getOwnPropertyNames(error)),
+    );
+    const msg =
+      error.data?.message ||
+      error.data?.statusMessage ||
+      "Network error. Please try again.";
+
     // If email already exists, show the login prompt
-    if (msg.toLowerCase().includes('exists')) {
+    if (msg.toLowerCase().includes("exists")) {
       showPrompt.value = true;
     }
 
     toast(msg, {
-      theme: 'dark',
-      type: 'error',
-      position: 'top-center',
+      theme: "dark",
+      type: "error",
+      position: "top-center",
     });
   } finally {
     loading.value = false;
@@ -178,8 +204,8 @@ const register = async (): Promise<void> => {
 
 const socialLogin = async (provider: string) => {
   const isCapacitorDevice = await useCapacitorDevice();
-  
-  if (provider === 'google') {
+
+  if (provider === "google") {
     if (isCapacitorDevice) {
       await googleRegister(); // Use a register-specific Google auth function
     } else {
@@ -188,7 +214,7 @@ const socialLogin = async (provider: string) => {
         window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider}`;
       }
     }
-  } else if (provider === 'facebook') {
+  } else if (provider === "facebook") {
     if (isCapacitorDevice) {
       await facebookRegister(); // Use a register-specific Facebook auth function
     } else {
@@ -208,49 +234,52 @@ const socialLogin = async (provider: string) => {
 // Google authentication function for Capacitor devices during registration using @capgo/capacitor-social-login
 const googleRegister = async () => {
   loading.value = true;
-  console.log('--- googleRegister Native Start ---');
+  console.log("--- googleRegister Native Start ---");
 
   try {
     const config = useRuntimeConfig();
-    const { SocialLogin } = await import('@capgo/capacitor-social-login');
-    
-    console.log('Calling SocialLogin.login for Google...');
+    const { SocialLogin } = await import("@capgo/capacitor-social-login");
+
+    console.log("Calling SocialLogin.login for Google...");
     const result = await SocialLogin.login({
-      provider: 'google',
+      provider: "google",
       options: {
-        scopes: ['openid', 'email', 'profile'],
+        scopes: ["openid", "email", "profile"],
       },
     });
-    console.log('SocialLogin.login result received:', JSON.stringify(result, null, 2));
+    console.log(
+      "SocialLogin.login result received:",
+      JSON.stringify(result, null, 2),
+    );
 
     if (!result.accessToken) {
-      throw new Error('No access token received from Google');
+      throw new Error("No access token received from Google");
     }
 
     // Use the dedicated Google social auth endpoint for Capacitor
-    const socialUrl = '/api/v1/auth/social/google';
-    console.log('Calling server social endpoint:', socialUrl);
-    
+    const socialUrl = "/api/v1/auth/social/google";
+    console.log("Calling server social endpoint:", socialUrl);
+
     const response = await $fetch<any>(socialUrl, {
-      method: 'POST',
+      method: "POST",
       body: {
         accessToken: result.accessToken,
         idToken: result.idToken,
       },
       baseURL: config.public.originUrl,
-      credentials: 'include',
+      credentials: "include",
     });
-    console.log('Server response received:', JSON.stringify(response, null, 2));
+    console.log("Server response received:", JSON.stringify(response, null, 2));
 
     if (response && response.user) {
-      await handleSocialRegisterSuccess(response, 'Google');
+      await handleSocialRegisterSuccess(response, "Google");
     } else {
-      throw new Error('User data not received from server');
+      throw new Error("User data not received from server");
     }
   } catch (error: any) {
-    handleSocialRegisterError(error, 'Google');
+    handleSocialRegisterError(error, "Google");
   } finally {
-    console.log('--- googleRegister Native End ---');
+    console.log("--- googleRegister Native End ---");
     loading.value = false;
   }
 };
@@ -258,46 +287,46 @@ const googleRegister = async () => {
 // Facebook authentication function for Capacitor devices during registration using @capgo/capacitor-social-login
 const facebookRegister = async () => {
   loading.value = true;
-  console.log('--- facebookRegister Native Start ---');
+  console.log("--- facebookRegister Native Start ---");
 
   try {
     const config = useRuntimeConfig();
-    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+    const { SocialLogin } = await import("@capgo/capacitor-social-login");
 
-    console.log('Calling SocialLogin.login for Facebook...');
+    console.log("Calling SocialLogin.login for Facebook...");
     const result = await SocialLogin.login({
-      provider: 'facebook',
+      provider: "facebook",
       options: {
-        permissions: ['public_profile', 'email'],
-      }
+        permissions: ["public_profile", "email"],
+      },
     });
-    console.log('SocialLogin.login result:', JSON.stringify(result, null, 2));
+    console.log("SocialLogin.login result:", JSON.stringify(result, null, 2));
 
     if (!result.accessToken) {
-      throw new Error('No access token received from Facebook');
+      throw new Error("No access token received from Facebook");
     }
 
-    const socialUrl = '/api/v1/auth/social/facebook';
+    const socialUrl = "/api/v1/auth/social/facebook";
     const response = await $fetch<any>(socialUrl, {
-      method: 'POST',
+      method: "POST",
       body: {
         accessToken: result.accessToken,
       },
       baseURL: config.public.originUrl,
-      credentials: 'include',
+      credentials: "include",
     });
 
-    console.log('Server response received:', JSON.stringify(response, null, 2));
+    console.log("Server response received:", JSON.stringify(response, null, 2));
 
     if (response && response.user) {
-      await handleSocialRegisterSuccess(response, 'Facebook');
+      await handleSocialRegisterSuccess(response, "Facebook");
     } else {
-      throw new Error('User data not received from server');
+      throw new Error("User data not received from server");
     }
   } catch (error: any) {
-    handleSocialRegisterError(error, 'Facebook');
+    handleSocialRegisterError(error, "Facebook");
   } finally {
-    console.log('--- facebookRegister Native End ---');
+    console.log("--- facebookRegister Native End ---");
     loading.value = false;
   }
 };
@@ -308,10 +337,10 @@ const handleSocialRegisterSuccess = async (response: any, provider: string) => {
 
   // Sync cookies for Capacitor
   if (import.meta.client && (await useCapacitorDevice())) {
-    console.log('Capacitor device detected, syncing cookies...');
-    await new Promise(resolve => setTimeout(resolve, 800));
+    console.log("Capacitor device detected, syncing cookies...");
+    await new Promise((resolve) => setTimeout(resolve, 800));
     const cookies = await CapacitorCookies.getCookies();
-    console.log('Synced Cookies:', JSON.stringify(cookies, null, 2));
+    console.log("Synced Cookies:", JSON.stringify(cookies, null, 2));
     if (cookies.accessToken) {
       accessToken.value = cookies.accessToken;
     }
@@ -324,14 +353,14 @@ const handleSocialRegisterSuccess = async (response: any, provider: string) => {
   });
 
   toast(`Successfully authenticated with ${provider}`, {
-    theme: 'auto',
-    type: 'success',
-    position: 'top-center',
+    theme: "auto",
+    type: "success",
+    position: "top-center",
     dangerouslyHTMLString: true,
   });
 
-  const redirectPath = (route.query.redirect as string) || '/dashboard';
-  console.log('Navigating to:', redirectPath);
+  const redirectPath = (route.query.redirect as string) || "/dashboard";
+  console.log("Navigating to:", redirectPath);
   await navigateTo(localePath(redirectPath));
 };
 
@@ -339,22 +368,28 @@ const handleSocialRegisterSuccess = async (response: any, provider: string) => {
 const handleSocialRegisterError = (error: any, provider: string) => {
   console.error(`--- ${provider} Registration Error ---`);
   // Fix for [object Object] logging
-  console.error('Error Details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-  
+  console.error(
+    "Error Details:",
+    JSON.stringify(error, Object.getOwnPropertyNames(error)),
+  );
+
   if (error.response) {
-    console.error('Response Data:', JSON.stringify(error.response._data, null, 2));
+    console.error(
+      "Response Data:",
+      JSON.stringify(error.response._data, null, 2),
+    );
   }
-  
+
   toast(`${provider} sign-up failed. Please try again or use email.`, {
-    theme: 'dark',
-    type: 'error',
-    position: 'top-center',
+    theme: "dark",
+    type: "error",
+    position: "top-center",
   });
 
   // Fallback to web flow if appropriate
   const isCapacitor = useRuntimeConfig().public.isCapacitor;
   if (import.meta.client && !isCapacitor) {
-    console.log('FALLBACK: Attempting web-based auth flow');
+    console.log("FALLBACK: Attempting web-based auth flow");
     window.location.href = `${useRuntimeConfig().public.originUrl}/api/v1/auth/${provider.toLowerCase()}`;
   }
 };

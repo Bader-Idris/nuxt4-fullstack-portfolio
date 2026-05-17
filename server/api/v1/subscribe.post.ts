@@ -19,6 +19,6 @@ export default defineEventHandler(async (event) => {
   }
 
   // await saveSubscription(userId, subscription);
-  await saveSubscription(redis, userId, subscription);// after setting its type in the Fn itself
+  await saveSubscription(redis, userId, subscription); // after setting its type in the Fn itself
   return { success: true };
 });

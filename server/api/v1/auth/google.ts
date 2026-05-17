@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     scope: "openid email profile",
   };
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${stringifyQuery(
-    query
+    query,
   )}`;
   return sendRedirect(event, authUrl);
 });

@@ -1,36 +1,42 @@
-import crypto from 'node:crypto'
-import { User, Token } from '../../../models/mongo/index'
-import { createTokenUser, attachCookiesToResponse } from '../../../utils'
-import { validateGoogleToken, validateFacebookToken, findOrCreateSocialUser } from '../../../utils/socialAuth'
+import crypto from "node:crypto";
+import { User, Token } from "../../../models/mongo/index";
+import { createTokenUser, attachCookiesToResponse } from "../../../utils";
+import {
+  validateGoogleToken,
+  validateFacebookToken,
+  findOrCreateSocialUser,
+} from "../../../utils/socialAuth";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { email, password, provider, profile, accessToken, idToken } = body;
 
   // --- Capacitor Social Login handling ---
-  if (provider && provider !== 'email') {
+  if (provider && provider !== "email") {
     console.log(`--- Capacitor Social Login Start (${provider}) ---`);
-    
+
     try {
       let socialProfile;
-      if (provider === 'google') {
+      if (provider === "google") {
         socialProfile = await validateGoogleToken(accessToken, idToken);
-      } else if (provider === 'facebook') {
+      } else if (provider === "facebook") {
         socialProfile = await validateFacebookToken(accessToken);
       } else {
         // For other providers, we might still trust the profile if validation is not yet implemented
         // but it's better to log a warning
-        console.warn(`Validation not implemented for provider: ${provider}. Using provided profile.`);
+        console.warn(
+          `Validation not implemented for provider: ${provider}. Using provided profile.`,
+        );
         socialProfile = profile;
       }
 
       if (!socialProfile) {
-        throw new Error('Social authentication failed');
+        throw new Error("Social authentication failed");
       }
 
       const user = await findOrCreateSocialUser(socialProfile, provider);
       const tokenUser = createTokenUser(user);
-      
+
       let refreshToken = "";
       const existingToken = await Token.findOne({ user: user._id });
 
@@ -45,13 +51,16 @@ export default defineEventHandler(async (event) => {
       }
 
       attachCookiesToResponse(event, tokenUser, refreshToken);
-      console.log('--- Capacitor Social Login Success ---');
+      console.log("--- Capacitor Social Login Success ---");
       return { user: tokenUser };
     } catch (error: any) {
-      console.error(`--- Capacitor Social Login Error (${provider}) ---`, error);
+      console.error(
+        `--- Capacitor Social Login Error (${provider}) ---`,
+        error,
+      );
       throw createError({
         statusCode: 401,
-        statusMessage: error.message || 'Social authentication failed',
+        statusMessage: error.message || "Social authentication failed",
       });
     }
   }
@@ -64,8 +73,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const user = await User.findOne({ email }).select('+password');
-  
+  const user = await User.findOne({ email }).select("+password");
+
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -74,7 +83,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // If user exists but has no password, they are likely a social login user
-  if (!user.password || user.provider !== 'email') {
+  if (!user.password || user.provider !== "email") {
     throw createError({
       statusCode: 401,
       // Capitalize the provider name for display
@@ -135,4 +144,4 @@ export default defineEventHandler(async (event) => {
   // expressJs difference
   // attachCookiesToResponse({ res, user: tokenUser, refreshToken });
   // res.status(StatusCodes.OK).json({ user: tokenUser });
-})
+});

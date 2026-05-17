@@ -10,27 +10,27 @@ export interface CameraOptions {
 }
 
 export function useCamera(options: CameraOptions) {
-  const { canvas, width, height } = options;// don't put terrain here, it's a let not const!
-  let currentTerrain = options.terrain; 
+  const { canvas, width, height } = options; // don't put terrain here, it's a let not const!
+  let currentTerrain = options.terrain;
 
   const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
   camera.position.set(5, 2.3, 2.5);
 
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
-  
+
   // Prevent camera from going below the horizon or too high up
   controls.maxPolarAngle = Math.PI * 0.48; // Hide "underneath"
   controls.minPolarAngle = Math.PI * 0.15; // Prevent looking straight up into empty sky
-  
+
   // Horizontal (Azimuth) limits to keep the "sides" focused on the scene
   // This prevents the user from rotating behind the "main view" if desired.
-  // controls.minAzimuthAngle = -Math.PI * 0.5; 
+  // controls.minAzimuthAngle = -Math.PI * 0.5;
   // controls.maxAzimuthAngle = Math.PI * 0.5;
 
   controls.minDistance = 2.0;
   controls.maxDistance = 35.0; // Tightened distance
-  
+
   // Internal state for follow logic
   const lastTargetPos = new THREE.Vector3();
   const followState = { initialized: false };
@@ -38,9 +38,9 @@ export function useCamera(options: CameraOptions) {
   const FOLLOW_TIGHTNESS = 0.16;
   const MIN_ALTITUDE_BUFFER = 0.8;
 
-  // Tighter boundaries based on terrain size (512) 
+  // Tighter boundaries based on terrain size (512)
   // to ensure the camera never sees past the fog/edges.
-  const BOUNDS = 220; 
+  const BOUNDS = 220;
 
   const update = (targetPos: THREE.Vector3, followMotion: boolean = false) => {
     // 1. Clamp the target position itself to keep the focus within the terrain
@@ -80,14 +80,25 @@ export function useCamera(options: CameraOptions) {
     }
 
     // --- CAMERA CONSTRAINTS ---
-    
+
     // 2. Strict Boundary constraints for Camera position (XZ)
-    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -BOUNDS, BOUNDS);
-    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -BOUNDS, BOUNDS);
+    camera.position.x = THREE.MathUtils.clamp(
+      camera.position.x,
+      -BOUNDS,
+      BOUNDS,
+    );
+    camera.position.z = THREE.MathUtils.clamp(
+      camera.position.z,
+      -BOUNDS,
+      BOUNDS,
+    );
 
     // 3. Terrain collision (Altitude)
     if (currentTerrain) {
-      const groundHeight = currentTerrain.getHeightAt(camera.position.x, camera.position.z);
+      const groundHeight = currentTerrain.getHeightAt(
+        camera.position.x,
+        camera.position.z,
+      );
       const minHeight = groundHeight + MIN_ALTITUDE_BUFFER;
       if (camera.position.y < minHeight) {
         camera.position.y = minHeight;
@@ -112,6 +123,8 @@ export function useCamera(options: CameraOptions) {
     update,
     handleResize,
     resetFollow,
-    setTerrain: (newTerrain: any) => { currentTerrain = newTerrain; }
+    setTerrain: (newTerrain: any) => {
+      currentTerrain = newTerrain;
+    },
   };
 }

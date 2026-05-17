@@ -3283,7 +3283,17 @@
               "type": ["null", "string"]
             }
           ],
-          "default": [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"],
+          "default": [
+            ".avi",
+            ".mov",
+            ".m4v",
+            ".mp4",
+            ".m4p",
+            ".qt",
+            ".mkv",
+            ".webm",
+            ".vmdk"
+          ],
           "description": "The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files."
         },
         "publish": {
@@ -3515,7 +3525,17 @@
               "type": ["null", "string"]
             }
           ],
-          "default": [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"],
+          "default": [
+            ".avi",
+            ".mov",
+            ".m4v",
+            ".mp4",
+            ".m4p",
+            ".qt",
+            ".mkv",
+            ".webm",
+            ".vmdk"
+          ],
           "description": "The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files."
         },
         "publish": {
@@ -5077,7 +5097,11 @@
           "type": "string"
         }
       },
-      "required": ["certificateProfileName", "codeSigningAccountName", "endpoint"],
+      "required": [
+        "certificateProfileName",
+        "codeSigningAccountName",
+        "endpoint"
+      ],
       "type": "object"
     },
     "WindowsConfiguration": {

@@ -5,19 +5,18 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t } = useI18n();
 
 useSeoMeta({
-  title: t('about.professional.title'),
-  description: t('about.professional.description'),
-})
+  title: t("about.professional.title"),
+  description: t("about.professional.description"),
+});
 
 useSchemaOrg({
   "@type": "AboutPage", // or "WebPage"
   name: "Professional Background",
-  description: "Professional experience of Bader Idris."
-})
-
+  description: "Professional experience of Bader Idris.",
+});
 </script>
 
 <style lang="scss" scoped>

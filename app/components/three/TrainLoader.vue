@@ -7,8 +7,8 @@
         </div>
         <div class="progress-container">
           <div class="progress-bar-bg">
-            <div 
-              class="progress-bar-fill" 
+            <div
+              class="progress-bar-fill"
               :style="{ width: animatedProgress + '%' }"
             ></div>
           </div>
@@ -35,21 +35,25 @@ const statusMessages = [
   "Oiling the wheels...",
   "Checking the pressure...",
   "Clearing the tracks...",
-  "Almost ready for departure..."
+  "Almost ready for departure...",
 ];
 
 // Smoothly animate the progress value
-watch(() => props.progress, (newVal) => {
-  useGSAP().to(animatedProgress, {
-    value: newVal,
-    duration: 0.5,
-    ease: "power2.out"
-  });
+watch(
+  () => props.progress,
+  (newVal) => {
+    useGSAP().to(animatedProgress, {
+      value: newVal,
+      duration: 0.5,
+      ease: "power2.out",
+    });
 
-  // Update status text based on progress
-  const index = Math.floor((newVal / 101) * statusMessages.length);
-  statusText.value = statusMessages[index] || statusMessages[statusMessages.length - 1];
-});
+    // Update status text based on progress
+    const index = Math.floor((newVal / 101) * statusMessages.length);
+    statusText.value =
+      statusMessages[index] || statusMessages[statusMessages.length - 1];
+  },
+);
 
 onMounted(() => {
   if (iconWrapper.value) {
@@ -58,7 +62,7 @@ onMounted(() => {
       repeat: -1,
       yoyo: true,
       duration: 1.5,
-      ease: "power1.inOut"
+      ease: "power1.inOut",
     });
   }
 });
@@ -121,7 +125,7 @@ onMounted(() => {
 
 .progress-text {
   color: #00c853;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 18px;
   font-weight: bold;
 }

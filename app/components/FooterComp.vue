@@ -2,10 +2,13 @@
   <footer itemscope itemtype="http://schema.org/WPFooter">
     <div class="container">
       <p>find me in:</p>
-      <div class="social" itemprop="contactPoint" itemscope itemtype="http://schema.org/ContactPoint">
-        <div
-          class="telegram"
-          @click="navigateToChild(telegramLink)">
+      <div
+        class="social"
+        itemprop="contactPoint"
+        itemscope
+        itemtype="http://schema.org/ContactPoint"
+      >
+        <div class="telegram" @click="navigateToChild(telegramLink)">
           <CustomLink
             aria-label="go to my telegram profile"
             class="link external-link"
@@ -18,12 +21,11 @@
               width="30"
               height="30"
               mode="svg"
-              class="svg" />
+              class="svg"
+            />
           </CustomLink>
         </div>
-        <div
-          class="facebook"
-          @click="navigateToChild(facebookLink)">
+        <div class="facebook" @click="navigateToChild(facebookLink)">
           <CustomLink
             aria-label="go to my facebook page"
             class="link external-link"
@@ -36,14 +38,12 @@
               width="30"
               height="30"
               mode="svg"
-              class="svg" />
+              class="svg"
+            />
           </CustomLink>
         </div>
       </div>
-      <div
-        class="terms-services-container"
-        @click="toggleTerms = !toggleTerms"
-      >
+      <div class="terms-services-container" @click="toggleTerms = !toggleTerms">
         <Icon name="heroicons:information-circle" width="30" height="30" />
         <div v-show="toggleTerms" @click.stop>
           <CustomLink
@@ -55,7 +55,7 @@
             <!-- {{ t('home.hello') }} -->
             terms
           </CustomLink>
-          & 
+          &
           <CustomLink
             aria-label="privacy policy"
             class="link"
@@ -67,10 +67,7 @@
           </CustomLink>
         </div>
       </div>
-      <div
-        class="github"
-        tabindex="0"
-        @click="navigateToGithub">
+      <div class="github" tabindex="0" @click="navigateToGithub">
         <p>@bader-idris</p>
         <CustomLink
           aria-label="go to my github profile"
@@ -80,11 +77,12 @@
           target="_blank"
         >
           <Icon
-          name="mdi:github"
-          width="30"
-          height="30"
-          mode="svg"
-            class="svg" />
+            name="mdi:github"
+            width="30"
+            height="30"
+            mode="svg"
+            class="svg"
+          />
         </CustomLink>
       </div>
     </div>
@@ -92,41 +90,41 @@
 </template>
 
 <script setup lang="ts">
-import socialData from '~/apis/random-data.json'
-import { definePerson } from "nuxt-schema-org/schema"
+import socialData from "~/apis/random-data.json";
+import { definePerson } from "nuxt-schema-org/schema";
 
-const localePath = useLocalePath()
-const toggleTerms = ref(false)
-const [{ socialLinks }] = socialData
+const localePath = useLocalePath();
+const toggleTerms = ref(false);
+const [{ socialLinks }] = socialData;
 // @ts-expect-error: socialLinks is not properly typed
-const [telegramLink, facebookLink, githubLink] = socialLinks.map(({ url }) => url)
+const [telegramLink, facebookLink, githubLink] = socialLinks.map(
+  ({ url }) => url,
+);
 
 // Handle client-side navigation
 const navigateToGithub = () => {
-  if (import.meta.client) { // Ensure this runs only on the client side
-    window.open(githubLink, '_blank', 'noopener,noreferrer') // Opens in a new tab with security attributes
+  if (import.meta.client) {
+    // Ensure this runs only on the client side
+    window.open(githubLink, "_blank", "noopener,noreferrer"); // Opens in a new tab with security attributes
   }
-}
-const navigateToChild = (child : string) => {
-  if (import.meta.client) { // Ensure this runs only on the client side
-    window.open(child, '_blank', 'noopener,noreferrer') // Opens in a new tab with security attributes
+};
+const navigateToChild = (child: string) => {
+  if (import.meta.client) {
+    // Ensure this runs only on the client side
+    window.open(child, "_blank", "noopener,noreferrer"); // Opens in a new tab with security attributes
   }
-}
+};
 
 // Add structured data for social profiles using Nuxt SEO
 useSchemaOrg([
   definePerson({
-    name: 'Bader Idris',
-    image: '/imgs/meTwentyFour.jpg',
-    jobTitle: 'Full Stack Developer',
+    name: "Bader Idris",
+    image: "/imgs/meTwentyFour.jpg",
+    jobTitle: "Full Stack Developer",
     url: useRuntimeConfig().public.originUrl,
-    sameAs: [
-      githubLink,
-      telegramLink,
-      facebookLink
-    ]
-  })
-])
+    sameAs: [githubLink, telegramLink, facebookLink],
+  }),
+]);
 </script>
 
 <style lang="scss" scoped>
@@ -196,7 +194,6 @@ footer {
       i {
         margin-top: 20px;
         text-align: center;
-        
       }
       > div {
         position: absolute;

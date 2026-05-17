@@ -26,7 +26,7 @@ import type { Redis } from "ioredis";
 export async function saveSubscription(
   redis: Redis,
   userId: string,
-  subscription: PushSubscription
+  subscription: PushSubscription,
 ): Promise<void> {
   if (import.meta.prerender) {
     console.log("⚠️ Skipping Redis during prerendering");
@@ -36,9 +36,11 @@ export async function saveSubscription(
   try {
     await redis.set(
       `push:subscription:${userId}`,
-      JSON.stringify(subscription)
+      JSON.stringify(subscription),
     );
-    console.log(`✅ Saved subscription for user: ${userId}, though we might need to persist it in disk!`);
+    console.log(
+      `✅ Saved subscription for user: ${userId}, though we might need to persist it in disk!`,
+    );
   } catch (error) {
     console.error(`❌ Failed to save subscription for user ${userId}:`, error);
     throw new Error("Failed to save subscription");
@@ -47,7 +49,7 @@ export async function saveSubscription(
 
 export async function getSubscription(
   redis: Redis,
-  userId: string
+  userId: string,
 ): Promise<PushSubscription | null> {
   if (import.meta.prerender) {
     console.log("⚠️ Skipping Redis during prerendering");
@@ -72,7 +74,7 @@ export async function getSubscription(
 export async function saveCapacitorSubscription(
   redis: Redis,
   userId: string,
-  subscription: { token: string; platform: string }
+  subscription: { token: string; platform: string },
 ): Promise<void> {
   if (import.meta.prerender) {
     console.log("⚠️ Skipping Redis during prerendering");
@@ -82,18 +84,21 @@ export async function saveCapacitorSubscription(
   try {
     await redis.set(
       `capacitor:subscription:${userId}`,
-      JSON.stringify(subscription)
+      JSON.stringify(subscription),
     );
     console.log(`✅ Saved Capacitor subscription for user: ${userId}`);
   } catch (error) {
-    console.error(`❌ Failed to save Capacitor subscription for user ${userId}:`, error);
+    console.error(
+      `❌ Failed to save Capacitor subscription for user ${userId}:`,
+      error,
+    );
     throw new Error("Failed to save Capacitor subscription");
   }
 }
 
 export async function getCapacitorSubscription(
   redis: Redis,
-  userId: string
+  userId: string,
 ): Promise<{ token: string; platform: string } | null> {
   if (import.meta.prerender) {
     console.log("⚠️ Skipping Redis during prerendering");
@@ -101,10 +106,15 @@ export async function getCapacitorSubscription(
   }
 
   try {
-    const subscriptionJson = await redis.get(`capacitor:subscription:${userId}`);
+    const subscriptionJson = await redis.get(
+      `capacitor:subscription:${userId}`,
+    );
     return subscriptionJson ? JSON.parse(subscriptionJson) : null;
   } catch (error) {
-    console.error(`❌ Failed to get Capacitor subscription for user ${userId}:`, error);
+    console.error(
+      `❌ Failed to get Capacitor subscription for user ${userId}:`,
+      error,
+    );
     return null;
   }
 }

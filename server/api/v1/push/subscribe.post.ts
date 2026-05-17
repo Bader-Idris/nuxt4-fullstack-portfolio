@@ -1,24 +1,26 @@
-
-import { PushSubscription as MongoPushSubscription } from '../../../models/mongo/PushSubscription';
-import { saveSubscription as saveSubscriptionToRedis } from '../../../utils/redisUtils';
-import { redisClient } from '../../../plugins/redis';
+import { PushSubscription as MongoPushSubscription } from "../../../models/mongo/PushSubscription";
+import { saveSubscription as saveSubscriptionToRedis } from "../../../utils/redisUtils";
+import { redisClient } from "../../../plugins/redis";
 
 export default defineEventHandler(async (event) => {
   if (!event.context.user) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      statusMessage: "Unauthorized",
     });
   }
 
   const { subscription } = await readBody(event);
 
-  console.log('Inspecting user object in subscribe endpoint:', event.context.user);
+  console.log(
+    "Inspecting user object in subscribe endpoint:",
+    event.context.user,
+  );
 
   if (!subscription || !subscription.endpoint) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Bad Request: Missing subscription details',
+      statusMessage: "Bad Request: Missing subscription details",
     });
   }
 
@@ -34,15 +36,19 @@ export default defineEventHandler(async (event) => {
     );
 
     if (redisClient) {
-      await saveSubscriptionToRedis(redisClient, event.context.user.userId, subscription);
+      await saveSubscriptionToRedis(
+        redisClient,
+        event.context.user.userId,
+        subscription,
+      );
     }
 
-    return { message: 'Subscription saved successfully' };
+    return { message: "Subscription saved successfully" };
   } catch (error) {
-    console.error('Error saving push subscription:', error);
+    console.error("Error saving push subscription:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal Server Error: Could not save subscription',
+      statusMessage: "Internal Server Error: Could not save subscription",
     });
   }
 });

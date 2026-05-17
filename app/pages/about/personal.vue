@@ -1,14 +1,8 @@
 <template>
   <div class="personal-info split-in-half">
-    <div
-      ref="bioContainer"
-      class="personal-bio"
-    >
+    <div ref="bioContainer" class="personal-bio">
       <!-- Render each parsed line as a <p> element with bold formatting applied where necessary -->
-      <p
-        v-for="(line, index) in formattedBio"
-        :key="index"
-      >
+      <p v-for="(line, index) in formattedBio" :key="index">
         <span
           v-for="(segment, i) in line"
           :key="i"
@@ -38,7 +32,7 @@
           loading="lazy"
           data-flip-id="profile-pic"
           @click="toggleLightbox"
-        >
+        />
 
         <Teleport to="body">
           <div
@@ -52,7 +46,7 @@
               :src="profileImage"
               alt="personal-img-lightbox"
               class="lightbox-img"
-            >
+            />
           </div>
         </Teleport>
         <div class="auth-aside">
@@ -61,94 +55,89 @@
         </div>
       </div>
       <ClientOnly>
-        <TiptapEditorContent
-          v-if="editor"
-          :editor="editor"
-        />
+        <TiptapEditorContent v-if="editor" :editor="editor" />
       </ClientOnly>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
-import { all, createLowlight } from 'lowlight'
-import { Flip } from 'gsap/all'
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import { all, createLowlight } from "lowlight";
+import { Flip } from "gsap/all";
 
-const { t, locale } = useI18n()
-const { $device } = useNuxtApp()
-const config = useRuntimeConfig()
+const { t, locale } = useI18n();
+const { $device } = useNuxtApp();
+const config = useRuntimeConfig();
 
 // Base image path
-const imageBasePath = '/imgs/meTwentyFour.jpg'
+const imageBasePath = "/imgs/meTwentyFour.jpg";
 
 // State to hold the final image path (shared between SSR and client)
-const profileImage = useState('profileImage', () => imageBasePath)
+const profileImage = useState("profileImage", () => imageBasePath);
 
 // Generate WebP and set image path on server
 if (import.meta.server) {
-  const fs = await import('node:fs')
-  const path = await import('node:path')
-  const inputPath = path.join(process.cwd(), 'public/imgs/meTwentyFour.jpg')
-  const outputPath = path.join(process.cwd(), 'public/imgs/meTwentyFour.webp')
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const inputPath = path.join(process.cwd(), "public/imgs/meTwentyFour.jpg");
+  const outputPath = path.join(process.cwd(), "public/imgs/meTwentyFour.webp");
 
   try {
     // Generate WebP if it doesn't exist
     if (fs.existsSync(inputPath) && !fs.existsSync(outputPath)) {
-      const sharp = (await import('sharp')).default
-      await sharp(inputPath)
-        .webp({ quality: 80 })
-        .toFile(outputPath)
-      console.log('[personal.vue] WebP generated')
+      const sharp = (await import("sharp")).default;
+      await sharp(inputPath).webp({ quality: 80 }).toFile(outputPath);
+      console.log("[personal.vue] WebP generated");
     }
-    
+
     // Set WebP path with originUrl for SSR
     if (fs.existsSync(outputPath)) {
-      profileImage.value = `${config.public.originUrl}/imgs/meTwentyFour.webp`
+      profileImage.value = `${config.public.originUrl}/imgs/meTwentyFour.webp`;
     } else {
-      profileImage.value = `${config.public.originUrl}${imageBasePath}`
+      profileImage.value = `${config.public.originUrl}${imageBasePath}`;
     }
   } catch (error) {
-    console.error('[personal.vue] Sharp error:', error)
-    profileImage.value = `${config.public.originUrl}${imageBasePath}`
+    console.error("[personal.vue] Sharp error:", error);
+    profileImage.value = `${config.public.originUrl}${imageBasePath}`;
   }
 }
 
 // SEO optimization using @nuxtjs/seo module
 useSeoMeta({
-  title: t('about.personal.title'),
-  description: t('about.personal.description'),
-  ogTitle: t('about.personal.title'),
-  ogDescription: t('about.personal.description'),
+  title: t("about.personal.title"),
+  description: t("about.personal.description"),
+  ogTitle: t("about.personal.title"),
+  ogDescription: t("about.personal.description"),
   ogImage: profileImage.value,
-  twitterCard: 'summary_large_image',
-})
+  twitterCard: "summary_large_image",
+});
 
 // Schema.org structured data for better SEO
 useSchemaOrg([
   {
     "@type": "AboutPage",
-    name: t('about.personal.schema.name'),
-    description: t('about.personal.schema.description'),
+    name: t("about.personal.schema.name"),
+    description: t("about.personal.schema.description"),
     mainEntity: {
       "@type": "Person",
       name: "Bader Idris",
-      jobTitle: t('about.personal.schema.jobTitle'),
-      description: t('about.personal.schema.personDescription'),
+      jobTitle: t("about.personal.schema.jobTitle"),
+      description: t("about.personal.schema.personDescription"),
       image: profileImage.value,
       url: `${config.public.originUrl}${useRoute().path}`,
       sameAs: [
         "https://github.com/bader-idris",
-        "https://linkedin.com/in/bader-idris"
-      ]
-    }
-  }
-])
+        "https://linkedin.com/in/bader-idris",
+      ],
+    },
+  },
+]);
 
-const bioContainer = ref<HTMLElement | null>(null)
+const bioContainer = ref<HTMLElement | null>(null);
 
 // Tiptap Editor Setup
-const lowlight = createLowlight(all)
+const lowlight = createLowlight(all);
 const editor = useEditor({
   content: `
 <pre><code class="language-javascript">
@@ -170,137 +159,141 @@ const editor = useEditor({
       lowlight,
     }),
   ],
-})
+});
 
 onBeforeUnmount(() => {
-  unref(editor)?.destroy()
-})
+  unref(editor)?.destroy();
+});
 
 // Calculate the duration since June 15, 2022 with i18n support
-const startDate = new Date('2022-06-15')
-const currentDate = new Date()
-const diffInMs = currentDate.getTime() - startDate.getTime()
-const diffInYears = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365.25))
+const startDate = new Date("2022-06-15");
+const currentDate = new Date();
+const diffInMs = currentDate.getTime() - startDate.getTime();
+const diffInYears = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365.25));
 const diffInMonths = Math.floor(
   (diffInMs % (1000 * 60 * 60 * 24 * 365.25)) / (1000 * 60 * 60 * 24 * 30.44),
-)
+);
 
 // Format the experience duration based on current locale
 const formattedExperience = computed(() => {
-  return t('about.personal.experienceDuration', {
+  return t("about.personal.experienceDuration", {
     years: diffInYears,
-    months: diffInMonths
-  })
-})
+    months: diffInMonths,
+  });
+});
 
 interface Segment {
-  text: string
-  isBold: boolean
+  text: string;
+  isBold: boolean;
 }
 
 // Use i18n for bio text with dynamic values
 const bio = computed(() => {
-  return t('about.personal.bio', {
-    experience: formattedExperience.value
-  })
-})
+  return t("about.personal.bio", {
+    experience: formattedExperience.value,
+  });
+});
 
 // Function to process the bio and convert it into a structured format
 function parseBioText(text: string): Segment[][] {
-  return text.split('\n').map((line) => {
-    const segments: Segment[] = []
-    let match
-    const boldRegex = /\*\*(.*?)\*\*/g
+  return text.split("\n").map((line) => {
+    const segments: Segment[] = [];
+    let match;
+    const boldRegex = /\*\*(.*?)\*\*/g;
 
-    let lastIndex = 0
+    let lastIndex = 0;
     while ((match = boldRegex.exec(line)) !== null) {
       if (match.index > lastIndex) {
-        segments.push({ text: line.slice(lastIndex, match.index), isBold: false })
+        segments.push({
+          text: line.slice(lastIndex, match.index),
+          isBold: false,
+        });
       }
-      segments.push({ text: match[1], isBold: true })
-      lastIndex = match.index + match[0].length
+      segments.push({ text: match[1], isBold: true });
+      lastIndex = match.index + match[0].length;
     }
 
     if (lastIndex < line.length) {
-      segments.push({ text: line.slice(lastIndex), isBold: false })
+      segments.push({ text: line.slice(lastIndex), isBold: false });
     }
 
-    return segments
-  })
+    return segments;
+  });
 }
 
 // Computed property to store the formatted bio
-const formattedBio = computed(() => parseBioText(bio.value))
+const formattedBio = computed(() => parseBioText(bio.value));
 
 // --- Drag Handling Functions ---
-const isDragging = ref(false)
-const startY = ref(0)
-const scrollTop = ref(0)
+const isDragging = ref(false);
+const startY = ref(0);
+const scrollTop = ref(0);
 
 // Use device detection from @nuxtjs/device
 const isMobile = computed(() => {
-  return $device.isMobile
-})
+  return $device.isMobile;
+});
 
 function handleMouseDown(event: MouseEvent | TouchEvent): void {
-  if (isMobile.value) return // PC only check
-  isDragging.value = true
-  bioContainer.value?.classList.add('grabbing')
-  startY.value = 'touches' in event ? event.touches[0].pageY : event.pageY
-  scrollTop.value = bioContainer.value?.scrollTop || 0
+  if (isMobile.value) return; // PC only check
+  isDragging.value = true;
+  bioContainer.value?.classList.add("grabbing");
+  startY.value = "touches" in event ? event.touches[0].pageY : event.pageY;
+  scrollTop.value = bioContainer.value?.scrollTop || 0;
 }
 
 function handleMouseMove(event: MouseEvent | TouchEvent): void {
-  if (isMobile.value || !isDragging.value || !bioContainer.value) return // PC only check
-  const y = 'touches' in event ? event.touches[0].pageY : event.pageY
-  bioContainer.value.scrollTop = scrollTop.value - (y - startY.value)
+  if (isMobile.value || !isDragging.value || !bioContainer.value) return; // PC only check
+  const y = "touches" in event ? event.touches[0].pageY : event.pageY;
+  bioContainer.value.scrollTop = scrollTop.value - (y - startY.value);
 }
 
 function handleMouseUp(): void {
-  if (isMobile.value) return // PC only check
-  isDragging.value = false
-  bioContainer.value?.classList.remove('grabbing')
+  if (isMobile.value) return; // PC only check
+  isDragging.value = false;
+  bioContainer.value?.classList.remove("grabbing");
 }
 
 // Format date with i18n support
 const createTimeCodeSnippet = computed(() => {
-  const now = new Date()
-  const then = new Date('2023-05-19T00:00:00.000Z')
-  
+  const now = new Date();
+  const then = new Date("2023-05-19T00:00:00.000Z");
+
   // Use Intl.RelativeTimeFormat for localized relative time
-  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' })
-  
-  const diff = now.getTime() - then.getTime()
-  const monthDiff = Math.floor(diff / (1000 * 60 * 60 * 24 * 30))
-  
-  return t('about.personal.createdTimeAgo', { 
-    time: rtf.format(-monthDiff, 'month')
-  })
-})
+  const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: "auto" });
+
+  const diff = now.getTime() - then.getTime();
+  const monthDiff = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
+
+  return t("about.personal.createdTimeAgo", {
+    time: rtf.format(-monthDiff, "month"),
+  });
+});
 
 // --- GSAP Flip Animation Logic ---
-const imageRef = ref<HTMLImageElement | null>(null)
-const lightboxImageRef = ref<HTMLImageElement | null>(null)
-const overlayRef = ref<HTMLElement | null>(null)
-const isLightboxOpen = ref(false)
+const imageRef = ref<HTMLImageElement | null>(null);
+const lightboxImageRef = ref<HTMLImageElement | null>(null);
+const overlayRef = ref<HTMLElement | null>(null);
+const isLightboxOpen = ref(false);
 
 const toggleLightbox = async () => {
   if (!isLightboxOpen.value) {
-    isLightboxOpen.value = true
-    await nextTick()
+    isLightboxOpen.value = true;
+    await nextTick();
 
     // Capture original state
     const state = Flip.getState(imageRef.value, { props: "borderRadius" });
 
     // Switch visibility
-    useGSAP().set(lightboxImageRef.value, { visibility: 'visible' })
-    useGSAP().set(imageRef.value, { visibility: 'hidden' })
+    useGSAP().set(lightboxImageRef.value, { visibility: "visible" });
+    useGSAP().set(imageRef.value, { visibility: "hidden" });
 
     // Fade in overlay
-    useGSAP().fromTo(overlayRef.value, 
-      { opacity: 0 }, 
-      { opacity: 1, duration: 0.4, ease: 'power2.inOut' }
-    )
+    useGSAP().fromTo(
+      overlayRef.value,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: "power2.inOut" },
+    );
 
     // Flip animation to lightbox
     Flip.from(state, {
@@ -308,21 +301,23 @@ const toggleLightbox = async () => {
       duration: 0.6,
       ease: "back.out(1.5)",
       scale: true,
-    })
+    });
   } else {
     // Capture lightbox state
-    const state = Flip.getState(lightboxImageRef.value, { props: "borderRadius" });
+    const state = Flip.getState(lightboxImageRef.value, {
+      props: "borderRadius",
+    });
 
     // Switch visibility back
-    useGSAP().set(imageRef.value, { visibility: 'visible' })
-    useGSAP().set(lightboxImageRef.value, { visibility: 'hidden' })
+    useGSAP().set(imageRef.value, { visibility: "visible" });
+    useGSAP().set(lightboxImageRef.value, { visibility: "hidden" });
 
     // Fade out overlay
-    useGSAP().to(overlayRef.value, { 
-      opacity: 0, 
-      duration: 0.4, 
-      ease: 'power2.inOut' 
-    })
+    useGSAP().to(overlayRef.value, {
+      opacity: 0,
+      duration: 0.4,
+      ease: "power2.inOut",
+    });
 
     // Flip animation back to original place
     Flip.from(state, {
@@ -331,48 +326,48 @@ const toggleLightbox = async () => {
       ease: "power3.inOut",
       scale: true,
       onComplete: () => {
-        isLightboxOpen.value = false
-      }
-    })
+        isLightboxOpen.value = false;
+      },
+    });
   }
-}
+};
 
 // Removed the watch as logic is now handled in toggleLightbox
 
 // Use VueUse for better lifecycle management
 if (import.meta.client) {
-  useEventListener(bioContainer, 'mousedown', handleMouseDown)
-  useEventListener(bioContainer, 'mousemove', handleMouseMove)
-  useEventListener(document, 'mouseup', handleMouseUp)
+  useEventListener(bioContainer, "mousedown", handleMouseDown);
+  useEventListener(bioContainer, "mousemove", handleMouseMove);
+  useEventListener(document, "mouseup", handleMouseUp);
 
   // Handle window resize to avoid GSAP/Flip sticking issues
   const handleResize = useThrottleFn(() => {
     if (isLightboxOpen.value) {
       // Force close if open to avoid calculation issues on layout shift
-      isLightboxOpen.value = false
-      useGSAP().set(overlayRef.value, { opacity: 0 })
-      useGSAP().set(lightboxImageRef.value, { visibility: 'hidden' })
-      useGSAP().set(imageRef.value, { 
-        clearProps: 'all',
-        visibility: 'visible' 
-      })
+      isLightboxOpen.value = false;
+      useGSAP().set(overlayRef.value, { opacity: 0 });
+      useGSAP().set(lightboxImageRef.value, { visibility: "hidden" });
+      useGSAP().set(imageRef.value, {
+        clearProps: "all",
+        visibility: "visible",
+      });
     }
-  }, 200)
+  }, 200);
 
-  useEventListener(window, 'resize', handleResize)
+  useEventListener(window, "resize", handleResize);
 }
 
 onBeforeMount(() => {
   if (import.meta.client) {
-    useGSAP().registerPlugin(Flip)
+    useGSAP().registerPlugin(Flip);
   }
-})
+});
 
 // Removed onMounted highlight.js call
 </script>
 
 <style lang="scss">
-@import 'highlight.js/styles/github-dark.css'; // Keep import or remove if tiptap handles styles fully, but we need base styles for tokens
+@import "highlight.js/styles/github-dark.css"; // Keep import or remove if tiptap handles styles fully, but we need base styles for tokens
 
 .split-in-half {
   @include flex-container(row, nowrap, center, center);
@@ -484,7 +479,7 @@ onBeforeMount(() => {
     /* Target Tiptap's prose mirror structure */
     .ProseMirror {
       outline: none;
-      
+
       pre {
         // border-right: 1px solid $lines;
         // margin: 0;
@@ -493,7 +488,7 @@ onBeforeMount(() => {
         // word-wrap: break-word;
         // background: transparent;
         // padding: 0;
-        
+
         code {
           background: none;
           color: inherit;

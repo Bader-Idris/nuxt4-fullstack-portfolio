@@ -1,45 +1,31 @@
 <template>
   <div>
-    <div
-      v-if="filteredProjects.length === 0"
-      class="empty-message"
-    >
+    <div v-if="filteredProjects.length === 0" class="empty-message">
       <p>
-        {{ $t('projects.caution') }}
+        {{ $t("projects.caution") }}
       </p>
     </div>
-    <div
-      v-else
-      class="filtered-projects"
-    >
+    <div v-else class="filtered-projects">
       <div
         v-for="project in filteredProjects"
         :key="project.title"
         class="project-card"
       >
-        <h3 class="card-title">
-          // {{ project.title }}
-        </h3>
+        <h3 class="card-title">// {{ project.title }}</h3>
         <div class="card-content">
           <!-- test this -->
-          <CustomLink 
+          <CustomLink
             aria-label="go to ${{ project.title }}"
             class="link external-link"
             :to="project.url"
           >
-            <img
-              :src="project.img"
-              :alt="project.title"
-            >
+            <img :src="project.img" :alt="project.title" />
           </CustomLink>
           <p>{{ project.desc }}</p>
 
-          <CustomButton
-            button-type="default"
-            class="project-link"
-          >
+          <CustomButton button-type="default" class="project-link">
             <CustomLink :to="project.url">
-            <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)"> -->
+              <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)"> -->
               View Project
             </CustomLink>
           </CustomButton>
@@ -50,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import projects from '~/apis/projects_info.json'
+import projects from "~/apis/projects_info.json";
 
 // const localePath = useLocalePath()
 const props = defineProps({
@@ -58,15 +44,15 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-})
+});
 
 const filteredProjects = computed(() => {
   // @ts-expect-error: props.activeItems is not properly typed
-  const activeItemsLower = props.activeItems.map(item => item.toLowerCase())
-  return projects.filter(project =>
-    project.tags.some(tag => activeItemsLower.includes(tag.toLowerCase())),
-  )
-})
+  const activeItemsLower = props.activeItems.map((item) => item.toLowerCase());
+  return projects.filter((project) =>
+    project.tags.some((tag) => activeItemsLower.includes(tag.toLowerCase())),
+  );
+});
 
 // const slugify = (text) => {
 //   return text
@@ -81,18 +67,17 @@ const filteredProjects = computed(() => {
 
 onMounted(() => {
   if (import.meta.client) {
-    useGSAP().from('.project-card', {
+    useGSAP().from(".project-card", {
       y: 50,
       opacity: 0,
       delay: 0.3,
       duration: 0.5,
       scale: 0.9,
-      ease: 'back.out(1.7)',
+      ease: "back.out(1.7)",
       stagger: 0.3,
-    })
+    });
   }
-})
-
+});
 </script>
 
 <style lang="scss">
@@ -208,7 +193,7 @@ onMounted(() => {
         transform: translate3d(0, 0, 40px);
 
         &::before {
-          content: 'broken image';
+          content: "broken image";
           background-color: $secondary2;
           width: 100%;
           height: 100%;

@@ -53,7 +53,7 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
     keyboardHeight = info.keyboardHeight;
     document.documentElement.style.setProperty(
       "--keyboard-height",
-      `${info.keyboardHeight}px`
+      `${info.keyboardHeight}px`,
     );
     document.documentElement.style.paddingBottom = `${keyboardHeight}px`;
   };

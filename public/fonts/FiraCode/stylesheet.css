@@ -1,9 +1,8 @@
 @font-face {
-  font-family: 'Fira Code';
-  
-  
+  font-family: "Fira Code";
+
   font-weight: 300;
   font-style: normal;
   font-display: swap;
-  src: url('FiraCode-Light.woff2') format('woff2');
+  src: url("FiraCode-Light.woff2") format("woff2");
 }

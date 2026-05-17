@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { Schema, model } from "mongoose";
 
 const SingleOrderItemSchema = new Schema<IOrderItem>({
   name: { type: String, required: true },
@@ -7,10 +7,10 @@ const SingleOrderItemSchema = new Schema<IOrderItem>({
   amount: { type: Number, required: true },
   product: {
     type: Schema.Types.ObjectId,
-    ref: 'Product',
+    ref: "Product",
     required: true,
   },
-})
+});
 
 const OrderSchema = new Schema<IOrder>(
   {
@@ -33,13 +33,13 @@ const OrderSchema = new Schema<IOrder>(
     orderItems: [SingleOrderItemSchema],
     status: {
       type: String,
-      enum: ['pending', 'failed', 'paid', 'delivered', 'canceled'],
-      default: 'pending',
+      enum: ["pending", "failed", "paid", "delivered", "canceled"],
+      default: "pending",
       index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
     },
     user: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       index: true,
     },
@@ -53,6 +53,6 @@ const OrderSchema = new Schema<IOrder>(
     },
   },
   { timestamps: true },
-)
+);
 
-export const Order = model<IOrder>('Order', OrderSchema)
+export const Order = model<IOrder>("Order", OrderSchema);

@@ -1,10 +1,10 @@
 import { defineEventHandler, getQuery, sendRedirect } from "h3";
 import { User, Token } from "../../../../models/mongo";
-import crypto from 'node:crypto';
+import crypto from "node:crypto";
 
 // Assuming createTokenUser and attachCookiesToResponse are auto-imported or available in the context
 // You might need to import them explicitly if they are not auto-imported, e.g.:
-// import { createTokenUser, attachCookiesToResponse } from '../../../../utils/auth'; 
+// import { createTokenUser, attachCookiesToResponse } from '../../../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     if (!tokenResponse.ok) {
       throw createError({
         statusCode: 400,
-        statusMessage: `Failed to obtain access token: ${tokenData.error_description || 'Unknown error'}`,
+        statusMessage: `Failed to obtain access token: ${tokenData.error_description || "Unknown error"}`,
       });
     }
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-      }
+      },
     );
     const profile = await profileResponse.json();
     if (!profileResponse.ok) {
@@ -63,15 +63,15 @@ export default defineEventHandler(async (event) => {
       user = new User({
         name: profile.name,
         email: profile.email,
-        provider: 'google', // Set the provider
+        provider: "google", // Set the provider
         role: "user",
         isVerified: true, // OAuth users are considered verified
       });
       await user.save();
     } else {
       // If user exists but logs in with Google for the first time, update provider
-      if (user.provider !== 'google') {
-        user.provider = 'google';
+      if (user.provider !== "google") {
+        user.provider = "google";
         // You might want to clear password fields if they switch to OAuth
         user.password = undefined;
         await user.save();
@@ -99,10 +99,9 @@ export default defineEventHandler(async (event) => {
     // --- END OF UNIFIED LOGIC ---
 
     // Secure, clean redirect to the auth callback page on the client.
-    return sendRedirect(event, '/auth/callback');
-
+    return sendRedirect(event, "/auth/callback");
   } catch (error) {
     console.error("Google auth callback error:", error);
-    return sendRedirect(event, '/login?error=google_auth_failed');
+    return sendRedirect(event, "/login?error=google_auth_failed");
   }
 });

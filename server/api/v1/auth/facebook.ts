@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     scope: "email public_profile",
   };
   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${stringifyQuery(
-    query
+    query,
   )}`;
   return sendRedirect(event, authUrl);
 });

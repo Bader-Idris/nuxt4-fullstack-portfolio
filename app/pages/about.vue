@@ -39,10 +39,7 @@
           </p>
         </div>
 
-        <FoldableTab
-          :initially-folded="true"
-          @toggle="toggleContact"
-        >
+        <FoldableTab :initially-folded="true" @toggle="toggleContact">
           <p>contacts</p>
         </FoldableTab>
 
@@ -51,18 +48,36 @@
           class="personal-contact"
           :class="{ hidden: isContactHidden }"
         >
-        <ClientOnly>
-          <p @click="(openMailTo(0), copyToClipboard(0))">
-            <Icon name="mdi:envelope" width="30" style="position: relative; top: 3px;" />
-            {{ displayContactInfo[0] }}
-            <Icon v-if="showIcon[0]" name="mdi:envelope" width="24" height="24" />
-          </p>
-          <p @click="copyToClipboard(1)">
-            <Icon name="ic:baseline-phone" width="30" style="position: relative; top: 3px;" />
-            {{ contInfo[1] }}
-            <Icon v-if="showIcon[1]" name="mingcute:copy-fill" width="24" height="24" />
-          </p>
-        </ClientOnly>
+          <ClientOnly>
+            <p @click="(openMailTo(0), copyToClipboard(0))">
+              <Icon
+                name="mdi:envelope"
+                width="30"
+                style="position: relative; top: 3px"
+              />
+              {{ displayContactInfo[0] }}
+              <Icon
+                v-if="showIcon[0]"
+                name="mdi:envelope"
+                width="24"
+                height="24"
+              />
+            </p>
+            <p @click="copyToClipboard(1)">
+              <Icon
+                name="ic:baseline-phone"
+                width="30"
+                style="position: relative; top: 3px"
+              />
+              {{ contInfo[1] }}
+              <Icon
+                v-if="showIcon[1]"
+                name="mingcute:copy-fill"
+                width="24"
+                height="24"
+              />
+            </p>
+          </ClientOnly>
         </div>
       </div>
     </aside>
@@ -73,36 +88,38 @@
 </template>
 
 <script setup lang="ts">
-const localePath = useLocalePath()
-const { t } = useI18n()
+const localePath = useLocalePath();
+const { t } = useI18n();
 
 definePageMeta({
   middleware: [
     (to) => {
       // Skip during initial client hydration to avoid
       // "Error preloading payload" and routing paralysis
-      const nuxtApp = useNuxtApp()
+      const nuxtApp = useNuxtApp();
       if (
         import.meta.client &&
         nuxtApp.isHydrating &&
         nuxtApp.payload.serverRendered
       ) {
-        return
+        return;
       }
 
-      const localePath = useLocalePath()
+      const localePath = useLocalePath();
       // if (to.path === localePath('/about') || to.path === '/about') {
       //   return navigateTo(localePath('/about/personal'), { replace: true })
       // }
 
-      if (to.path.replace(/\/$/, '') === localePath('/about').replace(/\/$/, '')) {
-        return navigateTo(localePath('/about/personal'), { replace: true })
+      if (
+        to.path.replace(/\/$/, "") === localePath("/about").replace(/\/$/, "")
+      ) {
+        return navigateTo(localePath("/about/personal"), { replace: true });
       }
     },
   ],
-})
+});
 // we can put it as a middleware file: app/middleware/about-redirect.ts
-/* 
+/*
 // app/middleware/about-redirect.ts
 export default defineNuxtRouteMiddleware((to) => {
   const localePath = useLocalePath()
@@ -121,138 +138,161 @@ definePageMeta({
 })
 */
 
-
-const route = useRoute()
-const router = useRouter()
-const activeIconIndex = ref(1)
-const isHobbiesHidden = ref(false)
-const isContactHidden = ref(true)
-const activeHobbyIndex = ref(0)
+const route = useRoute();
+const router = useRouter();
+const activeIconIndex = ref(1);
+const isHobbiesHidden = ref(false);
+const isContactHidden = ref(true);
+const activeHobbyIndex = ref(0);
 
 useSeoMeta({
-  title: t('about.title'),
-  description: t('about.description'),
-  ogTitle: t('about.title'),
-  ogDescription: t('about.description'),
-})
+  title: t("about.title"),
+  description: t("about.description"),
+  ogTitle: t("about.title"),
+  ogDescription: t("about.description"),
+});
 
 useSchemaOrg([
   {
     "@type": "WebPage",
-    name: t('about.title'),
-    description: t('about.description'),
+    name: t("about.title"),
+    description: t("about.description"),
     dateModified: new Date().toISOString(),
-  }
-])
+  },
+]);
 
-const isMobile = useMobile()
+const isMobile = useMobile();
 const checkScreenSize = () => {
-  isMobile.value = window.innerWidth < 768
-}
+  isMobile.value = window.innerWidth < 768;
+};
 
-const contInfo = ['contact@baderidris.com', '+970595744368']
-const showIcon = ref([false, false])
+const contInfo = ["contact@baderidris.com", "+970595744368"];
+const showIcon = ref([false, false]);
 
 const openMailTo = (index: number) => {
-  if (import.meta.client) window.location.href = `mailto:${contInfo[index]}`
-}
+  if (import.meta.client) window.location.href = `mailto:${contInfo[index]}`;
+};
 
 const copyToClipboard = async (index: number) => {
-  if (!import.meta.client) return
+  if (!import.meta.client) return;
   try {
-    await navigator.clipboard.writeText(contInfo[index])
-    showIcon.value[index] = true
-    setTimeout(() => { showIcon.value[index] = false }, 1000)
-  } catch (e) { console.error(e) }
-}
+    await navigator.clipboard.writeText(contInfo[index]);
+    showIcon.value[index] = true;
+    setTimeout(() => {
+      showIcon.value[index] = false;
+    }, 1000);
+  } catch (e) {
+    console.error(e);
+  }
+};
 
-const icons = useState('aboutIcons', () => [
-  { iconSrc: '/imgs/svgs/shell.svg', iconAlt: 'shell', path: 'professional' },
-  { iconSrc: '/imgs/svgs/circle.svg', iconAlt: 'circle', path: 'personal' },
-  { iconSrc: '/imgs/svgs/game.svg', iconAlt: 'game', path: 'hobbies' },
-])
+const icons = useState("aboutIcons", () => [
+  { iconSrc: "/imgs/svgs/shell.svg", iconAlt: "shell", path: "professional" },
+  { iconSrc: "/imgs/svgs/circle.svg", iconAlt: "circle", path: "personal" },
+  { iconSrc: "/imgs/svgs/game.svg", iconAlt: "game", path: "hobbies" },
+]);
 
-const hobbiesObj = useState('aboutHobbies', () => [
-  { title: 'bio',         icon: '/imgs/svgs/red-dir.svg', iconAlt: 'red folder' },
-  { title: 'interests',   icon: '/imgs/svgs/green-dir.svg', iconAlt: 'green folder' },
-  { title: 'education',   icon: '/imgs/svgs/purple-dir.svg', iconAlt: 'purple folder' },
-  { title: 'high-school', icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
-  { title: 'University',  icon: '/imgs/svgs/md-icon.svg', iconAlt: 'markdown icon' },
-])
+const hobbiesObj = useState("aboutHobbies", () => [
+  { title: "bio", icon: "/imgs/svgs/red-dir.svg", iconAlt: "red folder" },
+  {
+    title: "interests",
+    icon: "/imgs/svgs/green-dir.svg",
+    iconAlt: "green folder",
+  },
+  {
+    title: "education",
+    icon: "/imgs/svgs/purple-dir.svg",
+    iconAlt: "purple folder",
+  },
+  {
+    title: "high-school",
+    icon: "/imgs/svgs/md-icon.svg",
+    iconAlt: "markdown icon",
+  },
+  {
+    title: "University",
+    icon: "/imgs/svgs/md-icon.svg",
+    iconAlt: "markdown icon",
+  },
+]);
 
-const config = useRuntimeConfig()
+const config = useRuntimeConfig();
 
 if (import.meta.server) {
-  const fs = await import('node:fs')
-  const path = await import('node:path')
-  const sharp = (await import('sharp')).default
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const sharp = (await import("sharp")).default;
 
   const processIcon = async (iconPath: string) => {
-    const inputPath = path.join(process.cwd(), 'public', iconPath)
-    const outputPath = inputPath.replace('.svg', '.webp')
-    const webpPath = iconPath.replace('.svg', '.webp')
+    const inputPath = path.join(process.cwd(), "public", iconPath);
+    const outputPath = inputPath.replace(".svg", ".webp");
+    const webpPath = iconPath.replace(".svg", ".webp");
 
     if (fs.existsSync(inputPath)) {
       if (!fs.existsSync(outputPath)) {
         try {
-          await sharp(inputPath)
-            .webp({ quality: 80 })
-            .toFile(outputPath)
-          console.log(`[about.vue] WebP generated: ${webpPath}`)
+          await sharp(inputPath).webp({ quality: 80 }).toFile(outputPath);
+          console.log(`[about.vue] WebP generated: ${webpPath}`);
         } catch (error) {
-          console.error(`[about.vue] Sharp error for ${iconPath}:`, error)
-          return `${config.public.originUrl}${iconPath}`
+          console.error(`[about.vue] Sharp error for ${iconPath}:`, error);
+          return `${config.public.originUrl}${iconPath}`;
         }
       }
       // Return WebP path with originUrl for SSR
-      return `${config.public.originUrl}${webpPath}`
+      return `${config.public.originUrl}${webpPath}`;
     }
     // Fallback to original path with originUrl
-    return `${config.public.originUrl}${iconPath}`
-  }
+    return `${config.public.originUrl}${iconPath}`;
+  };
 
   // Process main icons
   for (const icon of icons.value) {
-    icon.iconSrc = await processIcon(icon.iconSrc)
+    icon.iconSrc = await processIcon(icon.iconSrc);
   }
 
   // Process hobbies icons
   for (const hobby of hobbiesObj.value) {
-    hobby.icon = await processIcon(hobby.icon)
+    hobby.icon = await processIcon(hobby.icon);
   }
 }
 
-const toggleHobbies = () => { isHobbiesHidden.value = !isHobbiesHidden.value }
-const toggleContact = () => { isContactHidden.value = !isContactHidden.value }
-const setActiveHobby = (index: number) => { activeHobbyIndex.value = index }
+const toggleHobbies = () => {
+  isHobbiesHidden.value = !isHobbiesHidden.value;
+};
+const toggleContact = () => {
+  isContactHidden.value = !isContactHidden.value;
+};
+const setActiveHobby = (index: number) => {
+  activeHobbyIndex.value = index;
+};
 
 // FIX: navigate only, don't set state (watcher is single source of truth)
 const setActiveIcon = (index: number) => {
-  navigateTo(localePath(`/about/${icons.value[index].path}`))
-}
+  navigateTo(localePath(`/about/${icons.value[index].path}`));
+};
 
 // FIX: client-only, exact segment match instead of includes()
 const syncActiveIcon = (path: string) => {
-  const segment = path.split('/').filter(Boolean).at(-1) ?? ''
-  const index = icons.value.findIndex(icon => icon.path === segment)
-  if (index !== -1) activeIconIndex.value = index
-}
+  const segment = path.split("/").filter(Boolean).at(-1) ?? "";
+  const index = icons.value.findIndex((icon) => icon.path === segment);
+  if (index !== -1) activeIconIndex.value = index;
+};
 
 const displayContactInfo = computed(() => {
   return isMobile.value
     ? contInfo
-    : [contInfo[0].slice(0, -10) + ' ...', contInfo[1]]
-})
+    : [contInfo[0].slice(0, -10) + " ...", contInfo[1]];
+});
 
 onMounted(() => {
-  syncActiveIcon(route.path)
-  checkScreenSize()
-  window.addEventListener('resize', checkScreenSize)
-})
+  syncActiveIcon(route.path);
+  checkScreenSize();
+  window.addEventListener("resize", checkScreenSize);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('resize', checkScreenSize)
-})
+  window.removeEventListener("resize", checkScreenSize);
+});
 </script>
 
 <style lang="scss" scoped>

@@ -27,8 +27,10 @@
         <li>Software solutions and API integrations</li>
         <li>Hosting and managing online courses</li>
         <li>Publishing blogs and technical content</li>
-        <li>Digital goods such as website templates, plugins, and downloadable
-          software</li>
+        <li>
+          Digital goods such as website templates, plugins, and downloadable
+          software
+        </li>
         <li>Consulting and technical support services</li>
       </ul>
       <p>
@@ -39,18 +41,24 @@
 
     <section>
       <h2>3. User Responsibilities</h2>
-      <p>
-        By using our services or purchasing our goods, you agree to:
-      </p>
+      <p>By using our services or purchasing our goods, you agree to:</p>
       <ul>
-        <li>Provide accurate, complete, and up-to-date information when creating
-          an account or placing an order.</li>
-        <li>Use our services and goods only for lawful purposes and in
-          compliance with these Terms.</li>
-        <li>Not engage in any activity that may disrupt, harm, or interfere with
-          our services, goods, or other users.</li>
-        <li>Comply with all applicable laws, including data protection and
-          intellectual property laws.</li>
+        <li>
+          Provide accurate, complete, and up-to-date information when creating
+          an account or placing an order.
+        </li>
+        <li>
+          Use our services and goods only for lawful purposes and in compliance
+          with these Terms.
+        </li>
+        <li>
+          Not engage in any activity that may disrupt, harm, or interfere with
+          our services, goods, or other users.
+        </li>
+        <li>
+          Comply with all applicable laws, including data protection and
+          intellectual property laws.
+        </li>
       </ul>
     </section>
 
@@ -65,12 +73,18 @@
         chosen Payment Processor.
       </p>
       <ul>
-        <li>All payments are non-refundable unless otherwise stated in a
-          specific agreement or required by law.</li>
-        <li>We reserve the right to suspend or terminate access to services or
-          delivery of goods if payments are not received promptly.</li>
-        <li>You are responsible for any taxes, fees, or charges imposed by
-          Payment Processors or applicable laws.</li>
+        <li>
+          All payments are non-refundable unless otherwise stated in a specific
+          agreement or required by law.
+        </li>
+        <li>
+          We reserve the right to suspend or terminate access to services or
+          delivery of goods if payments are not received promptly.
+        </li>
+        <li>
+          You are responsible for any taxes, fees, or charges imposed by Payment
+          Processors or applicable laws.
+        </li>
       </ul>
       <p>
         For custom development services, payment schedules (e.g., milestones or
@@ -156,11 +170,14 @@
       <h2>11. Contact Information</h2>
       <p>For questions about these Terms, please contact us:</p>
       <ul>
-        <li>Email: <a
-            href="mailto:contact@baderidris.com">contact@baderidris.com</a></li>
+        <li>
+          Email:
+          <a href="mailto:contact@baderidris.com">contact@baderidris.com</a>
+        </li>
         <li>Phone: +970595744368</li>
-        <li>Contact Page: <a
-          href="https://baderidris.com/contact">baderidris.com/contact</a>
+        <li>
+          Contact Page:
+          <a href="https://baderidris.com/contact">baderidris.com/contact</a>
         </li>
       </ul>
     </section>
@@ -169,9 +186,10 @@
 
 <script setup>
 useSeoMeta({
-  title: 'Terms and Conditions - Bader Idris Portfolio',
-  description: 'Read the Terms and Conditions for using Bader Idris Portfolio services and goods, including full-stack development, digital products, and online courses.'
-})
+  title: "Terms and Conditions - Bader Idris Portfolio",
+  description:
+    "Read the Terms and Conditions for using Bader Idris Portfolio services and goods, including full-stack development, digital products, and online courses.",
+});
 </script>
 
 <style lang="scss" scoped>
@@ -180,7 +198,7 @@ useSeoMeta({
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   color: #333;
 
   h1 {

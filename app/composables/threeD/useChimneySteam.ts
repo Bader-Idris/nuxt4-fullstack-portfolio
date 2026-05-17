@@ -78,24 +78,21 @@ export const useChimneySteam = () => {
     const particleGeo = new THREE.BufferGeometry();
     particleGeo.setAttribute(
       "position",
-      new THREE.BufferAttribute(smokePositions, 3)
+      new THREE.BufferAttribute(smokePositions, 3),
     );
     particleGeo.setAttribute(
       "aBirth",
-      new THREE.BufferAttribute(smokeBirths, 1)
+      new THREE.BufferAttribute(smokeBirths, 1),
     );
     particleGeo.setAttribute(
       "aLifespan",
-      new THREE.BufferAttribute(smokeLifespans, 1)
+      new THREE.BufferAttribute(smokeLifespans, 1),
     );
     particleGeo.setAttribute(
       "aVelocity",
-      new THREE.BufferAttribute(smokeVelocities, 3)
+      new THREE.BufferAttribute(smokeVelocities, 3),
     );
-    particleGeo.setAttribute(
-      "aSeed",
-      new THREE.BufferAttribute(smokeSeeds, 1)
-    );
+    particleGeo.setAttribute("aSeed", new THREE.BufferAttribute(smokeSeeds, 1));
 
     // Create shader material for particles (puff shape computed in GLSL)
     smokeMaterial = new THREE.ShaderMaterial({
@@ -106,7 +103,7 @@ export const useChimneySteam = () => {
         // --- PARTICLE SIZE ---
         // Base radius of the smoke puffs.
         // Small (0.05) = wispy steam, Large (0.3) = heavy coal clouds.
-        uParticleSize: { value: 0.40 },
+        uParticleSize: { value: 0.4 },
         // --- SMOKE COLOR ---
         // Warm gray: rgb(217, 209, 204)
         uColor: { value: new THREE.Color(0.85, 0.82, 0.8) },
@@ -125,15 +122,20 @@ export const useChimneySteam = () => {
     smokeParticles.position.set(0, 0.12, 0);
     smokeParticles.frustumCulled = false;
     // IMPORTANT: Higher renderOrder ensures smoke renders over other transparent shaders like water/slabs
-    smokeParticles.renderOrder = 10; 
+    smokeParticles.renderOrder = 10;
     chimneyMesh.add(smokeParticles);
   };
 
-  const update = (elapsed: number, delta: number, locomotiveSpeed: number, camDist: number = 0) => {
+  const update = (
+    elapsed: number,
+    delta: number,
+    locomotiveSpeed: number,
+    camDist: number = 0,
+  ) => {
     if (!smokeMaterial || !smokeParticles) return;
 
     smokeMaterial.uniforms.uTime.value = elapsed;
-    
+
     // CPU OPTIMIZATION: If very far away, skip most of the update logic
     // We still update uTime but skip the expensive loop and attribute updates
     const isVeryFar = camDist > 150;
@@ -149,7 +151,7 @@ export const useChimneySteam = () => {
         0,
         -6.8,
         0,
-        80
+        80,
       );
     } else {
       // Mapping backward speed (2.4 max) to -45 degrees tilt
@@ -158,7 +160,7 @@ export const useChimneySteam = () => {
         0,
         2.4,
         0,
-        -45
+        -45,
       );
     }
 
@@ -167,7 +169,7 @@ export const useChimneySteam = () => {
     smokeBendAngle.value = THREE.MathUtils.lerp(
       smokeBendAngle.value,
       targetBendRad,
-      lerpT
+      lerpT,
     );
     smokeMaterial.uniforms.uWindBendAngle.value = smokeBendAngle.value;
 
@@ -182,15 +184,16 @@ export const useChimneySteam = () => {
     smokeMaterial.uniforms.uLifeSpeed.value = THREE.MathUtils.lerp(
       currentLifeSpeed,
       lifeSpeedTarget,
-      lerpT
+      lerpT,
     );
 
     if (isVeryFar) return;
 
     // Respawn dead particles - THROTTLE: only every few frames if far
     // Or just process a subset? Simple approach: full update but skip if very far.
-    const positions = smokeParticles.geometry.attributes.position.array as Float32Array;
-    
+    const positions = smokeParticles.geometry.attributes.position
+      .array as Float32Array;
+
     // If far, we only process half of the particles per frame to save CPU
     const stride = isFar ? 2 : 1;
     const offset = Math.floor(elapsed * 60) % stride;

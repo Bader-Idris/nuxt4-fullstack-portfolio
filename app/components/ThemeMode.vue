@@ -1,46 +1,47 @@
 <script setup>
-import { useColorMode } from '@vueuse/core'
+import { useColorMode } from "@vueuse/core";
 
-const colorMode = useColorMode()
+const colorMode = useColorMode();
 
 const modes = [
-  { value: 'system', icon: 'material-symbols:autorenew', label: 'System' },
-  { value: 'light', icon: 'i-lucide-sun', label: 'Light' },
-  { value: 'dark', icon: 'i-lucide-moon', label: 'Dark' }
-]
+  { value: "system", icon: "material-symbols:autorenew", label: "System" },
+  { value: "light", icon: "i-lucide-sun", label: "Light" },
+  { value: "dark", icon: "i-lucide-moon", label: "Dark" },
+];
 
-const isOpen = ref(false)
+const isOpen = ref(false);
 const toggleDropdown = () => {
-  isOpen.value = !isOpen.value
-}
+  isOpen.value = !isOpen.value;
+};
 
 const selectMode = (mode) => {
-  colorMode.value = mode
-  isOpen.value = false
-}
+  colorMode.value = mode;
+  isOpen.value = false;
+};
 </script>
 
 <template>
   <div class="color-mode-selector">
     <!-- Current selection button -->
-    <button
-      class="theme-toggle-btn"
-      @click="toggleDropdown"
-    >
-      <Icon :name="modes.find(m => m.value === colorMode)?.icon" class="icon" />
-      <span class="label">{{modes.find(m => m.value === colorMode)?.label
-        }}</span>
+    <button class="theme-toggle-btn" @click="toggleDropdown">
+      <Icon
+        :name="modes.find((m) => m.value === colorMode)?.icon"
+        class="icon"
+      />
+      <span class="label">{{
+        modes.find((m) => m.value === colorMode)?.label
+      }}</span>
       <Icon name="i-lucide-chevron-down" class="chevron-icon" />
     </button>
 
     <!-- Dropdown menu -->
     <div v-if="isOpen" class="dropdown-menu">
       <button
-        v-for="mode in modes" 
+        v-for="mode in modes"
         :key="mode.value"
-        :class="{ 'active': colorMode === mode.value }"
+        :class="{ active: colorMode === mode.value }"
         class="dropdown-item"
-        @click="selectMode(mode.value)" 
+        @click="selectMode(mode.value)"
       >
         <Icon :name="mode.icon" class="icon" />
         <span class="label">{{ mode.label }}</span>
@@ -70,7 +71,9 @@ const selectMode = (mode) => {
   color: $btn2-clr;
   font-size: $labels-size;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 
   &:hover {
     background-color: $primary1-hovered;

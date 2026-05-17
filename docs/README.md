@@ -8,15 +8,15 @@ The mail server is currently running at `mail.baderidris.com`.
 
 To ensure proper mail delivery and security, the following DNS records are required:
 
-| Type | Hostname | Value |
-| :--- | :--- | :--- |
-| **MX** | `baderidris.com` | `mail.baderidris.com` |
-| **A** | `mail.baderidris.com` | `<your-server-IP>` |
-| **TXT** | `baderidris.com` | `v=spf1 mx a -all` |
-| **TXT** | `mail._domainkey.baderidris.com` | `v=DKIM1; h=sha256; k=rsa; p=<generated-hash>` |
-| **TXT** | `_dmarc.baderidris.com` | `v=DMARC1; p=quarantine; sp=quarantine; fo=0; adkim=r; aspf=r; pct=100; rua=mailto:dmarc.report@baderidris.com` |
-| **TXT** | `_mta-sts.baderidris.com` | `v=STSv1; id=<timestamp>;` |
-| **A** | `mta-sts.baderidris.com` | `<your-server-IP>` |
+| Type    | Hostname                         | Value                                                                                                           |
+| :------ | :------------------------------- | :-------------------------------------------------------------------------------------------------------------- |
+| **MX**  | `baderidris.com`                 | `mail.baderidris.com`                                                                                           |
+| **A**   | `mail.baderidris.com`            | `<your-server-IP>`                                                                                              |
+| **TXT** | `baderidris.com`                 | `v=spf1 mx a -all`                                                                                              |
+| **TXT** | `mail._domainkey.baderidris.com` | `v=DKIM1; h=sha256; k=rsa; p=<generated-hash>`                                                                  |
+| **TXT** | `_dmarc.baderidris.com`          | `v=DMARC1; p=quarantine; sp=quarantine; fo=0; adkim=r; aspf=r; pct=100; rua=mailto:dmarc.report@baderidris.com` |
+| **TXT** | `_mta-sts.baderidris.com`        | `v=STSv1; id=<timestamp>;`                                                                                      |
+| **A**   | `mta-sts.baderidris.com`         | `<your-server-IP>`                                                                                              |
 
 ## User Management
 
@@ -56,11 +56,13 @@ Generate DKIM keys for your domain:
 ```bash
 docker exec -it mail setup config dkim domain 'baderidris.com'
 ```
+
 Reboot the container after generation. The public key will be saved to the `config/opendkim/keys/` directory.
 
 ### MTA-STS (Mail Transfer Agent Strict Transport Security)
 
 MTA-STS is enabled to enforce TLS encryption for incoming emails.
+
 1. Add DNS records as shown in the table above.
 2. Serve the `mta-sts.txt` file via HTTPS on `mta-sts.baderidris.com`.
 
@@ -89,11 +91,11 @@ The mail server stores data in the following directories (relative to the projec
 
 For advanced management, consider these resources:
 
-- **Postfix:** *The Book of Postfix* by Ralf Hildebrandt
-- **Dovecot:** *Dovecot: The Definitive Guide* by Oleg Tarasov
-- **Security:** *Email Authentication: DKIM, SPF, and DMARC* by John W. Wargo
+- **Postfix:** _The Book of Postfix_ by Ralf Hildebrandt
+- **Dovecot:** _Dovecot: The Definitive Guide_ by Oleg Tarasov
+- **Security:** _Email Authentication: DKIM, SPF, and DMARC_ by John W. Wargo
 - **Official Docs:** [Docker Mailserver Documentation](https://docker-mailserver.github.io/docker-mailserver/latest/)
 
 ---
 
-*Note: For a quick reference of commands, see the [whatToDoOnMailserver.sh](../server/config/mailserver/whatToDoOnMailserver.sh) script.*
+_Note: For a quick reference of commands, see the [whatToDoOnMailserver.sh](../server/config/mailserver/whatToDoOnMailserver.sh) script._

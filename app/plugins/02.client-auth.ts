@@ -1,8 +1,8 @@
-import { useUserStore } from '~/stores/useUserSocket';
+import { useUserStore } from "~/stores/useUserSocket";
 
 export default defineNuxtPlugin(() => {
   if (import.meta.server) return;
-  
+
   // The user store now hydrates itself from localStorage.
   // The server-side plugin (01.auth.ts) will hydrate it from the cookie if available.
   // We just need to trigger the initialization logic.

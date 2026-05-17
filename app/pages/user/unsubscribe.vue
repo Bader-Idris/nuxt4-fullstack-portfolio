@@ -1,13 +1,7 @@
 <template>
-  <div>
-    in dev yet
-  </div>
+  <div>in dev yet</div>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts" setup></script>
 
-</script>
-
-<style lang="scss">
-
-</style>
+<style lang="scss"></style>

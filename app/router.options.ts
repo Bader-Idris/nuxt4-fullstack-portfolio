@@ -1,11 +1,10 @@
 // app/router.options.ts
-import type { RouterConfig } from '@nuxt/schema'
+import type { RouterConfig } from "@nuxt/schema";
 
 export default <RouterConfig>{
   // scrollBehavior(to, from, savedPosition) {
   //   return savedPosition || { top: 0 };
   // },
-
   // routes: (routes) => {
   //   const aboutRoute = routes.find(route => route.name === 'about');
   //   if (aboutRoute) {
@@ -32,4 +31,4 @@ export default <RouterConfig>{
   //   }
   //   return routes;
   // }
-}
+};

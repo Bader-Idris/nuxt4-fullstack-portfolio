@@ -18,6 +18,7 @@ If you must build on a server with limited resources (e.g., 1GB RAM, 1 vCPU, 25G
 A swap file can provide the additional memory needed for the build process.
 
 1.  **Allocate a 4GB swap file:**
+
     ```bash
     # Use fallocate to create the swap file
     sudo fallocate -l 4G /swapfile
@@ -27,11 +28,13 @@ A swap file can provide the additional memory needed for the build process.
     ```
 
 2.  **Set the correct permissions:**
+
     ```bash
     sudo chmod 600 /swapfile
     ```
 
 3.  **Set up the swap area:**
+
     ```bash
     sudo mkswap /swapfile
     ```
@@ -63,8 +66,8 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 Swappiness is a kernel parameter that controls how aggressively the system uses swap space. The value ranges from 0 to 100.
 
--   **`10`**: Recommended for servers. The kernel will favor keeping data in RAM.
--   **`60`**: Default value.
+- **`10`**: Recommended for servers. The kernel will favor keeping data in RAM.
+- **`60`**: Default value.
 
 To set swappiness to `10`:
 

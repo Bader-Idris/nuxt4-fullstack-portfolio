@@ -23,8 +23,8 @@ ${verifyEmail}
 If you did not request this email, please ignore it.
 `;
 
-//  To unsubscribe from future emails, click here: ${unsubscribeLink}
-  /* 
+  //  To unsubscribe from future emails, click here: ${unsubscribeLink}
+  /*
 <header style="border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px;">
         <h4 style="color: #333;">Hello, ${name}</h4>
         <p style="font-size: 14px; color: #555;">

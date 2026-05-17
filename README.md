@@ -2,18 +2,18 @@
 
 <div align="right">
 
-**Language:** 
+**Language:**
 <a href="./README.md">
-  <img src="https://flagcdn.com/16x12/us.png" alt="English" width="16" height="12">
-  English
-</a> | 
+<img src="https://flagcdn.com/16x12/us.png" alt="English" width="16" height="12">
+English
+</a> |
 <a href="./README.ar.md">
-  <img src="https://flagcdn.com/16x12/sa.png" alt="العربية" width="16" height="12">
-  العربية
-</a> | 
+<img src="https://flagcdn.com/16x12/sa.png" alt="العربية" width="16" height="12">
+العربية
+</a> |
 <a href="./README.es.md">
-  <img src="https://flagcdn.com/16x12/es.png" alt="Español" width="16" height="12">
-  Español
+<img src="https://flagcdn.com/16x12/es.png" alt="Español" width="16" height="12">
+Español
 </a>
 
 </div>
@@ -169,7 +169,7 @@ db.users.find({ "email": "contact@baderidris.com" })
 
 // to modify the role based on email do:
 db.users.updateOne(
-  { "email": "contact@baderidris.com" }, 
+  { "email": "contact@baderidris.com" },
   { $set: { "role": "admin" } }
 )
 // to delete do:
@@ -250,7 +250,7 @@ To build the application for production:
 # make it yours
 cp ./compose.prod.test.yaml.example ./compose.prod.test.yaml
 # then stop dev if running, and start building!
-docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d redis postgres mongo ; docker compose -f compose.prod.test.yaml build --progress=plain app; docker compose -f compose.prod.test.yaml up -d 
+docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d redis postgres mongo ; docker compose -f compose.prod.test.yaml build --progress=plain app; docker compose -f compose.prod.test.yaml up -d
 ```
 
 > [!CAUTION]  
@@ -338,7 +338,6 @@ To create a production build for Electron:
    ```
 
 2. Use the following commands to build the Electron application:
-
    - `bun run build:electron`: Build for the current platform
    - `bun run build:electron:all`: Build for Windows, macOS, and Linux
    - `bun run build:electron:win`: Build for Windows only

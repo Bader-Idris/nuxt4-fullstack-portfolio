@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import vertexWater from "@/components/three/shaders/water/vertex.glsl"
-import fragmentWater from "@/components/three/shaders/water/fragment.glsl"
+import vertexWater from "@/components/three/shaders/water/vertex.glsl";
+import fragmentWater from "@/components/three/shaders/water/fragment.glsl";
 
 export interface WaterOptions {
   size?: number;
@@ -23,16 +23,11 @@ export interface WaterInstance {
  */
 export function useWater(
   scene: THREE.Scene,
-  options: WaterOptions
+  options: WaterOptions,
 ): WaterInstance | null {
   if (import.meta.server) return null;
 
-  const {
-    size = 500,
-    elevation = -0.3,
-    splatTexture,
-    terrainSize,
-  } = options;
+  const { size = 500, elevation = -0.3, splatTexture, terrainSize } = options;
 
   const geometry = new THREE.PlaneGeometry(size, size, 32, 32);
   geometry.rotateX(-Math.PI * 0.5);
@@ -58,14 +53,14 @@ export function useWater(
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.y = elevation;
   mesh.receiveShadow = true;
-  
+
   /**
    * IMPORTANT: Fixing transparency issue where smoke becomes invisible.
    * By setting renderOrder to 0 (default) and ensuring smoke has a higher order,
    * or by setting water to a negative order to render it first as the "background".
    * Since water is mostly at the bottom of the scene, rendering it first is safe.
    */
-  mesh.renderOrder = -1; 
+  mesh.renderOrder = -1;
 
   scene.add(mesh);
 

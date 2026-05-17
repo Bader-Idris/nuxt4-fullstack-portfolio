@@ -1,5 +1,5 @@
 // TODO: better to put in api/v1/user/me.get.ts
-import { defineEventHandler } from 'h3';
+import { defineEventHandler } from "h3";
 
 // This is a protected route. We need a way to verify the user.
 // We will create a middleware for this endpoint.
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Authentication required',
+      statusMessage: "Authentication required",
     });
   }
 

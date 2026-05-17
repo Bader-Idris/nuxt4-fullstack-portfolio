@@ -6,12 +6,13 @@
       </p>
     </div>
     <div v-if="!gameStarted || gameOver" class="outcome-display">
-      <CustomButton 
-        v-if="!gameStarted && !gameOver" 
+      <CustomButton
+        v-if="!gameStarted && !gameOver"
         button-type="ghost"
         data-game-control="start"
-        @click="handleStartClick">
-        {{ $t('home.gameCommand') }}
+        @click="handleStartClick"
+      >
+        {{ $t("home.gameCommand") }}
       </CustomButton>
 
       <p v-if="gameOver && congratsMessage" class="outcome">
@@ -22,292 +23,310 @@
         ref="congratsEl"
         class="congrats"
         @click="handleStartClick"
-        @keydown.space="handleStartClick">
+        @keydown.space="handleStartClick"
+      >
         {{ congratsMessage }}
       </div>
     </div>
     <client-only>
       <div
-        v-for="(segment, index) in snake" 
-        :key="index" 
+        v-for="(segment, index) in snake"
+        :key="index"
         class="snake"
-        :style="{ gridColumn: segment.x, gridRow: segment.y }" />
+        :style="{ gridColumn: segment.x, gridRow: segment.y }"
+      />
       <div class="food" :style="{ gridColumn: food.x, gridRow: food.y }" />
     </client-only>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Howl } from 'howler'
-import { useI18n } from 'vue-i18n'
-import { useIntervalFn, useEventListener, useTimeoutFn } from '@vueuse/core'
-import eatingSound from '@/assets/sounds/swallow.mp3'
-import victorySound from '@/assets/sounds/victory.mp3'
-import wallHitSound from '@/assets/sounds/wall-hit.mp3'
-import snakeHissing from '@/assets/sounds/snake-hissing.mp3'
-import ouch from '@/assets/sounds/ouch.mp3'
-import { Haptics, ImpactStyle } from '@capacitor/haptics'
-import { LocalNotifications } from '@capacitor/local-notifications'
-import { Capacitor } from '@capacitor/core'
-import confetti from 'canvas-confetti'
+import { Howl } from "howler";
+import { useI18n } from "vue-i18n";
+import { useIntervalFn, useEventListener, useTimeoutFn } from "@vueuse/core";
+import eatingSound from "@/assets/sounds/swallow.mp3";
+import victorySound from "@/assets/sounds/victory.mp3";
+import wallHitSound from "@/assets/sounds/wall-hit.mp3";
+import snakeHissing from "@/assets/sounds/snake-hissing.mp3";
+import ouch from "@/assets/sounds/ouch.mp3";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { Capacitor } from "@capacitor/core";
+import confetti from "canvas-confetti";
 
 // Define the shape of the `sounds` object
-type SoundKeys = 'snakeHissing' | 'eating' | 'wallHit' | 'ouch' | 'victory'
-type SoundsMap = Record<SoundKeys, Howl | null>
+type SoundKeys = "snakeHissing" | "eating" | "wallHit" | "ouch" | "victory";
+type SoundsMap = Record<SoundKeys, Howl | null>;
 
 // Initialize `sounds` as a reactive object
-const sounds = ref<SoundsMap | null>(null)
-const board = ref<HTMLElement | null>(null)
+const sounds = ref<SoundsMap | null>(null);
+const board = ref<HTMLElement | null>(null);
 // const startButtonEl = ref<any>(null);
 const congratsEl = ref<HTMLElement | null>(null);
-const isClient = import.meta.client
+const isClient = import.meta.client;
 
 // Function to initialize sounds (called on user interaction)
 const initializeSounds = () => {
   if (isClient && !sounds.value) {
     sounds.value = {
-      snakeHissing: new Howl({ src: [snakeHissing],  preload: true }),
+      snakeHissing: new Howl({ src: [snakeHissing], preload: true }),
       ouch: new Howl({ src: [ouch] }),
-      eating: new Howl({ src: [eatingSound],  preload: true }),
+      eating: new Howl({ src: [eatingSound], preload: true }),
       wallHit: new Howl({ src: [wallHitSound] }),
       victory: new Howl({ src: [victorySound] }),
-    }
+    };
   }
-}
+};
 
 // Function to play a sound by key
 const playSound = (key: SoundKeys) => {
-  if (!isClient || !sounds.value?.[key]) return
+  if (!isClient || !sounds.value?.[key]) return;
   try {
-    sounds.value[key]!.stop()
-    sounds.value[key]!.play()
+    sounds.value[key]!.stop();
+    sounds.value[key]!.play();
   } catch (error) {
-    console.error(`Error playing sound "${key}":`, error)
+    console.error(`Error playing sound "${key}":`, error);
   }
-}
+};
 
 // Electron's Notification API
-const isElectron = Capacitor.getPlatform() === 'electron'
-const { t } = useI18n({ useScope: 'global' })
+const isElectron = Capacitor.getPlatform() === "electron";
+const { t } = useI18n({ useScope: "global" });
 
 const isCapacitorDevice = useCapacitorDevice();
 
 // Define props with proper types
 const props = defineProps<{
-  foodLeft: { eaten: boolean }[]
-  updateFoodLeft: () => void
-  triggerSignal?: { code: string, timestamp: number }
-}>()
+  foodLeft: { eaten: boolean }[];
+  updateFoodLeft: () => void;
+  triggerSignal?: { code: string; timestamp: number };
+}>();
 
 // Watch for external trigger signals
-watch(() => props.triggerSignal, (signal) => {
-  if (signal && isClient) {
-    handleInput(signal.code)
-  }
-})
+watch(
+  () => props.triggerSignal,
+  (signal) => {
+    if (signal && isClient) {
+      handleInput(signal.code);
+    }
+  },
+);
 
 // Emit types
 const emit = defineEmits<{
-  (e: 'foodEaten', score: number): void
-  (e: 'gameOver'): void
-}>()
+  (e: "foodEaten", score: number): void;
+  (e: "gameOver"): void;
+}>();
 
 // Reactive variables with types
-const gridSize = ref<number>(20)
-const snake = ref<{ x: number, y: number }[]>([])
-const food = ref<{ x: number, y: number }>({ x: 0, y: 0 })
-const direction = ref<string>('up')
-const lastDirection = ref<string>('up')
-const gameSpeedDelay = ref<number>(130)
-const gameStarted = ref<boolean>(false)
-const gameOver = ref<boolean>(false)
-const congratsMessage = ref<string>('')
-const score = ref<number>(0)
-const winningScore = ref<number>(10)
-const foodEatenRecently = ref<boolean>(false)
+const gridSize = ref<number>(20);
+const snake = ref<{ x: number; y: number }[]>([]);
+const food = ref<{ x: number; y: number }>({ x: 0, y: 0 });
+const direction = ref<string>("up");
+const lastDirection = ref<string>("up");
+const gameSpeedDelay = ref<number>(130);
+const gameStarted = ref<boolean>(false);
+const gameOver = ref<boolean>(false);
+const congratsMessage = ref<string>("");
+const score = ref<number>(0);
+const winningScore = ref<number>(10);
+const foodEatenRecently = ref<boolean>(false);
 
 // Initialize snake and food on client side
 if (isClient) {
-  snake.value = Array.from({ length: 10 }, (_, index) => ({ x: 10, y: 20 + index }))
-  food.value = generateFood()
+  snake.value = Array.from({ length: 10 }, (_, index) => ({
+    x: 10,
+    y: 20 + index,
+  }));
+  food.value = generateFood();
 }
 
 // Formatted score for singular/plural
 const formattedScore = computed(() =>
-  score.value === 1 ? `${t('home.score')}: ${score.value}` : `${t('home.scores')}: ${score.value}`
-)
+  score.value === 1
+    ? `${t("home.score")}: ${score.value}`
+    : `${t("home.scores")}: ${score.value}`,
+);
 
 // Computed property for win condition
 const isWon = computed(() =>
-  score.value >= winningScore.value ? t('home.hasWon') : t('home.hasNotWon')
-)
+  score.value >= winningScore.value ? t("home.hasWon") : t("home.hasNotWon"),
+);
 
 // UseIntervalFn for game loop
-const { pause, resume } = useIntervalFn(() => {
-  move()
-  checkCollision()
-}, gameSpeedDelay, { immediate: false })
+const { pause, resume } = useIntervalFn(
+  () => {
+    move();
+    checkCollision();
+  },
+  gameSpeedDelay,
+  { immediate: false },
+);
 
 // Client-side setup
 onMounted(() => {
-  if (!isClient) return
+  if (!isClient) return;
 
-  food.value = generateFood()
+  food.value = generateFood();
 
   // Update snake head style
   nextTick(() => {
-    const snakeHead = board.value?.querySelector('.snake')
+    const snakeHead = board.value?.querySelector(".snake");
     if (snakeHead instanceof HTMLElement) {
-      snakeHead.style.borderRadius = '10px 10px 0 0'
+      snakeHead.style.borderRadius = "10px 10px 0 0";
     }
-  })
-})
+  });
+});
 
-const foodEatenRecentlyTimeout = useTimeoutFn(() => {
-  foodEatenRecently.value = false
-}, 300, { immediate: false })
+const foodEatenRecentlyTimeout = useTimeoutFn(
+  () => {
+    foodEatenRecently.value = false;
+  },
+  300,
+  { immediate: false },
+);
 
 // Watch for recent food eaten to reset animation after a delay
 watch(foodEatenRecently, (newVal) => {
   if (newVal && isClient) {
-    foodEatenRecentlyTimeout.start()
+    foodEatenRecentlyTimeout.start();
   }
-})
+});
 
 // Function to show notification
 async function showNotification(message: string) {
-  if (!isClient) return
+  if (!isClient) return;
 
   if (isElectron) {
-    const granted = await Notification.requestPermission()
-    if (granted === 'granted') {
-      const notification = new Notification('Victory!', {
+    const granted = await Notification.requestPermission();
+    if (granted === "granted") {
+      const notification = new Notification("Victory!", {
         body: message,
-        icon: '../../assets/icon-only.png',
-        tag: 'victory',
-      })
+        icon: "../../assets/icon-only.png",
+        tag: "victory",
+      });
       // this is not a reactive one, so we don't have to use vueUse composable for it as in food one!
-      setTimeout(() => notification.close(), 3000)
+      setTimeout(() => notification.close(), 3000);
     }
-  } else if (await isCapacitorDevice || Capacitor.getPlatform() === 'web') {
-    const granted = await LocalNotifications.requestPermissions()
-    if (granted.display === 'granted') {
+  } else if ((await isCapacitorDevice) || Capacitor.getPlatform() === "web") {
+    const granted = await LocalNotifications.requestPermissions();
+    if (granted.display === "granted") {
       await LocalNotifications.schedule({
         notifications: [
           {
-            title: t('home.gameCongratsTitle'),
+            title: t("home.gameCongratsTitle"),
             body: message,
             id: 1,
             schedule: { at: new Date(Date.now() + 3000) },
-            sound: '',
-            largeIcon: '/pwa-192x192.png',
-            smallIcon: '/favicon-16x16.png',
+            sound: "",
+            largeIcon: "/pwa-192x192.png",
+            smallIcon: "/favicon-16x16.png",
             silent: false,
-            actionTypeId: '',
+            actionTypeId: "",
             extra: null,
           },
         ],
-      })
-      await Haptics.impact({ style: ImpactStyle.Heavy })
+      });
+      await Haptics.impact({ style: ImpactStyle.Heavy });
     }
   } else {
-    console.log('Platform not supported for notifications')
+    console.log("Platform not supported for notifications");
   }
 }
 
 // Game logic
 function checkWinCondition() {
   if (score.value >= winningScore.value) {
-    playSound('victory')
+    playSound("victory");
     if (isClient) {
-      launchConfetti()
-      launchConfettiInMiddle()
+      launchConfetti();
+      launchConfettiInMiddle();
     }
-    stopGame('Play-again')
+    stopGame("Play-again");
     if (isClient) {
-      showNotification(t('home.gameCongrats'))
+      showNotification(t("home.gameCongrats"));
     }
   }
 }
 
 function updateHeadStyle(element: HTMLElement): void {
   switch (direction.value) {
-    case 'up':
-      element.style.borderRadius = '10px 10px 0 0'
-      break
-    case 'down':
-      element.style.borderRadius = '0 0 10px 10px'
-      break
-    case 'left':
-      element.style.borderRadius = '10px 0 0 10px'
-      break
-    case 'right':
-      element.style.borderRadius = '0 10px 10px 0'
-      break
+    case "up":
+      element.style.borderRadius = "10px 10px 0 0";
+      break;
+    case "down":
+      element.style.borderRadius = "0 0 10px 10px";
+      break;
+    case "left":
+      element.style.borderRadius = "10px 0 0 10px";
+      break;
+    case "right":
+      element.style.borderRadius = "0 10px 10px 0";
+      break;
   }
 }
 
-function generateFood(): { x: number, y: number } {
-  const x = Math.floor(Math.random() * gridSize.value) + 1
-  const y = Math.floor(Math.random() * (gridSize.value + 14)) + 1
-  return { x, y }
+function generateFood(): { x: number; y: number } {
+  const x = Math.floor(Math.random() * gridSize.value) + 1;
+  const y = Math.floor(Math.random() * (gridSize.value + 14)) + 1;
+  return { x, y };
 }
 
 function move(): void {
-  if (!isClient) return
+  if (!isClient) return;
 
-  const head = { ...snake.value[0] }
+  const head = { ...snake.value[0] };
 
   if (
-    (lastDirection.value === 'up' && direction.value === 'down') ||
-    (lastDirection.value === 'down' && direction.value === 'up') ||
-    (lastDirection.value === 'left' && direction.value === 'right') ||
-    (lastDirection.value === 'right' && direction.value === 'left')
+    (lastDirection.value === "up" && direction.value === "down") ||
+    (lastDirection.value === "down" && direction.value === "up") ||
+    (lastDirection.value === "left" && direction.value === "right") ||
+    (lastDirection.value === "right" && direction.value === "left")
   ) {
-    direction.value = lastDirection.value
+    direction.value = lastDirection.value;
   } else {
-    lastDirection.value = direction.value
+    lastDirection.value = direction.value;
   }
 
   // Update snake head position
   switch (direction.value) {
-    case 'up':
-      head.y--
-      break
-    case 'down':
-      head.y++
-      break
-    case 'left':
-      head.x--
-      break
-    case 'right':
-      head.x++
-      break
+    case "up":
+      head.y--;
+      break;
+    case "down":
+      head.y++;
+      break;
+    case "left":
+      head.x--;
+      break;
+    case "right":
+      head.x++;
+      break;
   }
 
   // Update the snake's head style
-  const headElement = board.value?.querySelector('.snake')
+  const headElement = board.value?.querySelector(".snake");
   if (headElement instanceof HTMLElement) {
-    headElement.classList.add('head')
-    updateHeadStyle(headElement)
+    headElement.classList.add("head");
+    updateHeadStyle(headElement);
   }
 
-  snake.value.unshift(head)
+  snake.value.unshift(head);
 
   // Check if the snake ate the food
   if (head.x === food.value.x && head.y === food.value.y) {
-    food.value = generateFood()
-    emit('foodEaten', score.value + 1)
-    increaseSpeed()
-    score.value++
-    foodEatenRecently.value = true
-    playSound('eating')
-    if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 50 })
+    food.value = generateFood();
+    emit("foodEaten", score.value + 1);
+    increaseSpeed();
+    score.value++;
+    foodEatenRecently.value = true;
+    playSound("eating");
+    if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 50 });
   } else {
-    snake.value.pop()
+    snake.value.pop();
   }
 
-  checkWinCondition()
+  checkWinCondition();
 }
 
 function triggerStartAnimation(element: any) {
@@ -318,8 +337,8 @@ function triggerStartAnimation(element: any) {
   const targetEl = element.$el || element;
 
   // Ensure we have a valid DOM element to animate.
-  if (!targetEl || typeof targetEl.style === 'undefined') {
-    console.warn('GSAP animation target is not a valid DOM element:', element);
+  if (!targetEl || typeof targetEl.style === "undefined") {
+    console.warn("GSAP animation target is not a valid DOM element:", element);
     // If we can't animate, we shouldn't start the game, as it would be immediate.
     // This respects the user's expectation of an animation delay.
     return;
@@ -330,163 +349,171 @@ function triggerStartAnimation(element: any) {
     yoyo: true,
     repeat: 1,
     onComplete: () => {
-      useGSAP().set(targetEl, { clearProps: 'all' });
+      useGSAP().set(targetEl, { clearProps: "all" });
       startGame();
-    }
+    },
   });
 }
 
 function handleStartClick(event: MouseEvent) {
-  initializeSounds()
+  initializeSounds();
   triggerStartAnimation(event.currentTarget as HTMLElement);
 }
 
 function startGame(): void {
-  if (!isClient) return
+  if (!isClient) return;
 
-  resetGame()
-  playSound('snakeHissing')
-  resume()
+  resetGame();
+  playSound("snakeHissing");
+  resume();
 }
 
 function resetGame(): void {
-  gameStarted.value = true
-  gameOver.value = false
-  congratsMessage.value = ''
-  score.value = 0
-  snake.value = Array.from({ length: 10 }, (_, index) => ({ x: 10, y: 20 + index }))
-  food.value = generateFood()
-  pause()
-  emit('gameOver')
+  gameStarted.value = true;
+  gameOver.value = false;
+  congratsMessage.value = "";
+  score.value = 0;
+  snake.value = Array.from({ length: 10 }, (_, index) => ({
+    x: 10,
+    y: 20 + index,
+  }));
+  food.value = generateFood();
+  pause();
+  emit("gameOver");
 }
 
 function launchConfettiInMiddle() {
-  if (!isClient) return
+  if (!isClient) return;
 
-  const count = 200
+  const count = 200;
   const defaults = {
     origin: { y: 0.7 },
-  }
+  };
 
   function fire(particleRatio: number, opts: Record<string, any>) {
     confetti({
       ...defaults,
       ...opts,
       particleCount: Math.floor(count * particleRatio),
-    })
+    });
   }
 
-  fire(0.25, { spread: 26, startVelocity: 55 })
-  fire(0.2, { spread: 60 })
-  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 })
-  fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 })
-  fire(0.1, { spread: 120, startVelocity: 45 })
+  fire(0.25, { spread: 26, startVelocity: 55 });
+  fire(0.2, { spread: 60 });
+  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+  fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+  fire(0.1, { spread: 120, startVelocity: 45 });
 }
 
 function launchConfetti() {
-  if (!isClient) return
+  if (!isClient) return;
 
-  const end = Date.now() + 5 * 1000 // Confetti lasts for 5 seconds
-  const colors = ['#bb0000', '#ffffff'] // Custom colors (Buckeyes)
+  const end = Date.now() + 5 * 1000; // Confetti lasts for 5 seconds
+  const colors = ["#bb0000", "#ffffff"]; // Custom colors (Buckeyes)
+  (function frame() {
+    confetti({
+      particleCount: 2,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors,
+    });
+    confetti({
+      particleCount: 2,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors,
+    });
 
-    ; (function frame() {
-      confetti({
-        particleCount: 2,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors,
-      })
-      confetti({
-        particleCount: 2,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors,
-      })
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame) // Continue the confetti animation
-      }
-    })()
+    if (Date.now() < end) {
+      requestAnimationFrame(frame); // Continue the confetti animation
+    }
+  })();
 }
 
 function increaseSpeed(): void {
   if (gameSpeedDelay.value > 50) {
-    gameSpeedDelay.value -= 10
+    gameSpeedDelay.value -= 10;
   }
 }
 
 function checkCollision(): void {
-  if (!isClient) return
+  if (!isClient) return;
 
-  const head = snake.value[0]
-  if (head.x < 1 || head.x > gridSize.value || head.y < 1 || head.y > gridSize.value + 14) {
-    playSound('wallHit')
-    if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 100 })
-    stopGame(t('home.again'))
-    return
+  const head = snake.value[0];
+  if (
+    head.x < 1 ||
+    head.x > gridSize.value ||
+    head.y < 1 ||
+    head.y > gridSize.value + 14
+  ) {
+    playSound("wallHit");
+    if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 100 });
+    stopGame(t("home.again"));
+    return;
   }
   for (let i = 1; i < snake.value.length; i++) {
     if (head.x === snake.value[i].x && head.y === snake.value[i].y) {
-      playSound('ouch')
-      if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 100 })
-      stopGame(t('home.again'))
-      return
+      playSound("ouch");
+      if (Capacitor.isNativePlatform()) Haptics.vibrate({ duration: 100 });
+      stopGame(t("home.again"));
+      return;
     }
   }
 }
 
 function stopGame(message: string): void {
-  gameOver.value = true
-  gameStarted.value = false
-  gameSpeedDelay.value = 130
-  direction.value = 'up'
-  lastDirection.value = 'up'
-  congratsMessage.value = message
-  pause()
+  gameOver.value = true;
+  gameStarted.value = false;
+  gameSpeedDelay.value = 130;
+  direction.value = "up";
+  lastDirection.value = "up";
+  congratsMessage.value = message;
+  pause();
 }
 
 // Handle input from keyboard or external controls
 function handleInput(code: string) {
-  if (!isClient) return
+  if (!isClient) return;
 
-  if ((gameOver.value || !gameStarted.value) && code === 'Space') {
-    initializeSounds()
-    triggerStartAnimation(board.value)
+  if ((gameOver.value || !gameStarted.value) && code === "Space") {
+    initializeSounds();
+    triggerStartAnimation(board.value);
   } else if (gameStarted.value) {
-    switch (code) {// event.key is too specific and bad with i18n, requires you to use these two for one keyCode
-    //  ["س ", "s"]
-      case 'ArrowUp':
-      case 'KeyW':
-        if (lastDirection.value !== 'down') direction.value = 'up'
-        break
-      case 'ArrowDown':
-      case 'KeyS':
-        if (lastDirection.value !== 'up') direction.value = 'down'
-        break
-      case 'ArrowLeft':
-      case 'KeyA':
-        if (lastDirection.value !== 'right') direction.value = 'left'
-        break
-      case 'ArrowRight':
-      case 'KeyD':
-        if (lastDirection.value !== 'left') direction.value = 'right'
-        break
+    switch (
+      code // event.key is too specific and bad with i18n, requires you to use these two for one keyCode
+    ) {
+      //  ["س ", "s"]
+      case "ArrowUp":
+      case "KeyW":
+        if (lastDirection.value !== "down") direction.value = "up";
+        break;
+      case "ArrowDown":
+      case "KeyS":
+        if (lastDirection.value !== "up") direction.value = "down";
+        break;
+      case "ArrowLeft":
+      case "KeyA":
+        if (lastDirection.value !== "right") direction.value = "left";
+        break;
+      case "ArrowRight":
+      case "KeyD":
+        if (lastDirection.value !== "left") direction.value = "right";
+        break;
     }
   }
 }
 
 // Key event listener using useEventListener
-useEventListener(document, 'keydown', (event: KeyboardEvent) => {
-  handleInput(event.code)
+useEventListener(document, "keydown", (event: KeyboardEvent) => {
+  handleInput(event.code);
 });
 
 defineExpose({
-  handleInput
-})
+  handleInput,
+});
 </script>
-
 
 <style lang="scss">
 .game-screen {
@@ -551,7 +578,7 @@ defineExpose({
       text-transform: uppercase;
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         width: 100%;
         height: 100%;

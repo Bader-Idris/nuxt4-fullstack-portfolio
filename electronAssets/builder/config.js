@@ -1,12 +1,12 @@
 /* eslint-disable no-template-curly-in-string */
 
 // TODO: check this out https://www.electron.build/configuration.html
-const path = require('path')
+const path = require("path");
 // import path, { dirname } from 'path'
-const dotenv = require('dotenv')
+const dotenv = require("dotenv");
 // import * as dotenv from "dotenv";
 // import dotenv from "dotenv";
-const packageJson = require('../../package.json')
+const packageJson = require("../../package.json");
 // import packageJson from "../../package.json";
 // import packageJson from '../../package.json' assert { type: 'json' };
 
@@ -17,9 +17,9 @@ const packageJson = require('../../package.json')
 // const __dirname = dirname(__filename);
 
 dotenv.config({
-  path: path.resolve(__dirname, './envs/.env'),
-  debug: true
-})
+  path: path.resolve(__dirname, "./envs/.env"),
+  debug: true,
+});
 
 // // Print the App ID for debugging purposes, as requested.
 // const appxAppId = 'BaderIdrisPortfolio'
@@ -29,32 +29,31 @@ dotenv.config({
 // console.log('This is to fix the AppX build error due to invalid characters in the default appId.')
 // console.log('---------------------------------')
 
-
 // Get formatted current date
 function getLocalTimestamp() {
-  const date = new Date()
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0') // Month is zero-based
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}${month}${day}_${hours}_${minutes}`
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-based
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}${month}${day}_${hours}_${minutes}`;
 }
 
 const windowsTargets = [
-  { target: 'nsis', arch: 'x64' },
-  { target: 'msi', arch: 'x64' },     // Professional MSI installer
+  { target: "nsis", arch: "x64" },
+  { target: "msi", arch: "x64" }, // Professional MSI installer
   // { target: 'appx', arch: 'x64' },
   // { target: 'zip', arch: 'x64' }, // not worthy!
-  { target: 'portable', arch: 'x64' }
-]
+  { target: "portable", arch: "x64" },
+];
 
 const linuxTargets = [
-  { target: 'snap', arch: 'x64' },
-  { target: 'deb', arch: 'x64' },
-  { target: 'rpm', arch: 'x64' },
-  { target: 'AppImage', arch: 'x64' }
-]
+  { target: "snap", arch: "x64" },
+  { target: "deb", arch: "x64" },
+  { target: "rpm", arch: "x64" },
+  { target: "AppImage", arch: "x64" },
+];
 
 const baseConfig = {
   /*
@@ -80,50 +79,53 @@ const baseConfig = {
   asarUnpack: [
     "**/node_modules/sharp/**/*",
     "**/node_modules/@img/**/*",
-  //   // Only unpack image and SVG files for direct file access
-  //   ".output/public/imgs/**/*.{png,jpg,jpeg,webp,svg,gif,ico}",
-  //   ".output/public/fonts/**/*",
-  //   ".output/public/sounds/**/*",
-  //   // Unpack electronAssets/resources for tray icon access
-  //   "electronAssets/resources/**/*"
+    //   // Only unpack image and SVG files for direct file access
+    //   ".output/public/imgs/**/*.{png,jpg,jpeg,webp,svg,gif,ico}",
+    //   ".output/public/fonts/**/*",
+    //   ".output/public/sounds/**/*",
+    //   // Unpack electronAssets/resources for tray icon access
+    //   "electronAssets/resources/**/*"
   ],
   // extends: null,
-  compression: 'maximum',
+  compression: "maximum",
   // Fixed: use target OS macro (${os}), not the host platform (resolves to win/mac/linux)
-  artifactName: '${productName}_${version}_' + getLocalTimestamp() + '_${os}_${arch}.${ext}', // ! can't read them with template strings!
+  artifactName:
+    "${productName}_${version}_" +
+    getLocalTimestamp() +
+    "_${os}_${arch}.${ext}", // ! can't read them with template strings!
   directories: {
-    output: './release/${version}'
+    output: "./release/${version}",
   },
   // Set homepage to baderidris.com instead of GitHub URL using extraMetadata
   extraMetadata: {
-    homepage: 'https://baderidris.com'
+    homepage: "https://baderidris.com",
   },
   mac: {
-    bundleVersion: '1.0',
+    bundleVersion: "1.0",
     hardenedRuntime: true,
     gatekeeperAssess: false,
-    notarize: process.env.MAC_NOTARIZE === 'true', // ! Enables notarization conditionally
-    icon: 'electronAssets/resources/icon.icns',
-    type: 'distribution',
+    notarize: process.env.MAC_NOTARIZE === "true", // ! Enables notarization conditionally
+    icon: "electronAssets/resources/icon.icns",
+    type: "distribution",
     identity: process.env.MAC_CODE_SIGN_IDENTITY || null, // ! For macOS signing
-    target: [{ target: 'dmg', arch: ['x64', 'arm64', 'universal'] }]
+    target: [{ target: "dmg", arch: ["x64", "arm64", "universal"] }],
   },
   dmg: {
     contents: [
-      { x: 410, y: 150, type: 'link', path: '/Applications' },
-      { x: 130, y: 150, type: 'file' }
+      { x: 410, y: 150, type: "link", path: "/Applications" },
+      { x: 130, y: 150, type: "file" },
     ],
-    sign: false
+    sign: false,
   },
   win: {
-    icon: 'electronAssets/resources/icon.ico',
+    icon: "electronAssets/resources/icon.ico",
     publish: [
       {
-        provider: 'github', // must be github | s3 | spaces | generic | custom | keygen | snapStore | bitbucket
-        owner: 'Bader-Idris',
-        repo: 'Bader-Idris',
-        private: true
-      }
+        provider: "github", // must be github | s3 | spaces | generic | custom | keygen | snapStore | bitbucket
+        owner: "Bader-Idris",
+        repo: "Bader-Idris",
+        private: true,
+      },
     ],
     // forceCodeSigning: true, // to fill the build if code signing failed or is invalid
     forceCodeSigning: false,
@@ -135,65 +137,67 @@ const baseConfig = {
     // Certificate can be:
     // 1. Path to .pfx file (relative or absolute)
     // 2. Base64-encoded certificate content (prefix with "base64:")
-    cscLink: process.env.WIN_CSC_LINK || (function() {
-      const certPath = path.join(__dirname, 'envs', 'Cert.pfx')
-      // Only use default path if file exists, otherwise let electron-builder skip signing
-      try {
-        return require('fs').existsSync(certPath) ? certPath : undefined
-      } catch {
-        return undefined
-      }
-    })(),
+    cscLink:
+      process.env.WIN_CSC_LINK ||
+      (function () {
+        const certPath = path.join(__dirname, "envs", "Cert.pfx");
+        // Only use default path if file exists, otherwise let electron-builder skip signing
+        try {
+          return require("fs").existsSync(certPath) ? certPath : undefined;
+        } catch {
+          return undefined;
+        }
+      })(),
     cscKeyPassword: process.env.WIN_CSC_KEY_PASSWORD || undefined,
     // signingHashAlgorithms: ['sha256'], // used from gemini web not cli, invalid config!
     // publisherName: 'Bader-Idris',
 
     // For compatibility with older Windows SDKs and avoid "A required function is not present" error,
     // we'll handle timestamp at the appx level if needed
-    target: windowsTargets
+    target: windowsTargets,
   },
   nsis: {
-    oneClick: false,                    // Assisted installer for professional experience
-    perMachine: true,                   // Install per machine to Program Files (requires admin)
-    allowElevation: true,               // Allow requesting elevation if needed
-    selectPerMachineByDefault: true,    // Default to per-machine installation
+    oneClick: false, // Assisted installer for professional experience
+    perMachine: true, // Install per machine to Program Files (requires admin)
+    allowElevation: true, // Allow requesting elevation if needed
+    selectPerMachineByDefault: true, // Default to per-machine installation
     allowToChangeInstallationDirectory: true, // Allow users to modify installation site
-    deleteAppDataOnUninstall: false,    // Preserve user data on uninstall
-    createDesktopShortcut: 'always',        // Always recreate desktop shortcut even on reinstall
-    createStartMenuShortcut: true,      // Create start menu shortcut
-    shortcutName: 'Bader Idris Portfolio', // Custom shortcut name
-    uninstallDisplayName: 'Bader Idris Portfolio', // Professional uninstall display name
-    license: 'LICENSE',                 // Include license in installer
+    deleteAppDataOnUninstall: false, // Preserve user data on uninstall
+    createDesktopShortcut: "always", // Always recreate desktop shortcut even on reinstall
+    createStartMenuShortcut: true, // Create start menu shortcut
+    shortcutName: "Bader Idris Portfolio", // Custom shortcut name
+    uninstallDisplayName: "Bader Idris Portfolio", // Professional uninstall display name
+    license: "LICENSE", // Include license in installer
     // Branding and visual customization
-    installerIcon: 'electronAssets/resources/icon.ico',    // Custom installer icon
-    uninstallerIcon: 'electronAssets/resources/icon.ico',  // Custom uninstaller icon
+    installerIcon: "electronAssets/resources/icon.ico", // Custom installer icon
+    uninstallerIcon: "electronAssets/resources/icon.ico", // Custom uninstaller icon
     // installerSidebar: 'electronAssets/resources/installerSidebar.bmp', // Uncomment when sidebar image is ready (164x314px recommended)
     // installerHeader: 'electronAssets/resources/installerHeader.bmp',   // Uncomment when header image is ready (150x57px recommended)
     // Language settings
-    displayLanguageSelector: false,     // Auto-detect OS language
+    displayLanguageSelector: false, // Auto-detect OS language
     // Additional professional settings
-    menuCategory: true,                 // Use company name for start menu folder
-    runAfterFinish: true,               // Run application after installation
+    menuCategory: true, // Use company name for start menu folder
+    runAfterFinish: true, // Run application after installation
     // Advanced options
-    packElevateHelper: true,            // Pack elevate helper for elevation
-    useZip: false,                      // Use 7z for compression instead of zip
+    packElevateHelper: true, // Pack elevate helper for elevation
+    useZip: false, // Use 7z for compression instead of zip
     // Custom NSIS script for advanced features
-    include: 'electronAssets/builder/customNSIS.nsh',  // Include custom NSIS script with registry functions
-    installerLanguages: 'en_US',              // Set installer language
+    include: "electronAssets/builder/customNSIS.nsh", // Include custom NSIS script with registry functions
+    installerLanguages: "en_US", // Set installer language
   },
   msi: {
     // MSI-specific configuration for professional Windows installation
-    upgradeCode: 'A3C81A20-2152-4B60-B31B-2C618E641234',  // Unique GUID for upgrade tracking
+    upgradeCode: "A3C81A20-2152-4B60-B31B-2C618E641234", // Unique GUID for upgrade tracking
     // Advanced MSI options
-    oneClick: false,                                        // Traditional installer behavior
-    perMachine: true,                                       // Install per machine by default
+    oneClick: false, // Traditional installer behavior
+    perMachine: true, // Install per machine by default
     // User experience options
-    runAfterFinish: true,                                   // Run application after install
-    createDesktopShortcut: true,                            // Create desktop shortcut
-    createStartMenuShortcut: true,                          // Create start menu shortcut
+    runAfterFinish: true, // Run application after install
+    createDesktopShortcut: true, // Create desktop shortcut
+    createStartMenuShortcut: true, // Create start menu shortcut
     // Additional professional options
-    menuCategory: true,                                     // Use company name for start menu folder
-    shortcutName: 'Bader Idris Portfolio',                  // Custom shortcut name for MSI
+    menuCategory: true, // Use company name for start menu folder
+    shortcutName: "Bader Idris Portfolio", // Custom shortcut name for MSI
     // Enhanced branding options
     // Note: MSI branding is more limited than NSIS but we can use these options for better appearance
     // Additional WiX arguments for advanced customization (requires WiX files in the project)
@@ -208,10 +212,10 @@ const baseConfig = {
   //   publisher: `CN=${packageJson.author.split(' <')[0]}`
   // },
   linux: {
-    executableName: 'portfolio', // Allow opening via "portfolio" command in terminal
-    icon: 'electronAssets/resources',
-    category: 'Utility',
-    target: linuxTargets
+    executableName: "portfolio", // Allow opening via "portfolio" command in terminal
+    icon: "electronAssets/resources",
+    category: "Utility",
+    target: linuxTargets,
     // TODO: add the icon to deb version, it doesn't appear when trying to install
     // and verify your ownership with it; because it says: potentially unsafe, packageJson.homepage is good, it appears the webapp
     // TODO: fix snap distribution, it has a bug when trying to setup: failed to install file not supported
@@ -221,44 +225,48 @@ const baseConfig = {
       // Great, this fixed the running issue
       // 'gconf2',
       // 'gconf-service',
-      'libgtk-3-0',
-      'libnotify4',
-      'libnss3',
-      'libxss1',
-      'xdg-utils',
-      'libatspi2.0-0', // Accessibility support
-      'libappindicator3-1', // For app indicator support
-      'libxtst6', // X11 Testing support
-      'libgbm1', // Essential for WebGL/GPU acceleration
-      'libasound2', // Essential for audio support
+      "libgtk-3-0",
+      "libnotify4",
+      "libnss3",
+      "libxss1",
+      "xdg-utils",
+      "libatspi2.0-0", // Accessibility support
+      "libappindicator3-1", // For app indicator support
+      "libxtst6", // X11 Testing support
+      "libgbm1", // Essential for WebGL/GPU acceleration
+      "libasound2", // Essential for audio support
       // "xapp-gtk3-module"
     ],
     // https://www.electron.build/electron-builder.interface.deboptions
     synopsis: "Bader's portfolio application",
-    description: packageJson.description || 'A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile.',
+    description:
+      packageJson.description ||
+      "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile.",
   },
   snap: {
-    grade: 'stable',
-    confinement: 'strict',
+    grade: "stable",
+    confinement: "strict",
     summary: "Bader's portfolio using Nuxt 4 + Vue 3 + Electron + Capacitor",
-    description: packageJson.description || "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information."
+    description:
+      packageJson.description ||
+      "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information.",
   },
   files: [
-    'dist-electron/**/*',
+    "dist-electron/**/*",
     ".output/**/*",
     "electronAssets/resources/**/*",
-    '!dist-electron/main/index.dev.js',
-    '!dist',
-    '!electronAssets/builder/envs', // important security to hide our certs from third parties, or in the app bundle
-    '!docs/**/*',
-    '!tests/**/*',
-    '!release/**/*',
-    '!node_modules/**/*'
-  ]
+    "!dist-electron/main/index.dev.js",
+    "!dist",
+    "!electronAssets/builder/envs", // important security to hide our certs from third parties, or in the app bundle
+    "!docs/**/*",
+    "!tests/**/*",
+    "!release/**/*",
+    "!node_modules/**/*",
+  ],
 
   // check https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json
-}
-baseConfig.copyright = `ⓒ ${new Date().getFullYear()} ${packageJson.author}`
+};
+baseConfig.copyright = `ⓒ ${new Date().getFullYear()} ${packageJson.author}`;
 
 // TODO: check this useful notifier repo: https://github.com/mikaelbr/node-notifier
 /* TODO: check these for electron inspiration:
@@ -278,13 +286,13 @@ baseConfig.copyright = `ⓒ ${new Date().getFullYear()} ${packageJson.author}`
 */
 
 // Notarization script for macOS (if enabled)
-if (process.env.MAC_NOTARIZE === 'true') {
-  baseConfig.afterSign = './electronAssets/builder/notarize.ts'
+if (process.env.MAC_NOTARIZE === "true") {
+  baseConfig.afterSign = "./electronAssets/builder/notarize.ts";
 }
 
 module.exports = {
   ...baseConfig,
-}
+};
 
 // export default {
 //   ...baseConfig,

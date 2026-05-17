@@ -1,5 +1,5 @@
-import { Schema, model, type Document } from 'mongoose'
-import { Product } from './Product'
+import { Schema, model, type Document } from "mongoose";
+import { Product } from "./Product";
 
 const ReviewSchema = new Schema<IReview>(
   {
@@ -7,35 +7,35 @@ const ReviewSchema = new Schema<IReview>(
       type: Number,
       min: 1,
       max: 5,
-      required: [true, 'Please provide rating'],
+      required: [true, "Please provide rating"],
     },
     title: {
       type: String,
       trim: true,
-      required: [true, 'Please provide review title'],
+      required: [true, "Please provide review title"],
       maxlength: 100,
     },
     comment: {
       type: String,
-      required: [true, 'Please provide review text'],
+      required: [true, "Please provide review text"],
     },
     user: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       index: true, // Performance: indexed queries are 100-1000x faster than collection scans (per MongoDB docs)
     },
     product: {
       type: Schema.Types.ObjectId,
-      ref: 'Product',
+      ref: "Product",
       required: true,
       index: true,
     },
   },
   { timestamps: true },
-)
+);
 
-ReviewSchema.index({ product: 1, user: 1 }, { unique: true })
+ReviewSchema.index({ product: 1, user: 1 }, { unique: true });
 
 ReviewSchema.statics.calculateAverageRating = async function (
   productId: Schema.Types.ObjectId,
@@ -45,11 +45,11 @@ ReviewSchema.statics.calculateAverageRating = async function (
     {
       $group: {
         _id: null,
-        averageRating: { $avg: '$rating' },
+        averageRating: { $avg: "$rating" },
         numOfReviews: { $sum: 1 },
       },
     },
-  ])
+  ]);
 
   try {
     await Product.findOneAndUpdate(
@@ -58,19 +58,22 @@ ReviewSchema.statics.calculateAverageRating = async function (
         averageRating: Math.ceil(result[0]?.averageRating || 0),
         numOfReviews: result[0]?.numOfReviews || 0,
       },
-    )
+    );
+  } catch (error) {
+    console.log(error);
   }
-  catch (error) {
-    console.log(error)
-  }
-}
+};
 
-ReviewSchema.post('save', async function (doc) {
-  await (doc.constructor as any).calculateAverageRating(doc.product)
-})
+ReviewSchema.post("save", async function (doc) {
+  await (doc.constructor as any).calculateAverageRating(doc.product);
+});
 
-ReviewSchema.post('deleteOne', { document: true, query: false }, async function (doc) {
-  await (doc.constructor as any).calculateAverageRating(doc.product)
-})
+ReviewSchema.post(
+  "deleteOne",
+  { document: true, query: false },
+  async function (doc) {
+    await (doc.constructor as any).calculateAverageRating(doc.product);
+  },
+);
 
-export const Review = model<IReview>('Review', ReviewSchema)
+export const Review = model<IReview>("Review", ReviewSchema);

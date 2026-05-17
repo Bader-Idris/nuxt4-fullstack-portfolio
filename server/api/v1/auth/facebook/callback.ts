@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery, sendRedirect } from "h3";
 import { User, Token } from "../../../../models/mongo";
-import crypto from 'node:crypto';
+import crypto from "node:crypto";
 
 // Assuming createTokenUser and attachCookiesToResponse are auto-imported or available in the context
 
@@ -25,14 +25,14 @@ export default defineEventHandler(async (event) => {
           client_secret: config.facebookClientSecret,
           redirect_uri: `${config.public.originUrl}/api/v1/auth/facebook/callback`,
           code,
-        })
+        }),
     );
 
     const tokenData = await tokenResponse.json();
     if (!tokenResponse.ok) {
       throw createError({
         statusCode: 400,
-        statusMessage: `Failed to obtain access token: ${tokenData.error?.message || 'Unknown error'}`,
+        statusMessage: `Failed to obtain access token: ${tokenData.error?.message || "Unknown error"}`,
       });
     }
 
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
 
     // Fetch user profile
     const profileResponse = await fetch(
-      `https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`,
     );
     const profile = await profileResponse.json();
     if (!profileResponse.ok) {
@@ -56,15 +56,15 @@ export default defineEventHandler(async (event) => {
       user = new User({
         name: profile.name,
         email: profile.email,
-        provider: 'facebook', // Set the provider
+        provider: "facebook", // Set the provider
         role: "user",
         isVerified: true, // OAuth users are considered verified
       });
       await user.save();
     } else {
       // If user exists but logs in with Facebook for the first time, update provider
-      if (user.provider !== 'facebook') {
-        user.provider = 'facebook';
+      if (user.provider !== "facebook") {
+        user.provider = "facebook";
         user.password = undefined; // Clear password if they switch to OAuth
         await user.save();
       }
@@ -91,10 +91,9 @@ export default defineEventHandler(async (event) => {
     // --- END OF UNIFIED LOGIC ---
 
     // Secure, clean redirect to the auth callback page on the client.
-    return sendRedirect(event, '/auth/callback');
-
+    return sendRedirect(event, "/auth/callback");
   } catch (error) {
     console.error("Facebook auth callback error:", error);
-    return sendRedirect(event, '/login?error=facebook_auth_failed');
+    return sendRedirect(event, "/login?error=facebook_auth_failed");
   }
 });
