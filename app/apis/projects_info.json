@@ -1,11 +1,35 @@
 [
   {
-    "title": "e-commerce product",
+    "title": "e-commerce product page",
     "url": "https://bader-idris.github.io/ecommerce-product-page/",
     "img": "https://raw.githubusercontent.com/Bader-Idris/ecommerce-product-page/main/design/desktop-preview.jpg",
     "imgAlt": "",
     "desc": "Interactive and responsive e-commerce product page, you can add and remove items from cart and see the total amount of items in the cart, and navigate through the images of the product",
     "tags": ["html", "css", "Javascript"]
+  },
+  {
+    "title": "My First 3D Challenge: Steaming Into The Horizon",
+    "url": "/projects/train",
+    "img": "/imgs/train-thumbnail-2026-05-5.webp",
+    "imgAlt": "Locomotive ready to race",
+    "desc": "interactive terrain with water, sand, grass and ground marble, planning to make it gamified with beautiful environment",
+    "tags": ["Docker", "Typescript", "Nginx", "Nuxt", "Sass", "Electron", "ThreeJs", "CapacitorJs"]
+  },
+  {
+    "title": "designing agency web app clone",
+    "url": "https://beautiful-web-application.netlify.app/",
+    "img": "https://raw.githubusercontent.com/Bader-Idris/guru-agency-duplication-site/refs/heads/bader/brave_703HxjzGmt.png",
+    "imgAlt": "designing agency web app",
+    "desc": "A stunning web application designed for a designing agency, showcasing beautiful CSS interactions. The app features an innovative background color conversion effect on hover, as well as various text manipulation techniques, making it a visually appealing and engaging experience for users. As a full-stack developer, I would be delighted to help you bring such a project to life.",
+    "tags": ["html", "sass", "Vue", "typescript"]
+  },
+  {
+    "title": "Countries API",
+    "url": "https://countries-apis-bader.netlify.app/",
+    "img": "https://raw.githubusercontent.com/Bader-Idris/countries-api/refs/heads/bader/design-assets/design/desktop-preview.jpg",
+    "imgAlt": "countries api with dark/light mode",
+    "desc": "Explore global data with this sleek, responsive app. Fetch country details, toggle dark/light mode, and search or filter by region effortlessly.",
+    "tags": ["html", "Sass", "Vue", "typescript"]
   },
   {
     "title": "Pricing page",
@@ -32,22 +56,6 @@
     "tags": ["html", "css", "Javascript"]
   },
   {
-    "title": "designing agency web app",
-    "url": "https://beautiful-web-application.netlify.app/",
-    "img": "https://raw.githubusercontent.com/Bader-Idris/guru-agency-duplication-site/refs/heads/bader/brave_703HxjzGmt.png",
-    "imgAlt": "designing agency web app",
-    "desc": "A stunning web application designed for a designing agency, showcasing beautiful CSS interactions. The app features an innovative background color conversion effect on hover, as well as various text manipulation techniques, making it a visually appealing and engaging experience for users. As a full-stack developer, I would be delighted to help you bring such a project to life.",
-    "tags": ["html", "sass", "Vue", "typescript"]
-  },
-  {
-    "title": "Countries API",
-    "url": "https://countries-apis-bader.netlify.app/",
-    "img": "https://raw.githubusercontent.com/Bader-Idris/countries-api/refs/heads/bader/design-assets/design/desktop-preview.jpg",
-    "imgAlt": "countries api with dark/light mode",
-    "desc": "Explore global data with this sleek, responsive app. Fetch country details, toggle dark/light mode, and search or filter by region effortlessly.",
-    "tags": ["html", "Sass", "Vue", "typescript"]
-  },
-  {
     "title": "Random Quotes Generator",
     "url": "https://bader-idris.github.io/random-quote/",
     "img": "https://raw.githubusercontent.com/Bader-Idris/random-quote/refs/heads/main/Screenshot%20from%202025-01-12%2021-39-33.png",
@@ -65,7 +73,7 @@
   },
   {
     "title": "building 50 projects with Elzero",
-    "url": "https://elzero.org",
+    "url": "/projects/elzero-50-projects",
     "img": "https://avatars.githubusercontent.com/u/93044377?s=96&v=4",
     "imgAlt": "image",
     "desc": "under development",

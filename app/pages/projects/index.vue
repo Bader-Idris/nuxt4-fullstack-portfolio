@@ -74,7 +74,9 @@ const list = ref<Array<{ title: string; imgAlt: string; isActive: boolean }>>([
   { title: "Docker", imgAlt: "Docker icon", isActive: true },
   { title: "Nginx", imgAlt: "Nginx icon", isActive: true },
   { title: "Nuxt", imgAlt: "Nuxt icon", isActive: true },
-  // { title: 'Electron', imgAlt: 'Electron icon', isActive: true },
+  { title: 'Electron', imgAlt: 'Electron icon', isActive: true },
+  { title: 'ThreeJs', imgAlt: 'ThreeJs icon', isActive: true },
+  { title: 'CapacitorJs', imgAlt: 'CapacitorJs icon', isActive: true },
   // { title: 'Bash', imgAlt: 'Bash icon', isActive: true },
   // { title: 'NestJs', imgAlt: 'NestJs icon', isActive: true },
 ]);
