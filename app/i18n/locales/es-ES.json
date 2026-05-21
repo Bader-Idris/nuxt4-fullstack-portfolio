@@ -97,5 +97,32 @@
     "thank_you": {
       "emailMsg": "Tu mensaje ha sido aceptado. Te responderemos muy pronto!"
     }
-  }
+  },
+  "explorer_title": "EXPLORADOR: ELZERO 50",
+  "search_placeholder": "Buscar desafíos...",
+  "no_results": "No se encontraron resultados",
+  "group_core": "01 - Desafíos Principales (01-10)",
+  "group_advanced": "02 - Módulos Intermedios (11-30)",
+  "group_sandbox": "03 - Patios de Juegos UI (31-50)",
+  "elzero_dashboard": {
+    "title": "50 Proyectos de Elzero",
+    "subtitle": "Una colección completa de 50 desafíos frontend, construidos con estándares web modernos y características interactivas.",
+    "stats": {
+      "challenges": "Desafíos",
+      "languages": "Idiomas",
+      "interactive": "Interactivo"
+    },
+    "cta": "Seleccione un proyecto del explorador para comenzar a explorar el patio de juegos interactivo.",
+    "featured": "Desafíos Principales Destacados"
+  },
+  "tabs": {
+    "preview": "Vista Previa",
+    "code": "Código",
+    "details": "Detalles"
+  },
+  "sandbox_hint": "Simulación interactiva activa. Nota: La lógica de JavaScript se simula con fines de demostración.",
+  "details_title": "Descripción del Desafío",
+  "tech_stack": "Tecnologías Utilizadas",
+  "project_not_found": "Proyecto no encontrado en el explorador.",
+  "back_to_dashboard": "Volver al Panel"
 }

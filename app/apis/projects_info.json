@@ -72,26 +72,11 @@
     "tags": ["Docker", "Typescript", "Nginx", "Nuxt", "Sass"]
   },
   {
-    "title": "building 50 projects with Elzero",
+    "title": "50 Frontend Challenges: Elzero Edition",
     "url": "/projects/elzero-50-projects",
-    "img": "https://avatars.githubusercontent.com/u/93044377?s=96&v=4",
-    "imgAlt": "image",
-    "desc": "under development",
-    "tags": ["HTML"],
-    "RemoveMe-tags": [
-      "HTML",
-      "CSS",
-      "Vue",
-      "Typescript",
-      "Android",
-      "Apple",
-      "Docker",
-      "Sass",
-      "Nginx",
-      "Nuxt",
-      "Electron",
-      "Bash",
-      "NestJs"
-    ]
+    "img": "https://raw.githubusercontent.com/Bader-Idris/50projects50days/master/expanding-cards/screenshot.png",
+    "imgAlt": "Elzero 50 Projects Challenge Showcase",
+    "desc": "A premium, interactive showcase of 50 frontend challenges from the Elzero Web School. Features a VSCode-style explorer, live playground previews, and full support for English, Arabic, and Spanish.",
+    "tags": ["HTML", "CSS", "Javascript", "Nuxt", "Typescript", "Sass"]
   }
 ]

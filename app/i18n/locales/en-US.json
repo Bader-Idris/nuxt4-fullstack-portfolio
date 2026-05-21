@@ -97,5 +97,32 @@
     "thank_you": {
       "emailMsg": "Your message has been accepted. You will receive an answer really soon!"
     }
-  }
+  },
+  "explorer_title": "EXPLORER: ELZERO 50",
+  "search_placeholder": "Search challenges...",
+  "no_results": "No challenges found",
+  "group_core": "01 - Core Challenges (01-10)",
+  "group_advanced": "02 - Intermediate Modules (11-30)",
+  "group_sandbox": "03 - UI Playgrounds (31-50)",
+  "elzero_dashboard": {
+    "title": "Elzero 50 Projects",
+    "subtitle": "A comprehensive collection of 50 frontend challenges, built with modern web standards and interactive features.",
+    "stats": {
+      "challenges": "Challenges",
+      "languages": "Languages",
+      "interactive": "Interactive"
+    },
+    "cta": "Select a project from the explorer to begin exploring the interactive playground.",
+    "featured": "Featured Core Challenges"
+  },
+  "tabs": {
+    "preview": "Preview",
+    "code": "Code",
+    "details": "Details"
+  },
+  "sandbox_hint": "Interactive simulation active. Note: JavaScript logic is simulated for demo purposes.",
+  "details_title": "Challenge Description",
+  "tech_stack": "Technologies Used",
+  "project_not_found": "Project not found in the explorer.",
+  "back_to_dashboard": "Back to Dashboard"
 }
