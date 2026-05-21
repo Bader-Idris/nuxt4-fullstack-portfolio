@@ -101,6 +101,9 @@ cd portfolio
 > [!IMPORTANT]
 > Asegúrese de tener Bun instalado antes de ejecutar estos comandos.
 
+> [!TIP]
+> Si Bun falla al compilar las aplicaciones cliente (especialmente en Windows), se recomienda encarecidamente instalar y usar **pnpm**, ya que es más estable y ha sido probado exhaustivamente para estas plataformas.
+
 ```bash
 bun install
 ```

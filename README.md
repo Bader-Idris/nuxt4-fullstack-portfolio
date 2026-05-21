@@ -101,6 +101,9 @@ cd portfolio
 > [!IMPORTANT]  
 > Ensure you have Bun installed before running these commands.
 
+> [!TIP]
+> If Bun fails to build the client apps (especially on Windows), it is highly recommended to install and use **pnpm**, as it is more stable and thoroughly tested for these platforms.
+
 ```bash
 bun install
 ```
