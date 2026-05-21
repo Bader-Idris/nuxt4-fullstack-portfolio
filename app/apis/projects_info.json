@@ -12,7 +12,7 @@
     "url": "/projects/train",
     "img": "/imgs/train-thumbnail-2026-05-5.webp",
     "imgAlt": "Locomotive ready to race",
-    "desc": "interactive terrain with water, sand, grass and ground marble, planning to make it gamified with beautiful environment",
+    "desc": "High-fidelity 3D locomotive simulation with professional shadow tuning, angular-sort path extraction, dynamic chimney steam, and a reactive suspension system on an interactive terrain!!",
     "tags": ["Docker", "Typescript", "Nginx", "Nuxt", "Sass", "Electron", "ThreeJs", "CapacitorJs"]
   },
   {

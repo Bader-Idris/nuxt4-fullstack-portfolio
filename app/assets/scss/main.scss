@@ -65,6 +65,9 @@ ul {
 /* Custom scrollbar styles */
 @include tablet-to-up {
   /* Standard scrollbar properties are used in html block above. */
+  ::scrollbar-thumb {
+    cursor: pointer;
+  }
 }
 
 /* custom selection */

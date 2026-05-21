@@ -570,6 +570,14 @@ export default defineNuxtConfig({
       charset: "utf-8",
       viewport:
         "viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=3.0, user-scalable=yes",
+      link: [
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossorigin: "anonymous",
+        },
+      ],
     },
   },
   ogImage: {
