@@ -731,13 +731,15 @@ export default defineNuxtConfig({
         id: process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,
         // have to install nuxtjs/partytown for this option,
         // but it stops promise crashes due to these 3rd parties
-        partytown: true,
+        partytown: false, // read this: https://scripts.nuxt.com/docs/guides/first-party#partytown-web-worker
         trigger: "onNuxtReady",
+        proxy: false,
       },
       googleTagManager: {
         id: process.env.GOOGLE_TAG_MANAGER_ID,
-        partytown: true,
+        partytown: false, // same as googleAnalytics
         trigger: "onNuxtReady",
+        proxy: false,
       }, // more robust with var for docker image building
       // ? check https://scripts.nuxt.com/scripts/tracking/google-tag-manager#loading-globally
       // googleAdsense: {
@@ -748,6 +750,7 @@ export default defineNuxtConfig({
         id: process.env.CLARITY_ID,
         partytown: true,
         trigger: "onNuxtReady",
+        proxy: false,
       },
       // metaPixel: {
       //   id: process.env.META_PIXEL_ID,

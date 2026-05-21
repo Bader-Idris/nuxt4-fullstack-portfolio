@@ -11,6 +11,7 @@ android/
 dist-electron/
 release/
 tests/results/
+.antigravitycli/
 
 # Node dependencies
 node_modules

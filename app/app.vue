@@ -60,6 +60,10 @@ useHead({
       content: "black-translucent",
     },
     { name: "mobile-web-app-capable", content: "yes" },
+    // { // nginx is sufficient 
+    //   "http-equiv": "Content-Security-Policy",
+    //   content: "default-src 'self' 'unsafe-eval' 'unsafe-inline' http: https: ws: wss: blob: data: capacitor://localhost; img-src 'self' https://baderidris.com https://*.githubusercontent.com https://www.googletagmanager.com https://*.google-analytics.com https://*.g.doubleclick.net https://*.clarity.ms https://c.bing.com data:;"
+    // },
   ],
   link: [
     {
