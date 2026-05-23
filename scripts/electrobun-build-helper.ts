@@ -1,5 +1,5 @@
 import { readdirSync, renameSync, existsSync, mkdirSync, cpSync, rmSync } from "fs";
-import { join, extname } from "path";
+import { join, extname, dirname } from "path";
 import packageJson from "../package.json";
 
 /**
@@ -21,7 +21,7 @@ function getLocalTimestamp() {
 }
 
 const timestamp = process.env.BUILD_TIMESTAMP || getLocalTimestamp();
-const releaseRoot = join(process.cwd(), "release/electrobun");
+const releaseRoot = join(process.cwd(), "release", "electrobun");
 const targetFolder = join(releaseRoot, `${version}_${timestamp}`);
 
 // Sources (Electrobun defaults)
@@ -95,7 +95,3 @@ if (existsSync(artifactsFolder)) {
 }
 
 console.log("Release organization complete!");
-
-function dirname(path: string) {
-    return path.substring(0, path.lastIndexOf("/"));
-}
