@@ -966,9 +966,10 @@ onMounted(async () => {
     if (itemsTotal > 0) loadProgress.value = (itemsLoaded / itemsTotal) * 100;
   };
   manager.onLoad = () => {
-    setTimeout(() => {
-      isLoading.value = false;
-    }, 500);
+    // We handle isLoading explicitly at the end of onMounted
+    // to ensure critical draw calls (terrain, shaders) are out
+    // and avoid the "broken" appearance on slow PCs.
+    loadProgress.value = 100;
   };
 
   try {
@@ -1251,6 +1252,11 @@ onMounted(async () => {
   }
   window.addEventListener("resize", handleResize);
   animate(0);
+
+  // Finalize loading after all assets are ready and first frame is processed
+  setTimeout(() => {
+    isLoading.value = false;
+  }, 500);
 });
 
 onUnmounted(() => {

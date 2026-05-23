@@ -79,12 +79,12 @@ const baseConfig = {
   asarUnpack: [
     "**/node_modules/sharp/**/*",
     "**/node_modules/@img/**/*",
-    //   // Only unpack image and SVG files for direct file access
-    //   ".output/public/imgs/**/*.{png,jpg,jpeg,webp,svg,gif,ico}",
-    //   ".output/public/fonts/**/*",
-    //   ".output/public/sounds/**/*",
-    //   // Unpack electronAssets/resources for tray icon access
-    //   "electronAssets/resources/**/*"
+    // Unpack image and SVG files for direct file access
+    // ".output/public/imgs/**/*.{png,jpg,jpeg,webp,svg,gif,ico}",
+    // ".output/public/fonts/**/*",
+    // ".output/public/sounds/**/*",
+    // Unpack electronAssets/resources for tray icon / app indicator access
+    "electronAssets/resources/**/*",
   ],
   // extends: null,
   compression: "maximum",
@@ -213,7 +213,7 @@ const baseConfig = {
   // },
   linux: {
     executableName: "portfolio", // Allow opening via "portfolio" command in terminal
-    icon: "electronAssets/resources",
+    icon: "electronAssets/resources/icon.png", // Explicitly point to PNG for app indicator support
     category: "Utility",
     target: linuxTargets,
     // TODO: add the icon to deb version, it doesn't appear when trying to install
@@ -222,20 +222,23 @@ const baseConfig = {
   },
   deb: {
     depends: [
-      // Great, this fixed the running issue
-      // 'gconf2',
-      // 'gconf-service',
       "libgtk-3-0",
       "libnotify4",
       "libnss3",
       "libxss1",
       "xdg-utils",
       "libatspi2.0-0", // Accessibility support
-      "libappindicator3-1", // For app indicator support
+      "libappindicator3-1", // For app indicator support (older Ubuntu/Debian)
+      "libayatana-appindicator3-1", // For app indicator support (newer Ubuntu/Debian)
       "libxtst6", // X11 Testing support
       "libgbm1", // Essential for WebGL/GPU acceleration
       "libasound2", // Essential for audio support
-      // "xapp-gtk3-module"
+      "libnspr4", // Essential dependency
+      "libsecret-1-0", // Essential for secure storage
+      "libatk1.0-0", // Accessibility support
+      "libatk-bridge2.0-0", // Accessibility support
+      "libcups2", // Printing support
+      "libdrm2", // DRM support
     ],
     // https://www.electron.build/electron-builder.interface.deboptions
     synopsis: "Bader's portfolio application",
@@ -243,9 +246,36 @@ const baseConfig = {
       packageJson.description ||
       "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile.",
   },
+  rpm: {
+    depends: [
+      "libgtk-3-0",
+      "libnotify4",
+      "libnss3",
+      "libxss1",
+      "xdg-utils",
+      "libatspi2.0-0",
+      "libappindicator3-1",
+      "libayatana-appindicator3-1",
+      "libxtst6",
+      "libgbm1",
+      "libasound2",
+      "libnspr4",
+      "libsecret-1-0",
+      "libatk1.0-0",
+      "libatk-bridge2.0-0",
+      "libcups2",
+      "libdrm2",
+    ],
+  },
   snap: {
     grade: "stable",
     confinement: "strict",
+    // stagePackages: [
+    //   "default",
+    //   "libayatana-appindicator3-1",
+    //   "libgbm1",
+    //   "libasound2",
+    // ],
     summary: "Bader's portfolio using Nuxt 4 + Vue 3 + Electron + Capacitor",
     description:
       packageJson.description ||

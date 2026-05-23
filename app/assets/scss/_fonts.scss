@@ -1,18 +1,24 @@
+/* 1. Use Google Fonts first for fast CDN delivery and browser caching */
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap");
+
+/* 2. Define local fallback for offline usage (Electron/Capacitor) or CDN failure */
+@font-face {
+  font-family: "Fira Code";
+  /* Variable font range */
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+  src:
+    local("Fira Code"),
+    url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2-variations"),
+    url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2");
+}
+
+/* 3. Keep specific weights if needed for older browser compatibility or specific styling */
 @font-face {
   font-family: "Fira Code";
   font-weight: 300;
   font-style: normal;
   font-display: swap;
   src: url("/fonts/FiraCode/FiraCode-Light.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Fira Code";
-  /* Variable font */
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-  src:
-    url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2"),
-    url("/fonts/FiraCode/FiraCode_wght_.woff2") format("woff2");
 }
