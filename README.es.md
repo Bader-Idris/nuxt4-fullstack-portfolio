@@ -326,9 +326,10 @@ Para compilar la aplicación Android, asegúrese de tener instalado [Android Stu
 Esto garantiza un comportamiento de visualización adecuado en dispositivos Android 15+ cuando se usa Capacitor con configuraciones `overlay=true`.
 
 Puede consultar el problema [aquí](https://github.com/ionic-team/capacitor-plugins/issues/2350#issuecomment-2904401405)
-
-## Aplicación Electron
-
+- [Aplicación Electron](#aplicación-electron)
+- [Aplicación Electrobun](#aplicación-electrobun)
+- [Despliegue en producción](#despliegue-en-producción)
+...
 ### Configuración
 
 Para crear una compilación de producción para Electron:
@@ -348,9 +349,45 @@ Para crear una compilación de producción para Electron:
    - `bun run build:electron:linux`: Compilar solo para Linux
    - `bun run build:electron:dir`: Compilar en un directorio sin empaquetar para pruebas
 
+## Aplicación Electrobun
+
+Una alternativa moderna y ligera a Electron que utiliza Bun y vistas web del sistema.
+
+### Configuración
+
+1. Use el archivo de entorno de Electron existente o cree uno específico si es necesario.
+
+2. Use los siguientes comandos para compilar o desarrollar con Electrobun:
+   - `bun run dev:electrobun`: Ejecutar en modo de desarrollo con HMR y ventana nativa.
+   - `bun run build:electrobun`: Compilar para la plataforma actual.
+   - `bun run build:electrobun:all`: Compilar para Windows, macOS y Linux secuencialmente.
+   - `bun run build:electrobun:win`: Compilar solo para Windows.
+   - `bun run build:electrobun:mac`: Compilar solo para macOS.
+   - `bun run build:electrobun:linux`: Compilar solo para Linux.
+
+Los lanzamientos se organizarán y fecharán en `./release/electrobun/${version}_${timestamp}/`.
+
 ### Configuración de dominio
 
 Asegúrese de actualizar el nombre de dominio `baderidris.com` en el archivo `b.dev.yml` y en los archivos de configuración asociados con su propio nombre de dominio.
+
+## Aplicación Electrobun
+
+Una alternativa moderna y ligera a Electron que utiliza Bun y vistas web del sistema.
+
+### Configuración
+
+1. Use el archivo de entorno de Electron existente o cree uno específico si es necesario.
+
+2. Use los siguientes comandos para compilar o desarrollar con Electrobun:
+   - `bun run dev:electrobun`: Ejecutar en modo de desarrollo con HMR y ventana nativa.
+   - `bun run build:electrobun`: Compilar para la plataforma actual.
+   - `bun run build:electrobun:all`: Compilar para Windows, macOS y Linux secuencialmente.
+   - `bun run build:electrobun:win`: Compilar solo para Windows.
+   - `bun run build:electrobun:mac`: Compilar solo para macOS.
+   - `bun run build:electrobun:linux`: Compilar solo para Linux.
+
+Los lanzamientos se organizarán y fecharán en `./release/electrobun/${version}_${timestamp}/`.
 
 ## Despliegue en producción
 

@@ -54,3 +54,7 @@ electronAssets/builder/envs/request.csr
 electronAssets/builder/envs/certificate.crt
 electronAssets/builder/envs/private.key
 electronAssets/builder/envs/Cert.pfx
+.electrobun/
+artifacts/
+# even after we put the app in /release/electrobun, the build/ isn't removed
+build/

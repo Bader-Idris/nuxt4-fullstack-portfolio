@@ -326,9 +326,10 @@ To build the Android app, ensure you have [Android Studio](https://developer.and
 This ensures proper display behavior on Android 15+ devices when using Capacitor with `overlay=true` settings.
 
 You can check out the [issue here](https://github.com/ionic-team/capacitor-plugins/issues/2350#issuecomment-2904401405)
-
-## Electron Application
-
+- [Electron Application](#electron-application)
+- [Electrobun Application](#electrobun-application)
+- [Production Deployment](#production-deployment)
+...
 ### Setup
 
 To create a production build for Electron:
@@ -347,6 +348,24 @@ To create a production build for Electron:
    - `bun run build:electron:mac`: Build for macOS only
    - `bun run build:electron:linux`: Build for Linux only
    - `bun run build:electron:dir`: Build in an unpackaged directory for testing
+
+## Electrobun Application
+
+A modern, lightweight alternative to Electron using Bun and system webviews.
+
+### Setup
+
+1. Use the existing Electron environment file or create a specific one if needed.
+
+2. Use the following commands to build or develop with Electrobun:
+   - `bun run dev:electrobun`: Run development mode with HMR and native window.
+   - `bun run build:electrobun`: Build for the current platform.
+   - `bun run build:electrobun:all`: Build for Windows, macOS, and Linux sequentially.
+   - `bun run build:electrobun:win`: Build for Windows only.
+   - `bun run build:electrobun:mac`: Build for macOS only.
+   - `bun run build:electrobun:linux`: Build for Linux only.
+
+Releases will be organized and timestamped in `./release/electrobun/${version}_${timestamp}/`.
 
 ### Domain Configuration
 

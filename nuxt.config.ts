@@ -11,9 +11,15 @@ import glsl from "vite-plugin-glsl";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const isElectron = process.env.IS_ELECTRON === "true";
+const isElectrobun = process.env.IS_ELECTROBUN === "true";
+const isCapacitor = process.env.IS_CAPACITOR === "true";
+const isDesktop = isElectron || isElectrobun;
+const isSSR = process.env.NUXT_SSR !== "false" && !isDesktop && !isCapacitor;
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  ssr: process.env.NUXT_SSR !== "false",
+  ssr: isSSR,
   // read this for compatibility https://nitro.build/config#compatibilitydate
   compatibilityDate: "2026-05-14",
   devtools: {
@@ -78,7 +84,7 @@ export default defineNuxtConfig({
     },
     routeRules: {
       // this is critical for production version of electron, otherwise you'll lose index.html file
-      ...(process.env.IS_ELECTRON === "true" && {
+      ...(isElectron && {
         "/": {
           prerender: true,
         },
@@ -133,12 +139,7 @@ export default defineNuxtConfig({
     },
 
     serveStatic:
-      process.env.NODE_ENV === "production" &&
-      process.env.NUXT_SSR !== "false" &&
-      process.env.IS_ELECTRON !== "true" &&
-      process.env.IS_CAPACITOR !== "true"
-        ? false
-        : true,
+      process.env.NODE_ENV === "production" && isSSR ? false : true,
     // publicAssets: {
     //   baseURL: '_nuxt',
     //   dir: '.output/public/_nuxt',
@@ -236,7 +237,7 @@ export default defineNuxtConfig({
   // },
   modules: [
     // "@vite-pwa/nuxt", // TODO: test if they fixed the security bug of not handling status codes anymore!!
-    ...(process.env.IS_ELECTRON === "true" ? ["nuxt-electron"] : []),
+    ...(isElectron ? ["nuxt-electron"] : []),
     "@nuxtjs/device",
     "@nuxtjs/seo",
     "nuxt-skew-protection",
@@ -266,17 +267,19 @@ export default defineNuxtConfig({
   //     driver: 'fs',
   //   },
   // },
-  ...(process.env.IS_ELECTRON === "true" && {
+  ...(isDesktop && {
     router: {
       options: {
-        hashMode: true, // This helps with Electron file path issues
+        hashMode: true, // This helps with Electron and Electrobun file path issues
       },
     },
     app: {
       // TODO: check if it was a bun error or something!!
-      baseURL: "./", // Needed for proper resource loading in Electron
+      baseURL: "./", // Needed for proper resource loading in Electron/Electrobun
       // buildAssetsDir: '/_nuxt/', // Ensures asset paths are correct
     },
+  }),
+  ...(isElectron && {
     electron: {
       build: [
         {
