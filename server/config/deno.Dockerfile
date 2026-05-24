@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────
 # Stage 1: Base (not really used, but keeps structure similar)
 # ────────────────────────────────────────────────────────────────
-FROM node:24.15-alpine AS base
+FROM node:24.16-alpine AS base
 
 RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev \
     && npm install -g npm@latest

@@ -33,7 +33,7 @@
         "ioredis": "^5.10.1",
         "jsonwebtoken": "^9.0.3",
         "mongoose": "9.6.2",
-        "nodemailer": "^8.0.7",
+        "nodemailer": "^8.0.8",
         "nuxt": "4.4.6",
         "nuxt-skew-protection": "^1.1.1",
         "nuxt-tiptap-editor": "3.3.0",
@@ -3328,7 +3328,7 @@
 
     "node-releases": ["node-releases@2.0.46", "", {}, "sha512-GYVXHE2KnrzAfsAjl4uP++evGFCrAU1jta4ubEjIG7YWt/64Gqv66a30yKwWczVjA6j3bM4nBwH7Pk1JmDHaxQ=="],
 
-    "nodemailer": ["nodemailer@8.0.7", "", {}, "sha512-pkjE4mkBzQjdJT4/UmlKl3pX0rC9fZmjh7c6C9o7lv66Ac6w9WCnzPzhbPNxwZAzlF4mdq4CSWB5+FbK6FWCow=="],
+    "nodemailer": ["nodemailer@8.0.8", "", {}, "sha512-p+XsnzXGdtIHXUu2ugxdfG+eX2nehsGhMjW9h0CWj1BhE30hrFz0kh0yIM0/VjUgVsRrDj+80ZO+I1nSkGE4tA=="],
 
     "nopt": ["nopt@9.0.0", "", { "dependencies": { "abbrev": "4.0.0" }, "bin": { "nopt": "bin/nopt.js" } }, "sha512-Zhq3a+yFKrYwSBluL4H9XP3m3y5uvQkB/09CwDruCiRmR/UJYnn9W4R48ry0uGC70aeTPKLynBtscP9efFFcPw=="],
 

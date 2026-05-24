@@ -1,5 +1,5 @@
 # Stage 1: Base image with node.js
-FROM node:24.15-alpine AS base
+FROM node:24.16-alpine AS base
 
 # Update npm to the latest version for performance and security benefits
 RUN npm install -g npm@latest
@@ -53,7 +53,7 @@ ENV NODE_OPTIONS="--max-old-space-size=16384"
 RUN npm run build
 
 # Stage 4: Production runner — lean image, no build tools needed
-FROM node:24.15-alpine AS runner
+FROM node:24.16-alpine AS runner
 
 WORKDIR /app
 
