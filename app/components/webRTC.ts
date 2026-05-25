@@ -455,12 +455,29 @@ export function useWebRTC() {
       });
       await peerConnection.setLocalDescription(answer);
 
-      // Send answer via socket
+      // Send answer via socket with acknowledgment to get initial ICE candidates
       if (socketStore.socket) {
-        socketStore.socket.emit("call-answer", {
-          to: data.from,
-          answer,
+        // Use emitWithAck if available, or fallback to standard emit with callback
+        const ackData = await new Promise<any[]>((resolve) => {
+          socketStore.socket!.emit(
+            "call-answer",
+            { to: data.from, answer, callType: callTypeLocal },
+            (iceCandidates: any[]) => resolve(iceCandidates),
+          );
         });
+
+        // Add any initial ICE candidates received from the offerer
+        if (ackData && Array.isArray(ackData)) {
+          for (const candidate of ackData) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+              console.log("Added initial ICE candidate from acknowledgment");
+            } catch (e) {
+              console.error("Error adding initial ICE candidate:", e);
+            }
+          }
+        }
+        
         callStatus.value = "connected";
       }
     } catch (error: any) {

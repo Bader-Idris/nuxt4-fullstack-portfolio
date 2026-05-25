@@ -129,5 +129,22 @@
     "notFound": "المقال غير موجود",
     "backHome": "العودة للرئيسية",
     "loading": "جاري تحميل المقال..."
-  }
-}
+    },
+    "dashboard": {
+    "guest_placeholder": {
+      "message": "يرجى {link} للدردشة مع المستخدمين الآخرين.",
+      "link_text": "تسجيل الدخول"
+    },
+    "select_user": "اختر مستخدماً لبدء المحادثة.",
+    "online_users": "المستخدمون المتصلون",
+    "no_users": "لا يوجد مستخدمون متصلون.",
+    "connection_status": "حالة الاتصال",
+    "connecting": "جاري الاتصال...",
+    "disconnected": "غير متصل",
+    "transport": "وسيلة النقل",
+    "user": "المستخدم",
+    "enable_notifications": "تفعيل التنبيهات",
+    "in_call_with": "في مكالمة مع",
+    "call_connecting": "جاري الاتصال..."
+    }
+    }

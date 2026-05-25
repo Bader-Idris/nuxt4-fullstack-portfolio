@@ -124,5 +124,27 @@
   "details_title": "Descripción del Desafío",
   "tech_stack": "Tecnologías Utilizadas",
   "project_not_found": "Proyecto no encontrado en el explorador.",
-  "back_to_dashboard": "Volver al Panel"
-}
+  "back_to_dashboard": "Volver al Panel",
+  "blog": {
+  "notFound": "Publicación no encontrada",
+  "backHome": "Volver al inicio",
+  "loading": "Cargando publicación..."
+  },
+  "dashboard": {
+  "guest_placeholder": {
+    "message": "Por favor {link} para chatear con otros usuarios.",
+    "link_text": "inicia sesión"
+  },
+  "select_user": "Seleccione un usuario para iniciar una conversación.",
+  "online_users": "Usuarios en línea",
+  "no_users": "No hay usuarios en línea.",
+  "connection_status": "Estado de la conexión",
+  "connecting": "Conectando...",
+  "disconnected": "Desconectado",
+  "transport": "Transporte",
+  "user": "Usuario",
+  "enable_notifications": "Habilitar notificaciones",
+  "in_call_with": "En llamada con",
+  "call_connecting": "Conectando..."
+  }
+  }

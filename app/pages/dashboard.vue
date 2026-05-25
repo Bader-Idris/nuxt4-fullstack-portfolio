@@ -6,12 +6,12 @@
         <ClientOnly>
           <div class="status-indicator">
             <span class="dot" :class="(isMounted && socketStore.isConnected) ? 'online' : 'offline'" />
-            <span class="label">Connection Status</span>
+            <span class="label">{{ $t('dashboard.connection_status') }}</span>
           </div>
           <template #fallback>
             <div class="status-indicator">
               <span class="dot offline" />
-              <span class="label">Connection Status</span>
+              <span class="label">{{ $t('dashboard.connection_status') }}</span>
             </div>
           </template>
         </ClientOnly>
@@ -23,23 +23,23 @@
           <p v-if="socketStore.connectionError" class="error">
             Error: {{ socketStore.connectionError }}
           </p>
-          <p v-else-if="socketStore.isConnecting" class="info">Connecting...</p>
+          <p v-else-if="socketStore.isConnecting" class="info">{{ $t('dashboard.connecting') }}</p>
           <div v-else-if="socketStore.isConnected && socketStore.currentUser">
             <p>
-              Transport: <span class="highlight">{{ socketStore.transport }}</span>
+              {{ $t('dashboard.transport') }}: <span class="highlight">{{ socketStore.transport }}</span>
             </p>
             <p>
-              User: <span class="highlight">{{ socketStore.currentUser.name }}</span>
+              {{ $t('dashboard.user') }}: <span class="highlight">{{ socketStore.currentUser.name }}</span>
             </p>
             <button
               v-if="isPushSupported"
               class="notifications-btn"
               @click="subscribeForNotifications"
             >
-              Enable Notifications
+              {{ $t('dashboard.enable_notifications') }}
             </button>
           </div>
-          <p v-else class="info">Disconnected</p>
+          <p v-else class="info">{{ $t('dashboard.disconnected') }}</p>
         </ClientOnly>
       </div>
     </aside>
@@ -49,9 +49,9 @@
       <div class="dashboard-grid">
         <!-- Online Users List -->
         <div ref="contactsPanel" class="online-users-panel">
-          <h3>Online Users ({{ onlineUsersStore.users.length }})</h3>
+          <h3>{{ $t('dashboard.online_users') }} ({{ onlineUsersStore.users.length }})</h3>
           <div v-if="onlineUsersStore.users.length === 0" class="no-users">
-            No users online.
+            {{ $t('dashboard.no_users') }}
           </div>
           <ul>
             <li
@@ -135,7 +135,7 @@
                 <header class="call-header">
                   <div class="call-partner-info">
                     <Icon name="material-symbols:call" class="call-icon" />
-                    <span>In call with: {{ getUserName(currentCallPartner) }}</span>
+                    <span>{{ $t('dashboard.in_call_with') }}: {{ getUserName(currentCallPartner) }}</span>
                   </div>
                   <button class="minimize-btn" @click="isCallMinimized = !isCallMinimized">
                     <Icon :name="isCallMinimized ? 'material-symbols:open-in-full' : 'material-symbols:close-fullscreen'" />
@@ -151,7 +151,7 @@
                       class="remote-video"
                     />
                     <div v-if="!remoteStream" class="connecting-overlay">
-                      <span>Connecting...</span>
+                      <span>{{ $t('dashboard.call_connecting') }}</span>
                       <div class="spinner" />
                     </div>
                   </div>
@@ -270,12 +270,14 @@
             <div v-if="userStore.isGuest" class="guest-placeholder">
               <Icon name="ion:locked" width="50" height="50" mode="svg" />
               <p>
-                Please
-                <NuxtLink :to="localePath('/login')">sign in</NuxtLink> to chat
-                with other users.
+                <i18n-t keypath="dashboard.guest_placeholder.message" scope="global">
+                  <template #link>
+                    <NuxtLink :to="localePath('/login')">{{ $t('dashboard.guest_placeholder.link_text') }}</NuxtLink>
+                  </template>
+                </i18n-t>
               </p>
             </div>
-            <p v-else>Select a user to start a conversation.</p>
+            <p v-else>{{ $t('dashboard.select_user') }}</p>
           </div>
         </div>
       </div>
@@ -353,6 +355,7 @@ const {
   remoteVideoRef,
   toggleMute,
   toggleVideo,
+  setupSocketListeners,
   cleanup,
 } = useWebRTC();
 
@@ -362,6 +365,7 @@ onMounted(async () => {
   if (import.meta.client) {
     // Make sure socket is initialized
     socketStore.initializeSocket();
+    setupSocketListeners();
 
     // Fetch latest user info to get lastActiveChat
     try {
@@ -635,7 +639,7 @@ function formatDateSeparator(timestamp: string | number | Date) {
   }
 
   .status-content {
-    height: 310px;
+    max-height: 310px;
     padding: 0 12px 12px;
     border-top: 1px solid var(--lines-color);
     animation: fadeIn 0.3s ease;
@@ -731,13 +735,99 @@ function formatDateSeparator(timestamp: string | number | Date) {
   border: 1px solid var(--lines-color);
   overflow: hidden;
   position: relative;
-  background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
-  background-blend-mode: overlay;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/imgs/patterns/cubes.png");
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .chat-panel {
   @include flex-container(column, nowrap, unset, unset);
   height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-placeholder {
+  flex-grow: 1;
+  @include flex-container(column, nowrap, center, center);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  height: 100%;
+
+  > p {
+    font-size: 1.1rem;
+    max-width: 400px;
+    line-height: 1.5;
+    animation: fadeIn 0.5s ease-out;
+  }
+}
+
+.guest-placeholder {
+  @include flex-container(column, nowrap, center, center);
+  gap: 1.5rem;
+  background-color: var(--bg-secondary);
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  border: 1px solid var(--lines-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+  animation: slideUp 0.4s ease-out;
+
+  svg {
+    color: var(--accent-primary);
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.1));
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    
+    a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent-primary);
+        transform: scaleX(0);
+        transition: transform 0.2s ease;
+      }
+
+      &:hover::after {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  @include mobile {
+    padding: 2rem 1.5rem;
+    gap: 1rem;
+    width: 95%;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .chat-header {

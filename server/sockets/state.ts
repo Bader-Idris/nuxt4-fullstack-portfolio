@@ -3,9 +3,103 @@ import {
   ONLINE_USERS_KEY,
   UNIQUE_ONLINE_USERS_KEY,
   USER_CONN_COUNT_KEY,
+  WEBRTC_OFFERS_KEY,
 } from "./constants";
 
-// Helper functions for Redis-based online users management
+// --- WebRTC Signaling Helpers ---
+
+export const saveOfferToRedis = async (offerData: any) => {
+  try {
+    const offerId = `offer-${offerData.offererUserId}-${Date.now()}`;
+    const data = {
+      ...offerData,
+      offerId,
+      offerIceCandidates: [],
+      answerIceCandidates: [],
+      createdAt: Date.now(),
+    };
+    await redisClient!.hset(WEBRTC_OFFERS_KEY, offerId, JSON.stringify(data));
+    return offerId;
+  } catch (error) {
+    console.error("Error saving WebRTC offer to Redis:", error);
+    return null;
+  }
+};
+
+export const getOfferFromRedis = async (offerId: string) => {
+  try {
+    const data = await redisClient!.hget(WEBRTC_OFFERS_KEY, offerId);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error("Error fetching WebRTC offer from Redis:", error);
+    return null;
+  }
+};
+
+export const updateOfferInRedis = async (offerId: string, update: any) => {
+  try {
+    const current = await getOfferFromRedis(offerId);
+    if (!current) return false;
+
+    const updated = { ...current, ...update };
+    await redisClient!.hset(WEBRTC_OFFERS_KEY, offerId, JSON.stringify(updated));
+    return true;
+  } catch (error) {
+    console.error("Error updating WebRTC offer in Redis:", error);
+    return false;
+  }
+};
+
+export const addIceCandidateToRedis = async (
+  offerId: string,
+  candidate: any,
+  isOfferer: boolean,
+) => {
+  try {
+    const current = await getOfferFromRedis(offerId);
+    if (!current) return false;
+
+    if (isOfferer) {
+      current.offerIceCandidates.push(candidate);
+    } else {
+      current.answerIceCandidates.push(candidate);
+    }
+
+    await redisClient!.hset(WEBRTC_OFFERS_KEY, offerId, JSON.stringify(current));
+    return true;
+  } catch (error) {
+    console.error("Error adding ICE candidate to Redis:", error);
+    return false;
+  }
+};
+
+export const deleteOfferFromRedis = async (offerId: string) => {
+  try {
+    await redisClient!.hdel(WEBRTC_OFFERS_KEY, offerId);
+    return true;
+  } catch (error) {
+    console.error("Error deleting WebRTC offer from Redis:", error);
+    return false;
+  }
+};
+
+export const findOfferByUsers = async (offererId: string, answererId: string) => {
+  try {
+    const allOffers = await redisClient!.hgetall(WEBRTC_OFFERS_KEY);
+    for (const offerId in allOffers) {
+      const offer = JSON.parse(allOffers[offerId]);
+      if (offer.offererUserId === offererId && offer.answererUserId === answererId) {
+        return offer;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error finding WebRTC offer by users:", error);
+    return null;
+  }
+};
+
+// --- Online Users Management ---
 export const getOnlineUsersFromRedis = async () => {
   try {
     const data = await redisClient!.hgetall(UNIQUE_ONLINE_USERS_KEY);

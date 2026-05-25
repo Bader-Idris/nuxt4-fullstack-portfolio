@@ -57,7 +57,10 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   "call-offer": (data: { to: string; offer: any; callType: string }) => void;
-  "call-answer": (data: { to: string; answer: any; callType: string }) => void;
+  "call-answer": (
+    data: { to: string; answer: any; callType: string },
+    callback: (iceCandidates: any[]) => void,
+  ) => void;
   "ice-candidate": (data: { to: string; candidate: any }) => void;
   "call-declined": (data: { to: string; reason: string }) => void;
   "call-ended": (data: { to: string }) => void;

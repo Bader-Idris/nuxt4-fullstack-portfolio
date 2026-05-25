@@ -129,5 +129,22 @@
     "notFound": "Post Not Found",
     "backHome": "Go Back Home",
     "loading": "Loading post..."
-  }
-}
+    },
+    "dashboard": {
+    "guest_placeholder": {
+      "message": "Please {link} to chat with other users.",
+      "link_text": "sign in"
+    },
+    "select_user": "Select a user to start a conversation.",
+    "online_users": "Online Users",
+    "no_users": "No users online.",
+    "connection_status": "Connection Status",
+    "connecting": "Connecting...",
+    "disconnected": "Disconnected",
+    "transport": "Transport",
+    "user": "User",
+    "enable_notifications": "Enable Notifications",
+    "in_call_with": "In call with",
+    "call_connecting": "Connecting..."
+    }
+    }
