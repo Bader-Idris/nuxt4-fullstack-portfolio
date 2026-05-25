@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
         outline: none;
         min-height: 24px;
         font-size: 1rem;
-        line-height: 10px;
+        line-height: 1.6;
 
         p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
