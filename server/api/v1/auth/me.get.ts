@@ -5,22 +5,31 @@ import { defineEventHandler } from "h3";
 // We will create a middleware for this endpoint.
 
 export default defineEventHandler(async (event) => {
-  // The user object should be attached to the event context by a server middleware
-  // that validates the accessToken cookie.
-  const user = event.context.user;
+  const tokenUser = event.context.user;
 
-  if (!user) {
+  if (!tokenUser) {
     throw createError({
       statusCode: 401,
       statusMessage: "Authentication required",
     });
   }
 
+  const { User } = await import("../../../models/mongo/User");
+  const user = await User.findById(tokenUser.userId);
+
+  if (!user) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "User not found",
+    });
+  }
+
   return {
     user: {
-      userId: user.userId,
+      userId: user._id.toString(),
       name: user.name,
       role: user.role,
+      lastActiveChat: user.lastActiveChat,
     },
   };
 });

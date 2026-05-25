@@ -124,5 +124,10 @@
   "details_title": "Challenge Description",
   "tech_stack": "Technologies Used",
   "project_not_found": "Project not found in the explorer.",
-  "back_to_dashboard": "Back to Dashboard"
+  "back_to_dashboard": "Back to Dashboard",
+  "blog": {
+    "notFound": "Post Not Found",
+    "backHome": "Go Back Home",
+    "loading": "Loading post..."
+  }
 }

@@ -6,6 +6,7 @@ export interface User {
   username: string;
   role: "admin" | "user" | "guest";
   provider?: "email" | "google" | "facebook";
+  lastActiveChat?: string;
 }
 
 export const useUserStore = defineStore("user", () => {

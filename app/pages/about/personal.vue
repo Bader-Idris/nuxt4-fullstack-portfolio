@@ -2,7 +2,7 @@
   <div class="personal-info split-in-half">
     <div ref="bioContainer" class="personal-bio">
       <!-- Render each parsed line as a <p> element with bold formatting applied where necessary -->
-      <p v-for="(line, index) in formattedBio" :key="index">
+      <p v-for="(line, index) in formattedBio" :key="index" dir="auto">
         <span
           v-for="(segment, i) in line"
           :key="i"
@@ -138,6 +138,28 @@ const bioContainer = ref<HTMLElement | null>(null);
 
 // Tiptap Editor Setup
 const lowlight = createLowlight(all);
+
+// Custom extension to handle text direction automatically
+const Direction = TiptapExtension.create({
+  name: "direction",
+  addGlobalAttributes() {
+    return [
+      {
+        types: ["paragraph", "heading", "blockquote", "codeBlock", "listItem"],
+        attributes: {
+          dir: {
+            default: "auto",
+            renderHTML: (attributes) => ({
+              dir: attributes.dir,
+            }),
+            parseHTML: (element) => element.getAttribute("dir") || "auto",
+          },
+        },
+      },
+    ];
+  },
+});
+
 const editor = useEditor({
   content: `
 <pre><code class="language-javascript">
@@ -158,6 +180,7 @@ const editor = useEditor({
     CodeBlockLowlight.configure({
       lowlight,
     }),
+    Direction,
   ],
 });
 

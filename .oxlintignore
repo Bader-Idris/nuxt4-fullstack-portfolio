@@ -1,0 +1,7 @@
+.data/
+.nuxt/
+.output/
+dist/
+dist-electron/
+public/assets/three/
+node_modules/

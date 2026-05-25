@@ -6,6 +6,7 @@
     ".output/**",
     "dist/**",
     "dist-electron/**",
+    "public/assets/three/**",
     "*.yaml",
     "*.yml",
     "*.min.js"

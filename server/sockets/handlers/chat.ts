@@ -150,6 +150,7 @@ export const registerChatHandlers = (
       const formattedMessages = messages.reverse().map((msg) => ({
         ...msg,
         fromName: (msg.from as any).name, // Extract populated name
+        from: (msg.from as any)._id.toString(), // Ensure 'from' is the string ID
         id: msg._id.toString(),
       }));
 
@@ -161,6 +162,19 @@ export const registerChatHandlers = (
     } catch (error) {
       console.error("Error fetching messages:", error);
       if (callback) callback({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Handle updating the last active chat recipient
+  socket.on("update-active-chat", async (recipientId: string) => {
+    const user = socket.data.user;
+    if (!user || !user.userId) return;
+
+    try {
+      const { User } = await import("../../models/mongo/User");
+      await User.findByIdAndUpdate(user.userId, { lastActiveChat: recipientId });
+    } catch (error) {
+      console.error("Error updating active chat:", error);
     }
   });
 };

@@ -45,6 +45,7 @@ const UserSchema = new Schema<IUser>(
     verified: Date,
     passwordToken: { type: String, index: true },
     passwordTokenExpirationDate: Date,
+    lastActiveChat: { type: String },
   },
   {
     timestamps: true,

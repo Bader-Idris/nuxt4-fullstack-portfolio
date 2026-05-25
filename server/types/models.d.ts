@@ -31,6 +31,7 @@ declare global {
     verified?: Date;
     passwordToken?: string;
     passwordTokenExpirationDate?: Date;
+    lastActiveChat?: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
   }
 

@@ -78,6 +78,7 @@ export interface ClientToServerEvents {
     data: any,
     callback: (res: { users?: any[]; error?: string }) => void,
   ) => void;
+  "update-active-chat": (recipientId: string) => void;
   broadcast: (data: { message: string; timestamp: Date }) => void;
 }
 
