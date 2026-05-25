@@ -1,5 +1,6 @@
 import { isTokenValid, attachCookiesToResponse } from "../utils/jwt";
 import { Token } from "../models/mongo";
+import { getCookie } from "h3";
 
 export default defineEventHandler(async (event) => {
   // Define protected API routes that require authentication
@@ -8,6 +9,7 @@ export default defineEventHandler(async (event) => {
     "/api/v1/received_emails",
     "/api/v1/push/subscribe",
     "/api/v1/push/subscribe-capacitor",
+    "/api/v1/user/settings",
   ];
 
   const isProtectedRoute = protectedRoutes.some((route) =>

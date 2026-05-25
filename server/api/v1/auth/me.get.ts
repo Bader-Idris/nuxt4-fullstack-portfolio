@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       role: user.role,
       lastActiveChat: user.lastActiveChat,
+      settings: user.settings,
     },
   };
 });

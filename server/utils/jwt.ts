@@ -3,9 +3,22 @@ import { setCookie } from "h3";
 
 const config = useRuntimeConfig();
 
+// Define types
+export interface TokenUser {
+  userId: string;
+  name: string;
+  role: string;
+  email?: string;
+}
+
+export interface TokenPayload {
+  user: TokenUser;
+  refreshToken?: string;
+}
+
 // Define the structure of your payload
 interface JWTCreateParams {
-  payload: TokenPayload; // Adjust this based on your actual TokenPayload type
+  payload: TokenPayload;
 }
 
 export const createJWT = (

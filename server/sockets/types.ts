@@ -36,6 +36,14 @@ export interface ServerToClientEvents {
     reason: string;
   }) => void;
   "call-ended": (data: { from: string; fromName: string }) => void;
+  "call-fingerprint": (data: {
+    from: string;
+    fromName: string;
+    duration: number;
+    callType: string;
+    timestamp: Date;
+    id: string;
+  }) => void;
   "private-message": (data: {
     from: string;
     fromName: string;
@@ -64,6 +72,11 @@ export interface ClientToServerEvents {
   "ice-candidate": (data: { to: string; candidate: any }) => void;
   "call-declined": (data: { to: string; reason: string }) => void;
   "call-ended": (data: { to: string }) => void;
+  "call-fingerprint": (data: {
+    to: string;
+    duration: number;
+    callType: string;
+  }) => void;
   "private-message": (data: {
     to: string;
     message: string;

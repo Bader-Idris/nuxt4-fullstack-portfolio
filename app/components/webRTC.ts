@@ -16,6 +16,8 @@ export function useWebRTC() {
     "idle" | "calling" | "ringing" | "connected" | "ended"
   >("idle");
   const answeredCalls = ref(new Set<string>()); // Track which calls have received answers
+  const callStartTime = ref<number | null>(null);
+  const incomingOffer = ref<RTCSessionDescriptionInit | null>(null);
 
   // UI references
   const localVideoRef = ref<HTMLVideoElement | null>(null);
@@ -76,20 +78,60 @@ export function useWebRTC() {
     }
   };
 
-  // Toggle video on/off
-  const toggleVideo = () => {
-    if (localStream.value) {
-      const videoTracks = localStream.value.getVideoTracks();
-      videoTracks.forEach((track) => (track.enabled = !track.enabled));
-      isVideoOff.value = !videoTracks[0]?.enabled;
+  // Toggle video on/off (with renegotiation support)
+  const toggleVideo = async () => {
+    if (!isInCall.value || !currentCallPartner.value) return;
+
+    const peerConnection = peerConnections.value.get(currentCallPartner.value);
+    if (!peerConnection) return;
+
+    const existingVideoTracks = localStream.value?.getVideoTracks() || [];
+    if (existingVideoTracks.length > 0) {
+      // Toggle existing track
+      existingVideoTracks.forEach((track) => (track.enabled = !track.enabled));
+      isVideoOff.value = !existingVideoTracks[0]?.enabled;
+    } else {
+      // Switch from audio to video (renegotiation) or start video if off
+      try {
+        const videoStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+        });
+        const videoTrack = videoStream.getVideoTracks()[0];
+
+        if (localStream.value) {
+          localStream.value.addTrack(videoTrack);
+        } else {
+          localStream.value = videoStream;
+        }
+
+        const sender = peerConnection.addTrack(videoTrack, localStream.value!);
+        
+        // Trigger renegotiation
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        socketStore.socket?.emit("call-offer", {
+          to: currentCallPartner.value,
+          offer,
+          callType: "video",
+        });
+
+        callType.value = "video";
+        isVideoOff.value = false;
+      } catch (error: any) {
+        console.error("Failed to enable video during call:", error);
+        alert("Could not enable video. Please check your camera permissions.");
+      }
     }
   };
 
   // Toggle speaker (for mobile)
   const toggleSpeaker = () => {
     isSpeakerOn.value = !isSpeakerOn.value;
-    // On mobile, you might need to use Capacitor's audio management
-    // This is a placeholder for actual speaker routing
   };
 
   // Create a new RTCPeerConnection
@@ -108,71 +150,30 @@ export function useWebRTC() {
 
     // Handle track events
     peerConnection.ontrack = (event) => {
-      // Only use the first stream for simplicity
       remoteStream.value = event.streams[0];
     };
 
-    // Handle connection state changes with improved resilience
+    // Handle connection state changes
     peerConnection.onconnectionstatechange = () => {
       console.log("Connection state changed:", peerConnection.connectionState);
       switch (peerConnection.connectionState) {
         case "connected":
           callStatus.value = "connected";
+          if (!callStartTime.value) callStartTime.value = Date.now();
           break;
         case "disconnected":
-          // Don't end call immediately on disconnect - allow for reconnection
-          console.log(
-            "Connection temporarily lost, attempting to reconnect...",
-          );
-          // Wait briefly to see if it reconnects automatically before ending call
           setTimeout(() => {
             if (
               peerConnection.connectionState === "disconnected" &&
               callStatus.value !== "ended"
             ) {
-              // If still disconnected after delay, end call
               endCall();
             }
-          }, 5000); // Wait 5 seconds before ending call
+          }, 5000);
           break;
         case "failed":
-          console.error("Connection failed, ending call");
-          endCall();
-          break;
         case "closed":
-          console.log("Connection closed");
           endCall();
-          break;
-      }
-    };
-
-    // Handle ICE connection state changes - making it resilient to temporary network issues
-    peerConnection.oniceconnectionstatechange = () => {
-      console.log(
-        "ICE connection state changed:",
-        peerConnection.iceConnectionState,
-      );
-      switch (peerConnection.iceConnectionState) {
-        case "connected":
-        case "completed":
-          callStatus.value = "connected";
-          break;
-        case "disconnected":
-          // Don't end call immediately on disconnect - allow for reconnection
-          console.log(
-            "Connection temporarily lost, attempting to reconnect...",
-          );
-          // Could implement reconnection logic here if needed
-          break;
-        case "failed":
-          // Only end call on failure, not just disconnection
-          console.error("Connection failed, ending call");
-          endCall();
-          break;
-        case "closed":
-          if (callStatus.value !== "ended") {
-            endCall();
-          }
           break;
       }
     };
@@ -180,144 +181,93 @@ export function useWebRTC() {
     return peerConnection;
   };
 
-  // Start a call with a specific user
+  // Helper for media constraints with echo cancellation
+  const getMediaConstraints = (type: "audio" | "video", hasAudio: boolean, hasVideo: boolean): MediaStreamConstraints => {
+    const audioConstraints = hasAudio ? {
+      echoCancellation: { ideal: true },
+      noiseSuppression: { ideal: true },
+      autoGainControl: { ideal: true },
+    } : false;
+
+    return {
+      audio: audioConstraints,
+      video: (type === "video" && hasVideo) ? {
+        facingMode: "user",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      } : false
+    };
+  };
+
+  // Start a call
   const initiateCall = async (
     userId: string,
     type: "audio" | "video" = "video",
   ) => {
     if (isInCall.value) {
-      alert("You are already in a call.");
+      // Use a custom event or reactive state instead of alert
+      console.warn("Already in a call");
       return Promise.reject(new Error("Already in a call"));
     }
 
-    // Check if the user is online before initiating a call
-    const { useOnlineUsersStore } =
-      await import("~/stores/useOnlineUsersStore");
-    const onlineUsersStore = useOnlineUsersStore();
-    const isUserOnline = onlineUsersStore.users.some(
-      (user) => user.userId === userId,
-    );
-
-    if (!isUserOnline && userId !== userStore.user.userId) {
-      alert("This user is no longer online.");
-      return Promise.reject(new Error("User not online"));
-    }
-
     try {
-      // Check for available media devices first
       const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasAudio = devices.some(d => d.kind === "audioinput");
+      const hasVideo = devices.some(d => d.kind === "videoinput");
 
-      // Determine what devices are available
-      const hasAudio = devices.some(
-        (device) =>
-          device.kind === "audioinput" &&
-          device.deviceId !== "default" &&
-          device.deviceId !== "communications",
-      );
-      const hasVideo =
-        type === "video" &&
-        devices.some(
-          (device) =>
-            device.kind === "videoinput" && device.deviceId !== "default",
-        );
-
-      // Define media constraints with better audio settings to prevent feedback
-      let audioConstraints: boolean | MediaTrackConstraints = hasAudio;
-      if (hasAudio) {
-        audioConstraints = {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          // Optional: specify a specific audio device if available
-          // deviceId: audioDeviceId ? { exact: audioDeviceId } : undefined
-        };
-      }
-
-      const mediaConstraints: MediaStreamConstraints = {
-        video: hasVideo && type === "video" ? true : false,
-        audio:
-          type === "audio"
-            ? audioConstraints
-            : hasAudio
-              ? audioConstraints
-              : false,
+      // Even if no hardware, we still allow starting the call (receiving only)
+      let constraints: MediaStreamConstraints = {
+        audio: hasAudio ? {
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+        } : false,
+        video: (type === "video" && hasVideo) ? {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } : false
       };
 
-      // Try to access media devices only if they are available
-      if (
-        (hasAudio && (type === "audio" || type === "video")) ||
-        (hasVideo && type === "video")
-      ) {
-        localStream.value =
-          await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      if (hasAudio || (type === "video" && hasVideo)) {
+        localStream.value = await navigator.mediaDevices.getUserMedia(constraints);
       } else {
-        // If no devices are available but it's an audio call, we can try to create a connection anyway
-        // but warn the user
-        if (type === "audio") {
-          console.warn(
-            "No audio input devices found, proceeding with audio call that may not capture audio...",
-          );
-        } else if (type === "video") {
-          console.warn(
-            "No video input devices found, proceeding with video call without local video...",
-          );
-        }
+        console.warn("Starting call without local media (no hardware found)");
+        localStream.value = new MediaStream();
       }
 
-      // Update call state
       callType.value = type;
       callStatus.value = "calling";
       isInCall.value = true;
       currentCallPartner.value = userId;
 
-      // Create peer connection
       const peerConnection = createPeerConnection(userId);
       peerConnections.value.set(userId, peerConnection);
 
-      // Add local tracks to connection if available
+      // Add tracks and set priority
       if (localStream.value) {
-        localStream.value.getTracks().forEach((track) => {
-          peerConnection.addTrack(track, localStream.value!);
-        });
+        for (const track of localStream.value.getTracks()) {
+          const sender = peerConnection.addTrack(track, localStream.value);
+          if (track.kind === "audio" && sender.setParameters) {
+            const params = sender.getParameters();
+            if (!params.encodings) params.encodings = [{}];
+            params.encodings[0].priority = "high";
+            params.encodings[0].networkPriority = "high";
+            await sender.setParameters(params);
+          }
+        }
       }
 
-      // Create and send offer
       const offer = await peerConnection.createOffer({
         offerToReceiveAudio: true,
-        offerToReceiveVideo: type === "video",
+        offerToReceiveVideo: true, // Always try to receive even if not sending
       });
       await peerConnection.setLocalDescription(offer);
 
-      // Send offer via socket
-      if (socketStore.socket) {
-        socketStore.socket.emit("call-offer", {
-          to: userId,
-          offer,
-          callType: type,
-        });
-        return Promise.resolve(true);
-      } else {
-        throw new Error("Socket not available");
-      }
+      socketStore.socket?.emit("call-offer", { to: userId, offer, callType: type });
+      return Promise.resolve(true);
     } catch (error: any) {
       console.error("Error starting call:", error);
-
-      // Handle specific device not found error more gracefully
-      if (
-        error.name === "NotFoundError" ||
-        error.message.includes("Requested device not found")
-      ) {
-        alert(
-          `Cannot start ${type} call: media device not found. Please check your camera and microphone permissions.`,
-        );
-      } else if (error.name === "NotAllowedError") {
-        alert(
-          `Cannot start ${type} call: media access denied. Please check your browser permissions.`,
-        );
-      } else if (error.message) {
-        alert(`Cannot start ${type} call: ${error.message}`);
-      }
-
       cleanupMedia();
       isInCall.value = false;
       currentCallPartner.value = null;
@@ -326,7 +276,7 @@ export function useWebRTC() {
     }
   };
 
-  // Handle incoming call offer
+  // Handle call offer
   const handleCallOffer = async (data: {
     from: string;
     fromName: string;
@@ -334,333 +284,164 @@ export function useWebRTC() {
     callType?: "audio" | "video";
   }) => {
     if (isInCall.value) {
-      // Busy: reject the call
-      if (socketStore.socket) {
-        socketStore.socket.emit("call-declined", {
-          to: data.from,
-          reason: "busy",
-        });
-      }
+      socketStore.socket?.emit("call-declined", { to: data.from, reason: "busy" });
       return;
     }
 
-    const callTypeLocal = data.callType || "video";
+    // Instead of confirm(), we set state for a custom UI
+    currentCallPartner.value = data.from;
+    callType.value = data.callType || "video";
+    callStatus.value = "ringing";
+    isInCall.value = true;
 
-    // Show call modal/confirmation
-    const acceptCall = confirm(
-      `Incoming ${callTypeLocal} call from ${data.fromName}. Accept?`,
-    );
+    // The actual "Accept" will be called from the custom UI calling acceptIncomingCall()
+  };
 
-    if (!acceptCall) {
-      if (socketStore.socket) {
-        socketStore.socket.emit("call-declined", {
-          to: data.from,
-          reason: "declined",
-        });
-      }
-      return;
-    }
-
+  const acceptIncomingCall = async (offer: RTCSessionDescriptionInit) => {
+    if (!currentCallPartner.value) return;
+    
     try {
-      // Check for available media devices first
       const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasAudio = devices.some(d => d.kind === "audioinput");
+      const hasVideo = devices.some(d => d.kind === "videoinput");
 
-      // Determine what devices are available
-      const hasAudio = devices.some(
-        (device) =>
-          device.kind === "audioinput" &&
-          device.deviceId !== "default" &&
-          device.deviceId !== "communications",
-      );
-      const hasVideo =
-        callTypeLocal === "video" &&
-        devices.some(
-          (device) =>
-            device.kind === "videoinput" && device.deviceId !== "default",
-        );
-
-      // Define media constraints with better audio settings to prevent feedback
-      let audioConstraints: boolean | MediaTrackConstraints = hasAudio;
-      if (
-        hasAudio &&
-        (callTypeLocal === "audio" || callTypeLocal === "video")
-      ) {
-        audioConstraints = {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          // Optional: specify a specific audio device if available
-          // deviceId: audioDeviceId ? { exact: audioDeviceId } : undefined
-        };
-      }
-
-      const mediaConstraints: MediaStreamConstraints = {
-        video: hasVideo && callTypeLocal === "video" ? true : false,
-        audio:
-          callTypeLocal === "audio"
-            ? audioConstraints
-            : hasAudio
-              ? audioConstraints
-              : false,
+      const type = callType.value;
+      const constraints: MediaStreamConstraints = {
+        audio: hasAudio ? {
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+        } : false,
+        video: (type === "video" && hasVideo) ? {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } : false
       };
 
-      // Try to access media devices only if they are available
-      if (
-        (hasAudio &&
-          (callTypeLocal === "audio" || callTypeLocal === "video")) ||
-        (hasVideo && callTypeLocal === "video")
-      ) {
-        localStream.value =
-          await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      if (hasAudio || (type === "video" && hasVideo)) {
+        localStream.value = await navigator.mediaDevices.getUserMedia(constraints);
       } else {
-        // If no devices are available but it's an audio call, we can try to create a connection anyway
-        // but warn the user
-        if (callTypeLocal === "audio") {
-          console.warn(
-            "No audio input devices found, proceeding with audio call that may not capture audio...",
-          );
-        } else if (callTypeLocal === "video") {
-          console.warn(
-            "No video input devices found, proceeding with video call without local video...",
-          );
-        }
+        localStream.value = new MediaStream();
       }
 
-      // Update call state
-      callType.value = callTypeLocal;
-      callStatus.value = "ringing";
-      isInCall.value = true;
-      currentCallPartner.value = data.from;
+      const peerConnection = createPeerConnection(currentCallPartner.value);
+      peerConnections.value.set(currentCallPartner.value, peerConnection);
 
-      // Create peer connection
-      const peerConnection = createPeerConnection(data.from);
-      peerConnections.value.set(data.from, peerConnection);
-
-      // Add local tracks to connection if available
       if (localStream.value) {
-        localStream.value.getTracks().forEach((track) => {
-          peerConnection.addTrack(track, localStream.value!);
-        });
-      }
-
-      // Set remote description (the offer)
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(data.offer),
-      );
-
-      // Create and send answer
-      const answer = await peerConnection.createAnswer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: callTypeLocal === "video",
-      });
-      await peerConnection.setLocalDescription(answer);
-
-      // Send answer via socket with acknowledgment to get initial ICE candidates
-      if (socketStore.socket) {
-        // Use emitWithAck if available, or fallback to standard emit with callback
-        const ackData = await new Promise<any[]>((resolve) => {
-          socketStore.socket!.emit(
-            "call-answer",
-            { to: data.from, answer, callType: callTypeLocal },
-            (iceCandidates: any[]) => resolve(iceCandidates),
-          );
-        });
-
-        // Add any initial ICE candidates received from the offerer
-        if (ackData && Array.isArray(ackData)) {
-          for (const candidate of ackData) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-              console.log("Added initial ICE candidate from acknowledgment");
-            } catch (e) {
-              console.error("Error adding initial ICE candidate:", e);
-            }
+        for (const track of localStream.value.getTracks()) {
+          const sender = peerConnection.addTrack(track, localStream.value);
+          if (track.kind === "audio" && sender.setParameters) {
+            const params = sender.getParameters();
+            if (!params.encodings) params.encodings = [{}];
+            params.encodings[0].priority = "high";
+            params.encodings[0].networkPriority = "high";
+            await sender.setParameters(params);
           }
         }
-        
+      }
+
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      if (socketStore.socket) {
+        socketStore.socket.emit("call-answer", { to: currentCallPartner.value, answer, callType: type }, async (candidates: any[]) => {
+          if (candidates && Array.isArray(candidates)) {
+            for (const c of candidates) {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(c)).catch(console.error);
+            }
+          }
+        });
         callStatus.value = "connected";
       }
     } catch (error: any) {
-      console.error("Error handling call offer:", error);
-
-      // Handle specific device not found error more gracefully
-      if (
-        error.name === "NotFoundError" ||
-        error.message.includes("Requested device not found")
-      ) {
-        alert(
-          `Cannot accept ${callTypeLocal} call: media device not found. Please check your camera and microphone permissions.`,
-        );
-      } else if (error.name === "NotAllowedError") {
-        alert(
-          `Cannot accept ${callTypeLocal} call: media access denied. Please check your browser permissions.`,
-        );
-      } else if (error.message) {
-        alert(`Cannot accept ${callTypeLocal} call: ${error.message}`);
-      }
-
+      console.error("Error accepting call:", error);
       endCall();
     }
   };
 
-  // Handle call answer from remote user
+  const declineIncomingCall = () => {
+    if (currentCallPartner.value) {
+      socketStore.socket?.emit("call-declined", { to: currentCallPartner.value, reason: "declined" });
+    }
+    endCall();
+  };
+
+  // Handle call answer
   const handleCallAnswer = async (data: {
     from: string;
     answer: RTCSessionDescriptionInit;
     callType?: "audio" | "video";
   }) => {
     try {
-      // Prevent duplicate processing of answers
-      if (answeredCalls.value.has(data.from)) {
-        console.warn(
-          "Answer already processed for this call, ignoring duplicate",
-        );
-        return;
-      }
-
-      const peerConnection = peerConnections.value.get(data.from);
-      if (peerConnection) {
-        // Check the signaling state before attempting to set the remote description
-        if (peerConnection.signalingState === "have-local-offer") {
-          await peerConnection.setRemoteDescription(
-            new RTCSessionDescription(data.answer),
-          );
-          callStatus.value = "connected";
-          answeredCalls.value.add(data.from); // Mark this call as answered
-
-          // Update call type if provided
-          if (data.callType) {
-            callType.value = data.callType;
-          }
-        } else if (peerConnection.signalingState === "stable") {
-          console.warn(
-            "Peer connection already stable, ignoring answer for",
-            data.from,
-          );
-        } else {
-          console.warn(
-            "Invalid signaling state for setting remote description:",
-            peerConnection.signalingState,
-            "for",
-            data.from,
-          );
-        }
+      if (answeredCalls.value.has(data.from)) return;
+      const pc = peerConnections.value.get(data.from);
+      if (pc && pc.signalingState === "have-local-offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        callStatus.value = "connected";
+        answeredCalls.value.add(data.from);
+        if (data.callType) callType.value = data.callType;
       }
     } catch (error) {
       console.error("Error handling call answer:", error);
-      if (
-        error instanceof Error &&
-        (error.message.includes("wrong state") ||
-          error.message.includes("stable"))
-      ) {
-        console.warn(
-          "Call answer received in wrong state, this may be a duplicate or race condition",
-        );
-        // Don't end the call for state errors as they can be harmless race conditions
-      } else {
-        endCall();
-      }
-    }
-  };
-
-  // Handle ICE candidate from remote user
-  const handleIceCandidate = async (data: {
-    from: string;
-    candidate: RTCIceCandidateInit;
-  }) => {
-    try {
-      const peerConnection = peerConnections.value.get(data.from);
-      if (peerConnection && peerConnection.signalingState !== "closed") {
-        // Only add ICE candidates if we're still in a valid state for negotiation
-        if (
-          peerConnection.signalingState === "have-local-offer" ||
-          peerConnection.signalingState === "have-remote-offer" ||
-          peerConnection.signalingState === "stable"
-        ) {
-          await peerConnection.addIceCandidate(
-            new RTCIceCandidate(data.candidate),
-          );
-        } else {
-          console.warn(
-            "Peer connection not in proper state for ICE candidates:",
-            peerConnection.signalingState,
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error handling ICE candidate:", error);
-      if (error instanceof Error && error.message.includes("Unknown ufrag")) {
-        console.warn(
-          "Received ICE candidate for already established connection, this is normal",
-        );
-        // This is typically not an error condition, just means candidates came in after connection
-      }
-    }
-  };
-
-  // Handle call decline
-  const handleCallDeclined = (data: {
-    from: string;
-    fromName: string;
-    reason: string;
-  }) => {
-    console.log(`Call declined by ${data.fromName}: ${data.reason}`);
-    if (currentCallPartner.value === data.from) {
-      alert(`Call declined by ${data.fromName} - Reason: ${data.reason}`);
       endCall();
     }
   };
 
-  // Handle call ended by remote user
-  const handleCallEnded = (data: { from: string; fromName: string }) => {
-    console.log(`Call ended by ${data.fromName}`);
+  // Handle ICE candidate
+  const handleIceCandidate = async (data: { from: string; candidate: RTCIceCandidateInit }) => {
+    const pc = peerConnections.value.get(data.from);
+    if (pc && pc.signalingState !== "closed") {
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(console.error);
+    }
+  };
+
+  const handleCallDeclined = (data: { from: string; fromName: string; reason: string }) => {
     if (currentCallPartner.value === data.from) {
+      alert(`Call declined: ${data.reason}`);
       endCall();
     }
   };
 
-  // End the current call
+  const handleCallEnded = (data: { from: string }) => {
+    if (currentCallPartner.value === data.from) endCall();
+  };
+
+  // End call
   const endCall = () => {
-    console.log("Ending call");
+    let duration = 0;
+    if (callStartTime.value && callStatus.value === "connected") {
+      duration = Math.floor((Date.now() - callStartTime.value) / 1000);
+    }
 
-    // Update call state
     callStatus.value = "ended";
     isInCall.value = false;
 
-    // Close all peer connections
-    peerConnections.value.forEach((connection, userId) => {
-      connection.close();
-      peerConnections.value.delete(userId);
-    });
-
-    // Clear answered calls tracking
+    peerConnections.value.forEach(pc => pc.close());
+    peerConnections.value.clear();
     answeredCalls.value.clear();
-
-    // Stop media tracks
     cleanupMedia();
 
-    // Notify remote user if socket is available
     if (currentCallPartner.value && socketStore.socket) {
-      socketStore.socket.emit("call-ended", {
-        to: currentCallPartner.value,
-      });
+      socketStore.socket.emit("call-ended", { to: currentCallPartner.value });
+      if (duration > 0) {
+        socketStore.socket.emit("call-fingerprint", {
+          to: currentCallPartner.value,
+          duration,
+          callType: callType.value
+        });
+      }
     }
 
-    // Reset state
     currentCallPartner.value = null;
-    callType.value = "video";
+    callStartTime.value = null;
     isMuted.value = false;
     isVideoOff.value = false;
   };
 
-  // Setup socket listeners for WebRTC signaling
   const setupSocketListeners = () => {
-    if (!socketStore.socket) {
-      console.warn("Socket not available, cannot setup WebRTC listeners");
-      return;
-    }
-
-    // Listen for WebRTC signaling events
+    if (!socketStore.socket) return;
     socketStore.socket.on("call-offer", handleCallOffer);
     socketStore.socket.on("call-answer", handleCallAnswer);
     socketStore.socket.on("ice-candidate", handleIceCandidate);
@@ -668,10 +449,8 @@ export function useWebRTC() {
     socketStore.socket.on("call-ended", handleCallEnded);
   };
 
-  // Remove socket listeners
   const removeSocketListeners = () => {
     if (!socketStore.socket) return;
-
     socketStore.socket.off("call-offer", handleCallOffer);
     socketStore.socket.off("call-answer", handleCallAnswer);
     socketStore.socket.off("ice-candidate", handleIceCandidate);
@@ -679,50 +458,30 @@ export function useWebRTC() {
     socketStore.socket.off("call-ended", handleCallEnded);
   };
 
-  // Cleanup function
   const cleanup = () => {
-    console.log("Cleaning up WebRTC");
-
-    // Remove socket listeners
     removeSocketListeners();
-
-    // End any ongoing call
-    if (isInCall.value) {
-      endCall();
-    }
-
-    // Close any remaining peer connections
-    peerConnections.value.forEach((connection) => {
-      connection.close();
-    });
-    peerConnections.value.clear();
-    answeredCalls.value.clear();
-
-    // Stop media tracks
+    if (isInCall.value) endCall();
     cleanupMedia();
   };
 
-  // Clean up on component unmount
-  onUnmounted(() => {
-    cleanup();
-  });
+  onUnmounted(cleanup);
 
   return {
-    // Reactive state
     localStream,
     remoteStream,
     isInCall,
     currentCallPartner,
     callType,
     callStatus,
+    incomingOffer,
     localVideoRef,
     remoteVideoRef,
     isMuted,
     isVideoOff,
     isSpeakerOn,
-
-    // Methods
     initiateCall,
+    acceptIncomingCall,
+    declineIncomingCall,
     endCall,
     toggleMute,
     toggleVideo,
@@ -732,8 +491,6 @@ export function useWebRTC() {
     handleIceCandidate,
     handleCallDeclined,
     handleCallEnded,
-
-    // Setup methods
     setupSocketListeners,
     removeSocketListeners,
     cleanup,

@@ -52,7 +52,12 @@ export default defineEventHandler(async (event) => {
 
       attachCookiesToResponse(event, tokenUser, refreshToken);
       console.log("--- Capacitor Social Login Success ---");
-      return { user: tokenUser };
+      return {
+        user: {
+          ...tokenUser,
+          settings: user.settings,
+        },
+      };
     } catch (error: any) {
       console.error(
         `--- Capacitor Social Login Error (${provider}) ---`,
@@ -139,7 +144,12 @@ export default defineEventHandler(async (event) => {
   });
 
   attachCookiesToResponse(event, tokenUser, refreshToken);
-  return { user: tokenUser };
+  return {
+    user: {
+      ...tokenUser,
+      settings: user.settings,
+    },
+  };
 
   // expressJs difference
   // attachCookiesToResponse({ res, user: tokenUser, refreshToken });

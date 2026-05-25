@@ -80,7 +80,12 @@ export default defineEventHandler(async (event) => {
     attachCookiesToResponse(event, tokenUser, refreshToken);
 
     console.log("--- Social Auth Callback Success ---");
-    return { user: tokenUser };
+    return {
+      user: {
+        ...tokenUser,
+        settings: user.settings,
+      },
+    };
   } catch (error: any) {
     console.error("--- Social auth callback error CRASH ---");
     console.error("Error details:", error);

@@ -1,54 +1,44 @@
 <template>
   <div class="dashboard">
-    <!-- Foldable Connection Status Bar -->
-    <aside class="connection-status-bar" :class="{ 'is-folded': isStatusFolded }">
-      <div class="status-header" @click="isStatusFolded = !isStatusFolded">
-        <ClientOnly>
-          <div class="status-indicator">
-            <span class="dot" :class="(isMounted && socketStore.isConnected) ? 'online' : 'offline'" />
-            <span class="label">{{ $t('dashboard.connection_status') }}</span>
-          </div>
-          <template #fallback>
-            <div class="status-indicator">
-              <span class="dot offline" />
-              <span class="label">{{ $t('dashboard.connection_status') }}</span>
-            </div>
-          </template>
-        </ClientOnly>
-        <Icon :name="isStatusFolded ? 'material-symbols:expand-more' : 'material-symbols:expand-less'" />
-      </div>
-      
-      <div v-show="!isStatusFolded" class="status-content">
-        <ClientOnly>
-          <p v-if="socketStore.connectionError" class="error">
-            Error: {{ socketStore.connectionError }}
-          </p>
-          <p v-else-if="socketStore.isConnecting" class="info">{{ $t('dashboard.connecting') }}</p>
-          <div v-else-if="socketStore.isConnected && socketStore.currentUser">
-            <p>
-              {{ $t('dashboard.transport') }}: <span class="highlight">{{ socketStore.transport }}</span>
-            </p>
-            <p>
-              {{ $t('dashboard.user') }}: <span class="highlight">{{ socketStore.currentUser.name }}</span>
-            </p>
-            <button
-              v-if="isPushSupported"
-              class="notifications-btn"
-              @click="subscribeForNotifications"
-            >
-              {{ $t('dashboard.enable_notifications') }}
-            </button>
-          </div>
-          <p v-else class="info">{{ $t('dashboard.disconnected') }}</p>
-        </ClientOnly>
-      </div>
-    </aside>
-
     <!-- Main Content Grid -->
     <ClientOnly>
       <div class="dashboard-grid">
         <!-- Online Users List -->
         <div ref="contactsPanel" class="online-users-panel">
+          <!-- Foldable Connection Status Bar -->
+          <aside class="connection-status-bar" :class="{ 'is-folded': isStatusFolded }">
+            <div class="status-header" @click="toggleStatusFolded()">
+              <div class="status-indicator">
+                <span class="dot" :class="(isClient && socketStore.isConnected) ? 'online' : 'offline'" />
+                <span class="label">{{ $t('dashboard.connection_status') }}</span>
+              </div>
+              <Icon :name="isStatusFolded ? 'material-symbols:expand-more' : 'material-symbols:expand-less'" />
+            </div>
+            
+            <div ref="statusContentRef" class="status-content">
+              <p v-if="socketStore.connectionError" class="error">
+                Error: {{ socketStore.connectionError }}
+              </p>
+              <p v-else-if="socketStore.isConnecting" class="info">{{ $t('dashboard.connecting') }}</p>
+              <div v-else-if="socketStore.isConnected && socketStore.currentUser">
+                <p>
+                  {{ $t('dashboard.transport') }}: <span class="highlight">{{ socketStore.transport }}</span>
+                </p>
+                <p>
+                  {{ $t('dashboard.user') }}: <span class="highlight">{{ socketStore.currentUser.name }} ({{ userStore.getUserRole }})</span>
+                </p>
+                <button
+                  v-if="isPushSupported"
+                  class="notifications-btn"
+                  @click="subscribeForNotifications"
+                >
+                  {{ $t('dashboard.enable_notifications') }}
+                </button>
+              </div>
+              <p v-else class="info">{{ $t('dashboard.disconnected') }}</p>
+            </div>
+          </aside>
+
           <h3>{{ $t('dashboard.online_users') }} ({{ onlineUsersStore.users.length }})</h3>
           <div v-if="onlineUsersStore.users.length === 0" class="no-users">
             {{ $t('dashboard.no_users') }}
@@ -112,6 +102,7 @@
                     "
                     name="material-symbols:call"
                     width="16"
+                    height="16"
                   />
                   <Icon
                     v-else
@@ -124,6 +115,36 @@
               </div>
             </li>
           </ul>
+
+          <!-- User Settings Section -->
+          <div v-if="!userStore.isGuest" class="user-settings-section" :class="{ 'is-folded': isSettingsFolded }">
+            <header class="settings-header" @click="toggleSettingsFolded()">
+              <h4><Icon name="material-symbols:settings" /> Settings</h4>
+              <Icon :name="isSettingsFolded ? 'material-symbols:expand-more' : 'material-symbols:expand-less'" />
+            </header>
+            <div ref="settingsContentRef" class="settings-content">
+              <div class="setting-item">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    :checked="userStore.user?.settings?.openLastChat" 
+                    @change="userStore.updateUserSettings({ openLastChat: ($event.target as HTMLInputElement).checked })"
+                  />
+                  Open last active chat
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    :checked="userStore.user?.settings?.showOldConversationTitles" 
+                    @change="userStore.updateUserSettings({ showOldConversationTitles: ($event.target as HTMLInputElement).checked })"
+                  />
+                  Show user names in history
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Chat and Video Area -->
@@ -208,7 +229,7 @@
           >
             <header class="chat-header">
               <div class="user-info-header">
-                <div class="avatar-placeholder">{{ getRecipientName().charAt(0) }}</div>
+                <div class="avatar-placeholder">{{ getRecipientName()?.charAt(0) || '?' }}</div>
                 <div class="user-details">
                   <h2>{{ getRecipientName() }}</h2>
                   <span class="online-status">online</span>
@@ -235,7 +256,7 @@
                 
                 <ChatMessage
                   :content="msg.message"
-                  :sender-name="msg.fromName"
+                  :sender-name="userStore.user?.settings?.showOldConversationTitles ? msg.fromName : ''"
                   :timestamp="formatTimestamp(msg.timestamp)"
                   :is-own="msg.from === userStore.getUserId"
                   @contextmenu.prevent="onMessageContext($event, msg)"
@@ -292,14 +313,17 @@ import { useOnlineUsersStore } from "~/stores/useOnlineUsersStore";
 import { useUserStore } from "~/stores/useUserSocket";
 import { usePendingActions } from "~/composables/usePendingActions";
 import { useWebRTC } from "~/components/webRTC";
+import { gsap } from "gsap";
+import { Draggable } from "gsap/all";
+import { useToggle } from "@vueuse/core";
+
+const { getAndClearPendingAction } = usePendingActions();
+
+if (import.meta.client) {
+  gsap.registerPlugin(Draggable);
+}
 
 const { $push } = useNuxtApp();
-
-useSeoMeta({
-  title: "Dashboard - Secure Chat & Video",
-  description:
-    "Access exclusive content, resources, and services on Bader Idris's platform.",
-});
 
 // --- Pinia Stores ---
 const socketStore = useSocketStore();
@@ -307,6 +331,12 @@ const messagesStore = useMessagesStore();
 const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
 const localePath = useLocalePath();
+
+useSeoMeta({
+  title: "Dashboard - Secure Chat & Video",
+  description:
+    "Access exclusive content, resources, and services on Bader Idris's platform.",
+});
 
 const isPushSupported = computed(
   () =>
@@ -328,25 +358,25 @@ function subscribeForNotifications() {
 const recipientUserId = ref("");
 const showNewMessageIndicator = ref(false);
 const isCallMinimized = ref(false);
-const isStatusFolded = ref(true);
-const isMounted = ref(false);
+// this has an issue with onMounted, it starts unfolded even with true as folder!
+const [isStatusFolded, toggleStatusFolded] = useToggle(true);
+const [isSettingsFolded, toggleSettingsFolded] = useToggle(true);
+const isClient = import.meta.client;
 const chatInputRef = ref(null);
 
 const chatContainer = ref<HTMLElement | null>(null);
 const contactsPanel = ref<HTMLElement | null>(null);
 
-const contextMenu = reactive({
-  show: false,
-  x: 0,
-  y: 0,
-  msg: null as any
-});
-
 // --- WebRTC Composables ---
 const {
   remoteStream,
   currentCallPartner,
+  callStatus,
+  callType,
+  incomingOffer,
   initiateCall,
+  acceptIncomingCall,
+  declineIncomingCall,
   endCall,
   isInCall,
   isMuted,
@@ -359,10 +389,57 @@ const {
   cleanup,
 } = useWebRTC();
 
+const currentCallOffer = ref<RTCSessionDescriptionInit | null>(null);
+
+watch(incomingOffer, (offer) => {
+  if (offer) {
+    currentCallOffer.value = offer;
+  }
+});
+
+const contextMenu = reactive({
+  show: false,
+  x: 0,
+  y: 0,
+  msg: null as any
+});
+
+// --- GSAP Folding Logic ---
+const statusContentRef = ref(null);
+const settingsContentRef = ref(null);
+
+watch(isStatusFolded, (val) => {
+  if (!statusContentRef.value || !import.meta.client) return;
+  if (!val) {
+    gsap.fromTo(statusContentRef.value, 
+      { height: 0, opacity: 0 }, 
+      { height: "auto", opacity: 1, duration: 0.4, ease: "power2.out" }
+    );
+  } else {
+    gsap.to(statusContentRef.value, 
+      { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" }
+    );
+  }
+});
+
+watch(isSettingsFolded, (val) => {
+  if (!settingsContentRef.value || !import.meta.client) return;
+  if (!val) {
+    gsap.fromTo(settingsContentRef.value, 
+      { height: 0, opacity: 0 }, 
+      { height: "auto", opacity: 1, duration: 0.4, ease: "power2.out" }
+    );
+  } else {
+    gsap.to(settingsContentRef.value, 
+      { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" }
+    );
+  }
+});
+
 // --- Lifecycle Hooks ---
 onMounted(async () => {
-  isMounted.value = true;
-  if (import.meta.client) {
+  if (!import.meta.client) return;
+  try {
     // Make sure socket is initialized
     socketStore.initializeSocket();
     setupSocketListeners();
@@ -378,7 +455,7 @@ onMounted(async () => {
           username: response.user.name,
         });
         
-        if (response.user.lastActiveChat) {
+        if (userStore.user?.settings?.openLastChat && response.user.lastActiveChat) {
           startChatWith(response.user.lastActiveChat);
         }
       }
@@ -398,7 +475,27 @@ onMounted(async () => {
       startChatWith(pendingAction.fromUserId);
     }
 
+    // Call fingerprint listener
+    socketStore.socket?.on("call-fingerprint", (data: any) => {
+      messagesStore.addMessage({
+        id: data.id,
+        from: data.from,
+        fromName: data.fromName,
+        to: userStore.getUserId,
+        message: `<div class="system-message call-fingerprint">
+          <span class="icon">📞</span>
+          <span>${data.callType === 'video' ? 'Video' : 'Voice'} call ended • ${formatDuration(data.duration)}</span>
+        </div>`,
+        timestamp: data.timestamp,
+        fromSocketId: '',
+        toSocketId: ''
+      });
+      nextTick(() => scrollToBottom());
+    });
+
     window.addEventListener('click', closeContextMenu);
+  } catch (err) {
+    console.error("Error in dashboard mounted hook:", err);
   }
 });
 
@@ -409,10 +506,24 @@ onUnmounted(() => {
   }
 });
 
-// --- Pending Actions ---
-const { getAndClearPendingAction } = usePendingActions();
-
 // --- Watchers ---
+watch(isInCall, (val) => {
+  if (val && import.meta.client) {
+    nextTick(() => {
+      setTimeout(() => {
+        Draggable.create(".video-call-overlay", {
+          bounds: ".dashboard",
+          edgeResistance: 0.65,
+          type: "x,y",
+        });
+        Draggable.create(".local-video-container", {
+          bounds: ".video-call-overlay",
+        });
+      }, 200);
+    });
+  }
+});
+
 watch(recipientUserId, (newRecipientId) => {
   if (newRecipientId && userStore.isAuthenticated) {
     messagesStore.setLoading(true);
@@ -450,7 +561,7 @@ watch(
       }
     }
   },
-  { deep: true },
+  { deep: true, flush: 'post' },
 );
 
 // --- Methods ---
@@ -574,6 +685,12 @@ function formatDateSeparator(timestamp: string | number | Date) {
   if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
   return date.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
 }
+
+function formatDuration(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+}
 </script>
 
 <style lang="scss" scoped>
@@ -591,18 +708,16 @@ function formatDateSeparator(timestamp: string | number | Date) {
 }
 
 .connection-status-bar {
-  min-height: 30px;
+  margin-bottom: 1rem;
   padding: 0;
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
+  background-color: var(--bg-primary);
+  border-radius: 8px;
   border: 1px solid var(--lines-color);
   overflow: hidden;
   transition: all 0.3s ease;
-  width: fit-content;
-  max-width: 300px;
+  width: 100%;
 
   &.is-folded {
-    border-color: transparent;
     background: transparent;
   }
 
@@ -893,6 +1008,26 @@ function formatDateSeparator(timestamp: string | number | Date) {
   span { background: rgba(0, 0, 0, 0.2); color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; backdrop-filter: blur(4px); }
 }
 
+.system-message {
+  align-self: center;
+  margin: 10px 0;
+  padding: 6px 16px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--lines-color);
+  
+  &.call-fingerprint {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+}
+
 .input-area { padding: 10px 20px 20px; }
 
 .new-message-indicator {
@@ -969,8 +1104,37 @@ function formatDateSeparator(timestamp: string | number | Date) {
     .minimize-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; }
   }
 
-  .video-grid { flex: 1; position: relative; background: #000; }
-  .remote-video-container { width: 100%; height: 100%; .remote-video { width: 100%; height: 100%; object-fit: cover; } }
+  .video-grid {
+    flex: 1;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .remote-video-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .remote-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    @include tablet-to-up {
+      height: 90%;
+      width: 90%;
+      .remote-video {
+        object-fit: contain;
+        border-radius: 12px;
+      }
+    }
+  }
   .local-video-container {
     position: absolute;
     bottom: 20px;
@@ -1045,4 +1209,108 @@ function formatDateSeparator(timestamp: string | number | Date) {
   color: var(--text-primary);
   cursor: pointer;
 }
+
+.user-settings-section {
+  margin-top: auto;
+  border-top: 1px solid var(--lines-color);
+  padding-top: 15px;
+
+  .settings-header {
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    h4 {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .settings-content {
+    overflow: hidden;
+    .setting-item {
+      margin-bottom: 12px;
+      label {
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        
+        input[type="checkbox"] {
+          accent-color: var(--accent-primary);
+        }
+      }
+    }
+  }
+}
+
+/* Incoming Call Modal */
+.incoming-call-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .modal-content {
+    background: var(--bg-secondary);
+    padding: 40px;
+    border-radius: 24px;
+    text-align: center;
+    border: 1px solid var(--lines-color);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    width: 320px;
+
+    .avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--gradient-start);
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: white;
+      font-weight: bold;
+    }
+
+    h3 { color: var(--text-primary); margin-bottom: 10px; }
+    p { color: var(--text-secondary); margin-bottom: 30px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 15px;
+      button {
+        flex: 1;
+        padding: 12px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+
+        &.accept-btn { background: #4caf50; color: white; &:hover { background: #45a049; } }
+        &.decline-btn { background: var(--accent-error); color: white; &:hover { background: #e53935; } }
+      }
+    }
+  }
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

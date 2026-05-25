@@ -1,15 +1,25 @@
 import { defineStore } from "pinia";
 import { useSocketStore } from "./useSocketStore";
 
+export interface UserSettings {
+  openLastChat: boolean;
+  showOldConversationTitles: boolean;
+}
+
 export interface User {
   userId: string;
   username: string;
   role: "admin" | "user" | "guest";
   provider?: "email" | "google" | "facebook";
   lastActiveChat?: string;
+  settings?: UserSettings;
 }
 
 export const useUserStore = defineStore("user", () => {
+  const defaultSettings: UserSettings = {
+    openLastChat: false,
+    showOldConversationTitles: true,
+  };
   // --- STATE ---
   //   const storedUser = ref<User | null>(
   //   typeof window !== "undefined"
@@ -50,6 +60,12 @@ export const useUserStore = defineStore("user", () => {
       clearUser();
       return;
     }
+
+    // Ensure settings exist
+    if (!newUser.settings) {
+      newUser.settings = { ...defaultSettings };
+    }
+
     user.value = newUser;
     if (import.meta.client) {
       localStorage.setItem("user", JSON.stringify(newUser));
@@ -58,6 +74,31 @@ export const useUserStore = defineStore("user", () => {
     if (import.meta.client && isAuthenticated.value) {
       const socketStore = useSocketStore();
       socketStore.initializeSocket();
+    }
+  }
+
+  async function updateUserSettings(newSettings: Partial<UserSettings>) {
+    if (!user.value) return;
+
+    user.value.settings = {
+      ...(user.value.settings || { ...defaultSettings }),
+      ...newSettings,
+    };
+
+    if (import.meta.client) {
+      localStorage.setItem("user", JSON.stringify(user.value));
+      
+      // Sync with server
+      try {
+        const config = useRuntimeConfig();
+        await $fetch("/api/v1/user/settings", {
+          method: "PATCH",
+          baseURL: config.public.originUrl,
+          body: { settings: user.value.settings },
+        });
+      } catch (e) {
+        console.error("Failed to sync settings with server:", e);
+      }
     }
   }
 
@@ -89,6 +130,7 @@ export const useUserStore = defineStore("user", () => {
     getUserId,
     getUserRole,
     setUser,
+    updateUserSettings,
     clearUser,
     init,
   };

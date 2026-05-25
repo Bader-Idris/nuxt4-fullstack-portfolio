@@ -19,6 +19,11 @@ declare global {
     product: Types.ObjectId;
   }
 
+  interface IUserSettings {
+    openLastChat: boolean;
+    showOldConversationTitles: boolean;
+  }
+
   // User types
   interface IUser extends Document {
     name: string;
@@ -32,6 +37,7 @@ declare global {
     passwordToken?: string;
     passwordTokenExpirationDate?: Date;
     lastActiveChat?: string;
+    settings?: IUserSettings;
     comparePassword(candidatePassword: string): Promise<boolean>;
   }
 

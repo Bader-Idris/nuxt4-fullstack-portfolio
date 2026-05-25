@@ -14,6 +14,7 @@ import {
   InterServerEvents,
   SocketData,
 } from "../types";
+import { notifyMissedCall } from "../../utils/webrtc-notifications";
 
 export const registerRTCHandlers = (
   io: Server<
@@ -52,7 +53,9 @@ export const registerRTCHandlers = (
         callType,
       });
     } else {
-      socket.emit("error", { message: "User not online" });
+      // User is offline, send notification
+      await notifyMissedCall(to, user.name);
+      socket.emit("error", { message: "User is offline. They have been notified." });
     }
   });
 
@@ -99,10 +102,6 @@ export const registerRTCHandlers = (
     if (offer) {
       // Save ICE candidate to Redis
       await addIceCandidateToRedis(offer.offerId, candidate, isOfferer);
-
-      // Forward to peer if they are "active" in the call
-      // In the reference project, candidates are forwarded if the other side has answered
-      // or if they are the offerer.
 
       const isOnline = await isUserOnline(to);
       if (isOnline) {
@@ -152,5 +151,20 @@ export const registerRTCHandlers = (
         fromName: user.name,
       });
     }
+  });
+
+  socket.on("call-fingerprint", async (data) => {
+    const { to, duration, callType } = data;
+    const id = `fp-${Date.now()}`;
+    const timestamp = new Date();
+
+    io.to(`user-${to}`).emit("call-fingerprint", {
+      from: user.userId,
+      fromName: user.name,
+      duration,
+      callType,
+      timestamp,
+      id,
+    });
   });
 };
