@@ -26,6 +26,7 @@ export default {
     :href="String(to)"
     target="_blank"
     rel="noopener noreferrer"
+    @click="handleExternalClick"
   >
     <slot />
   </a>
@@ -88,5 +89,11 @@ const openInAppBrowser = async () => {
       presentationStyle: "popover", // This keeps the user in your app context
     });
   }
+};
+
+const handleExternalClick = (event: MouseEvent) => {
+  // Always stop propagation to prevent parent components (like FooterComp.vue)
+  // from triggering a second window.open call.
+  event.stopPropagation();
 };
 </script>
