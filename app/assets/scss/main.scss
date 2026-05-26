@@ -87,3 +87,43 @@ ul {
   font-weight: bold;
 }
 /* End custom selection */
+
+/* Spoiler Particle Effect */
+.tg-spoiler {
+  background-color: var(--text-primary);
+  color: transparent !important;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: inline;
+  padding: 0 2px;
+  
+  // Particles animation using background image and keyframes
+  background-image: radial-gradient(circle, var(--bg-primary) 10%, transparent 10%);
+  background-size: 4px 4px;
+  animation: spoilerParticles 1s linear infinite;
+
+  &.revealed {
+    background-color: transparent !important;
+    background-image: none;
+    color: inherit !important;
+    animation: none;
+  }
+}
+
+// In editors, make it readable for the sender
+.tiptap-editor-wrapper, .chat-input-wrapper {
+  .tg-spoiler {
+    background-color: rgba($secondary1, 0.2);
+    color: inherit !important;
+    border: 1px dashed $secondary1;
+    animation: none;
+  }
+}
+
+@keyframes spoilerParticles {
+  0% { background-position: 0 0; }
+  100% { background-position: 4px 4px; }
+}

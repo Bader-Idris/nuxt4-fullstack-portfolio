@@ -2,37 +2,9 @@
 import { toast } from "vue3-toastify";
 import "vue3-toastify/dist/index.css";
 import { useApiError } from "~/composables/useApiError";
+import { z } from "zod";
 
 const { t, locale } = useI18n();
-const { getFriendlyErrorMessage } = useApiError();
-const config = useRuntimeConfig();
-const isSubmitted = ref<boolean>(false);
-
-// Thank you image path with originUrl for SSR
-const thanksImage = ref("/imgs/thanks.svg");
-
-if (import.meta.server) {
-  const fs = await import("node:fs");
-  const path = await import("node:path");
-  const inputPath = path.join(process.cwd(), "public/imgs/thanks.svg");
-  const outputPath = path.join(process.cwd(), "public/imgs/thanks.webp");
-
-  try {
-    if (fs.existsSync(inputPath) && !fs.existsSync(outputPath)) {
-      const sharp = (await import("sharp")).default;
-      await sharp(inputPath).webp({ quality: 80 }).toFile(outputPath);
-      console.log("[contact.vue] WebP generated");
-    }
-    if (fs.existsSync(outputPath)) {
-      thanksImage.value = `${config.public.originUrl}/imgs/thanks.webp`;
-    } else {
-      thanksImage.value = `${config.public.originUrl}/imgs/thanks.svg`;
-    }
-  } catch (error) {
-    console.error("[contact.vue] Sharp error:", error);
-    thanksImage.value = `${config.public.originUrl}/imgs/thanks.svg`;
-  }
-}
 
 useSeoMeta({
   title: t("contact.title"),
@@ -47,16 +19,35 @@ useSchemaOrg([
   },
 ]);
 
+const { getFriendlyErrorMessage } = useApiError();
+const isSubmitted = ref<boolean>(false);
+const thanksImage = ref<string>("/imgs/thanks.svg");
+
 // Form and messaging state
 const name = ref<string>("");
 const email = ref<string>("");
 const message = ref<string>("");
 const isLoading = ref<boolean>(false);
+const formErrors = ref<Record<string, string>>({});
+
+// Zod schema for frontend validation
+const contactSchema = z.object({
+  name: z.string()
+    .min(2, t("contact.form.errors.name_min"))
+    .max(100, t("contact.form.errors.name_max")),
+  email: z.string()
+    .email(t("contact.form.errors.email_invalid")),
+  message: z.string()
+    .min(10, t("contact.form.errors.message_min"))
+    .max(5000, t("contact.form.errors.message_max")),
+});
 
 async function submitForm() {
   if (!validateForm()) return;
 
   isLoading.value = true;
+  formErrors.value = {};
+  
   try {
     const url = `/api/v1/received_emails`;
     await $fetch(url, {
@@ -75,8 +66,18 @@ async function submitForm() {
       type: "success",
       position: "top-center",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Contact form error:", error);
+    
+    // Handle Zod errors from server if available
+    if (error.data?.errors) {
+      error.data.errors.forEach((err: any) => {
+        if (err.path?.[0]) {
+          formErrors.value[err.path[0]] = err.message;
+        }
+      });
+    }
+
     const friendlyMessage = getFriendlyErrorMessage(error);
     toast(friendlyMessage, {
       theme: "auto",
@@ -99,35 +100,28 @@ const resetForm = (): void => {
   name.value = "";
   email.value = "";
   message.value = "";
+  formErrors.value = {};
 };
 
-// Form validation with i18n messages
+// Form validation with Zod
 const validateForm = (): boolean => {
-  if (!name.value || !email.value || !message.value) {
-    console.error("All form fields must be filled out.");
-    toast(t("contact.form.all_fields"), {
-      theme: "auto",
-      type: "error",
-      position: "top-center",
-    });
-    return false;
-  }
-  if (!validateEmail(email.value)) {
-    console.error("Invalid email format.");
-    toast(t("contact.form.email_format"), {
-      theme: "auto",
-      type: "error",
-      position: "top-center",
+  formErrors.value = {};
+  const result = contactSchema.safeParse({
+    name: name.value,
+    email: email.value,
+    message: message.value,
+  });
+
+  if (!result.success) {
+    result.error.issues.forEach((issue) => {
+      const path = issue.path[0] as string;
+      if (!formErrors.value[path]) {
+        formErrors.value[path] = issue.message;
+      }
     });
     return false;
   }
   return true;
-};
-
-// Validate email format using a regex
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
 };
 
 // Format date function with i18n support
@@ -152,6 +146,30 @@ const { pause } = useIntervalFn(
   { immediate: false },
 );
 
+const contextMenu = reactive({
+  show: false,
+  x: 0,
+  y: 0,
+  content: ""
+});
+
+const onResultContext = (event: MouseEvent, text: string) => {
+  contextMenu.show = true;
+  contextMenu.x = event.clientX;
+  contextMenu.y = event.clientY;
+  contextMenu.content = text;
+};
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(t("messages.copied"), { theme: "auto", type: "success", position: "bottom-right", autoClose: 1000 });
+  } catch (err) {
+    console.error("Copy failed", err);
+  }
+  contextMenu.show = false;
+};
+
 onMounted(() => {
   if (import.meta.client) {
     date.value = new Date();
@@ -169,34 +187,49 @@ onBeforeUnmount(() => {
 <template>
   <main class="cont">
     <div v-if="!isSubmitted" class="messaging">
-      <label for="name">{{ t("contact.form.name") }}</label>
-      <input
-        id="name"
-        v-model="name"
-        type="text"
-        :placeholder="t('contact.form.name_placeholder')"
-        required
-      />
+      <div class="input-group">
+        <label for="name">{{ t("contact.form.name") }}</label>
+        <input
+          id="name"
+          v-model="name"
+          type="text"
+          :placeholder="t('contact.form.name_placeholder')"
+          :class="{ invalid: formErrors.name }"
+          required
+        />
+        <Transition name="fade-error">
+          <span v-if="formErrors.name" class="error-msg">{{ formErrors.name }}</span>
+        </Transition>
+      </div>
 
-      <label for="_email">{{ t("contact.form.email") }}</label>
-      <input
-        id="_email"
-        v-model="email"
-        type="email"
-        :placeholder="t('contact.form.email_placeholder')"
-        required
-      />
+      <div class="input-group">
+        <label for="_email">{{ t("contact.form.email") }}</label>
+        <input
+          id="_email"
+          v-model="email"
+          type="email"
+          :placeholder="t('contact.form.email_placeholder')"
+          :class="{ invalid: formErrors.email }"
+          required
+        />
+        <Transition name="fade-error">
+          <span v-if="formErrors.email" class="error-msg">{{ formErrors.email }}</span>
+        </Transition>
+      </div>
 
-      <label for="_message">{{ t("contact.form.message") }}</label>
-      <textarea
-        id="_message"
-        v-model="message"
-        rows="5"
-        cols="33"
-        :placeholder="t('contact.form.message_placeholder')"
-        style="resize: vertical"
-        required
-      />
+      <div class="input-group">
+        <label for="_message">{{ t("contact.form.message") }}</label>
+        <TiptapEditor
+          id="_message"
+          v-model="message"
+          :placeholder="t('contact.form.message_placeholder')"
+          :class="{ invalid: formErrors.message }"
+        />
+        <Transition name="fade-error">
+          <span v-if="formErrors.message" class="error-msg">{{ formErrors.message }}</span>
+        </Transition>
+      </div>
+
       <CustomButton
         button-type="default"
         :disabled="isLoading"
@@ -207,18 +240,9 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="thank-you">
-      <!-- TODO: check persona file for reason of not using this comp -->
-      <!-- <NuxtImg
-        src="/imgs/thanks.svg"
-        alt="thank you message icon"
-        :placeholder="[50, 50, 75, 75]"
-        format="webp"
-        loading="lazy"
-      /> -->
       <img
         :src="thanksImage"
         alt="thank you message icon"
-        format="webp"
         loading="lazy"
       />
       <p>{{ t("messages.thank_you.emailMsg") }}</p>
@@ -243,27 +267,37 @@ onBeforeUnmount(() => {
         <span> =</span>
         <span> {</span>
         <div class="data-object">
-          <div class="set">
+          <div class="set" @contextmenu.prevent="onResultContext($event, name)" @click="onResultContext($event, name)">
             <span class="options">name</span>
             <p class="name results">{{ name }}</p>
           </div>
-          <div class="set">
+          <div class="set" @contextmenu.prevent="onResultContext($event, email)" @click="onResultContext($event, email)">
             <span class="options">email</span>
             <p class="email results">{{ email }}</p>
           </div>
-          <div class="set">
+          <div class="set" @contextmenu.prevent="onResultContext($event, message)" @click="onResultContext($event, message)">
             <span class="options">message</span>
-            <p class="message results" style="white-space: pre-line">
-              {{ message }}
-            </p>
+            <p class="message results" style="white-space: pre-line" v-html="message"></p>
           </div>
-          <div class="set">
+          <div class="set" @contextmenu.prevent="onResultContext($event, formattedDate)" @click="onResultContext($event, formattedDate)">
             <span class="options">date</span>
             <p class="date results">{{ formattedDate }}</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Context Menu for Results -->
+    <ContextMenu
+      :show="contextMenu.show"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      @close="contextMenu.show = false"
+    >
+      <button @click="copyToClipboard(contextMenu.content)">
+        <Icon name="material-symbols:content-copy" /> Copy Value
+      </button>
+    </ContextMenu>
   </main>
 </template>
 
@@ -305,17 +339,92 @@ main.cont {
   .messaging {
     @include flex-container(column, nowrap, unset, unset);
     align-content: flex-end;
+    width: 450px;
+
+    @include mobile {
+      width: 100%;
+    }
 
     @include tablet-to-up {
       margin-bottom: 60px;
       height: calc($full-viewport-height - 260px);
       position: relative;
       overflow-y: scroll;
+      padding-right: 20px;
     }
 
-    > * {
-      margin-bottom: 20px;
-      line-height: 1.6;
+    .input-group {
+      @include flex-container(column, nowrap, unset, unset);
+      margin-bottom: 24px;
+      gap: 8px;
+
+      label {
+        color: $secondary1;
+        font-size: $labels-size;
+        transition: color 0.3s ease;
+      }
+
+      &:focus-within label {
+        color: $secondary4;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      textarea {
+        background: $primary3;
+        border: 1px solid $lines;
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: $secondary4;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        width: 100%;
+
+        &::placeholder {
+          color: $secondary1;
+          opacity: 0.5;
+        }
+
+        &:hover {
+          border-color: $secondary1;
+        }
+
+        &:focus {
+          outline: none;
+          border-color: $secondary2;
+          box-shadow: 0 0 0 2px rgba($secondary2, 0.2);
+        }
+
+        &.invalid {
+          border-color: $accent3;
+          &:focus {
+            box-shadow: 0 0 0 2px rgba($accent3, 0.2);
+          }
+        }
+      }
+
+      textarea {
+        min-height: 150px;
+        resize: vertical;
+      }
+
+      .error-msg {
+        color: $accent3;
+        font-size: 14px;
+        margin-top: 4px;
+        display: block;
+      }
+    }
+
+    .fade-error-enter-active,
+    .fade-error-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .fade-error-enter-from,
+    .fade-error-leave-to {
+      opacity: 0;
+      transform: translateY(-5px);
     }
   }
 
@@ -332,42 +441,15 @@ main.cont {
       text-align: center;
       width: 340px;
       line-height: 1.7;
+      color: $secondary1;
     }
 
     @include mobile {
       padding-top: 50px;
-
       p {
         width: 100%;
       }
     }
-  }
-
-  textarea,
-  input[type="text"],
-  input[type="email"] {
-    background: $primary3;
-    border-radius: 5px;
-    border: 2px solid transparent;
-    padding: 10px;
-    color: $secondary1;
-
-    &:focus {
-      outline: none;
-      border: 2px solid $secondary1;
-    }
-
-    &::placeholder {
-      color: $secondary1;
-      opacity: 0.5;
-    }
-
-    &:focus::placeholder {
-      color: transparent;
-    }
-  }
-  textarea {
-    padding-bottom: 30px;
   }
 
   button {
@@ -392,24 +474,15 @@ main.cont {
 
     .first-query {
       padding-bottom: 20px;
-
       > span:first-of-type {
         color: $accent4;
       }
     }
 
     .message-to-json {
-      > span:first-of-type {
-        color: $accent4;
-      }
-
-      > span:nth-of-type(2) {
-        color: $accent4;
-      }
-
-      > span:nth-of-type(3) {
-        color: $accent5;
-      }
+      > span:first-of-type { color: $accent4; }
+      > span:nth-of-type(2) { color: $accent4; }
+      > span:nth-of-type(3) { color: $accent5; }
     }
 
     .var-name,
@@ -425,40 +498,20 @@ main.cont {
 
     .query {
       span {
-        &:first-of-type {
-          color: $secondary2;
-        }
-
-        &:nth-of-type(2) {
-          color: $secondary1;
-        }
-
-        &:nth-of-type(3) {
-          color: $secondary3;
-        }
-
+        &:first-of-type { color: $secondary2; }
+        &:nth-of-type(2) { color: $secondary1; }
+        &:nth-of-type(3) { color: $secondary3; }
         &:last-of-type {
           color: $accent1;
-
-          &::before,
-          &::after {
-            color: $secondary1;
-          }
-
-          &::before {
-            content: "(";
-          }
-
-          &::after {
-            content: ")";
-          }
+          &::before, &::after { color: $secondary1; }
+          &::before { content: "("; }
+          &::after { content: ")"; }
         }
       }
     }
 
     .data-object {
       margin-bottom: 10px;
-
       @include tablet-to-up {
         margin-bottom: 60px;
         height: calc($full-viewport-height - 260px);
@@ -473,7 +526,6 @@ main.cont {
 
         .options {
           padding-right: 10px;
-
           &::after {
             content: ": ";
             color: $secondary1;
@@ -483,11 +535,7 @@ main.cont {
         .results {
           color: $accent1;
           width: 300px;
-
-          &::before,
-          &::after {
-            content: '"';
-          }
+          &::before, &::after { content: '"'; }
 
           &.name,
           &.email {
@@ -501,10 +549,7 @@ main.cont {
             max-height: 250px;
             overflow-y: scroll;
             font-weight: normal;
-
-            &::-webkit-scrollbar {
-              display: none;
-            }
+            &::-webkit-scrollbar { display: none; }
           }
         }
       }
@@ -513,111 +558,6 @@ main.cont {
         content: "}";
         color: $accent5;
       }
-    }
-
-    .event-listener {
-      .first-line {
-        .dom-keyword {
-          color: $secondary2;
-        }
-
-        .dot {
-          color: $secondary1;
-        }
-
-        .event {
-          color: $secondary3;
-        }
-
-        .click-event {
-          color: $accent1;
-
-          &::before,
-          &::after {
-            color: $secondary1;
-          }
-
-          &::before {
-            content: "(";
-          }
-
-          &::after {
-            content: " , ";
-          }
-        }
-
-        .parenthesis,
-        .curly {
-          color: $accent4;
-        }
-
-        .arrow {
-          color: $accent4;
-          padding: 0 10px;
-        }
-      }
-
-      .second-line {
-        padding: 5px 20px;
-
-        .dom-form {
-          color: $secondary2;
-        }
-
-        .dot {
-          color: $secondary1;
-        }
-
-        .event {
-          color: $secondary3;
-        }
-
-        .message-var {
-          color: $secondary4;
-
-          &::before,
-          &::after {
-            color: $secondary1;
-          }
-
-          &::before {
-            content: "(";
-          }
-
-          &::after {
-            content: ")";
-          }
-        }
-      }
-
-      .third-line {
-        .curly {
-          color: $accent4;
-        }
-
-        .parenthesis {
-          color: $accent5;
-        }
-      }
-    }
-  }
-}
-
-.received-to-admin {
-  @include mobile {
-    width: calc(100vw - 60px);
-    margin-top: 50px;
-  }
-  @include tablet-to-up {
-    margin-top: 50px;
-    padding-left: 20px;
-  }
-
-  > button {
-    margin-bottom: 20px;
-    margin-left: 15px;
-    @include mobile {
-      width: calc(100% - 20px);
     }
   }
 }

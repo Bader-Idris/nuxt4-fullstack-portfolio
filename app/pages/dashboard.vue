@@ -329,6 +329,7 @@
                   :timestamp="formatTimestamp(msg.timestamp)"
                   :is-own="msg.from === userStore.getUserId"
                   @contextmenu.prevent="onMessageContext($event, msg)"
+                  @dblclick="isMobile && onMessageContext($event, msg)"
                 />
               </template>
             </div>
@@ -350,11 +351,26 @@
             </div>
 
             <!-- Custom Context Menu -->
-            <div v-if="contextMenu.show" class="context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-              <button @click="copyMessage(contextMenu.msg)"><Icon name="material-symbols:content-copy" /> Copy</button>
-              <button @click="replyToMessage(contextMenu.msg)"><Icon name="material-symbols:reply" /> Reply</button>
-              <button v-if="contextMenu.msg.from === userStore.getUserId" class="delete" @click="deleteMessage(contextMenu.msg)"><Icon name="material-symbols:delete" /> Delete</button>
-            </div>
+            <ContextMenu
+              :show="contextMenu.show"
+              :x="contextMenu.x"
+              :y="contextMenu.y"
+              @close="contextMenu.show = false"
+            >
+              <button @click="copyMessage(contextMenu.msg)">
+                <Icon name="material-symbols:content-copy" /> Copy
+              </button>
+              <button @click="replyToMessage(contextMenu.msg)">
+                <Icon name="material-symbols:reply" /> Reply
+              </button>
+              <button
+                v-if="contextMenu.msg?.from === userStore.getUserId"
+                class="delete"
+                @click="deleteMessage(contextMenu.msg)"
+              >
+                <Icon name="material-symbols:delete" /> Delete
+              </button>
+            </ContextMenu>
           </div>
           <div v-else class="chat-placeholder">
             <div v-if="userStore.isGuest" class="guest-placeholder">
@@ -387,6 +403,7 @@ import { Draggable } from "gsap/all";
 import { useToggle } from "@vueuse/core";
 
 const { getAndClearPendingAction } = usePendingActions();
+const isMobile = useMobile();
 
 if (import.meta.client) {
   gsap.registerPlugin(Draggable);

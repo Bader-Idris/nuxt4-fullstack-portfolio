@@ -1,71 +1,13 @@
 <template>
   <div class="chat-input-wrapper">
     <div class="input-container" data-clarity-mask="true">
-      <TiptapBubbleMenu
-        v-if="editor"
-        :editor="editor"
-        :tippy-options="{ duration: 100 }"
-        class="bubble-menu"
-      >
-        <button
-          type="button"
-          @click="editor.chain().focus().toggleBold().run()"
-          :class="{ 'is-active': editor.isActive('bold') }"
-          title="Bold"
-        >
-          <Icon name="material-symbols:format-bold" />
-        </button>
-        <button
-          type="button"
-          @click="editor.chain().focus().toggleItalic().run()"
-          :class="{ 'is-active': editor.isActive('italic') }"
-          title="Italic"
-        >
-          <Icon name="material-symbols:format-italic" />
-        </button>
-        <button
-          type="button"
-          @click="editor.chain().focus().toggleUnderline().run()"
-          :class="{ 'is-active': editor.isActive('underline') }"
-          title="Underline"
-        >
-          <Icon name="material-symbols:format-underlined" />
-        </button>
-        <button
-          type="button"
-          @click="editor.chain().focus().toggleStrike().run()"
-          :class="{ 'is-active': editor.isActive('strike') }"
-          title="Strikethrough"
-        >
-          <Icon name="material-symbols:format-strikethrough" />
-        </button>
-        <button
-          type="button"
-          @click="editor.chain().focus().toggleCode().run()"
-          :class="{ 'is-active': editor.isActive('code') }"
-          title="Monospace"
-        >
-          <Icon name="material-symbols:code" />
-        </button>
-        <button
-          type="button"
-          @click="editor.chain().focus().toggleSpoiler().run()"
-          :class="{ 'is-active': editor.isActive('spoiler') }"
-          title="Spoiler"
-        >
-          <Icon name="material-symbols:visibility-off" />
-        </button>
-        <button
-          type="button"
-          @click="setLink"
-          :class="{ 'is-active': editor.isActive('link') }"
-          title="Link"
-        >
-          <Icon name="material-symbols:link" />
-        </button>
-      </TiptapBubbleMenu>
-
-      <TiptapEditorContent :editor="editor" class="tiptap-input" />
+      <TiptapEditorContent 
+        :editor="editor" 
+        class="tiptap-input" 
+        @click="handleInteraction"
+        @dblclick="handleDoubleClick"
+        @contextmenu.prevent="handleContextMenu"
+      />
       
       <button
         class="send-btn"
@@ -74,12 +16,42 @@
       >
         <Icon name="material-symbols:send-rounded" width="24" height="24" />
       </button>
+
+      <!-- Custom Formatting Context Menu -->
+      <ContextMenu
+        :show="showFormattingMenu"
+        :x="menuPosition.x"
+        :y="menuPosition.y"
+        @close="showFormattingMenu = false"
+      >
+        <button @click="toggleMark('bold')" :class="{ 'is-active': editor?.isActive('bold') }">
+          <Icon name="material-symbols:format-bold" /> Bold
+        </button>
+        <button @click="toggleMark('italic')" :class="{ 'is-active': editor?.isActive('italic') }">
+          <Icon name="material-symbols:format-italic" /> Italic
+        </button>
+        <button @click="toggleMark('underline')" :class="{ 'is-active': editor?.isActive('underline') }">
+          <Icon name="material-symbols:format-underlined" /> Underline
+        </button>
+        <button @click="toggleMark('strike')" :class="{ 'is-active': editor?.isActive('strike') }">
+          <Icon name="material-symbols:format-strikethrough" /> Strike
+        </button>
+        <button @click="toggleMark('code')" :class="{ 'is-active': editor?.isActive('code') }">
+          <Icon name="material-symbols:code" /> Code
+        </button>
+        <button @click="toggleMark('spoiler')" :class="{ 'is-active': editor?.isActive('spoiler') }">
+          <Icon name="material-symbols:visibility-off" /> Spoiler
+        </button>
+        <button @click="setLink" :class="{ 'is-active': editor?.isActive('link') }">
+          <Icon name="material-symbols:link" /> Link
+        </button>
+      </ContextMenu>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { MyUnderline, MyLink, MySpoiler, MyPlaceholder, MyBubbleMenu } from "~/composables/tiptapExt";
+import { MyUnderline, MyLink, MySpoiler, MyPlaceholder } from "~/composables/tiptapExt";
 
 const props = defineProps<{
   placeholder?: string;
@@ -89,6 +61,9 @@ const emit = defineEmits<{
   (e: "send", html: string): void;
 }>();
 
+const showFormattingMenu = ref(false);
+const menuPosition = reactive({ x: 0, y: 0 });
+
 const editor = useEditor({
   content: "",
   extensions: [
@@ -97,7 +72,7 @@ const editor = useEditor({
       codeBlock: false,
       bulletList: false,
       orderedList: false,
-      blockquote: false, // We'll keep it simple for chat
+      blockquote: false,
     }),
     MyUnderline,
     MyLink.configure({
@@ -111,7 +86,6 @@ const editor = useEditor({
     MyPlaceholder.configure({
       placeholder: props.placeholder || "Write a message...",
     }),
-    MyBubbleMenu,
   ],
   editorProps: {
     handleKeyDown: (view, event) => {
@@ -129,6 +103,46 @@ const isEditorEmpty = computed(() => {
   return editor.value.getText().trim() === "";
 });
 
+const isMobile = useMobile();
+
+const handleInteraction = () => {
+  // Focus logic handled by wrapper or selection elsewhere
+};
+
+const handleDoubleClick = (event: MouseEvent | TouchEvent) => {
+  if (isMobile.value) {
+    const clientX = 'clientX' in event ? event.clientX : (event as TouchEvent).touches[0].clientX;
+    const clientY = 'clientY' in event ? event.clientY : (event as TouchEvent).touches[0].clientY;
+    
+    showFormattingMenu.value = true;
+    menuPosition.x = clientX;
+    menuPosition.y = clientY;
+  }
+};
+
+const handleContextMenu = (event: MouseEvent | TouchEvent) => {
+  const clientX = 'clientX' in event ? event.clientX : (event as TouchEvent).touches[0].clientX;
+  const clientY = 'clientY' in event ? event.clientY : (event as TouchEvent).touches[0].clientY;
+  
+  showFormattingMenu.value = true;
+  menuPosition.x = clientX;
+  menuPosition.y = clientY;
+};
+
+function toggleMark(type: string) {
+  if (!editor.value) return;
+  const chain = editor.value.chain().focus();
+  
+  if (type === 'bold') chain.toggleBold().run();
+  else if (type === 'italic') chain.toggleItalic().run();
+  else if (type === 'underline') chain.toggleUnderline().run();
+  else if (type === 'strike') chain.toggleStrike().run();
+  else if (type === 'code') chain.toggleCode().run();
+  else if (type === 'spoiler') chain.toggleSpoiler().run();
+  
+  showFormattingMenu.value = false;
+}
+
 function setLink() {
   if (!editor.value) return;
   const previousUrl = editor.value.getAttributes("link").href;
@@ -137,14 +151,14 @@ function setLink() {
   if (url === null) return;
   if (url === "") {
     editor.value.chain().focus().extendMarkRange("link").unsetLink().run();
-    return;
+  } else {
+    editor.value.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }
-  editor.value.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  showFormattingMenu.value = false;
 }
 
 function handleSend() {
   if (!editor.value || isEditorEmpty.value) return;
-  // Get HTML to preserve formatting
   const html = editor.value.getHTML();
   emit("send", html);
   editor.value.commands.clearContent();

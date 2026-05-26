@@ -8,6 +8,7 @@ const config: ElectrobunConfig = {
     version: packageJson.version,
   },
   build: {
+    useAsar: true,
     // We'll let Electrobun use its default 'artifacts' folder and move things in the helper script
     // to avoid interfering with internal build paths.
     bun: {

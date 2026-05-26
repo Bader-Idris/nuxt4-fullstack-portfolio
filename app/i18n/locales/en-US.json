@@ -58,7 +58,7 @@
     "caution": "Please select a programming tool to view my projects. \n Your choice is crucial to proceed."
   },
   "contact": {
-    "title": "Contact Bader Idris - Full Stack Developer",
+    "title": "Contact Bader Idris | Expert Full Stack Developer & Designer",
     "description": "Get in touch with Bader Idris for collaborations on Full Stack, DevOps, or GSAP/Three.js projects. Reach out via email, phone, or LinkedIn.",
     "admin": {
       "title": "Admin Emails | Bader Idris",
@@ -75,7 +75,14 @@
       "email_placeholder": "JohnDoe﹫gmail.com",
       "message_placeholder": "Leave your message here",
       "all_fields": "All fields are required.",
-      "email_format": "Please enter a valid email address."
+      "email_format": "Please enter a valid email address.",
+      "errors": {
+        "name_min": "Name must be at least 2 characters.",
+        "name_max": "Name must be at most 100 characters.",
+        "email_invalid": "Please enter a valid email address.",
+        "message_min": "Message must be at least 10 characters.",
+        "message_max": "Message must be at most 5000 characters."
+      }
     }
   },
   "errors": {
@@ -84,6 +91,7 @@
     "serverError": "Server error - please try again later"
   },
   "messages": {
+    "copied": "Copied to clipboard!",
     "emailsLoaded": "Emails loaded successfully",
     "emailSent": "Email sent successfully",
     "NetworkStatus": {

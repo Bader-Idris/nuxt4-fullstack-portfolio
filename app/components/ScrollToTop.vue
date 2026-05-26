@@ -38,6 +38,8 @@ const scrollToTop = () => {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:color";
+
 .scroll-to-top {
   position: fixed;
   bottom: 20px;
@@ -58,7 +60,7 @@ const scrollToTop = () => {
 
   &:hover {
     transform: scale(1.1);
-    background-color: lighten($accent1, 10%);
+    background-color: color.adjust($accent1, $lightness: 10%);
   }
 
   &:active {
