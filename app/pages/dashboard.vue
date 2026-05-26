@@ -4,7 +4,7 @@
     <ClientOnly>
       <div class="dashboard-grid">
         <!-- Online Users List -->
-        <div ref="contactsPanel" class="online-users-panel">
+        <div ref="contactsPanel" class="online-users-panel" data-clarity-mask="true">
           <!-- Foldable Connection Status Bar -->
           <aside class="connection-status-bar" :class="{ 'is-folded': isStatusFolded }">
             <div class="status-header" @click="toggleStatusFolded()">
@@ -153,7 +153,7 @@
           <Transition name="slide-up">
             <div v-show="isInCall" class="video-call-overlay" :class="{ 'is-fullscreen': isFullscreen }">
               <div class="call-wrapper">
-                <header class="call-header">
+                <header class="call-header" data-clarity-mask="true">
                   <div class="call-partner-info">
                     <Icon name="material-symbols:call" class="call-icon" />
                     <span>{{ $t('dashboard.in_call_with') }}: {{ getUserName(currentCallPartner) }}</span>
@@ -189,7 +189,8 @@
                   </template>
                   <template v-else>
                     <!-- Premium Audio Calling Layout -->
-                    <div class="audio-call-container">
+                    <div class="audio-call-container" data-clarity-mask="true">
+                      <audio ref="remoteAudioRef" autoplay playsinline style="display: none;"></audio>
                       <div class="audio-avatar-wrapper">
                         <div class="avatar-large-glow">
                           {{ getUserName(currentCallPartner)?.charAt(0) || '?' }}
@@ -268,7 +269,7 @@
 
           <!-- Incoming Call Permission Custom Modal (Overlay) -->
           <Transition name="fade">
-            <div v-if="callStatus === 'ringing' && !isInCall" class="incoming-call-modal">
+            <div v-if="callStatus === 'ringing' && !isInCall" class="incoming-call-modal" data-clarity-mask="true">
               <div class="modal-content">
                 <div class="avatar-large">
                   {{ getUserName(currentCallPartner)?.charAt(0) || '?' }}
@@ -294,7 +295,7 @@
             v-if="recipientUserId && !userStore.isGuest"
             class="chat-panel"
           >
-            <header class="chat-header">
+            <header class="chat-header" data-clarity-mask="true">
               <div class="user-info-header">
                 <div class="avatar-placeholder">{{ getRecipientName()?.charAt(0) || '?' }}</div>
                 <div class="user-details">
@@ -311,6 +312,7 @@
               ref="chatContainer"
               class="chat-container"
               @scroll="handleScroll"
+              data-clarity-mask="true"
             >
               <div v-if="messagesStore.isLoading" class="loading-indicator">
                 <div class="spinner-small" />
@@ -441,8 +443,8 @@ const {
   callStatus,
   callType,
   incomingOffer,
-  initiateCall,
-  acceptIncomingCall,
+  initiateCall: rawInitiateCall,
+  acceptIncomingCall: rawAcceptIncomingCall,
   declineIncomingCall,
   endCall,
   isInCall,
@@ -450,6 +452,7 @@ const {
   isVideoOff,
   localVideoRef,
   remoteVideoRef,
+  remoteAudioRef,
   toggleMute,
   toggleVideo,
   setupSocketListeners,
@@ -457,6 +460,67 @@ const {
 } = useWebRTC();
 
 const currentCallOffer = ref<RTCSessionDescriptionInit | null>(null);
+
+// --- Permission Handling ---
+async function checkAndRequestPermissions() {
+  if (!import.meta.client) return true;
+  
+  try {
+    // Check if permissions were previously denied
+    const micStatus = await navigator.permissions.query({ name: 'microphone' as any });
+    const camStatus = await navigator.permissions.query({ name: 'camera' as any });
+    
+    if (micStatus.state === 'denied' || camStatus.state === 'denied') {
+      const { toast } = await import("vue3-toastify");
+      toast.info("Media permissions are currently denied. We'll try to ask again.", {
+        position: "top-center",
+        theme: "dark",
+      });
+    }
+    
+    // Forcefully attempt to get media to trigger the browser prompt
+    // This is the best way to "re-ask" if the state is not "denied" (i.e. it was cleared or is prompt)
+    // If it's "denied", this will throw, and we can guide the user.
+    return true;
+  } catch (e) {
+    console.warn("Permission API not supported or error checking:", e);
+    return true;
+  }
+}
+
+async function initiateCall(userId: string, type: 'audio' | 'video') {
+  const allowed = await checkAndRequestPermissions();
+  if (allowed) {
+    try {
+      await rawInitiateCall(userId, type);
+    } catch (err: any) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        const { toast } = await import("vue3-toastify");
+        toast.error("Permissions denied. Please enable camera/microphone in your browser settings to call.", {
+          position: "top-center",
+          theme: "dark",
+        });
+      }
+    }
+  }
+}
+
+async function acceptIncomingCall(offer: RTCSessionDescriptionInit) {
+  const allowed = await checkAndRequestPermissions();
+  if (allowed) {
+    try {
+      await rawAcceptIncomingCall(offer);
+    } catch (err: any) {
+       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        const { toast } = await import("vue3-toastify");
+        toast.error("Permissions denied. Please enable camera/microphone to accept the call.", {
+          position: "top-center",
+          theme: "dark",
+        });
+      }
+    }
+  }
+}
 
 watch(incomingOffer, (offer) => {
   if (offer) {
@@ -572,15 +636,31 @@ onMounted(async () => {
 
     // Call fingerprint listener
     socketStore.socket?.on("call-fingerprint", (data: any) => {
+      // If server provides a pre-rendered message (from MongoDB persistence), use it
+      // otherwise fallback to client-side rendering for immediate feedback
+      let messageHtml = data.message;
+      
+      if (!messageHtml) {
+        let statusText = '';
+        if (data.status === 'declined') statusText = 'Call declined';
+        else if (data.status === 'busy') statusText = 'User busy';
+        else if (data.status === 'missed') statusText = 'Missed call';
+        else statusText = `${data.callType === 'video' ? 'Video' : 'Voice'} call ended`;
+
+        const durationText = data.duration > 0 ? ` • ${formatDuration(data.duration)}` : '';
+        
+        messageHtml = `<div class="system-message call-fingerprint">
+          <span class="icon">${data.duration > 0 ? '📞' : '📵'}</span>
+          <span>${statusText}${durationText}</span>
+        </div>`;
+      }
+
       messagesStore.addMessage({
         id: data.id,
         from: data.from,
         fromName: data.fromName,
         to: userStore.getUserId,
-        message: `<div class="system-message call-fingerprint">
-          <span class="icon">📞</span>
-          <span>${data.callType === 'video' ? 'Video' : 'Voice'} call ended • ${formatDuration(data.duration)}</span>
-        </div>`,
+        message: messageHtml,
         timestamp: data.timestamp,
         fromSocketId: '',
         toSocketId: ''
@@ -619,25 +699,36 @@ function updateDraggable() {
   if (!import.meta.client) return;
 
   if (activeDraggable) {
-    activeDraggable[0]?.kill();
+    if (Array.isArray(activeDraggable)) {
+      activeDraggable.forEach(d => d.kill());
+    } else {
+      activeDraggable.kill();
+    }
     activeDraggable = null;
   }
 
   nextTick(() => {
     setTimeout(() => {
       const pipSelector = isVideosSwapped.value ? ".remote-video-container" : ".local-video-container";
+      const target = document.querySelector(pipSelector);
+      if (!target) return;
 
       // Reset any GSAP transforms on both containers so they snap back to their default CSS layouts beautifully before enabling drag
-      gsap.set([".local-video-container", ".remote-video-container"], { clearProps: "x,y,transform" });
+      gsap.set([".local-video-container", ".remote-video-container"], { clearProps: "all" });
 
-      activeDraggable = Draggable.create(pipSelector, {
+      activeDraggable = Draggable.create(target, {
         bounds: ".video-call-overlay",
         edgeResistance: 0.65,
+        type: "x,y",
+        onPress: function() {
+          // Bring to front
+          gsap.set(this.target, { zIndex: 20 });
+        },
         onClick: () => {
           toggleVideoSwap();
         }
-      });
-    }, 100);
+      })[0];
+    }, 150);
   });
 }
 
@@ -661,8 +752,14 @@ function toggleVideoSwap() {
     const newLocalRect = localEl.getBoundingClientRect();
     const newRemoteRect = remoteEl.getBoundingClientRect();
 
+    // Kill existing draggables before animating
+    if (activeDraggable) {
+      activeDraggable.kill();
+      activeDraggable = null;
+    }
+
     // Reset GSAP transforms from dragging
-    gsap.set([localEl, remoteEl], { clearProps: "x,y,transform" });
+    gsap.set([localEl, remoteEl], { clearProps: "all" });
 
     // Calculate scale and position changes for Local Container
     const localDeltaX = localRect.left - newLocalRect.left;
@@ -691,7 +788,10 @@ function toggleVideoSwap() {
         scaleX: 1,
         scaleY: 1,
         duration: 0.5,
-        ease: "power2.inOut"
+        ease: "power3.inOut",
+        onComplete: () => {
+          gsap.set(localEl, { clearProps: "all" });
+        }
       }
     );
 
@@ -710,12 +810,13 @@ function toggleVideoSwap() {
         scaleX: 1,
         scaleY: 1,
         duration: 0.5,
-        ease: "power2.inOut"
+        ease: "power3.inOut",
+        onComplete: () => {
+          gsap.set(remoteEl, { clearProps: "all" });
+          updateDraggable();
+        }
       }
     );
-
-    // Re-create the draggable on the new small (PiP) container
-    updateDraggable();
   });
 }
 

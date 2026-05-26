@@ -1,6 +1,6 @@
 <template>
   <div class="chat-input-wrapper">
-    <div class="input-container">
+    <div class="input-container" data-clarity-mask="true">
       <TiptapBubbleMenu
         v-if="editor"
         :editor="editor"

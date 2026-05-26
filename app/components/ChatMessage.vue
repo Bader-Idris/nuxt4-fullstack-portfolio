@@ -5,6 +5,7 @@
       isOwn ? 'sent' : 'received',
       { 'with-tail': hasTail }
     ]"
+    data-clarity-mask="true"
   >
     <div v-if="!isOwn" class="sender-name">{{ senderName }}</div>
     <div class="message-body" @click="handleSpoilerClick">

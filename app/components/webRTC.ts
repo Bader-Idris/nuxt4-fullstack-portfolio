@@ -177,23 +177,48 @@ export function useWebRTC() {
           if (!callStartTime.value) callStartTime.value = Date.now();
           break;
         case "disconnected":
+          // Automatic Reconnection Attempt (ICE Restart)
+          console.warn("WebRTC disconnected, attempting ICE restart...");
+          attemptIceRestart(userId);
+          
           setTimeout(() => {
             if (
               peerConnection.connectionState === "disconnected" &&
               callStatus.value !== "ended"
             ) {
-              endCall();
+              endCall("missed"); // If it stays disconnected, mark as missed/failed
             }
-          }, 5000);
+          }, 10000); // Wait longer for recovery
           break;
         case "failed":
+          console.error("WebRTC connection failed, attempting recovery...");
+          attemptIceRestart(userId);
+          break;
         case "closed":
-          endCall();
+          if (callStatus.value !== "ended") endCall();
           break;
       }
     };
 
     return peerConnection;
+  };
+
+  const attemptIceRestart = async (userId: string) => {
+    const pc = peerConnections.value.get(userId);
+    if (!pc || pc.signalingState === "closed") return;
+
+    try {
+      const offer = await pc.createOffer({ iceRestart: true });
+      await pc.setLocalDescription(offer);
+      socketStore.socket?.emit("call-offer", {
+        to: userId,
+        offer,
+        callType: callType.value,
+        isRestart: true
+      });
+    } catch (e) {
+      console.error("Failed to initiate ICE restart:", e);
+    }
   };
 
   // Helper for media constraints with echo cancellation
@@ -297,7 +322,28 @@ export function useWebRTC() {
     fromName: string;
     offer: RTCSessionDescriptionInit;
     callType?: "audio" | "video";
+    isRestart?: boolean;
   }) => {
+    // Robustness: Allow renegotiation/restarts from the current partner
+    if (isInCall.value && data.from === currentCallPartner.value) {
+      const pc = peerConnections.value.get(data.from);
+      if (pc) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socketStore.socket?.emit("call-answer", {
+            to: data.from,
+            answer,
+            callType: callType.value
+          });
+          return;
+        } catch (e) {
+          console.error("Renegotiation failed:", e);
+        }
+      }
+    }
+
     if (isInCall.value || callStatus.value === "ringing") {
       socketStore.socket?.emit("call-declined", { to: data.from, reason: "busy" });
       return;
@@ -382,7 +428,7 @@ export function useWebRTC() {
     if (currentCallPartner.value) {
       socketStore.socket?.emit("call-declined", { to: currentCallPartner.value, reason: "declined" });
     }
-    endCall();
+    endCall("declined");
   };
 
   // Handle call answer
@@ -402,7 +448,7 @@ export function useWebRTC() {
       }
     } catch (error) {
       console.error("Error handling call answer:", error);
-      endCall();
+      endCall("failed");
     }
   };
 
@@ -425,7 +471,7 @@ export function useWebRTC() {
           });
         });
       }
-      endCall();
+      endCall(data.reason); // Pass "declined" or "busy"
     }
   };
 
@@ -434,27 +480,44 @@ export function useWebRTC() {
   };
 
   // End call
-  const endCall = () => {
+  const endCall = (reason: string = "ended") => {
     let duration = 0;
-    if (callStartTime.value && callStatus.value === "connected") {
+    const wasConnected = callStatus.value === "connected";
+    const wasInCall = isInCall.value || callStatus.value === "calling" || callStatus.value === "ringing";
+
+    if (callStartTime.value && wasConnected) {
       duration = Math.floor((Date.now() - callStartTime.value) / 1000);
     }
 
+    const previousPartner = currentCallPartner.value;
+    const previousType = callType.value;
+
+    // Immediately update status to prevent further logic triggers
     callStatus.value = "ended";
     isInCall.value = false;
 
-    peerConnections.value.forEach(pc => pc.close());
+    // Close connections immediately
+    peerConnections.value.forEach(pc => {
+      pc.onconnectionstatechange = null;
+      pc.onicecandidate = null;
+      pc.ontrack = null;
+      pc.close();
+    });
     peerConnections.value.clear();
     answeredCalls.value.clear();
     cleanupMedia();
 
-    if (currentCallPartner.value && socketStore.socket) {
-      socketStore.socket.emit("call-ended", { to: currentCallPartner.value });
-      if (duration > 0) {
+    if (previousPartner && socketStore.socket) {
+      // Notify the other peer
+      socketStore.socket.emit("call-ended", { to: previousPartner });
+      
+      // Emit footprint for persistence
+      if (wasInCall) {
         socketStore.socket.emit("call-fingerprint", {
-          to: currentCallPartner.value,
-          duration,
-          callType: callType.value
+          to: previousPartner,
+          duration: wasConnected ? duration : 0,
+          callType: previousType,
+          status: reason === "ended" ? (wasConnected ? "completed" : "cancelled") : reason
         });
       }
     }
@@ -472,6 +535,14 @@ export function useWebRTC() {
     socketStore.socket.on("ice-candidate", handleIceCandidate);
     socketStore.socket.on("call-declined", handleCallDeclined);
     socketStore.socket.on("call-ended", handleCallEnded);
+    
+    // Auto-reconnect/Robustness: Watch for socket reconnection
+    socketStore.socket.on("connect", () => {
+      if (isInCall.value && currentCallPartner.value) {
+        console.log("Socket reconnected during call, attempting to maintain connection...");
+        // In a real robust implementation, we might trigger ICE restart here
+      }
+    });
   };
 
   const removeSocketListeners = () => {

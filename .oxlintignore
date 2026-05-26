@@ -4,4 +4,9 @@
 dist/
 dist-electron/
 public/assets/three/
+public/assets/three/draco/
+**/draco_decoder.js
+**/draco_wasm_wrapper.js
+**/draco_decoder.wasm
+**/draco_encoder.wasm
 node_modules/

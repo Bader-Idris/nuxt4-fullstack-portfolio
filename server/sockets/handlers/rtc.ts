@@ -154,17 +154,52 @@ export const registerRTCHandlers = (
   });
 
   socket.on("call-fingerprint", async (data) => {
-    const { to, duration, callType } = data;
+    const { to, duration, callType, status } = data;
     const id = `fp-${Date.now()}`;
     const timestamp = new Date();
 
-    io.to(`user-${to}`).emit("call-fingerprint", {
-      from: user.userId,
-      fromName: user.name,
-      duration,
-      callType,
-      timestamp,
-      id,
-    });
+    // Persist call fingerprint to MongoDB as a system message
+    try {
+      const { Message } = await import("../../models/mongo/Message");
+      
+      let statusText = "";
+      if (status === "declined") statusText = "Call declined";
+      else if (status === "busy") statusText = "User busy";
+      else if (status === "missed") statusText = "Missed call";
+      else statusText = `${callType === "video" ? "Video" : "Voice"} call ended`;
+
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+      const durationText = duration > 0 ? ` • ${mins > 0 ? `${mins}m ${secs}s` : `${secs}s`}` : "";
+
+      const fingerprintHtml = `<div class="system-message call-fingerprint">
+        <span class="icon">${duration > 0 ? "📞" : "📵"}</span>
+        <span>${statusText}${durationText}</span>
+      </div>`;
+
+      const newMessage = new Message({
+        from: user.userId,
+        to,
+        message: fingerprintHtml,
+        timestamp,
+      });
+      await newMessage.save();
+
+      // Broadcast to both participants if online
+      const fingerprintData = {
+        from: user.userId,
+        fromName: user.name,
+        duration,
+        callType,
+        status,
+        timestamp,
+        id: newMessage._id.toString(),
+        message: fingerprintHtml // Include HTML for immediate rendering
+      };
+
+      io.to(`user-${to}`).to(`user-${user.userId}`).emit("call-fingerprint", fingerprintData);
+    } catch (error) {
+      console.error("Error saving call fingerprint:", error);
+    }
   });
 };

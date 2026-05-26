@@ -762,6 +762,7 @@ export default defineNuxtConfig({
         partytown: true,
         trigger: "onNuxtReady",
         proxy: false,
+        privacy: 'default', // Anonymize IP, language, and hardware fingerprints
       },
       // metaPixel: {
       //   id: process.env.META_PIXEL_ID,
