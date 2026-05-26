@@ -1,5 +1,5 @@
 <template>
-  <div class="blog-post-page" dir="auto">
+  <div ref="blogPostContainer" class="blog-post-page" dir="auto">
     <div v-if="pending" class="loader-container">
       <CustomLoader />
     </div>
@@ -24,10 +24,14 @@
         </div>
       </footer>
     </article>
+    <ScrollToTop :target="blogPostContainer" />
   </div>
 </template>
 
 <script setup lang="ts">
+const blogPostContainer = ref<HTMLElement | null>(null);
+useMiddleClickScroll(blogPostContainer);
+
 const route = useRoute();
 const { t, locale } = useI18n();
 const config = useRuntimeConfig();

@@ -102,7 +102,8 @@
     "vue": "3.5.34",
     "vue-router": "5.0.7",
     "vue3-toastify": "^0.2.9",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@capacitor-community/app-icon": "^7.0.0",

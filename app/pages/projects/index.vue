@@ -1,5 +1,5 @@
 <template>
-  <div class="projects">
+  <div ref="projectsContainer" class="projects">
     <NavbarProjects @toggle-sidebar="toggleSidebar" />
     <aside :style="{ display: sidebarDisplay }">
       <ProjectsSidebar
@@ -10,11 +10,15 @@
       <SelectedTabs :active-items="activeItems" @remove-item="removeItem" />
     </aside>
     <FilteredProjects :active-items="activeItems" />
+    <ScrollToTop :target="projectsContainer" />
   </div>
 </template>
 
 <script setup lang="ts">
 import projects from "~/apis/projects_info.json";
+
+const projectsContainer = ref<HTMLElement | null>(null);
+useMiddleClickScroll(projectsContainer);
 
 // const img = useImage()
 const { t } = useI18n();

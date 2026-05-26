@@ -16,14 +16,10 @@ export default defineEventHandler(async (event) => {
     event.path.startsWith(route),
   );
 
-  // Only run authentication logic for protected routes
-  if (!isProtectedRoute) {
-    return;
-  }
-
   const accessToken = getCookie(event, "accessToken");
   const refreshTokenJWT = getCookie(event, "refreshToken");
 
+  // Attempt to authenticate using access token
   if (accessToken) {
     try {
       const payload = isTokenValid(accessToken);
@@ -32,19 +28,25 @@ export default defineEventHandler(async (event) => {
         return;
       }
     } catch (error) {
-      // Access token is invalid or expired, proceed to refresh token logic
+      // Access token is invalid or expired
       console.log("Access Token invalid, attempting refresh...");
     }
   }
 
+  // If no access token or it's invalid, and it's NOT a protected route, 
+  // we can skip refresh logic to save resources, but if there's a refresh token, we might want to refresh anyway
   if (!refreshTokenJWT) {
-    return; // No refresh token, user is unauthenticated
+    if (isProtectedRoute) {
+      // For protected routes, we could throw here, but we'll let the endpoint handle it or just leave context.user undefined
+      // Actually, standard behavior is to leave it undefined and let checkPermissions handle it.
+    }
+    return;
   }
 
   try {
     const payload = isTokenValid(refreshTokenJWT);
     if (!payload || !payload.user || !payload.refreshToken) {
-      return; // Invalid refresh token payload
+      return;
     }
 
     const existingToken = await Token.findOne({
@@ -53,7 +55,7 @@ export default defineEventHandler(async (event) => {
     });
 
     if (!existingToken || !existingToken.isValid) {
-      return; // Refresh token not found in DB or is invalidated
+      return;
     }
 
     // Issue new tokens
@@ -61,7 +63,6 @@ export default defineEventHandler(async (event) => {
     event.context.user = payload.user;
     console.log("Token refreshed successfully");
   } catch (error) {
-    // Refresh token is invalid or expired
     console.log("Refresh token invalid.");
     return;
   }

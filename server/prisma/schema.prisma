@@ -20,20 +20,22 @@ model User {
   id    Int     @id @default(autoincrement())
   email String  @unique
   name  String?
+  role  String  @default("user")
   posts Post[]
 
   @@map("users")
 }
 
 model Post {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   title     String
+  slug      String?  @unique
   content   String?
-  published Boolean @default(false)
+  published Boolean  @default(false)
   viewCount Int      @default(0)
-  author    User    @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
 
   @@map("posts")

@@ -70,6 +70,16 @@ ul {
   }
 }
 
+/* Autoscroll styles */
+.is-autoscrolling {
+  cursor: all-scroll !important;
+  user-select: none;
+}
+
+.middle-click-scroll-indicator {
+  cursor: all-scroll !important;
+}
+
 /* custom selection */
 ::selection {
   color: $primary1;

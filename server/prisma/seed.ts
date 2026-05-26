@@ -5,12 +5,13 @@ const userData = [
   {
     name: "Bader",
     email: "contact@baderidris.com",
+    role: "admin",
     posts: {
       create: [
         {
           title: "Join the Portfolio Discord",
-          // not applied yet! 😃
-          content: "https://baderidris.com/blog/join-the-portfolio-discord",
+          slug: "join-the-portfolio-discord",
+          content: "Welcome to our community! Join us on Discord to discuss development and more.",
           published: true,
         },
       ],
@@ -19,11 +20,13 @@ const userData = [
   {
     name: "Wife", // I have to marry her first 😉
     email: "info@baderidris.com",
+    role: "editor",
     posts: {
       create: [
         {
           title: "Follow Portfolio on Twitter",
-          content: "https://www.twitter.com/bader_idri8628",
+          slug: "follow-portfolio-on-twitter",
+          content: "Stay updated with the latest news by following us on Twitter.",
           published: true,
           viewCount: 42,
         },
@@ -33,19 +36,21 @@ const userData = [
   {
     name: "Mahmoud",
     email: "mahmoud@baderidris.com",
+    role: "user",
     posts: {
       create: [
         {
           title: "Ask a question about Portfolio on GitHub",
-          content:
-            "https://github.com/Bader-Idris/nuxt4-fullstack-portfolio/discussions",
+          slug: "ask-on-github",
+          content: "Have a question? Open a discussion on our GitHub repository.",
           published: true,
           viewCount: 128,
         },
         {
           title: "Portfolio on YouTube",
-          // not applied yet!
-          content: "https://www.youtube.com/@not-applied-yet",
+          slug: "portfolio-on-youtube",
+          content: "Check out our video tutorials and showcases on YouTube.",
+          published: false, // Unpublished example
         },
       ],
     },
@@ -53,6 +58,9 @@ const userData = [
 ];
 async function main() {
   console.log(`Start seeding ...`);
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
   for (const u of userData) {
     const user = await prisma.user.create({
       data: u,

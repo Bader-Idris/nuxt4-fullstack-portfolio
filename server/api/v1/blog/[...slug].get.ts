@@ -1,29 +1,98 @@
-import fs from 'node:fs';
-import path from 'node:path';
-// stupid ai, use dbs here: hhh
+import { prisma } from "@server/plugins/prisma";
+import { z } from "zod";
+
+const slugSchema = z.string().min(1).max(255).regex(/^[a-z0-9-/]+$/, "Invalid slug format");
+
 export default defineEventHandler(async (event) => {
   const slugParams = getRouterParam(event, 'slug');
-  const slug = Array.isArray(slugParams) ? slugParams.join('/') : slugParams;
-  const locale = getHeader(event, 'x-locale') || 'en';
+  const rawSlug = Array.isArray(slugParams) ? slugParams.join('/') : slugParams;
   
-  // Base directory for content - using the project's content structure
-  const contentDir = path.join(process.cwd(), 'app/content', locale);
-  const filePath = path.join(contentDir, `${slug}.md`);
+  if (!prisma) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Database connection not initialized",
+    });
+  }
+
+  // Validate slug
+  const validation = slugSchema.safeParse(rawSlug);
+  if (!validation.success) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: validation.error.issues[0].message,
+    });
+  }
+  const slug = validation.data;
 
   try {
-    if (!fs.existsSync(filePath)) {
-      // Fallback to default locale if not found in requested locale
-      const fallbackPath = path.join(process.cwd(), 'app/content/en', `${slug}.md`);
-      if (!fs.existsSync(fallbackPath)) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: `Post not found: ${slug}`,
-        });
+    const post = await prisma.post.findUnique({
+      where: { slug },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          }
+        }
       }
-      return await readAndParseFile(fallbackPath, slug);
+    });
+
+    if (!post) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: `Post not found: ${slug}`,
+      });
     }
 
-    return await readAndParseFile(filePath, slug);
+    // Authorization check
+    const user = event.context.user; // Populated by auth middleware
+    const isAdmin = user?.role === 'admin';
+    const isEditor = user?.role === 'editor';
+    const isAuthor = user && post.authorId === Number(user.userId);
+    
+    // Professionals: admin, editor, or author can see unpublished
+    const isAuthorized = isAdmin || isEditor || isAuthor;
+
+    if (!post.published && !isAuthorized) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'You are not authorized to view this unpublished post',
+      });
+    }
+
+    // Professional touch: track views asynchronously
+    if (post.published) {
+      prisma.post.update({
+        where: { id: post.id },
+        data: { viewCount: { increment: 1 } }
+      }).catch(err => console.error('[blog API] Failed to increment view count:', err));
+    }
+
+    return {
+      success: true,
+      data: {
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+        content: post.content,
+        published: post.published,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+        viewCount: post.viewCount,
+        metadata: {
+          author: post.author.name || post.author.email,
+          role: post.author.role,
+          isAuthor: isAuthor || false,
+        },
+        author: {
+          id: post.author.id,
+          name: post.author.name,
+          role: post.author.role,
+        }
+      }
+    };
   } catch (e: any) {
     console.error(`[blog API] Error fetching ${slug}:`, e.message);
     throw createError({
@@ -32,38 +101,3 @@ export default defineEventHandler(async (event) => {
     });
   }
 });
-
-async function readAndParseFile(filePath: string, slug: string) {
-  const md = fs.readFileSync(filePath, 'utf-8');
-  
-  // Simple frontmatter parser
-  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---/;
-  const match = md.match(frontmatterRegex);
-  let metadata: Record<string, string> = {
-    title: slug,
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-    author: 'Bader Idris'
-  };
-  let content = md;
-  
-  if (match) {
-    const yaml = match[1];
-    content = md.replace(frontmatterRegex, '').trim();
-    yaml.split('\n').forEach(line => {
-      const colonIndex = line.indexOf(':');
-      if (colonIndex !== -1) {
-        const key = line.slice(0, colonIndex).trim();
-        const value = line.slice(colonIndex + 1).trim();
-        if (key && value) {
-          metadata[key] = value.replace(/^["'](.*)["']$/, '$1'); // Remove quotes
-        }
-      }
-    });
-  }
-  
-  return {
-    metadata,
-    content
-  };
-}

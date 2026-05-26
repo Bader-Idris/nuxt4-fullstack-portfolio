@@ -135,6 +135,7 @@ useSchemaOrg([
 ]);
 
 const bioContainer = ref<HTMLElement | null>(null);
+useMiddleClickScroll(bioContainer);
 
 // Tiptap Editor Setup
 const lowlight = createLowlight(all);
@@ -545,4 +546,4 @@ onBeforeMount(() => {
   border-radius: 10px;
   object-fit: contain;
 }
-</style>
+</style>/style>
