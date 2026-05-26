@@ -138,3 +138,5 @@ minimumReleaseAgeExclude:
   - '@oxlint/binding-win32-x64-msvc@1.67.0'
   - oxfmt@0.52.0
   - oxlint@1.67.0
+  - ioredis@5.11.0
+  - nodemailer@8.0.9
