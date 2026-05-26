@@ -151,7 +151,7 @@
         <div class="chat-video-area">
           <!-- Video Call UI (Overlay Layer) -->
           <Transition name="slide-up">
-            <div v-show="isInCall" class="video-call-overlay">
+            <div v-show="isInCall" class="video-call-overlay" :class="{ 'is-fullscreen': isFullscreen }">
               <div class="call-wrapper">
                 <header class="call-header">
                   <div class="call-partner-info">
@@ -163,28 +163,61 @@
                   </button>
                 </header>
 
-                <div v-show="!isCallMinimized" class="video-grid">
-                  <div class="remote-video-container">
-                    <video
-                      ref="remoteVideoRef"
-                      autoplay
-                      playsinline
-                      class="remote-video"
-                    />
-                    <div v-if="!remoteStream" class="connecting-overlay">
-                      <span>{{ $t('dashboard.call_connecting') }}</span>
-                      <div class="spinner" />
+                <div v-show="!isCallMinimized" class="video-grid" :class="{ 'audio-only-grid': callType === 'audio', 'videos-swapped': isVideosSwapped }">
+                  <template v-if="callType === 'video'">
+                    <div class="remote-video-container">
+                      <video
+                        ref="remoteVideoRef"
+                        autoplay
+                        playsinline
+                        class="remote-video"
+                      />
+                      <div v-if="!remoteStream" class="connecting-overlay">
+                        <span>{{ $t('dashboard.call_connecting') }}</span>
+                        <div class="spinner" />
+                      </div>
                     </div>
-                  </div>
-                  <div class="local-video-container">
-                    <video
-                      ref="localVideoRef"
-                      autoplay
-                      playsinline
-                      muted
-                      class="local-video"
-                    />
-                  </div>
+                    <div class="local-video-container">
+                      <video
+                        ref="localVideoRef"
+                        autoplay
+                        playsinline
+                        muted
+                        class="local-video"
+                      />
+                    </div>
+                  </template>
+                  <template v-else>
+                    <!-- Premium Audio Calling Layout -->
+                    <div class="audio-call-container">
+                      <div class="audio-avatar-wrapper">
+                        <div class="avatar-large-glow">
+                          {{ getUserName(currentCallPartner)?.charAt(0) || '?' }}
+                        </div>
+                        <div class="pulse-ring ring-1"></div>
+                        <div class="pulse-ring ring-2"></div>
+                        <div class="pulse-ring ring-3"></div>
+                      </div>
+                      <div class="audio-call-info">
+                        <h3>{{ getUserName(currentCallPartner) }}</h3>
+                        <p class="audio-status">
+                          <span v-if="callStatus === 'connecting' || !remoteStream">{{ $t('dashboard.call_connecting') }}</span>
+                          <span v-else-if="callStatus === 'ringing'">Ringing...</span>
+                          <span v-else-if="callStatus === 'connected'" class="voice-active">Voice Connected</span>
+                          <span v-else>{{ callStatus }}</span>
+                        </p>
+                      </div>
+                      
+                      <!-- Wave visualizer micro-animation -->
+                      <div class="audio-waves" :class="{ 'animating': callStatus === 'connected' }">
+                        <span class="bar bar-1"></span>
+                        <span class="bar bar-2"></span>
+                        <span class="bar bar-3"></span>
+                        <span class="bar bar-4"></span>
+                        <span class="bar bar-5"></span>
+                      </div>
+                    </div>
+                  </template>
                 </div>
 
                 <div class="call-controls" :class="{ 'minimized': isCallMinimized }">
@@ -196,12 +229,13 @@
                     <Icon
                       :name="
                         isMuted
-                          ? 'heroicons:microphone-slash'
+                          ? 'mdi-light:microphone-off'
                           : 'heroicons:microphone'
                       "
                     />
                   </button>
                   <button
+                    v-if="callType === 'video'"
                     class="control-btn"
                     :class="{ active: isVideoOff }"
                     @click="toggleVideo"
@@ -214,8 +248,41 @@
                       "
                     />
                   </button>
+
+                  <!-- Fullscreen Button -->
+                  <button
+                    class="control-btn fullscreen-btn"
+                    :class="{ active: isFullscreen }"
+                    @click="toggleFullscreen"
+                  >
+                    <Icon :name="isFullscreen ? 'material-symbols:fullscreen-exit' : 'material-symbols:fullscreen'" />
+                  </button>
+
                   <button class="control-btn end-call" @click="endCall">
                     <Icon name="heroicons:phone-x-mark" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+
+          <!-- Incoming Call Permission Custom Modal (Overlay) -->
+          <Transition name="fade">
+            <div v-if="callStatus === 'ringing' && !isInCall" class="incoming-call-modal">
+              <div class="modal-content">
+                <div class="avatar-large">
+                  {{ getUserName(currentCallPartner)?.charAt(0) || '?' }}
+                </div>
+                <h3>{{ callType === 'video' ? 'Incoming Video Call' : 'Incoming Audio Call' }}</h3>
+                <p>{{ getUserName(currentCallPartner) }} is calling you...</p>
+                <div class="modal-actions">
+                  <button class="accept-btn" @click="acceptIncomingCall(currentCallOffer!)">
+                    <Icon name="material-symbols:call" />
+                    Accept
+                  </button>
+                  <button class="decline-btn" @click="declineIncomingCall">
+                    <Icon name="heroicons:phone-x-mark" />
+                    Decline
                   </button>
                 </div>
               </div>
@@ -397,6 +464,34 @@ watch(incomingOffer, (offer) => {
   }
 });
 
+const isFullscreen = ref(false);
+
+function toggleFullscreen() {
+  isFullscreen.value = !isFullscreen.value;
+  if (!import.meta.client) return;
+
+  const container = document.querySelector(".video-call-overlay");
+  if (!container) return;
+
+  if (isFullscreen.value) {
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch((err) => {
+        console.warn("Failed to enter browser fullscreen:", err);
+      });
+    }
+  } else {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => {
+        console.warn("Failed to exit browser fullscreen:", err);
+      });
+    }
+  }
+}
+
+function onFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement;
+}
+
 const contextMenu = reactive({
   show: false,
   x: 0,
@@ -493,7 +588,16 @@ onMounted(async () => {
       nextTick(() => scrollToBottom());
     });
 
+    // Initialize folding heights
+    if (isStatusFolded.value && statusContentRef.value) {
+      gsap.set(statusContentRef.value, { height: 0, opacity: 0, overflow: "hidden" });
+    }
+    if (isSettingsFolded.value && settingsContentRef.value) {
+      gsap.set(settingsContentRef.value, { height: 0, opacity: 0, overflow: "hidden" });
+    }
+
     window.addEventListener('click', closeContextMenu);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
   } catch (err) {
     console.error("Error in dashboard mounted hook:", err);
   }
@@ -503,24 +607,122 @@ onUnmounted(() => {
   if (import.meta.client) {
     cleanup();
     window.removeEventListener('click', closeContextMenu);
+    document.removeEventListener("fullscreenchange", onFullscreenChange);
   }
 });
 
 // --- Watchers ---
+const isVideosSwapped = ref(false);
+let activeDraggable: any = null;
+
+function updateDraggable() {
+  if (!import.meta.client) return;
+
+  if (activeDraggable) {
+    activeDraggable[0]?.kill();
+    activeDraggable = null;
+  }
+
+  nextTick(() => {
+    setTimeout(() => {
+      const pipSelector = isVideosSwapped.value ? ".remote-video-container" : ".local-video-container";
+
+      // Reset any GSAP transforms on both containers so they snap back to their default CSS layouts beautifully before enabling drag
+      gsap.set([".local-video-container", ".remote-video-container"], { clearProps: "x,y,transform" });
+
+      activeDraggable = Draggable.create(pipSelector, {
+        bounds: ".video-call-overlay",
+        edgeResistance: 0.65,
+        onClick: () => {
+          toggleVideoSwap();
+        }
+      });
+    }, 100);
+  });
+}
+
+function toggleVideoSwap() {
+  if (!import.meta.client) return;
+
+  const localEl = document.querySelector(".local-video-container") as HTMLElement;
+  const remoteEl = document.querySelector(".remote-video-container") as HTMLElement;
+  if (!localEl || !remoteEl) return;
+
+  // 1. Get FIRST state (current bounding boxes)
+  const localRect = localEl.getBoundingClientRect();
+  const remoteRect = remoteEl.getBoundingClientRect();
+
+  // 2. Toggle LAST state (update reactive class variables)
+  isVideosSwapped.value = !isVideosSwapped.value;
+
+  // 3. Wait for DOM updates, then INVERT and PLAY
+  nextTick(() => {
+    // Get new bounding boxes
+    const newLocalRect = localEl.getBoundingClientRect();
+    const newRemoteRect = remoteEl.getBoundingClientRect();
+
+    // Reset GSAP transforms from dragging
+    gsap.set([localEl, remoteEl], { clearProps: "x,y,transform" });
+
+    // Calculate scale and position changes for Local Container
+    const localDeltaX = localRect.left - newLocalRect.left;
+    const localDeltaY = localRect.top - newLocalRect.top;
+    const localScaleX = localRect.width / newLocalRect.width;
+    const localScaleY = localRect.height / newLocalRect.height;
+
+    // Calculate scale and position changes for Remote Container
+    const remoteDeltaX = remoteRect.left - newRemoteRect.left;
+    const remoteDeltaY = remoteRect.top - newRemoteRect.top;
+    const remoteScaleX = remoteRect.width / newRemoteRect.width;
+    const remoteScaleY = remoteRect.height / newRemoteRect.height;
+
+    // Invert Local Container
+    gsap.fromTo(localEl, 
+      {
+        x: localDeltaX,
+        y: localDeltaY,
+        scaleX: localScaleX,
+        scaleY: localScaleY,
+        transformOrigin: "top left"
+      },
+      {
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 0.5,
+        ease: "power2.inOut"
+      }
+    );
+
+    // Invert Remote Container
+    gsap.fromTo(remoteEl, 
+      {
+        x: remoteDeltaX,
+        y: remoteDeltaY,
+        scaleX: remoteScaleX,
+        scaleY: remoteScaleY,
+        transformOrigin: "top left"
+      },
+      {
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 0.5,
+        ease: "power2.inOut"
+      }
+    );
+
+    // Re-create the draggable on the new small (PiP) container
+    updateDraggable();
+  });
+}
+
 watch(isInCall, (val) => {
   if (val && import.meta.client) {
-    nextTick(() => {
-      setTimeout(() => {
-        Draggable.create(".video-call-overlay", {
-          bounds: ".dashboard",
-          edgeResistance: 0.65,
-          type: "x,y",
-        });
-        Draggable.create(".local-video-container", {
-          bounds: ".video-call-overlay",
-        });
-      }, 200);
-    });
+    isVideosSwapped.value = false;
+    updateDraggable();
   }
 });
 
@@ -576,7 +778,14 @@ function onSendMessage(html: string) {
 function startChatWith(userId: string) {
   if (userStore.isGuest) return;
   if (isInCall.value) {
-    alert("You cannot start a new chat while in a call.");
+    if (import.meta.client) {
+      import("vue3-toastify").then(({ toast }) => {
+        toast.warning("You cannot start a new chat while in a call.", {
+          position: "top-center",
+          theme: "dark",
+        });
+      });
+    }
     return;
   }
   
@@ -719,6 +928,11 @@ function formatDuration(seconds: number) {
 
   &.is-folded {
     background: transparent;
+    .status-content {
+      border-top-color: transparent !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
   }
 
   .status-header {
@@ -1032,7 +1246,7 @@ function formatDuration(seconds: number) {
 
 .new-message-indicator {
   position: absolute;
-  bottom: 80px;
+  bottom: 120px;
   right: 20px;
   width: 40px;
   height: 40px;
@@ -1092,6 +1306,16 @@ function formatDuration(seconds: number) {
   align-items: center;
   backdrop-filter: blur(10px);
 
+  &.is-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    border-radius: 0 !important;
+  }
+
   .call-wrapper { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
   .call-header {
     padding: 15px 20px;
@@ -1112,6 +1336,46 @@ function formatDuration(seconds: number) {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+
+    &.videos-swapped {
+      .remote-video-container {
+        position: absolute !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 150px !important;
+        height: auto !important;
+        aspect-ratio: 16/9 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        z-index: 10 !important;
+        
+        .remote-video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          border-radius: 0 !important;
+        }
+      }
+      
+      .local-video-container {
+        position: static !important;
+        bottom: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: 100% !important;
+        aspect-ratio: auto !important;
+        border-radius: 0 !important;
+        border: none !important;
+        z-index: 1 !important;
+        
+        .local-video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+        }
+      }
+    }
   }
   .remote-video-container {
     width: 100%;
@@ -1215,6 +1479,13 @@ function formatDuration(seconds: number) {
   border-top: 1px solid var(--lines-color);
   padding-top: 15px;
 
+  &.is-folded {
+    .settings-content {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+  }
+
   .settings-header {
     cursor: pointer;
     margin-bottom: 10px;
@@ -1313,4 +1584,123 @@ function formatDuration(seconds: number) {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Premium Audio Calling Visuals */
+.audio-only-grid {
+  background: radial-gradient(circle at center, #1b1c2b 0%, #0a0b12 100%) !important;
+}
+
+.audio-call-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  height: 100%;
+  width: 100%;
+  color: white;
+
+  .audio-avatar-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .avatar-large-glow {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--gradient-start);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+      z-index: 2;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      animation: audioPulse 3s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+      z-index: 1;
+      opacity: 0;
+
+      &.ring-2 {
+        animation-delay: 1s;
+      }
+      &.ring-3 {
+        animation-delay: 2s;
+      }
+    }
+  }
+
+  .audio-call-info {
+    text-align: center;
+    h3 {
+      font-size: 1.6rem;
+      margin: 0 0 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .audio-status {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0;
+      
+      .voice-active {
+        color: #4caf50;
+        font-weight: 500;
+        text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+      }
+    }
+  }
+
+  .audio-waves {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 40px;
+    margin-top: 10px;
+
+    .bar {
+      width: 4px;
+      background: var(--accent-primary);
+      border-radius: 2px;
+      height: 6px;
+      transition: height 0.25s ease;
+    }
+
+    &.animating {
+      .bar-1 { animation: wave 1.2s ease-in-out infinite; }
+      .bar-2 { animation: wave 0.9s ease-in-out infinite 0.2s; }
+      .bar-3 { animation: wave 1.4s ease-in-out infinite 0.4s; }
+      .bar-4 { animation: wave 1.1s ease-in-out infinite 0.1s; }
+      .bar-5 { animation: wave 1.3s ease-in-out infinite 0.3s; }
+    }
+  }
+}
+
+@keyframes audioPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.3);
+    opacity: 0;
+  }
+}
+
+@keyframes wave {
+  0%, 100% { height: 6px; }
+  50% { height: 38px; }
+}
 </style>

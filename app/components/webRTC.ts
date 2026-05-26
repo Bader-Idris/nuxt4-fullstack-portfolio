@@ -22,6 +22,7 @@ export function useWebRTC() {
   // UI references
   const localVideoRef = ref<HTMLVideoElement | null>(null);
   const remoteVideoRef = ref<HTMLVideoElement | null>(null);
+  const remoteAudioRef = ref<HTMLAudioElement | null>(null);
   const isMuted = ref(false);
   const isVideoOff = ref(false);
   const isSpeakerOn = ref(true); // For mobile speaker control
@@ -67,14 +68,19 @@ export function useWebRTC() {
     if (remoteVideoRef.value && newStream) {
       remoteVideoRef.value.srcObject = newStream;
     }
+    if (remoteAudioRef.value && newStream) {
+      remoteAudioRef.value.srcObject = newStream;
+    }
   });
 
   // Toggle audio mute
   const toggleMute = () => {
+    isMuted.value = !isMuted.value;
     if (localStream.value) {
       const audioTracks = localStream.value.getAudioTracks();
-      audioTracks.forEach((track) => (track.enabled = !track.enabled));
-      isMuted.value = !audioTracks[0]?.enabled;
+      audioTracks.forEach((track) => {
+        track.enabled = !isMuted.value;
+      });
     }
   };
 
@@ -88,8 +94,10 @@ export function useWebRTC() {
     const existingVideoTracks = localStream.value?.getVideoTracks() || [];
     if (existingVideoTracks.length > 0) {
       // Toggle existing track
-      existingVideoTracks.forEach((track) => (track.enabled = !track.enabled));
-      isVideoOff.value = !existingVideoTracks[0]?.enabled;
+      isVideoOff.value = !isVideoOff.value;
+      existingVideoTracks.forEach((track) => {
+        track.enabled = !isVideoOff.value;
+      });
     } else {
       // Switch from audio to video (renegotiation) or start video if off
       try {
@@ -124,7 +132,14 @@ export function useWebRTC() {
         isVideoOff.value = false;
       } catch (error: any) {
         console.error("Failed to enable video during call:", error);
-        alert("Could not enable video. Please check your camera permissions.");
+        if (import.meta.client) {
+          import("vue3-toastify").then(({ toast }) => {
+            toast.error("Could not enable video. Please check your camera permissions.", {
+              position: "top-center",
+              theme: "dark",
+            });
+          });
+        }
       }
     }
   };
@@ -184,9 +199,9 @@ export function useWebRTC() {
   // Helper for media constraints with echo cancellation
   const getMediaConstraints = (type: "audio" | "video", hasAudio: boolean, hasVideo: boolean): MediaStreamConstraints => {
     const audioConstraints = hasAudio ? {
-      echoCancellation: { ideal: true },
-      noiseSuppression: { ideal: true },
-      autoGainControl: { ideal: true },
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
     } : false;
 
     return {
@@ -218,9 +233,9 @@ export function useWebRTC() {
       // Even if no hardware, we still allow starting the call (receiving only)
       let constraints: MediaStreamConstraints = {
         audio: hasAudio ? {
-          echoCancellation: { ideal: true },
-          noiseSuppression: { ideal: true },
-          autoGainControl: { ideal: true },
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         } : false,
         video: (type === "video" && hasVideo) ? {
           facingMode: "user",
@@ -283,7 +298,7 @@ export function useWebRTC() {
     offer: RTCSessionDescriptionInit;
     callType?: "audio" | "video";
   }) => {
-    if (isInCall.value) {
+    if (isInCall.value || callStatus.value === "ringing") {
       socketStore.socket?.emit("call-declined", { to: data.from, reason: "busy" });
       return;
     }
@@ -292,7 +307,8 @@ export function useWebRTC() {
     currentCallPartner.value = data.from;
     callType.value = data.callType || "video";
     callStatus.value = "ringing";
-    isInCall.value = true;
+    incomingOffer.value = data.offer;
+    isInCall.value = false;
 
     // The actual "Accept" will be called from the custom UI calling acceptIncomingCall()
   };
@@ -301,6 +317,7 @@ export function useWebRTC() {
     if (!currentCallPartner.value) return;
     
     try {
+      isInCall.value = true;
       const devices = await navigator.mediaDevices.enumerateDevices();
       const hasAudio = devices.some(d => d.kind === "audioinput");
       const hasVideo = devices.some(d => d.kind === "videoinput");
@@ -399,7 +416,15 @@ export function useWebRTC() {
 
   const handleCallDeclined = (data: { from: string; fromName: string; reason: string }) => {
     if (currentCallPartner.value === data.from) {
-      alert(`Call declined: ${data.reason}`);
+      if (import.meta.client) {
+        import("vue3-toastify").then(({ toast }) => {
+          toast.warning(`Call declined: ${data.reason === 'busy' ? 'User is busy' : 'User declined the call'}`, {
+            position: "top-center",
+            theme: "dark",
+            autoClose: 5000,
+          });
+        });
+      }
       endCall();
     }
   };
@@ -476,6 +501,7 @@ export function useWebRTC() {
     incomingOffer,
     localVideoRef,
     remoteVideoRef,
+    remoteAudioRef,
     isMuted,
     isVideoOff,
     isSpeakerOn,

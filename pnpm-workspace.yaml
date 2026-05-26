@@ -95,3 +95,5 @@ minimumReleaseAgeExclude:
   - '@iconify-json/fluent@1.2.48'
   - '@iconify-json/material-symbols@1.2.74'
   - nodemailer@8.0.8
+  - '@vue/language-core@3.3.2'
+  - vue-tsc@3.3.2
