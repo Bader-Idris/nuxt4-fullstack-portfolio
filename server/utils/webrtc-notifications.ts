@@ -87,3 +87,91 @@ export async function notifyMissedCall(toUserId: string, fromName: string) {
     console.error("Error in notifyMissedCall:", error);
   }
 }
+
+export async function notifyIncomingCall(toUserId: string, fromName: string, callType: "audio" | "video") {
+  try {
+    const targetUser = await User.findById(toUserId);
+    if (!targetUser) return;
+
+    const originUrl = process.env.ORIGIN_URL || "https://baderidris.com";
+    const typeLabel = callType === "video" ? "Video Call" : "Voice Call";
+    
+    const payload = {
+      title: `Incoming ${typeLabel}`,
+      body: `${fromName} is calling you...`,
+      data: {
+        url: `${originUrl}/dashboard`,
+        action: "incoming_call",
+        fromName,
+        callType
+      }
+    };
+
+    // 1. Web Push
+    const webSubs = await PushSubscription.find({ userId: toUserId });
+    for (const sub of webSubs) {
+      try {
+        await webpush.sendNotification(
+          sub.subscription as any,
+          JSON.stringify({
+            notification: {
+              title: payload.title,
+              body: payload.body,
+              icon: "/favicon.ico",
+              click_action: payload.data.url,
+              tag: "incoming-call", // Grouping
+              renotify: true,
+              vibrate: [200, 100, 200, 100, 200, 100, 400],
+              actions: [
+                { action: "answer", title: "Answer" },
+                { action: "decline", title: "Decline" }
+              ]
+            }
+          })
+        );
+      } catch (e) {
+        console.error("WebPush failed for incoming call:", toUserId, e);
+      }
+    }
+
+    // 2. Mobile Push (FCM)
+    const capSubs = await CapacitorSubscription.find({ userId: toUserId });
+    for (const sub of capSubs) {
+      if (sub.platform === "android" || sub.platform === "ios") {
+        try {
+          await admin.messaging().send({
+            token: sub.token,
+            notification: {
+              title: payload.title,
+              body: payload.body,
+            },
+            data: {
+              url: payload.data.url,
+              action: "incoming_call"
+            },
+            android: {
+              priority: "high",
+              notification: {
+                sound: "default",
+                channelId: "calls"
+              }
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "default",
+                  category: "INCOMING_CALL"
+                }
+              }
+            }
+          });
+        } catch (e) {
+          console.error("FCM failed for incoming call:", toUserId, e);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error in notifyIncomingCall:", error);
+  }
+}
+

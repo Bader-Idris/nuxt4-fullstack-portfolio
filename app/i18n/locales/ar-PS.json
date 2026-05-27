@@ -153,6 +153,15 @@
     "user": "المستخدم",
     "enable_notifications": "تفعيل التنبيهات",
     "in_call_with": "في مكالمة مع",
-    "call_connecting": "جاري الاتصال..."
+    "call_connecting": "جاري الاتصال...",
+    "call_statuses": {
+      "ended_video": "انتهت مكالمة الفيديو",
+      "ended_audio": "انتهت المكالمة الصوتية",
+      "missed": "مكالمة لم يرد عليها",
+      "declined": "تم رفض المكالمة",
+      "busy": "المستخدم مشغول",
+      "cancelled": "تم إلغاء المكالمة",
+      "completed": "اكتملت المكالمة"
+    }
     }
     }

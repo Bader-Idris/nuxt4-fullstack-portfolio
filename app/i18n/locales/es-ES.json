@@ -153,6 +153,15 @@
   "user": "Usuario",
   "enable_notifications": "Habilitar notificaciones",
   "in_call_with": "En llamada con",
-  "call_connecting": "Conectando..."
+  "call_connecting": "Conectando...",
+  "call_statuses": {
+    "ended_video": "Llamada de video finalizada",
+    "ended_audio": "Llamada de voz finalizada",
+    "missed": "Llamada perdida",
+    "declined": "Llamada rechazada",
+    "busy": "Usuario ocupado",
+    "cancelled": "Llamada cancelada",
+    "completed": "Llamada completada"
+  }
   }
   }

@@ -760,9 +760,7 @@ export default defineNuxtConfig({
       clarity: {
         id: process.env.CLARITY_ID,
         partytown: true,
-        trigger: "onNuxtReady",
-        proxy: false,
-        privacy: 'default', // Anonymize IP, language, and hardware fingerprints
+        trigger: "manual", // Controlled manually in app.vue for privacy
       },
       // metaPixel: {
       //   id: process.env.META_PIXEL_ID,

@@ -250,6 +250,15 @@
                     />
                   </button>
 
+                  <!-- Camera Flip Button -->
+                  <button
+                    v-if="callType === 'video' && !isVideoOff"
+                    class="control-btn"
+                    @click="switchCamera"
+                  >
+                    <Icon name="mdi:camera-flip" />
+                  </button>
+
                   <!-- Fullscreen Button -->
                   <button
                     class="control-btn fullscreen-btn"
@@ -323,7 +332,17 @@
                   <span>{{ formatDateSeparator(msg.timestamp) }}</span>
                 </div>
                 
+                <!-- System Message / Call Fingerprint (Localized) -->
+                <div v-if="isCallFingerprint(msg.message)" class="system-message call-fingerprint">
+                  <span class="icon">{{ parseCallFingerprint(msg.message)?.duration > 0 ? '📞' : '📵' }}</span>
+                  <span>{{ getCallFingerprintText(msg.message) }}</span>
+                </div>
+
+                <!-- Backward Compatibility for older HTML fingerprints -->
+                <div v-else-if="msg.message.includes('system-message')" v-html="msg.message" style="display: contents;" />
+                
                 <ChatMessage
+                  v-else
                   :content="msg.message"
                   :sender-name="userStore.user?.settings?.showOldConversationTitles ? msg.fromName : ''"
                   :timestamp="formatTimestamp(msg.timestamp)"
@@ -417,6 +436,7 @@ const messagesStore = useMessagesStore();
 const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
 const localePath = useLocalePath();
+const { t } = useI18n();
 
 useSeoMeta({
   title: "Dashboard - Secure Chat & Video",
@@ -472,6 +492,7 @@ const {
   remoteAudioRef,
   toggleMute,
   toggleVideo,
+  switchCamera,
   setupSocketListeners,
   cleanup,
 } = useWebRTC();
@@ -620,6 +641,9 @@ onMounted(async () => {
     socketStore.initializeSocket();
     setupSocketListeners();
 
+    // Notify server that we are on dashboard
+    socketStore.socket?.emit("enter-page", "dashboard");
+
     // Fetch latest user info to get lastActiveChat
     try {
       const response = await $fetch<{ user: any }>("/api/v1/auth/me");
@@ -653,31 +677,14 @@ onMounted(async () => {
 
     // Call fingerprint listener
     socketStore.socket?.on("call-fingerprint", (data: any) => {
-      // If server provides a pre-rendered message (from MongoDB persistence), use it
-      // otherwise fallback to client-side rendering for immediate feedback
-      let messageHtml = data.message;
-      
-      if (!messageHtml) {
-        let statusText = '';
-        if (data.status === 'declined') statusText = 'Call declined';
-        else if (data.status === 'busy') statusText = 'User busy';
-        else if (data.status === 'missed') statusText = 'Missed call';
-        else statusText = `${data.callType === 'video' ? 'Video' : 'Voice'} call ended`;
-
-        const durationText = data.duration > 0 ? ` • ${formatDuration(data.duration)}` : '';
-        
-        messageHtml = `<div class="system-message call-fingerprint">
-          <span class="icon">${data.duration > 0 ? '📞' : '📵'}</span>
-          <span>${statusText}${durationText}</span>
-        </div>`;
-      }
-
+      // We now receive standardized messages like [CALL_FP]:{...}
+      // The template handles localized rendering automatically.
       messagesStore.addMessage({
         id: data.id,
         from: data.from,
         fromName: data.fromName,
         to: userStore.getUserId,
-        message: messageHtml,
+        message: data.message,
         timestamp: data.timestamp,
         fromSocketId: '',
         toSocketId: ''
@@ -702,6 +709,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (import.meta.client) {
+    // Notify server that we left dashboard
+    socketStore.socket?.emit("leave-page", "dashboard");
+
     cleanup();
     window.removeEventListener('click', closeContextMenu);
     document.removeEventListener("fullscreenchange", onFullscreenChange);
@@ -976,6 +986,35 @@ function deleteMessage(msg: any) {
 }
 
 // --- Helpers ---
+const isCallFingerprint = (message: string) => message.startsWith('[CALL_FP]:');
+
+const parseCallFingerprint = (message: string) => {
+  try {
+    return JSON.parse(message.replace('[CALL_FP]:', ''));
+  } catch (e) {
+    return null;
+  }
+};
+
+const getCallFingerprintText = (message: string) => {
+  const data = parseCallFingerprint(message);
+  if (!data) return message;
+
+  let statusKey = '';
+  if (data.status === 'declined') statusKey = 'declined';
+  else if (data.status === 'busy') statusKey = 'busy';
+  else if (data.status === 'missed') statusKey = 'missed';
+  else if (data.status === 'cancelled') statusKey = 'cancelled';
+  else if (data.status === 'completed') statusKey = 'completed';
+  else {
+    statusKey = data.callType === 'video' ? 'ended_video' : 'ended_audio';
+  }
+
+  const statusText = t(`dashboard.call_statuses.${statusKey}`);
+  const durationText = data.duration > 0 ? ` • ${formatDuration(data.duration)}` : '';
+  return `${statusText}${durationText}`;
+};
+
 const getUserName = (userId: string | null) => {
   if (!userId) return "Unknown";
   if (userId === userStore.getUserId) return userStore.getUsername || "You";

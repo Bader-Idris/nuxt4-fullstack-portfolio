@@ -14,7 +14,7 @@ import {
   InterServerEvents,
   SocketData,
 } from "../types";
-import { notifyMissedCall } from "../../utils/webrtc-notifications";
+import { notifyMissedCall, notifyIncomingCall } from "../../utils/webrtc-notifications";
 
 export const registerRTCHandlers = (
   io: Server<
@@ -46,16 +46,48 @@ export const registerRTCHandlers = (
         callType,
       });
 
+      // Check if user is on the dashboard
+      const targetSockets = await io.in(`user-${to}`).fetchSockets();
+      const isOnDashboard = targetSockets.some(s => s.rooms.has("page-dashboard"));
+
       io.to(`user-${to}`).emit("call-offer", {
         from: user.userId,
         fromName: user.name,
         offer,
         callType,
       });
+
+      // If online but not on dashboard, send a push notification
+      if (!isOnDashboard) {
+        await notifyIncomingCall(to, user.name, callType as any);
+      }
     } else {
-      // User is offline, send notification
+      // User is offline, send push notification and email
+      await notifyIncomingCall(to, user.name, callType as any);
       await notifyMissedCall(to, user.name);
-      socket.emit("error", { message: "User is offline. They have been notified." });
+      socket.emit("error", { message: "User is offline. They have been notified via push and email." });
+    }
+  });
+
+  socket.on("get-active-call", async (callback) => {
+    try {
+      const offer = await findOfferByUsers(undefined, user.userId);
+      if (offer && !offer.answer) {
+        const offerer = await User.findById(offer.offererUserId);
+        if (callback) {
+          callback({
+            from: offer.offererUserId,
+            fromName: offerer?.name || "Unknown",
+            offer: offer.offer,
+            callType: offer.callType
+          });
+        }
+      } else {
+        if (callback) callback(null);
+      }
+    } catch (e) {
+      console.error("Error in get-active-call:", e);
+      if (callback) callback(null);
     }
   });
 
@@ -155,32 +187,26 @@ export const registerRTCHandlers = (
 
   socket.on("call-fingerprint", async (data) => {
     const { to, duration, callType, status } = data;
-    const id = `fp-${Date.now()}`;
     const timestamp = new Date();
 
-    // Persist call fingerprint to MongoDB as a system message
+    // Persist call fingerprint to MongoDB as a standardized system message
     try {
       const { Message } = await import("../../models/mongo/Message");
       
-      let statusText = "";
-      if (status === "declined") statusText = "Call declined";
-      else if (status === "busy") statusText = "User busy";
-      else if (status === "missed") statusText = "Missed call";
-      else statusText = `${callType === "video" ? "Video" : "Voice"} call ended`;
-
-      const mins = Math.floor(duration / 60);
-      const secs = duration % 60;
-      const durationText = duration > 0 ? ` • ${mins > 0 ? `${mins}m ${secs}s` : `${secs}s`}` : "";
-
-      const fingerprintHtml = `<div class="system-message call-fingerprint">
-        <span class="icon">${duration > 0 ? "📞" : "📵"}</span>
-        <span>${statusText}${durationText}</span>
-      </div>`;
+      // Standardized format: [CALL_FP]:JSON_DATA
+      // This allows the client to detect system messages and apply i18n
+      const fingerprintPayload = JSON.stringify({
+        status,
+        callType,
+        duration,
+        timestamp
+      });
+      const standardizedMessage = `[CALL_FP]:${fingerprintPayload}`;
 
       const newMessage = new Message({
         from: user.userId,
         to,
-        message: fingerprintHtml,
+        message: standardizedMessage,
         timestamp,
       });
       await newMessage.save();
@@ -194,7 +220,7 @@ export const registerRTCHandlers = (
         status,
         timestamp,
         id: newMessage._id.toString(),
-        message: fingerprintHtml // Include HTML for immediate rendering
+        message: standardizedMessage
       };
 
       io.to(`user-${to}`).to(`user-${user.userId}`).emit("call-fingerprint", fingerprintData);

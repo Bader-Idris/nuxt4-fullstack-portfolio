@@ -20,6 +20,7 @@ export function useWebRTC() {
   const answeredCalls = ref(new Set<string>()); // Track which calls have received answers
   const callStartTime = ref<number | null>(null);
   const incomingOffer = ref<RTCSessionDescriptionInit | null>(null);
+  const facingMode = ref<"user" | "environment">("user");
 
   // Constants
   const CALL_TIMEOUT = 60000; // 60 seconds (Standard for big calling apps)
@@ -99,21 +100,38 @@ export function useWebRTC() {
       remoteStream.value.getTracks().forEach((track) => track.stop());
       remoteStream.value = null;
     }
+    facingMode.value = "user"; // Reset to default
   };
 
-  // Handle media stream changes to update video elements
+  // Handle media stream changes to update video elements with robust refresh
   watch(localStream, (newStream) => {
-    if (localVideoRef.value && newStream) {
-      localVideoRef.value.srcObject = newStream;
+    if (localVideoRef.value) {
+      if (newStream) {
+        // Force a fresh assignment to the video element
+        localVideoRef.value.srcObject = null;
+        localVideoRef.value.srcObject = newStream;
+        
+        // Ensure play is called as some browsers pause on srcObject change
+        localVideoRef.value.play().catch(e => {
+          if (e.name !== 'AbortError') console.warn("Local video play interrupted:", e);
+        });
+      } else {
+        localVideoRef.value.srcObject = null;
+      }
     }
-  });
+  }, { immediate: true });
 
   watch(remoteStream, (newStream) => {
-    if (remoteVideoRef.value && newStream) {
-      remoteVideoRef.value.srcObject = newStream;
+    if (remoteVideoRef.value) {
+      remoteVideoRef.value.srcObject = newStream || null;
+      if (newStream) {
+        remoteVideoRef.value.play().catch(e => {
+          if (e.name !== 'AbortError') console.warn("Remote video play interrupted:", e);
+        });
+      }
     }
-    if (remoteAudioRef.value && newStream) {
-      remoteAudioRef.value.srcObject = newStream;
+    if (remoteAudioRef.value) {
+      remoteAudioRef.value.srcObject = newStream || null;
     }
   });
 
@@ -147,7 +165,7 @@ export function useWebRTC() {
       try {
         const videoStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: "user",
+            facingMode: facingMode.value,
             width: { ideal: 1280 },
             height: { ideal: 720 }
           },
@@ -184,6 +202,57 @@ export function useWebRTC() {
             });
           });
         }
+      }
+    }
+  };
+
+  // Switch camera (front/back)
+  const switchCamera = async () => {
+    if (!localStream.value || !currentCallPartner.value) return;
+    
+    const pc = peerConnections.value.get(currentCallPartner.value);
+    if (!pc) return;
+
+    const newFacingMode = facingMode.value === "user" ? "environment" : "user";
+    
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: newFacingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      const oldVideoTracks = localStream.value.getVideoTracks();
+      
+      // Replace track on the peer connection sender
+      const senders = pc.getSenders();
+      const videoSender = senders.find(s => s.track?.kind === "video");
+      
+      if (videoSender) {
+        await videoSender.replaceTrack(newVideoTrack);
+      }
+      
+      // Update local stream
+      oldVideoTracks.forEach(track => {
+        track.stop();
+        localStream.value?.removeTrack(track);
+      });
+      
+      localStream.value.addTrack(newVideoTrack);
+      facingMode.value = newFacingMode;
+      
+    } catch (error: any) {
+      console.error("Failed to switch camera:", error);
+      if (import.meta.client) {
+        import("vue3-toastify").then(({ toast }) => {
+          toast.error("Could not switch camera.", {
+            position: "top-center",
+            theme: "dark",
+          });
+        });
       }
     }
   };
@@ -276,7 +345,7 @@ export function useWebRTC() {
     return {
       audio: audioConstraints,
       video: (type === "video" && hasVideo) ? {
-        facingMode: "user",
+        facingMode: facingMode.value,
         width: { ideal: 1280 },
         height: { ideal: 720 }
       } : false
@@ -307,7 +376,7 @@ export function useWebRTC() {
           autoGainControl: true,
         } : false,
         video: (type === "video" && hasVideo) ? {
-          facingMode: "user",
+          facingMode: facingMode.value,
           width: { ideal: 1280 },
           height: { ideal: 720 }
         } : false
@@ -420,7 +489,7 @@ export function useWebRTC() {
           autoGainControl: { ideal: true },
         } : false,
         video: (type === "video" && hasVideo) ? {
-          facingMode: "user",
+          facingMode: facingMode.value,
           width: { ideal: 1280 },
           height: { ideal: 720 }
         } : false
@@ -539,6 +608,7 @@ export function useWebRTC() {
     // Immediately update status to prevent further logic triggers
     callStatus.value = "ended";
     isInCall.value = false;
+    incomingOffer.value = null; // Clear incoming offer state
 
     // Close connections immediately
     peerConnections.value.forEach(pc => {
@@ -570,6 +640,14 @@ export function useWebRTC() {
     callStartTime.value = null;
     isMuted.value = false;
     isVideoOff.value = false;
+
+    // Robustness: Ensure UI icons unfreeze by returning to idle
+    // We use a small timeout to allow any "ended" animations/toasts to complete
+    setTimeout(() => {
+      if (callStatus.value === "ended") {
+        callStatus.value = "idle";
+      }
+    }, 1000);
   };
 
   const setupSocketListeners = () => {
@@ -585,6 +663,20 @@ export function useWebRTC() {
       if (isInCall.value && currentCallPartner.value) {
         console.log("Socket reconnected during call, attempting to maintain connection...");
         // In a real robust implementation, we might trigger ICE restart here
+      }
+      checkForActiveCall();
+    });
+
+    checkForActiveCall();
+  };
+
+  const checkForActiveCall = () => {
+    if (!socketStore.socket || isInCall.value || callStatus.value === "ringing") return;
+    
+    socketStore.socket.emit("get-active-call", (data: any) => {
+      if (data) {
+        console.log("Found active call on server:", data);
+        handleCallOffer(data);
       }
     });
   };
@@ -620,6 +712,7 @@ export function useWebRTC() {
     isMuted,
     isVideoOff,
     isSpeakerOn,
+    facingMode,
     initiateCall,
     acceptIncomingCall,
     declineIncomingCall,
@@ -627,6 +720,7 @@ export function useWebRTC() {
     toggleMute,
     toggleVideo,
     toggleSpeaker,
+    switchCamera,
     handleCallOffer,
     handleCallAnswer,
     handleIceCandidate,

@@ -16,13 +16,17 @@
       </SkewNotification> -->
     <NuxtLayout>
       <NuxtPage v-slot="{ Component }">
+        <!-- Transition is only applied if NOT first load to avoid hydration mismatches -->
         <Transition
-          :name="isFirstLoad ? '' : 'fade'"
+          v-if="!isFirstLoad"
+          name="fade"
           mode="out-in"
           @before-enter="handleBeforeEnter"
         >
           <component :is="Component" :key="$route.fullPath" />
         </Transition>
+        <!-- Static component for initial hydration to match server output -->
+        <component :is="Component" v-else :key="$route.fullPath" />
       </NuxtPage>
     </NuxtLayout>
   </template>
@@ -109,6 +113,32 @@ useHead({
 
 const route = useRoute();
 const router = useRouter();
+
+// --- Clarity Tracking Protection ---
+// According to Nuxt Scripts docs, we use the registry pattern and can manually load/control the script.
+const { load, status } = useScriptClarity();
+
+const isClarityEnabled = computed(() => {
+  if (!import.meta.client) return false;
+  
+  const protectedRoutes = [
+    "/dashboard",
+    "/contact/admin",
+    "/user/",
+    "/api/",
+  ];
+
+  return !protectedRoutes.some(p => route.path.includes(p));
+});
+
+// Load Clarity conditionally based on route
+if (import.meta.client && config.public.scripts.clarity?.id) {
+  watch(isClarityEnabled, (enabled) => {
+    if (enabled && status.value === 'awaitingLoad') {
+      load();
+    }
+  }, { immediate: true });
+}
 
 // --- State ---
 const showRiveSplash = ref(false);

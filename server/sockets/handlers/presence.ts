@@ -51,4 +51,15 @@ export const registerPresenceHandlers = (
       if (callback) callback({ error: "Failed to fetch online users" });
     }
   });
+
+  // Track user location for targeted notifications (e.g. only push if NOT on dashboard)
+  socket.on("enter-page", (pageName) => {
+    socket.join(`page-${pageName}`);
+    console.log(`User ${user.userId} entered page: ${pageName}`);
+  });
+
+  socket.on("leave-page", (pageName) => {
+    socket.leave(`page-${pageName}`);
+    console.log(`User ${user.userId} left page: ${pageName}`);
+  });
 };

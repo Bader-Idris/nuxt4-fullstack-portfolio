@@ -177,6 +177,12 @@ export const usePushNotifications = () => {
         "pushNotificationActionPerformed",
         (notification: any) => {
           console.log("Push action performed:", JSON.stringify(notification));
+          const data = notification.notification.data;
+          if (data && data.url) {
+            // Use window.location as a fallback if router isn't ready or for simplicity in listener
+            const url = new URL(data.url, window.location.origin);
+            navigateTo(url.pathname);
+          }
         },
       );
     }
