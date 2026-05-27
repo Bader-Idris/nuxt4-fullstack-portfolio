@@ -1,9 +1,11 @@
 import { useSocketStore } from "~/stores/useSocketStore";
 import { useUserStore } from "~/stores/useUserSocket";
+import { useSound } from "~/composables/useSound";
 
 export function useWebRTC() {
   const socketStore = useSocketStore();
   const userStore = useUserStore();
+  const { getSound } = useSound();
 
   // WebRTC variables
   const peerConnections = ref(new Map<string, RTCPeerConnection>());
@@ -18,6 +20,48 @@ export function useWebRTC() {
   const answeredCalls = ref(new Set<string>()); // Track which calls have received answers
   const callStartTime = ref<number | null>(null);
   const incomingOffer = ref<RTCSessionDescriptionInit | null>(null);
+
+  // Constants
+  const CALL_TIMEOUT = 60000; // 60 seconds (Standard for big calling apps)
+  const callTimeoutTimer = ref<NodeJS.Timeout | null>(null);
+
+  // Sound control and Call Timeout
+  watch(callStatus, (newStatus) => {
+    // Sound logic
+    const sound = getSound("calling");
+    if (sound) {
+      if (newStatus === "ringing" || newStatus === "calling") {
+        if (!sound.playing()) {
+          sound.loop(true);
+          sound.play();
+        }
+      } else {
+        sound.stop();
+      }
+    }
+
+    // Timeout logic
+    if (callTimeoutTimer.value) {
+      clearTimeout(callTimeoutTimer.value);
+      callTimeoutTimer.value = null;
+    }
+
+    if (newStatus === "ringing" || newStatus === "calling") {
+      callTimeoutTimer.value = setTimeout(() => {
+        console.log(`Call timed out after ${CALL_TIMEOUT / 1000}s`);
+        endCall("missed");
+        
+        if (import.meta.client) {
+          import("vue3-toastify").then(({ toast }) => {
+            toast.info("Call timed out: No answer", {
+              position: "top-center",
+              theme: "dark",
+            });
+          });
+        }
+      }, CALL_TIMEOUT);
+    }
+  });
 
   // UI references
   const localVideoRef = ref<HTMLVideoElement | null>(null);

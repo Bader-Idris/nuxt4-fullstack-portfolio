@@ -39,11 +39,11 @@
         "howler": "^2.2.4",
         "ioredis": "^5.11.0",
         "jsonwebtoken": "^9.0.3",
-        "mongoose": "9.6.2",
+        "mongoose": "9.6.3",
         "nodemailer": "^8.0.9",
         "nuxt": "4.4.6",
         "nuxt-skew-protection": "^1.1.1",
-        "nuxt-tiptap-editor": "3.3.0",
+        "nuxt-tiptap-editor": "3.4.0",
         "particles.js": "^2.0.0",
         "pg": "^8.21.0",
         "pinia": "^3.0.4",
@@ -55,7 +55,7 @@
         "socket.io-client": "^4.8.3",
         "three": "^0.184.0",
         "v-gsap-nuxt": "^1.5.12",
-        "vue": "3.5.34",
+        "vue": "3.5.35",
         "vue-router": "5.0.7",
         "vue3-toastify": "^0.2.9",
         "web-push": "^3.6.7",
@@ -135,7 +135,7 @@
         "capacitor-plugin-safe-area": "^5.0.0",
         "concurrently": "^9.2.1",
         "cross-env": "^10.1.0",
-        "electron": "^42.2.0",
+        "electron": "^42.3.0",
         "electron-builder": "^26.8.1",
         "eslint": "10.4.0",
         "nuxt-electron": "^0.7.0",
@@ -2335,7 +2335,7 @@
 
     "electrobun": ["electrobun@1.18.1", "", { "dependencies": { "@babylonjs/core": "7.54.3", "@types/bun": "1.3.14", "png-to-ico": "2.1.8", "proxy-agent": "6.5.0", "rcedit": "4.0.1", "three": "0.165.0" }, "bin": { "electrobun": "bin/electrobun.cjs" } }, "sha512-tgZ+WKGskn/1/Y5i1mpVCCkgRa1O31Tz7MIArBTK44GfPzT43uOq9c/HvxdQGrLeZV8ZvjK1lQrwqSXCgh6tvA=="],
 
-    "electron": ["electron@42.2.0", "", { "dependencies": { "@electron/get": "5.0.0", "@types/node": "24.12.4", "extract-zip": "2.0.1" }, "bin": { "electron": "cli.js", "install-electron": "install.js" } }, "sha512-b2Tc7sIKiZEl0tBVwFM5GJ+FT5KYhmy9QJHjx8BGVZPVW2SctXWEvrE959ElB56qw7H05dBkhlikDA1DmpaAMw=="],
+    "electron": ["electron@42.3.0", "", { "dependencies": { "@electron/get": "^5.0.0", "@types/node": "^24.9.0", "extract-zip": "^2.0.1" }, "bin": { "electron": "cli.js", "install-electron": "install.js" } }, "sha512-9ZiLdRXk+WDxW1OgIUz8J2rIQ5TYU9o629gCOjU48Q3dQiOmym7osWsH5Ubs/Jh4uuFLn6m6SBD2rmRXLAPz9g=="],
 
     "electron-builder": ["electron-builder@26.8.1", "", { "dependencies": { "app-builder-lib": "26.8.1", "builder-util": "26.8.1", "builder-util-runtime": "9.5.1", "chalk": "4.1.2", "ci-info": "4.4.0", "dmg-builder": "26.8.1", "fs-extra": "10.1.0", "lazy-val": "1.0.5", "simple-update-notifier": "2.0.0", "yargs": "17.7.2" }, "bin": { "electron-builder": "cli.js", "install-app-deps": "install-app-deps.js" } }, "sha512-uWhx1r74NGpCagG0ULs/P9Nqv2nsoo+7eo4fLUOB8L8MdWltq9odW/uuLXMFCDGnPafknYLZgjNX0ZIFRzOQAw=="],
 
@@ -3277,7 +3277,7 @@
 
     "mongodb-connection-string-url": ["mongodb-connection-string-url@7.0.1", "", { "dependencies": { "@types/whatwg-url": "13.0.0", "whatwg-url": "14.2.0" } }, "sha512-h0AZ9A7IDVwwHyMxmdMXKy+9oNlF0zFoahHiX3vQ8e3KFcSP3VmsmfvtRSuLPxmyv2vjIDxqty8smTgie/SNRQ=="],
 
-    "mongoose": ["mongoose@9.6.2", "", { "dependencies": { "kareem": "3.3.0", "mongodb": "7.2.0", "mpath": "0.9.0", "mquery": "6.0.0", "ms": "2.1.3", "sift": "17.1.3" } }, "sha512-7m8HntjkoRnwEmuPC0kdlwcZXJOQf4twumFj+PNzg/anqqZE2Er7hQslqyzy07mP3JcFjoTSgH5765PyqOXsxw=="],
+    "mongoose": ["mongoose@9.6.3", "", { "dependencies": { "kareem": "3.3.0", "mongodb": "~7.2", "mpath": "0.9.0", "mquery": "6.0.0", "ms": "2.1.3", "sift": "17.1.3" } }, "sha512-vI6dTTlQnfMCyyQ5TrvhG0bCRs4dq5e1uFNPtOOWsOhn0fSg8AoIHjfyyCYr8aybyvPs845dRHGxsC3w/fHcBA=="],
 
     "motion-dom": ["motion-dom@12.40.0", "", { "dependencies": { "motion-utils": "12.39.0" } }, "sha512-HxU3ZaBwNPVQUBQf1xxgq+7JrPNZvjLVxgbpEZL7RrWJnsxOf0/OM+yrHG9ogLQ31Do/r57Oz2gQWPK+6q62mg=="],
 
@@ -3381,7 +3381,7 @@
 
     "nuxt-skew-protection": ["nuxt-skew-protection@1.1.1", "", { "dependencies": { "@nuxt/kit": "4.4.6", "@vueuse/core": "14.3.0", "consola": "3.4.2", "cookie-es": "3.1.1", "nuxt-site-config": "4.0.8", "nuxtseo-shared": "5.1.3", "pathe": "2.0.3", "pkg-types": "2.3.1", "tinyexec": "1.1.2", "unstorage": "1.17.5", "zod": "4.4.3" }, "peerDependencies": { "@nuxtjs/robots": "6.0.8" }, "bin": { "nuxt-skew-protection": "bin/migrate.mjs" } }, "sha512-OzWskEU5cbHgixcdWPwPByZozYSKNwmMA1V7bQGF9aCKW48vQah1eiUTMCOWgetuEF/wdxSEcQBPyxXmhZEVpg=="],
 
-    "nuxt-tiptap-editor": ["nuxt-tiptap-editor@3.3.0", "", { "dependencies": { "@tiptap/extension-code-block-lowlight": "3.23.6", "@tiptap/extension-image": "3.23.6", "@tiptap/extension-link": "3.23.6", "@tiptap/pm": "3.23.6", "@tiptap/starter-kit": "3.23.6", "@tiptap/vue-3": "3.23.6", "lowlight": "3.3.0", "prosemirror-replaceattrs": "1.0.0" } }, "sha512-C0o8AL06pM4zGNZYG5wuyVx71bFhQMrWv/xrzCvjANCEQn6xnNsAUpUCVsuM7EsdGiQleT10+TFzZeJ4riS4pA=="],
+    "nuxt-tiptap-editor": ["nuxt-tiptap-editor@3.4.0", "", { "dependencies": { "@tiptap/extension-code-block-lowlight": "^3.23.6", "@tiptap/extension-image": "^3.23.6", "@tiptap/extension-link": "^3.23.6", "@tiptap/pm": "^3.23.6", "@tiptap/starter-kit": "^3.23.6", "@tiptap/vue-3": "^3.23.6", "lowlight": "^3.3.0" } }, "sha512-4I6iGKwsbXPM6nGKI1lIgWX+MpbRg3m0Aql24gjTEc7+Rihxw0pCidtgqbGQ2e8Ot9pDojoSayNpEQ3viAwSxA=="],
 
     "nuxtseo-layer-devtools": ["nuxtseo-layer-devtools@0.5.1", "", { "dependencies": { "@nuxt/devtools-kit": "4.0.0-alpha.3", "@nuxt/kit": "4.4.6", "@nuxt/ui": "4.8.0", "@shikijs/langs": "4.1.0", "@shikijs/themes": "4.1.0", "@vueuse/nuxt": "14.3.0", "nuxtseo-shared": "0.9.0", "ofetch": "1.5.1", "shiki": "4.1.0", "ufo": "1.6.4" } }, "sha512-kBbQzZdQI95e6NFzhCgNSiRz+QAwZfv7oOuIHIHDeW0hoJoHBs71TbHwi8DIe23t5IcZ9lzxiG7qJsM+uPhiHg=="],
 
@@ -3710,8 +3710,6 @@
     "prosemirror-keymap": ["prosemirror-keymap@1.2.3", "", { "dependencies": { "prosemirror-state": "1.4.4", "w3c-keyname": "2.2.8" } }, "sha512-4HucRlpiLd1IPQQXNqeo81BGtkY8Ai5smHhKW9jjPKRc2wQIxksg7Hl1tTI2IfT2B/LgX6bfYvXxEpJl7aKYKw=="],
 
     "prosemirror-model": ["prosemirror-model@1.25.7", "", { "dependencies": { "orderedmap": "2.1.1" } }, "sha512-A79aN8QEFUwI6cax8Yq4Rpcx1TJZ3Kagn+ii7qLo4/V8H3mMiHrhFyhTyHHvpSnOgMPpWiDGSwM3etwrxE50ug=="],
-
-    "prosemirror-replaceattrs": ["prosemirror-replaceattrs@1.0.0", "", { "dependencies": { "prosemirror-model": "1.25.7", "prosemirror-state": "1.4.4", "prosemirror-transform": "1.12.0" } }, "sha512-U/aqv0rNudGZ4aXzF+w3jy4WOC7GSQpQLfz6nyUVbzdBbhk7Lqpu2JQ6UP4RgFN9YQj73IxkBHFcNmE4niuJow=="],
 
     "prosemirror-schema-list": ["prosemirror-schema-list@1.5.1", "", { "dependencies": { "prosemirror-model": "1.25.7", "prosemirror-state": "1.4.4", "prosemirror-transform": "1.12.0" } }, "sha512-927lFx/uwyQaGwJxLWCZRkjXG0p48KpMj6ueoYiu4JX05GGuGcgzAy62dfiV8eFZftgyBUvLx76RsMe20fJl+Q=="],
 
