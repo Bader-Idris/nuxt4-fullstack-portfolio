@@ -94,37 +94,53 @@ import socialData from "~/apis/random-data.json";
 import { definePerson } from "nuxt-schema-org/schema";
 
 const localePath = useLocalePath();
+const config = useRuntimeConfig();
 const toggleTerms = ref(false);
-const [{ socialLinks }] = socialData;
-// @ts-expect-error: socialLinks is not properly typed
-const [telegramLink, facebookLink, githubLink] = socialLinks.map(
-  ({ url }) => url,
+
+// Robust data extraction
+const socialLinks = computed(() => socialData?.[0]?.socialLinks || []);
+
+const telegramLink = computed(() => 
+  socialLinks.value.find(l => l["social-title"] === "telegram")?.url || ""
+);
+const facebookLink = computed(() => 
+  socialLinks.value.find(l => l["social-title"] === "facebook")?.url || ""
+);
+const githubLink = computed(() => 
+  socialLinks.value.find(l => l["social-title"] === "github")?.url || ""
 );
 
 // Handle client-side navigation
 const navigateToGithub = () => {
-  if (import.meta.client) {
-    // Ensure this runs only on the client side
-    window.open(githubLink, "_blank", "noopener,noreferrer"); // Opens in a new tab with security attributes
+  if (import.meta.client && githubLink.value) {
+    // Opens in a new tab with security attributes
+    window.open(githubLink.value, "_blank", "noopener,noreferrer");
   }
 };
 const navigateToChild = (child: string) => {
-  if (import.meta.client) {
-    // Ensure this runs only on the client side
-    window.open(child, "_blank", "noopener,noreferrer"); // Opens in a new tab with security attributes
+  if (import.meta.client && child) {
+    // Opens in a new tab with security attributes
+    window.open(child, "_blank", "noopener,noreferrer");
   }
 };
 
 // Add structured data for social profiles using Nuxt SEO
-useSchemaOrg([
-  definePerson({
-    name: "Bader Idris",
-    image: "/imgs/meTwentyFour.jpg",
-    jobTitle: "Full Stack Developer",
-    url: useRuntimeConfig().public.originUrl,
-    sameAs: [githubLink, telegramLink, facebookLink],
-  }),
-]);
+// We only use this on the server for SEO, or if properly supported
+if (config.public.originUrl) {
+  useSchemaOrg([
+    definePerson({
+      name: "Bader Idris",
+      image: "/imgs/meTwentyFour.jpg",
+      jobTitle: "Full Stack Developer",
+      url: config.public.originUrl,
+      sameAs: [
+        githubLink.value,
+        telegramLink.value,
+        facebookLink.value
+      ].filter(Boolean),
+    }),
+  ]);
+}
 </script>
 
 <style lang="scss" scoped>

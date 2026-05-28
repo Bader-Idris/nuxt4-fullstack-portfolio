@@ -17,11 +17,14 @@ const isCapacitor = process.env.IS_CAPACITOR === "true";
 const isDesktop = isElectron || isElectrobun;
 const isSSR = process.env.NUXT_SSR !== "false" && !isDesktop && !isCapacitor;
 
+// Unified Site URL for SEO and i18n consistency
+const siteUrl = process.env.DOMAIN_NAME || "https://baderidris.com";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: isSSR,
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-05-14",
+  compatibilityDate: "2026-05-28",
   devtools: {
     enabled: true,
 
@@ -481,6 +484,8 @@ export default defineNuxtConfig({
   //   },
   // },
   i18n: {
+    // Force baseUrl here for build-time SEO tag generation
+    baseUrl: process.env.DOMAIN_NAME || "https://baderidris.com",
     langDir: "../app/i18n/locales/",
     locales: [
       {
@@ -595,12 +600,12 @@ export default defineNuxtConfig({
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
-    url: String(process.env.DOMAIN_NAME || "http://localhost:3000"),
+    url: isElectron ? "./" : siteUrl,
     name: "Bader Idris", // ! Causes stupid duplicate head.title
     description:
       "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
     defaultLocale: "en",
-    indexable: process.env.IS_ELECTRON !== "true",
+    indexable: !isElectron,
   },
   ...(process.env.IS_ELECTRON === "false" && {
     schemaOrg: {
@@ -648,7 +653,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // ? publicly for client
     public: {
-      originUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
+      originUrl: isElectron ? "./" : siteUrl,
       socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
       isCapacitor: process.env.IS_CAPACITOR === "true",
       // for web-push pkg
@@ -663,9 +668,8 @@ export default defineNuxtConfig({
       // ...(process.env.IS_ELECTRON === "false") && {
       i18n: {
         // ssr: process.env.NUXT_SSR !== "false",
-        baseUrl:
-          process.env.IS_ELECTRON === "true" ? "./" : process.env.DOMAIN_NAME,
-        // baseUrl: process.env.DOMAIN_NAME, // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+        // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+        baseUrl: isElectron ? "./" : siteUrl,
       },
       scripts: {
         googleTagManager: {
