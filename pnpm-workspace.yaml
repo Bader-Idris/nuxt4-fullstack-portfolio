@@ -153,3 +153,6 @@ minimumReleaseAgeExclude:
   - mongoose@9.6.3
   - nuxt-tiptap-editor@3.4.0
   - vue@3.5.35
+  - '@iconify-json/material-symbols@1.2.75'
+  - concurrently@10.0.0
+  - vue-router@5.1.0

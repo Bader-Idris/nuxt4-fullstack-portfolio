@@ -184,7 +184,12 @@
                         playsinline
                         muted
                         class="local-video"
+                        @loadedmetadata="onLocalVideoLoaded"
                       />
+                      <!-- Resize Handle for PiP -->
+                      <div class="resize-handle">
+                        <Icon name="material-symbols:drag-pan" />
+                      </div>
                     </div>
                   </template>
                   <template v-else>
@@ -225,6 +230,7 @@
                   <button
                     class="control-btn"
                     :class="{ active: isMuted }"
+                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
                     @click="toggleMute"
                   >
                     <Icon
@@ -239,6 +245,7 @@
                     v-if="callType === 'video'"
                     class="control-btn"
                     :class="{ active: isVideoOff }"
+                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
                     @click="toggleVideo"
                   >
                     <Icon
@@ -250,25 +257,28 @@
                     />
                   </button>
 
-                  <!-- Camera Flip Button -->
+                  <!-- Camera Flip Button with Loading State -->
                   <button
                     v-if="callType === 'video' && !isVideoOff"
                     class="control-btn"
+                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
                     @click="switchCamera"
                   >
-                    <Icon name="mdi:camera-flip" />
+                    <div v-if="isSwitchingCamera" class="spinner-small" />
+                    <Icon v-else name="mdi:camera-flip" />
                   </button>
 
                   <!-- Fullscreen Button -->
                   <button
                     class="control-btn fullscreen-btn"
                     :class="{ active: isFullscreen }"
+                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
                     @click="toggleFullscreen"
                   >
                     <Icon :name="isFullscreen ? 'material-symbols:fullscreen-exit' : 'material-symbols:fullscreen'" />
                   </button>
 
-                  <button class="control-btn end-call" @click="endCall">
+                  <button class="control-btn end-call" :disabled="isCleaningUp" @click="endCall">
                     <Icon name="heroicons:phone-x-mark" />
                   </button>
                 </div>
@@ -475,6 +485,7 @@ const contactsPanel = ref<HTMLElement | null>(null);
 
 // --- WebRTC Composables ---
 const {
+  localStream,
   remoteStream,
   currentCallPartner,
   callStatus,
@@ -493,11 +504,14 @@ const {
   toggleMute,
   toggleVideo,
   switchCamera,
+  isSwitchingCamera,
+  isCleaningUp,
   setupSocketListeners,
   cleanup,
 } = useWebRTC();
 
 const currentCallOffer = ref<RTCSessionDescriptionInit | null>(null);
+const isAnimatingSwap = ref(false);
 
 // --- Permission Handling ---
 async function checkAndRequestPermissions() {
@@ -567,6 +581,30 @@ watch(incomingOffer, (offer) => {
 });
 
 const isFullscreen = ref(false);
+const pipWidth = ref(150); // Default PiP width
+
+// Fix for black camera: occasionally srcObject assignment doesn't trigger playback correctly
+function onLocalVideoLoaded() {
+  if (localVideoRef.value && localVideoRef.value.paused) {
+    localVideoRef.value.play().catch(e => console.warn("Auto-play fix failed:", e));
+  }
+}
+
+// Watcher to periodically check for black camera (videoWidth/Height being 0)
+let blackCameraCheckInterval: any = null;
+watch(localStream, (stream) => {
+  if (stream && import.meta.client) {
+    if (blackCameraCheckInterval) clearInterval(blackCameraCheckInterval);
+    blackCameraCheckInterval = setInterval(() => {
+      if (localVideoRef.value && localVideoRef.value.srcObject && (localVideoRef.value.videoWidth === 0 || localVideoRef.value.paused)) {
+        console.warn("Detected potential black camera or paused stream, re-triggering...");
+        localVideoRef.value.play().catch(() => {});
+      }
+    }, 2000);
+  } else {
+    if (blackCameraCheckInterval) clearInterval(blackCameraCheckInterval);
+  }
+});
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value;
@@ -737,112 +775,124 @@ function updateDraggable() {
   nextTick(() => {
     setTimeout(() => {
       const pipSelector = isVideosSwapped.value ? ".remote-video-container" : ".local-video-container";
-      const target = document.querySelector(pipSelector);
+      const target = document.querySelector(pipSelector) as HTMLElement;
       if (!target) return;
 
-      // Reset any GSAP transforms on both containers so they snap back to their default CSS layouts beautifully before enabling drag
-      gsap.set([".local-video-container", ".remote-video-container"], { clearProps: "all" });
+      const handle = target.querySelector(".resize-handle") as HTMLElement;
 
+      // 1. Position/Drag Logic
       activeDraggable = Draggable.create(target, {
         bounds: ".video-call-overlay",
         edgeResistance: 0.65,
         type: "x,y",
+        trigger: target,
         onPress: function() {
-          // Bring to front
           gsap.set(this.target, { zIndex: 20 });
         },
-        onClick: () => {
-          toggleVideoSwap();
+        onClick: (e) => {
+          // Only swap if we didn't click the resize handle
+          if (!(e.target as HTMLElement).closest(".resize-handle")) {
+            toggleVideoSwap();
+          }
         }
       })[0];
+
+      // 2. Scale/Resize Logic
+      if (handle) {
+        Draggable.create(handle, {
+          type: "x,y",
+          onDrag: function() {
+            // Calculate new width based on drag distance
+            // We use the delta to scale the container width
+            const newWidth = Math.max(100, Math.min(600, pipWidth.value + this.x));
+            gsap.set(target, { width: newWidth });
+          },
+          onDragEnd: function() {
+            // Save the new width and reset handle position
+            pipWidth.value = target.offsetWidth;
+            gsap.set(this.target, { x: 0, y: 0 });
+            updateDraggable(); // Re-sync bounds
+          }
+        });
+      }
     }, 150);
   });
 }
 
 function toggleVideoSwap() {
-  if (!import.meta.client) return;
+  if (!import.meta.client || isAnimatingSwap.value) return;
+  isAnimatingSwap.value = true;
 
   const localEl = document.querySelector(".local-video-container") as HTMLElement;
   const remoteEl = document.querySelector(".remote-video-container") as HTMLElement;
-  if (!localEl || !remoteEl) return;
+  if (!localEl || !remoteEl) {
+    isAnimatingSwap.value = false;
+    return;
+  }
 
-  // 1. Get FIRST state (current bounding boxes)
+  // Ensure PiP width is maintained during swap
+  const currentPipWidth = isVideosSwapped.value ? remoteEl.offsetWidth : localEl.offsetWidth;
+
+  // 1. Get FIRST state
   const localRect = localEl.getBoundingClientRect();
   const remoteRect = remoteEl.getBoundingClientRect();
 
-  // 2. Toggle LAST state (update reactive class variables)
+  // 2. Toggle LAST state
   isVideosSwapped.value = !isVideosSwapped.value;
 
-  // 3. Wait for DOM updates, then INVERT and PLAY
   nextTick(() => {
-    // Get new bounding boxes
+    // 3. Wait for DOM updates, then INVERT and PLAY
     const newLocalRect = localEl.getBoundingClientRect();
     const newRemoteRect = remoteEl.getBoundingClientRect();
 
-    // Kill existing draggables before animating
     if (activeDraggable) {
       activeDraggable.kill();
       activeDraggable = null;
     }
 
-    // Reset GSAP transforms from dragging
     gsap.set([localEl, remoteEl], { clearProps: "all" });
+    
+    // Maintain the PiP size on the new PiP container
+    if (isVideosSwapped.value) {
+      gsap.set(remoteEl, { width: pipWidth.value });
+    } else {
+      gsap.set(localEl, { width: pipWidth.value });
+    }
 
-    // Calculate scale and position changes for Local Container
     const localDeltaX = localRect.left - newLocalRect.left;
     const localDeltaY = localRect.top - newLocalRect.top;
     const localScaleX = localRect.width / newLocalRect.width;
     const localScaleY = localRect.height / newLocalRect.height;
 
-    // Calculate scale and position changes for Remote Container
     const remoteDeltaX = remoteRect.left - newRemoteRect.left;
     const remoteDeltaY = remoteRect.top - newRemoteRect.top;
     const remoteScaleX = remoteRect.width / newRemoteRect.width;
     const remoteScaleY = remoteRect.height / newRemoteRect.height;
 
-    // Invert Local Container
-    gsap.fromTo(localEl, 
-      {
-        x: localDeltaX,
-        y: localDeltaY,
-        scaleX: localScaleX,
-        scaleY: localScaleY,
-        transformOrigin: "top left"
-      },
-      {
-        x: 0,
-        y: 0,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 0.5,
-        ease: "power3.inOut",
-        onComplete: () => {
-          gsap.set(localEl, { clearProps: "all" });
-        }
+    const tl = gsap.timeline({
+      onComplete: () => {
+        gsap.set([localEl, remoteEl], { clearProps: "transform,scale" });
+        updateDraggable();
+        isAnimatingSwap.value = false;
       }
+    });
+
+    // Safety fallback
+    setTimeout(() => {
+      if (isAnimatingSwap.value) {
+        isAnimatingSwap.value = false;
+        updateDraggable();
+      }
+    }, 2000);
+
+    tl.fromTo(localEl, 
+      { x: localDeltaX, y: localDeltaY, scaleX: localScaleX, scaleY: localScaleY, transformOrigin: "top left" },
+      { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.5, ease: "power3.inOut" }, 0
     );
 
-    // Invert Remote Container
-    gsap.fromTo(remoteEl, 
-      {
-        x: remoteDeltaX,
-        y: remoteDeltaY,
-        scaleX: remoteScaleX,
-        scaleY: remoteScaleY,
-        transformOrigin: "top left"
-      },
-      {
-        x: 0,
-        y: 0,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 0.5,
-        ease: "power3.inOut",
-        onComplete: () => {
-          gsap.set(remoteEl, { clearProps: "all" });
-          updateDraggable();
-        }
-      }
+    tl.fromTo(remoteEl, 
+      { x: remoteDeltaX, y: remoteDeltaY, scaleX: remoteScaleX, scaleY: remoteScaleY, transformOrigin: "top left" },
+      { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.5, ease: "power3.inOut" }, 0
     );
   });
 }
@@ -1565,7 +1615,32 @@ function formatDuration(seconds: number) {
     border-radius: 12px;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.3);
+    z-index: 20;
+    cursor: grab;
+
+    &:active { cursor: grabbing; }
+
     .local-video { width: 100%; height: 100%; object-fit: cover; }
+
+    .resize-handle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 30px;
+      height: 30px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: nwse-resize;
+      z-index: 21;
+      border-bottom-right-radius: 8px;
+      
+      &:hover {
+        background: var(--accent-primary);
+      }
+    }
   }
 
   .call-controls {

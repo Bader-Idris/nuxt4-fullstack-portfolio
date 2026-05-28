@@ -21,6 +21,8 @@ export function useWebRTC() {
   const callStartTime = ref<number | null>(null);
   const incomingOffer = ref<RTCSessionDescriptionInit | null>(null);
   const facingMode = ref<"user" | "environment">("user");
+  const isSwitchingCamera = ref(false);
+  const isCleaningUp = ref(false);
 
   // Constants
   const CALL_TIMEOUT = 60000; // 60 seconds (Standard for big calling apps)
@@ -111,6 +113,13 @@ export function useWebRTC() {
         localVideoRef.value.srcObject = null;
         localVideoRef.value.srcObject = newStream;
         
+        // Mirror front camera (standard for video calls)
+        if (facingMode.value === "user") {
+          localVideoRef.value.style.transform = "scaleX(-1)";
+        } else {
+          localVideoRef.value.style.transform = "scaleX(1)";
+        }
+
         // Ensure play is called as some browsers pause on srcObject change
         localVideoRef.value.play().catch(e => {
           if (e.name !== 'AbortError') console.warn("Local video play interrupted:", e);
@@ -120,6 +129,16 @@ export function useWebRTC() {
       }
     }
   }, { immediate: true });
+
+  watch(facingMode, (newMode) => {
+    if (localVideoRef.value) {
+      if (newMode === "user") {
+        localVideoRef.value.style.transform = "scaleX(-1)";
+      } else {
+        localVideoRef.value.style.transform = "scaleX(1)";
+      }
+    }
+  });
 
   watch(remoteStream, (newStream) => {
     if (remoteVideoRef.value) {
@@ -206,54 +225,107 @@ export function useWebRTC() {
     }
   };
 
-  // Switch camera (front/back)
+  // Switch camera (front/back) with high robustness for mobile devices
   const switchCamera = async () => {
-    if (!localStream.value || !currentCallPartner.value) return;
-    
-    const pc = peerConnections.value.get(currentCallPartner.value);
-    if (!pc) return;
-
-    const newFacingMode = facingMode.value === "user" ? "environment" : "user";
+    if (!localStream.value || isSwitchingCamera.value) return;
+    isSwitchingCamera.value = true;
     
     try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
+      // 1. Enumerate devices to identify all available cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === "videoinput");
+      
+      if (videoDevices.length < 2) {
+        console.warn("Switch camera requested but only one camera found.");
+        isSwitchingCamera.value = false;
+        return;
+      }
+
+      const oldVideoTracks = localStream.value.getVideoTracks();
+      const currentTrack = oldVideoTracks[0];
+      const currentDeviceId = currentTrack?.getSettings().deviceId;
+
+      // 2. Determine target facing mode
+      const newFacingMode = facingMode.value === "user" ? "environment" : "user";
+      
+      // 3. Try to find the best candidate device
+      let targetDevice = videoDevices.find(d => {
+        const label = d.label.toLowerCase();
+        if (newFacingMode === "user") return label.includes("front") || label.includes("user");
+        if (newFacingMode === "environment") return label.includes("back") || label.includes("rear") || label.includes("environment");
+        return false;
+      });
+
+      // If no label match, just pick any device that isn't the current one
+      if (!targetDevice) {
+        targetDevice = videoDevices.find(d => d.deviceId !== currentDeviceId) || videoDevices[0];
+      }
+
+      const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: newFacingMode,
+          deviceId: { exact: targetDevice.deviceId },
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
-      });
-      
-      const newVideoTrack = newStream.getVideoTracks()[0];
-      const oldVideoTracks = localStream.value.getVideoTracks();
-      
-      // Replace track on the peer connection sender
-      const senders = pc.getSenders();
-      const videoSender = senders.find(s => s.track?.kind === "video");
-      
-      if (videoSender) {
-        await videoSender.replaceTrack(newVideoTrack);
+      };
+
+      let newStream;
+      try {
+        // Try getting the new stream while the old one is still active (preferred for smooth transition)
+        newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        console.warn("Failed to get new stream while old one is active, stopping old tracks and retrying...", e);
+        // Fallback: stop old tracks first (required by some Android devices)
+        oldVideoTracks.forEach(t => t.stop());
+        newStream = await navigator.mediaDevices.getUserMedia(constraints);
       }
       
-      // Update local stream
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      
+      // 4. Update all active peer connections with the new track
+      const replacePromises = Array.from(peerConnections.value.values()).map(async (pc) => {
+        const senders = pc.getSenders();
+        const videoSender = senders.find(s => s.track?.kind === "video");
+        if (videoSender) {
+          try {
+            await videoSender.replaceTrack(newVideoTrack);
+          } catch (replaceError) {
+            console.error("Failed to replace track on peer connection:", replaceError);
+          }
+        }
+      });
+      await Promise.all(replacePromises);
+      
+      // 5. Update local stream and UI state
       oldVideoTracks.forEach(track => {
         track.stop();
         localStream.value?.removeTrack(track);
       });
       
       localStream.value.addTrack(newVideoTrack);
-      facingMode.value = newFacingMode;
+      
+      // Attempt to accurately detect if the new camera is front/back
+      const label = targetDevice.label.toLowerCase();
+      if (label.includes("front") || label.includes("user")) {
+        facingMode.value = "user";
+      } else if (label.includes("back") || label.includes("rear") || label.includes("environment")) {
+        facingMode.value = "environment";
+      } else {
+        facingMode.value = newFacingMode; // Fallback to our toggle
+      }
       
     } catch (error: any) {
-      console.error("Failed to switch camera:", error);
+      console.error("Critical failure during camera switch:", error);
       if (import.meta.client) {
         import("vue3-toastify").then(({ toast }) => {
-          toast.error("Could not switch camera.", {
+          toast.error("Could not switch camera. Device might be busy or unavailable.", {
             position: "top-center",
             theme: "dark",
           });
         });
       }
+    } finally {
+      isSwitchingCamera.value = false;
     }
   };
 
@@ -594,6 +666,9 @@ export function useWebRTC() {
 
   // End call
   const endCall = (reason: string = "ended") => {
+    if (isCleaningUp.value) return;
+    isCleaningUp.value = true;
+
     let duration = 0;
     const wasConnected = callStatus.value === "connected";
     const wasInCall = isInCall.value || callStatus.value === "calling" || callStatus.value === "ringing";
@@ -605,49 +680,62 @@ export function useWebRTC() {
     const previousPartner = currentCallPartner.value;
     const previousType = callType.value;
 
-    // Immediately update status to prevent further logic triggers
-    callStatus.value = "ended";
-    isInCall.value = false;
-    incomingOffer.value = null; // Clear incoming offer state
+    try {
+      // 1. Stop all media tracks immediately
+      cleanupMedia();
 
-    // Close connections immediately
-    peerConnections.value.forEach(pc => {
-      pc.onconnectionstatechange = null;
-      pc.onicecandidate = null;
-      pc.ontrack = null;
-      pc.close();
-    });
-    peerConnections.value.clear();
-    answeredCalls.value.clear();
-    cleanupMedia();
+      // 2. Close and cleanup all peer connections
+      peerConnections.value.forEach((pc, userId) => {
+        pc.onicecandidate = null;
+        pc.ontrack = null;
+        pc.onconnectionstatechange = null;
+        pc.onsignalingstatechange = null;
+        pc.oniceconnectionstatechange = null;
+        
+        if (pc.signalingState !== "closed") {
+          pc.close();
+        }
+      });
+      peerConnections.value.clear();
 
-    if (previousPartner && socketStore.socket) {
-      // Notify the other peer
-      socketStore.socket.emit("call-ended", { to: previousPartner });
-      
-      // Emit footprint for persistence
-      if (wasInCall) {
-        socketStore.socket.emit("call-fingerprint", {
-          to: previousPartner,
-          duration: wasConnected ? duration : 0,
-          callType: previousType,
-          status: reason === "ended" ? (wasConnected ? "completed" : "cancelled") : reason
-        });
+      // 3. Clear timers
+      if (callTimeoutTimer.value) {
+        clearTimeout(callTimeoutTimer.value);
+        callTimeoutTimer.value = null;
       }
-    }
 
-    currentCallPartner.value = null;
-    callStartTime.value = null;
-    isMuted.value = false;
-    isVideoOff.value = false;
+      // 4. Update core state
+      callStatus.value = "ended";
+      isInCall.value = false;
+      incomingOffer.value = null;
+      answeredCalls.value.clear();
+      callStartTime.value = null;
+      isMuted.value = false;
+      isVideoOff.value = false;
 
-    // Robustness: Ensure UI icons unfreeze by returning to idle
-    // We use a small timeout to allow any "ended" animations/toasts to complete
-    setTimeout(() => {
-      if (callStatus.value === "ended") {
+      // 5. Notify server and partner
+      if (previousPartner && socketStore.socket) {
+        socketStore.socket.emit("call-ended", { to: previousPartner });
+        
+        if (wasInCall) {
+          socketStore.socket.emit("call-fingerprint", {
+            to: previousPartner,
+            duration: wasConnected ? duration : 0,
+            callType: previousType,
+            status: reason === "ended" ? (wasConnected ? "completed" : "cancelled") : reason
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error during call cleanup:", error);
+    } finally {
+      // 6. Return to idle after a small delay to allow UI transitions
+      setTimeout(() => {
         callStatus.value = "idle";
-      }
-    }, 1000);
+        isCleaningUp.value = false;
+        currentCallPartner.value = null;
+      }, 800);
+    }
   };
 
   const setupSocketListeners = () => {
@@ -713,6 +801,8 @@ export function useWebRTC() {
     isVideoOff,
     isSpeakerOn,
     facingMode,
+    isSwitchingCamera,
+    isCleaningUp,
     initiateCall,
     acceptIncomingCall,
     declineIncomingCall,
