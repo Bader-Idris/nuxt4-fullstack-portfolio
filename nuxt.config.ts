@@ -80,6 +80,49 @@ export default defineNuxtConfig({
     //   },
     // },
     // }),
+
+    // Force Nitro to bundle everything it can instead of copying to node_modules.
+    // noExternals: true would bundle ALL deps — too aggressive for native modules.
+    // Instead we use externals to whitelist only what MUST stay external.
+    noExternals: false, // default, keep it
+
+    externals: {
+        // These stay external (native binaries / too dynamic to inline):
+        external: [
+          'sharp',
+          '@prisma/client',
+          'prisma',
+          'pg',
+          'pg-native',
+          'mongoose',
+          'firebase-admin',
+          'nodemailer',
+          'socket.io',
+          'socket.io-client',
+          'ioredis',
+          'apn',
+          'web-push',
+          '@socket.io/redis-streams-adapter',
+          'bcryptjs',
+          'jsonwebtoken',
+          'rate-limiter-flexible',
+        ],
+        // Force everything else to be inlined/bundled into chunks:
+        inline: [
+          // inline your own server code
+          /^~/,
+          /^@\//,
+          // inline smaller pure-JS deps that Nitro was unnecessarily externalizing
+          'howler',
+          'highlight.js',
+          'canvas-confetti',
+          'particles.js',
+          'vue3-toastify',
+        ],
+    },
+
+    minify: true,       // ← shrinks chunks/ from 53MB further (~30-40%)
+
     compressPublicAssets: {
       gzip: process.env.NUXT_GZIP !== "false",
       // brotli: process.env.NUXT_BROTLI !== 'false'
