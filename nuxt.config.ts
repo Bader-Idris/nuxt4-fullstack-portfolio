@@ -45,7 +45,7 @@ export default defineNuxtConfig({
   },
   experimental: {
     normalizeComponentNames: true,
-    // appManifest: false,
+    appManifest: false,
   },
   nitro: {
     // // Fix for Windows path resolution in prerenderer
@@ -106,6 +106,7 @@ export default defineNuxtConfig({
           'bcryptjs',
           'jsonwebtoken',
           'rate-limiter-flexible',
+          'ttf2woff2'
         ],
         // Force everything else to be inlined/bundled into chunks:
         inline: [
@@ -135,14 +136,11 @@ export default defineNuxtConfig({
           prerender: true,
         },
       }),
-      // Static assets and public files
-      // "/_nuxt/**": {
-      //   cache: {
-      //     maxAge: 86400 * 30, // 30 days
-      //     swr: true, // Investigate this one!
-      //     staleMaxAge: 86400 * 7, // 1 week fallback
-      //   },
-      // },
+      '/_nuxt/builds/**': {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      },
       "/socket.io/**": {
         cache: false,
         prerender: false,
@@ -178,19 +176,19 @@ export default defineNuxtConfig({
       websocket: true,
       // asyncContext: true,
     },
-    externals: {
-      // TODO: for code inside /server, but let's check if this could fix some bugs!
-      inline: [],
-      external: ["sharp", "ttf2woff2"],
-    },
 
     serveStatic:
       process.env.NODE_ENV === "production" && isSSR ? false : true,
-    // publicAssets: {
-    //   baseURL: '_nuxt',
-    //   dir: '.output/public/_nuxt',
-    //   maxAge: 60 * 60 * 24 * 365, // 1 year (immutable hashed files)
-    // },
+      publicAssets: [
+        {
+          // Feed prior build manifests so skew protection works across deploys.
+          // Nitro precomputes static asset routes at build time — files added
+          // after build are invisible to the router without this.
+          dir: '../public/_nuxt/builds',
+          baseURL: '/_nuxt/builds',
+          maxAge: 0, // never cache manifests
+        },
+      ],
   },
 
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],

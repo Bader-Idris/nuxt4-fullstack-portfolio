@@ -43,14 +43,7 @@ ENV PORT=${PORT}
 ENV NUXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=16384"
 
-# Cache mount for Nuxt/Vite's internal build cache (.nuxt/cache, node_modules/.cache)
-# This persists across builds so incremental builds stay fast.
-# CACHEBUST arg invalidates this RUN layer in Docker's layer cache,
-# but the --mount=type=cache is separate from layer cache and always persists.
-RUN --mount=type=cache,target=/app/node_modules/.cache \
-    --mount=type=cache,target=/root/.nuxt-cache \
-    echo "Cache bust: $CACHEBUST" && \
-    npm run build
+RUN echo "Cache bust: $CACHEBUST" && npm run build
 
 # ── Surgical pruning ─────────────────────────────────────────────────────────
 RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \
@@ -65,6 +58,22 @@ RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -
     ! -name 'resvg-js-linux-x64-musl' \
     -exec rm -rf {} +
 # saves ~200MB
+
+RUN find .output/server/node_modules -type f \( \
+    -name '*.md' \
+    -o -name 'CHANGELOG*' \
+    -o -name 'LICENSE*' \
+    -o -name '*.d.ts' \
+    -o -name '*.d.ts.map' \
+    -o -name '*.map' \
+    \) -delete 2>/dev/null || true
+
+RUN find .output/server/node_modules -type d \( \
+    -name '__tests__' \
+    -o -name 'docs' \
+    -o -name 'example' \
+    -o -name 'examples' \
+    \) -exec rm -rf {} + 2>/dev/null || true
 
 # ─────────────────────────────────────────────
 # Stage 4: Lean production runner
