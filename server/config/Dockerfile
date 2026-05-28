@@ -1,24 +1,31 @@
-# Stage 1: Base image with node.js
-FROM node:24.16-alpine AS base
-# Update npm to the latest version for performance and security benefits
-RUN npm install -g npm@latest
-# Install pnpm for fast, efficient dependency installation
-RUN npm install -g pnpm@latest
-# Install build dependencies for native modules and asset compression tools
-RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
-WORKDIR /app
+# syntax=docker/dockerfile:1
 
-# Stage 2: Install dependencies
-# This layer is cached as long as package.json doesn't change
+# ─────────────────────────────────────────────
+# Stage 1: Minimal base — shared toolchain only
+# ─────────────────────────────────────────────
+FROM node:24.16-alpine AS base
+WORKDIR /app
+# Install pnpm via corepack (no npm global bloat)
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# ─────────────────────────────────────────────
+# Stage 2: Install dependencies via pnpm
+# ─────────────────────────────────────────────
 FROM base AS deps
-# Include pnpm-workspace.yaml so pnpm can validate the lockfile against workspace policies
+# Native build tools needed ONLY for sharp, bcryptjs, pg native bindings etc.
+RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
+COPY server/prisma/ ./server/prisma/
 ARG CACHEBUST=0
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --shamefully-hoist --force
 
+# ─────────────────────────────────────────────
 # Stage 3: Build the Nuxt application
+# ─────────────────────────────────────────────
 FROM base AS builder
+# Need build tools here too for any native postinstall scripts triggered by npm run build
+RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
 COPY --from=deps /app/node_modules ./node_modules
 
 # ktx-tools provides the `toktx` binary used by scripts/compress.ts at build time.
@@ -30,28 +37,27 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ARG PORT=3000
-# ENV NODE_ENV=${NODE_ENV}
 ENV PORT=${PORT}
 ENV NUXT_TELEMETRY_DISABLED=1
-# Increase memory limit for the build process to prevent OOM errors
 ENV NODE_OPTIONS="--max-old-space-size=16384"
 
-# npm runs the build script — no install step, just uses the node_modules pnpm populated
+# npm runs the build — pnpm-installed node_modules are already in place
 RUN npm run build
 
-# Stage 4: Production runner — lean image, no build tools needed
+# ─────────────────────────────────────────────
+# Stage 4: Lean production runner
+# ─────────────────────────────────────────────
 FROM node:24.16-alpine AS runner
 WORKDIR /app
 
-RUN apk add --no-cache \
-    vips \
-    dumb-init
+# vips: required at runtime by sharp for server-side image transforms
+# dumb-init: proper PID 1 signal handling
+RUN apk add --no-cache vips dumb-init
 
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
 
 RUN chown -R node:node /app/.output
-
 USER node
 
 ARG PORT=3000
