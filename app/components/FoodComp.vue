@@ -1,5 +1,10 @@
 <template>
-  <div class="food-left" role="list" aria-label="Food items">
+  <div
+    class="food-left"
+    :class="{ 'medium-mode': isMediumMode, 'crazy-mode': isCrazyMode }"
+    role="list"
+    aria-label="Food items"
+  >
     <span
       v-for="(span, index) in foodLeft"
       :key="index"
@@ -7,7 +12,7 @@
       role="listitem"
       :aria-label="span.eaten ? 'Eaten food item' : 'Uneaten food item'"
       tabindex="0"
-      :style="{ animationDelay: `${index * 0.4}s` }"
+      :style="{ animationDelay: isCrazyMode ? `${(index % 20) * 0.05}s` : isMediumMode ? `${(index % 10) * 0.1}s` : `${index * 0.4}s` }"
     />
   </div>
 </template>
@@ -17,9 +22,12 @@ interface FoodItem {
   eaten: boolean;
 }
 
-defineProps<{
+const props = defineProps<{
   foodLeft: FoodItem[];
 }>();
+
+const isMediumMode = computed(() => props.foodLeft.length === 30);
+const isCrazyMode = computed(() => props.foodLeft.length > 30);
 </script>
 
 <style lang="scss">
@@ -43,6 +51,36 @@ defineProps<{
       0 0 0px 0px rgba(67, 217, 173, 0.3),
       // Return to subtle glow
       0 0 0px 0px rgba(67, 217, 173, 0.2);
+  }
+}
+
+@keyframes medium-smooth-glow {
+  0% {
+    box-shadow:
+      0 0 0px 2px rgba(67, 217, 173, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 8px 4px rgba(67, 217, 173, 0.5);
+  }
+  100% {
+    box-shadow:
+      0 0 0px 2px rgba(67, 217, 173, 0.3);
+  }
+}
+
+@keyframes crazy-smooth-glow {
+  0% {
+    box-shadow:
+      0 0 0px 0px rgba(67, 217, 173, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 4px 2px rgba(67, 217, 173, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 0px 0px rgba(67, 217, 173, 0.3);
   }
 }
 
@@ -71,6 +109,56 @@ defineProps<{
     &.eaten {
       opacity: 0.3;
       animation: none; // Disable animation for eaten items
+    }
+  }
+
+  &.medium-mode {
+    height: 80px;
+    top: 50%;
+
+    & > span {
+      width: 6px;
+      height: 6px;
+      margin: 4px;
+      box-shadow:
+        0 0 0px 3px rgba(67, 217, 173, 0.4),
+        0 0 0px 6px rgba(67, 217, 173, 0.2);
+      animation: medium-smooth-glow 3s ease-in-out infinite;
+      
+      &.eaten {
+        opacity: 0.25;
+        animation: none;
+      }
+    }
+  }
+
+  &.crazy-mode {
+    height: 95px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px;
+    top: 48%;
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $accent2;
+      border-radius: 2px;
+    }
+
+    & > span {
+      width: 4px;
+      height: 4px;
+      margin: 1px;
+      box-shadow:
+        0 0 1px 1px rgba(67, 217, 173, 0.4);
+      animation: crazy-smooth-glow 3s ease-in-out infinite;
+      
+      &.eaten {
+        opacity: 0.15;
+        animation: none;
+      }
     }
   }
 }

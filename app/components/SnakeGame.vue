@@ -1,7 +1,7 @@
 <template>
   <div ref="board" class="game-screen">
     <div class="scores">
-      <p v-if="gameStarted || !gameOver">
+      <p v-if="gameStarted || gameOver">
         {{ formattedScore }}
       </p>
     </div>
@@ -15,7 +15,11 @@
         {{ $t("home.gameCommand") }}
       </CustomButton>
 
-      <p v-if="gameOver && congratsMessage" class="outcome">
+      <p
+        v-if="gameOver && congratsMessage"
+        class="outcome"
+        :class="{ 'gold-neon': winningScore === 670, 'blue-neon': winningScore === 30 }"
+      >
         {{ isWon }}
       </p>
       <div
@@ -100,6 +104,7 @@ const props = defineProps<{
   foodLeft: { eaten: boolean }[];
   updateFoodLeft: () => void;
   triggerSignal?: { code: string; timestamp: number };
+  winningScore?: number;
 }>();
 
 // Watch for external trigger signals
@@ -124,12 +129,13 @@ const snake = ref<{ x: number; y: number }[]>([]);
 const food = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const direction = ref<string>("up");
 const lastDirection = ref<string>("up");
+const inputQueue = ref<string[]>([]);
 const gameSpeedDelay = ref<number>(130);
 const gameStarted = ref<boolean>(false);
 const gameOver = ref<boolean>(false);
 const congratsMessage = ref<string>("");
 const score = ref<number>(0);
-const winningScore = ref<number>(10);
+const winningScore = computed(() => props.winningScore ?? 10);
 const foodEatenRecently = ref<boolean>(false);
 
 // Initialize snake and food on client side
@@ -149,9 +155,18 @@ const formattedScore = computed(() =>
 );
 
 // Computed property for win condition
-const isWon = computed(() =>
-  score.value >= winningScore.value ? t("home.hasWon") : t("home.hasNotWon"),
-);
+const isWon = computed(() => {
+  if (score.value >= winningScore.value) {
+    if (winningScore.value === 670) {
+      return t("home.hasWonCrazy");
+    }
+    if (winningScore.value === 30) {
+      return t("home.hasWonMedium");
+    }
+    return t("home.hasWon");
+  }
+  return t("home.hasNotWon");
+});
 
 // UseIntervalFn for game loop
 const { pause, resume } = useIntervalFn(
@@ -239,12 +254,30 @@ function checkWinCondition() {
   if (score.value >= winningScore.value) {
     playSound("victory");
     if (isClient) {
-      launchConfetti();
-      launchConfettiInMiddle();
+      if (winningScore.value === 670) {
+        // Massive golden/emerald confetti celebration for Crazy mode!
+        launchConfetti(12000, ["#43d9ad", "#4d5bce", "#ffd700", "#ffffff"]);
+        launchConfettiInMiddle();
+        setTimeout(() => { launchConfettiInMiddle(); }, 3000);
+        setTimeout(() => { launchConfettiInMiddle(); }, 6000);
+      } else if (winningScore.value === 30) {
+        // Medium emerald/blue confetti celebration
+        launchConfetti(7000, ["#43d9ad", "#4d5bce", "#ffffff"]);
+        launchConfettiInMiddle();
+      } else {
+        launchConfetti(5000, ["#43d9ad", "#ffffff"]);
+        launchConfettiInMiddle();
+      }
     }
     stopGame("Play-again");
     if (isClient) {
-      showNotification(t("home.gameCongrats"));
+      let congratsMsg = t("home.gameCongrats");
+      if (winningScore.value === 30) {
+        congratsMsg = t("home.gameCongratsMedium");
+      } else if (winningScore.value === 670) {
+        congratsMsg = t("home.gameCongratsCrazy");
+      }
+      showNotification(congratsMsg);
     }
   }
 }
@@ -274,6 +307,11 @@ function generateFood(): { x: number; y: number } {
 
 function move(): void {
   if (!isClient) return;
+
+  // Consume next direction from input queue if available
+  if (inputQueue.value.length > 0) {
+    direction.value = inputQueue.value.shift()!;
+  }
 
   const head = { ...snake.value[0] };
 
@@ -380,6 +418,7 @@ function resetGame(): void {
   food.value = generateFood();
   pause();
   emit("gameOver");
+  inputQueue.value = [];
 }
 
 function launchConfettiInMiddle() {
@@ -405,25 +444,25 @@ function launchConfettiInMiddle() {
   fire(0.1, { spread: 120, startVelocity: 45 });
 }
 
-function launchConfetti() {
+function launchConfetti(durationMs: number = 5000, customColors: string[] = ["#bb0000", "#ffffff"]) {
   if (!isClient) return;
 
-  const end = Date.now() + 5 * 1000; // Confetti lasts for 5 seconds
-  const colors = ["#bb0000", "#ffffff"]; // Custom colors (Buckeyes)
+  const end = Date.now() + durationMs; // Confetti lasts for custom duration
+  // Custom colors
   (function frame() {
     confetti({
-      particleCount: 2,
+      particleCount: 3,
       angle: 60,
-      spread: 55,
+      spread: 60,
       origin: { x: 0 },
-      colors,
+      colors: customColors,
     });
     confetti({
-      particleCount: 2,
+      particleCount: 3,
       angle: 120,
-      spread: 55,
+      spread: 60,
       origin: { x: 1 },
-      colors,
+      colors: customColors,
     });
 
     if (Date.now() < end) {
@@ -471,6 +510,7 @@ function stopGame(message: string): void {
   lastDirection.value = "up";
   congratsMessage.value = message;
   pause();
+  inputQueue.value = [];
 }
 
 // Handle input from keyboard or external controls
@@ -481,26 +521,48 @@ function handleInput(code: string) {
     initializeSounds();
     triggerStartAnimation(board.value);
   } else if (gameStarted.value) {
+    let nextDir = "";
     switch (
       code // event.key is too specific and bad with i18n, requires you to use these two for one keyCode
     ) {
       //  ["س ", "s"]
       case "ArrowUp":
       case "KeyW":
-        if (lastDirection.value !== "down") direction.value = "up";
+        nextDir = "up";
         break;
       case "ArrowDown":
       case "KeyS":
-        if (lastDirection.value !== "up") direction.value = "down";
+        nextDir = "down";
         break;
       case "ArrowLeft":
       case "KeyA":
-        if (lastDirection.value !== "right") direction.value = "left";
+        nextDir = "left";
         break;
       case "ArrowRight":
       case "KeyD":
-        if (lastDirection.value !== "left") direction.value = "right";
+        nextDir = "right";
         break;
+    }
+
+    if (nextDir) {
+      // Cap input queue size to 2 to prevent control lag
+      if (inputQueue.value.length < 2) {
+        const lastQueuedDir = inputQueue.value.length > 0 
+          ? inputQueue.value[inputQueue.value.length - 1] 
+          : lastDirection.value;
+
+        if (nextDir !== lastQueuedDir) {
+          const isOpposite = 
+            (nextDir === "up" && lastQueuedDir === "down") ||
+            (nextDir === "down" && lastQueuedDir === "up") ||
+            (nextDir === "left" && lastQueuedDir === "right") ||
+            (nextDir === "right" && lastQueuedDir === "left");
+
+          if (!isOpposite) {
+            inputQueue.value.push(nextDir);
+          }
+        }
+      }
     }
   }
 }
@@ -576,6 +638,22 @@ defineExpose({
       color: $gradients2;
       font-size: 20px;
       text-transform: uppercase;
+
+      &.gold-neon {
+        color: #ffd700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.4);
+        box-shadow: inset 0px 2px 15px 9px rgba(255, 215, 0, 0.15);
+        border-top: 1px solid rgba(255, 215, 0, 0.3);
+        border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+      }
+
+      &.blue-neon {
+        color: #4d5bce;
+        text-shadow: 0 0 10px rgba(77, 91, 206, 0.8), 0 0 20px rgba(77, 91, 206, 0.4);
+        box-shadow: inset 0px 2px 15px 9px rgba(77, 91, 206, 0.15);
+        border-top: 1px solid rgba(77, 91, 206, 0.3);
+        border-bottom: 1px solid rgba(77, 91, 206, 0.3);
+      }
 
       &::before {
         content: "";

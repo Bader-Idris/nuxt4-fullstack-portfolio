@@ -15,7 +15,7 @@
         </div>
 
         <div class="explorer-lists">
-          <FoldableTab @toggle="toggleHobbies">
+          <FoldableTab :initially-folded="isMobile" @toggle="toggleHobbies">
             <p>personal_info</p>
           </FoldableTab>
 
@@ -119,9 +119,61 @@ definePageMeta({
 
 const route = useRoute();
 const activeIconIndex = ref(1);
-const isHobbiesHidden = ref(false);
+const isMobile = useMobile();
+const isHobbiesHidden = ref(isMobile.value);
 const isContactHidden = ref(true);
 const activeHobbyIndex = ref(0);
+
+// Sync Hobbies open/hidden state with screen size changes
+watch(
+  isMobile,
+  (newVal) => {
+    isHobbiesHidden.value = newVal;
+  },
+  { immediate: true },
+);
+
+const syncActiveState = () => {
+  const path = route.path;
+
+  // Helper to remove locale and leading slash for comparison
+  const segments = path.split("/").filter(Boolean);
+  if (["en", "ar", "es"].includes(segments[0])) {
+    segments.shift();
+  }
+  const relativePath = segments.join("/");
+  const subAboutPath = relativePath.startsWith("about/")
+    ? relativePath.replace("about/", "")
+    : relativePath;
+
+  // Sync Activity Bar: Match longest path first
+  const matchedIconIndex = icons.value
+    .map((icon, index) => ({ icon, index }))
+    .filter(({ icon }) => subAboutPath.startsWith(icon.path))
+    .sort((a, b) => b.icon.path.length - a.icon.path.length)[0]?.index;
+
+  if (matchedIconIndex !== undefined) {
+    activeIconIndex.value = matchedIconIndex;
+  }
+
+  // Sync Hobby Index
+  if (subAboutPath.startsWith("hobbies/")) {
+    const hobbySegment = subAboutPath.split("hobbies/")[1] || "";
+    const hobbyIndex = hobbiesObj.value.findIndex(
+      (hobby) => hobby.path === hobbySegment,
+    );
+    if (hobbyIndex !== -1) {
+      activeHobbyIndex.value = hobbyIndex;
+    }
+  }
+};
+
+watch(
+  () => route.path,
+  () => {
+    syncActiveState();
+  },
+);
 
 // Sidebar resizing logic
 const sidebarWidth = ref(300);
@@ -149,7 +201,6 @@ useSchemaOrg([
   },
 ]);
 
-const isMobile = useMobile();
 const checkScreenSize = () => {
   isMobile.value = window.innerWidth < 768;
 };
@@ -262,12 +313,6 @@ const setActiveIcon = (index: number) => {
   navigateTo(localePath(`/about/${icons.value[index].path}`));
 };
 
-const syncActiveIcon = (path: string) => {
-  const segment = path.split("/").filter(Boolean).at(-1) ?? "";
-  const index = icons.value.findIndex((icon) => icon.path === segment);
-  if (index !== -1) activeIconIndex.value = index;
-};
-
 const displayContactInfo = computed(() => {
   return isMobile.value
     ? contInfo
@@ -275,7 +320,7 @@ const displayContactInfo = computed(() => {
 });
 
 onMounted(() => {
-  syncActiveIcon(route.path);
+  syncActiveState();
   checkScreenSize();
   window.addEventListener("resize", checkScreenSize);
 });
@@ -346,7 +391,13 @@ aside {
   padding-top: 10px;
 
   @include mobile {
-    display: none;
+    flex-direction: row;
+    width: 100%;
+    height: auto;
+    justify-content: space-around;
+    padding: 0 10px;
+    border-right: none;
+    border-bottom: 1px solid $lines;
   }
 
   img {
@@ -355,7 +406,11 @@ aside {
     width: 24px;
     opacity: 0.4;
     @include transition-ease;
-    
+
+    @include mobile {
+      margin: 10px 0;
+    }
+
     &:hover,
     &.active {
       filter: brightness(4);

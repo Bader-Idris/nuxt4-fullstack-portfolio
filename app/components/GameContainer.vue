@@ -8,6 +8,7 @@
       :food-left="foodLeft"
       :update-food-left="Object(updateFoodLeft)"
       :trigger-signal="triggerSignal"
+      :winning-score="winningScore"
       @food-eaten="handleFoodEaten"
       @game-over="handleGameOver"
     />
@@ -51,6 +52,26 @@
         :food-left="foodLeft"
         hydrate-on-media-query="(min-width: 769px)"
       />
+      <div class="mode-selector">
+        <button
+          :class="{ active: winningScore === 10 }"
+          @click="setWinningScore(10)"
+        >
+          {{ $t("home.normal") }}
+        </button>
+        <button
+          :class="{ active: winningScore === 30 }"
+          @click="setWinningScore(30)"
+        >
+          {{ $t("home.medium") }}
+        </button>
+        <button
+          :class="{ active: winningScore === 670 }"
+          @click="setWinningScore(670)"
+        >
+          {{ $t("home.crazy") }}
+        </button>
+      </div>
       <CustomLink
         aria-label="about page"
         :to="localePath('/about')"
@@ -65,9 +86,11 @@
 </template>
 
 <script setup lang="ts">
+const winningScore = ref(10);
+
 // Reactive state for food, typed as an array of FoodItem
 const foodLeft = ref<{ eaten: boolean }[]>(
-  Array.from({ length: 10 }, () => ({ eaten: false })),
+  Array.from({ length: winningScore.value }, () => ({ eaten: false })),
 );
 const localePath = useLocalePath();
 // const snakeGame = ref<any>(null) // Removed ref
@@ -78,7 +101,7 @@ const triggerSignal = ref<{ code: string; timestamp: number } | undefined>(
 // Function to update foodLeft, based on the score
 function updateFoodLeft(score: number): void {
   for (let i = 0; i < score; ++i) {
-    if (!foodLeft.value[i].eaten) {
+    if (foodLeft.value[i] && !foodLeft.value[i].eaten) {
       foodLeft.value[i].eaten = true;
     }
   }
@@ -86,7 +109,14 @@ function updateFoodLeft(score: number): void {
 
 // Function to reset the foodLeft state to initial values
 function resetFoodLeft(): void {
-  foodLeft.value = Array.from({ length: 10 }, () => ({ eaten: false }));
+  foodLeft.value = Array.from({ length: winningScore.value }, () => ({ eaten: false }));
+}
+
+// Function to set the winning score and handle game reset/sync
+function setWinningScore(scoreValue: number): void {
+  if (winningScore.value === scoreValue) return;
+  winningScore.value = scoreValue;
+  resetFoodLeft();
 }
 
 // Function to trigger a keyboard event, with typed key parameter
@@ -188,7 +218,7 @@ onMounted(() => {
     top: 0%;
     left: 20%;
     width: 0;
-    height: 200px;
+    height: 0;
     transform: rotate(135deg);
     z-index: z("default");
   }
@@ -196,7 +226,7 @@ onMounted(() => {
   &::after {
     content: "";
     width: 0;
-    height: 200px;
+    height: 0;
     position: absolute;
     top: 70%;
     left: 70%;
@@ -218,6 +248,45 @@ onMounted(() => {
     & > span {
       display: block;
       margin: 10px 0;
+    }
+
+    .mode-selector {
+      display: flex;
+      justify-content: space-between;
+      gap: 5px;
+      margin: 10px 0;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 3px;
+      border-radius: 6px;
+      border: 1px solid rgba(67, 217, 173, 0.2);
+      z-index: z("default");
+      position: absolute;
+      top: 295px;
+      width: 100%;
+
+      button {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: $secondary1;
+        font-size: 10px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: $secondary4;
+        }
+
+        &.active {
+          background: $accent2;
+          color: $primary1;
+          box-shadow: 0 0 8px rgba(67, 217, 173, 0.6);
+        }
+      }
     }
 
     .board-arrows {
@@ -298,6 +367,12 @@ html[lang="es-ES"] {
     > span:nth-of-type(2) {
       font-size: calc($body-text-size - 25%);
     }
+  }
+}
+
+html[lang^="ar"] {
+  .mode-selector {
+    direction: rtl;
   }
 }
 </style>

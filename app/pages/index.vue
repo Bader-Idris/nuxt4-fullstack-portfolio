@@ -34,6 +34,31 @@
         <GameContainer />
       </aside>
     </div>
+
+    <!-- Draggable Mobile Game Drawer -->
+    <!-- we have to not fix the whole box for mobile, only the .game-screen with internal parts, meaning, the game without wide boilerplate, without ruiniing the pc expereience -->
+    <!-- <div
+      v-if="isMobile"
+      class="mobile-game-drawer"
+      :style="{ height: drawerHeight + 'px' }"
+      :class="{ 'is-dragging': isDragging, 'is-active': drawerHeight > 40 }"
+    >
+      <div
+        class="drag-handle"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+        @click="toggleDrawer"
+      >
+        <span class="handle-line" />
+        <span class="handle-text">
+          {{ drawerHeight > 100 ? $t("home.slideDownToClose") : $t("home.pullUpToPlay") }}
+        </span>
+      </div>
+      <div v-if="drawerHeight > 100" class="drawer-content">
+        <GameContainer />
+      </div>
+    </div> -->
   </div>
 </template>
 
@@ -43,6 +68,54 @@ import { SplitText } from "gsap/all";
 
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
+const isMobile = useMobile();
+
+// Draggable Mobile Game Drawer State
+const drawerHeight = ref(40);
+const maxDrawerHeight = 520;
+const minDrawerHeight = 40;
+const startTouchY = ref(0);
+const startHeight = ref(0);
+const isDragging = ref(false);
+const hasMoved = ref(false);
+
+const onTouchStart = (e: TouchEvent) => {
+  startTouchY.value = e.touches[0].clientY;
+  startHeight.value = drawerHeight.value;
+  isDragging.value = true;
+  hasMoved.value = false;
+};
+
+const onTouchMove = (e: TouchEvent) => {
+  if (!isDragging.value) return;
+  const deltaY = startTouchY.value - e.touches[0].clientY; // Positive means drag UP
+  if (Math.abs(deltaY) > 5) {
+    hasMoved.value = true;
+  }
+  const newHeight = startHeight.value + deltaY;
+  drawerHeight.value = Math.max(minDrawerHeight, Math.min(newHeight, maxDrawerHeight));
+};
+
+const onTouchEnd = () => {
+  isDragging.value = false;
+  if (hasMoved.value) {
+    // Snap behavior: snap fully open if dragged > 180px, otherwise snap closed
+    if (drawerHeight.value > 180) {
+      drawerHeight.value = maxDrawerHeight;
+    } else {
+      drawerHeight.value = minDrawerHeight;
+    }
+  }
+};
+
+const toggleDrawer = () => {
+  if (hasMoved.value) return; // Ignore click if dragging occurred
+  if (drawerHeight.value > minDrawerHeight) {
+    drawerHeight.value = minDrawerHeight;
+  } else {
+    drawerHeight.value = maxDrawerHeight;
+  }
+};
 // const img = useImage()
 
 const windowWidth = ref(500);
@@ -286,7 +359,7 @@ useSchemaOrg([
           top: 10%;
           left: 30%;
           width: 0;
-          height: 100px;
+          height: 0;
           transform: rotate(135deg);
           z-index: z("default");
         }
@@ -294,7 +367,7 @@ useSchemaOrg([
         &::after {
           content: "";
           width: 0;
-          height: 100px;
+          height: 0;
           position: absolute;
           top: 50%;
           left: 75%;
@@ -511,6 +584,82 @@ useSchemaOrg([
     @include tablet-to-up {
       width: 100% !important;
       justify-content: center;
+    }
+
+    .mobile-game-drawer {
+      display: none;
+
+      @include mobile {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(180deg, rgba(2, 18, 27, 0.95) 0%, rgba(1, 8, 14, 0.98) 100%);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(67, 217, 173, 0.2);
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        z-index: 1000;
+        transition: height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+        box-sizing: border-box;
+
+        &.is-dragging {
+          transition: none !important;
+        }
+
+        .drag-handle {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 40px;
+          cursor: grab;
+          user-select: none;
+          padding: 8px 0;
+          width: 100%;
+          box-sizing: border-box;
+
+          &:active {
+            cursor: grabbing;
+          }
+
+          .handle-line {
+            width: 40px;
+            height: 4px;
+            background-color: rgba(67, 217, 173, 0.4);
+            border-radius: 2px;
+            margin-bottom: 6px;
+          }
+
+          .handle-text {
+            font-size: 11px;
+            color: $secondary1;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+
+        .drawer-content {
+          flex: 1;
+          overflow-y: auto;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 10px;
+          box-sizing: border-box;
+
+          .game-container {
+            transform: scale(0.65) !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 510px;
+          }
+        }
+      }
     }
   }
 }

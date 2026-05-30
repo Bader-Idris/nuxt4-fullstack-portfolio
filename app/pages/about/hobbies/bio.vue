@@ -484,7 +484,7 @@ onBeforeMount(() => {
 
   @include mobile {
     position: relative;
-    @include flex-container(column, nowrap, unset, unset);
+    @include flex-container(column, nowrap, unset, center);
     padding: 20px 15px;
   }
 
