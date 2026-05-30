@@ -36,7 +36,6 @@
     </div>
 
     <!-- Draggable Mobile Game Drawer -->
-    <!-- we have to not fix the whole box for mobile, only the .game-screen with internal parts, meaning, the game without wide boilerplate, without ruiniing the pc expereience -->
     <!-- <div
       v-if="isMobile"
       class="mobile-game-drawer"
@@ -56,7 +55,7 @@
         </span>
       </div>
       <div v-if="drawerHeight > 100" class="drawer-content">
-        <GameContainer />
+        <LazyMobileSnakeGame />
       </div>
     </div> -->
   </div>
@@ -72,7 +71,7 @@ const isMobile = useMobile();
 
 // Draggable Mobile Game Drawer State
 const drawerHeight = ref(40);
-const maxDrawerHeight = 520;
+const maxDrawerHeight = 650;
 const minDrawerHeight = 40;
 const startTouchY = ref(0);
 const startHeight = ref(0);
@@ -649,15 +648,8 @@ useSchemaOrg([
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 10px;
+          padding: 10px 10px 25px;
           box-sizing: border-box;
-
-          .game-container {
-            transform: scale(0.65) !important;
-            margin: 0 !important;
-            width: 100% !important;
-            max-width: 510px;
-          }
         }
       }
     }
