@@ -79,7 +79,7 @@ const getIconName = (title: string): string => {
 
 <style lang="scss">
 .projects-sidebar {
-  width: 301px;
+  width: 100%;
   transition:
     opacity 0.5s ease,
     visibility 0.5s ease;

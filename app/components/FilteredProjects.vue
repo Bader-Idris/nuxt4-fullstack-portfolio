@@ -6,37 +6,41 @@
       </p>
     </div>
     <div v-else class="filtered-projects">
-      <div
-        v-for="project in filteredProjects"
-        :key="project.title"
-        class="project-card"
-      >
-        <h3 class="card-title">// {{ project.title }}</h3>
-        <div class="card-content">
-          <!-- test this -->
-          <CustomLink
-            aria-label="go to ${{ project.title }}"
-            class="link external-link"
-            :to="project.url"
-          >
-            <img :src="project.img" :alt="project.title" />
-          </CustomLink>
-          <p>{{ project.desc }}</p>
-
-          <CustomButton button-type="default" class="project-link">
-            <CustomLink :to="project.url">
-              <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title)}`)"> -->
-              View Project
+      <TransitionGroup name="list">
+        <div
+          v-for="project in filteredProjects"
+          :key="project.title.en"
+          class="project-card"
+        >
+          <h3 class="card-title">// {{ project.title[locale] || project.title.en }}</h3>
+          <div class="card-content">
+            <!-- test this -->
+            <CustomLink
+              :aria-label="'go to ' + (project.title[locale] || project.title.en)"
+              class="link external-link"
+              :to="project.url"
+            >
+              <img :src="project.img" :alt="project.title[locale] || project.title.en" />
             </CustomLink>
-          </CustomButton>
+            <p>{{ project.desc[locale] || project.desc.en }}</p>
+
+            <CustomButton button-type="default" class="project-link">
+              <CustomLink :to="project.url">
+                <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title.en)}`)"> -->
+                View Project
+              </CustomLink>
+            </CustomButton>
+          </div>
         </div>
-      </div>
+      </TransitionGroup>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import projects from "~/apis/projects_info.json";
+import { projectsList } from "~/apis/projects_data";
+
+const { locale } = useI18n();
 
 // const localePath = useLocalePath()
 const props = defineProps({
@@ -44,14 +48,40 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  searchQuery: {
+    type: String,
+    default: "",
+  },
 });
 
 const filteredProjects = computed(() => {
+  const q = props.searchQuery.toLowerCase().trim();
   // @ts-expect-error: props.activeItems is not properly typed
   const activeItemsLower = props.activeItems.map((item) => item.toLowerCase());
-  return projects.filter((project) =>
-    project.tags.some((tag) => activeItemsLower.includes(tag.toLowerCase())),
-  );
+
+  return projectsList.filter((project) => {
+    // 1. Tag Match (Must match at least one selected tag if tags are active)
+    const matchesTags = project.tags.some((tag) =>
+      activeItemsLower.includes(tag.toLowerCase()),
+    );
+    if (!matchesTags) return false;
+
+    // 2. Search Query Match (Guessing Approach)
+    if (!q) return true;
+
+    // Search across ALL localized fields to "guess" intent
+    const searchableFields = [
+      project.title.en,
+      project.title.ar,
+      project.title.es,
+      project.desc.en,
+      project.desc.ar,
+      project.desc.es,
+      ...project.tags,
+    ];
+
+    return searchableFields.some((field) => field.toLowerCase().includes(q));
+  });
 });
 
 // const slugify = (text) => {
@@ -113,29 +143,20 @@ onMounted(() => {
 
 .filtered-projects {
   gap: 20px;
-  left: 350px;
-  position: absolute;
-  top: 100px;
   overflow: hidden;
   padding-bottom: 100px;
-  @include flex-container(unset, wrap, unset, unset);
+  @include flex-container(unset, wrap, unset, stretch);
 
   @include mobile {
-    width: calc($full-viewport-width - 30px);
+    width: 100%;
     flex-direction: column;
-    left: 0;
-    top: 0;
     position: relative;
   }
 
   @include tablet {
-    width: calc($full-viewport-width - 460px);
+    width: 100%;
     @include flex-container(row, wrap, space-evenly, stretch);
     align-content: center;
-  }
-
-  @media (min-width: 1024px) and (max-width: 1200px) {
-    width: calc($full-viewport-width - 430px);
   }
 
   @media (min-width: 1200px) {

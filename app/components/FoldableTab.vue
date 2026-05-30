@@ -1,5 +1,5 @@
 <template>
-  <span id="line" />
+  <span v-show="!isToggled" id="line" />
   <div class="nav-titled">
     <div
       class="foldable-tab"

@@ -1,27 +1,39 @@
 <template>
   <div ref="projectsContainer" class="projects">
     <NavbarProjects @toggle-sidebar="toggleSidebar" />
-    <aside :style="{ display: sidebarDisplay }">
-      <ProjectsSidebar
-        :is-sidebar-hidden="isSidebarHidden"
-        :list="list"
-        @toggle-active="toggleActive"
-      />
-      <SelectedTabs :active-items="activeItems" @remove-item="removeItem" />
-    </aside>
-    <FilteredProjects :active-items="activeItems" />
+    <div class="projects-body">
+      <aside :style="{ display: sidebarDisplay }">
+        <ProjectsSidebar
+          :is-sidebar-hidden="isSidebarHidden"
+          :list="list"
+          @toggle-active="toggleActive"
+        />
+        <SelectedTabs :active-items="activeItems" @remove-item="removeItem" />
+      </aside>
+      
+      <div class="projects-main-content">
+        <ProjectSearchBar @search="handleSearch" />
+        <FilteredProjects :active-items="activeItems" :search-query="searchQuery" />
+      </div>
+    </div>
+
     <ScrollToTop :target="projectsContainer" />
   </div>
 </template>
 
 <script setup lang="ts">
-import projects from "~/apis/projects_info.json";
+import { projectsList } from "~/apis/projects_data";
 
 const projectsContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(projectsContainer);
 
 // const img = useImage()
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const searchQuery = ref("");
+const handleSearch = (q: string) => {
+  searchQuery.value = q;
+};
 
 // const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
 //   width: 1200,
@@ -46,13 +58,13 @@ useSchemaOrg([
     name: t("projects.title"),
     description: t("projects.description"),
     dateModified: new Date().toISOString(),
-    itemListElement: projects.map((project, index) => ({
+    itemListElement: projectsList.map((project, index) => ({
       "@type": "ListItem",
       position: index + 1,
       item: {
         "@type": "CreativeWork",
-        name: project.title,
-        description: project.desc,
+        name: project.title[locale.value] || project.title.en,
+        description: project.desc[locale.value] || project.desc.en,
         url: project.url,
         image: project.img.startsWith("http")
           ? project.img
@@ -159,11 +171,56 @@ watch(list, saveActiveItems, { deep: true });
 
 <style lang="scss" scoped>
 .projects {
-  overflow-y: scroll !important;
+  display: flex;
+  flex-direction: column;
+  height: calc(#{$full-viewport-height} - 87px);
+  overflow: hidden;
   @include mainMiddleSettings;
 
   @include mobile {
     @include phone-borders;
+    height: calc(#{$full-viewport-height} - 45px);
+  }
+}
+
+.projects-body {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+
+  @include mobile {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+}
+
+aside {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid $lines;
+  background-color: $primary3;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  @include mobile {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid $lines;
+    flex-shrink: 0;
+    max-height: 50vh;
+  }
+}
+
+.projects-main-content {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  background-color: $primary2;
+
+  @include mobile {
+    padding: 20px 15px;
   }
 }
 </style>

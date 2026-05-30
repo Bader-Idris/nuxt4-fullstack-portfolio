@@ -8,32 +8,32 @@
 
 <script setup lang="ts">
 const route = useRoute();
+const { t } = useI18n();
 const runtimeConfig = useRuntimeConfig();
 
-const trainTitle = "3D Train Locomotive Project";
-const trainDescription =
-  "Interactive 3D train locomotive scene built with Nuxt 4, Three.js, custom GLSL smoke particles, and a procedural sky shader.";
+const trainTitle = computed(() => t("projects.train.title"));
+const trainDescription = computed(() => t("projects.train.description"));
 const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-05-5.webp`;
 
 useSeoMeta({
-  title: trainTitle,
-  description: trainDescription,
-  ogTitle: trainTitle,
-  ogDescription: trainDescription,
+  title: () => trainTitle.value,
+  description: () => trainDescription.value,
+  ogTitle: () => trainTitle.value,
+  ogDescription: () => trainDescription.value,
   ogImage: trainSeoImage,
   ogImageWidth: 1200,
   ogImageHeight: 630,
   ogType: "article",
   twitterCard: "summary_large_image",
-  twitterTitle: trainTitle,
-  twitterDescription: trainDescription,
+  twitterTitle: () => trainTitle.value,
+  twitterDescription: () => trainDescription.value,
   twitterImage: trainSeoImage,
 });
 
 useSchemaOrg([
   defineArticle({
-    headline: trainTitle,
-    description: trainDescription,
+    headline: () => trainTitle.value,
+    description: () => trainDescription.value,
     image: trainSeoImage,
     datePublished: "2026-04-13",
     author: [{ name: "Bader Idris", url: "https://baderidris.com" }],

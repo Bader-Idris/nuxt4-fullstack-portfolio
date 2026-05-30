@@ -55,7 +55,12 @@
   "projects": {
     "title": "Bader Idris - Proyectos Full Stack e Interactivos",
     "description": "Explora mis proyectos Full Stack con Nuxt, Vue, Node, GSAP y Three.js. Mostrando diseño responsivo y herramientas interactivas.",
-    "caution": "Por favor, selecciona una herramienta de programación\n para ver mis proyectos. Tu elección es crucial para continuar."
+    "caution": "Por favor, selecciona una herramienta de programación\n para ver mis proyectos. Tu elección es crucial para continuar.",
+    "search_placeholder": "Buscar proyectos, tecnología o palabras clave...",
+    "train": {
+      "title": "Proyecto de Locomotora de Tren 3D",
+      "description": "Escena interactiva de locomotora de tren 3D construida con Nuxt 4, Three.js, partículas de humo GLSL personalizadas y un sombreador de cielo procedimental."
+    }
   },
   "contact": {
     "title": "Contactar a Bader Idris | Desarrollador Full Stack y Experto",
