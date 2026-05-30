@@ -6,7 +6,7 @@
         <div v-show="!isSidebarHidden" class="sidebar-scrollable-content">
           <ProjectsSidebar
             :is-sidebar-hidden="isSidebarHidden"
-            :list="list"
+            :list="displayedList"
             @toggle-active="toggleActive"
           />
         </div>
@@ -104,12 +104,44 @@ const list = ref<Array<{ title: string; imgAlt: string; isActive: boolean }>>([
   { title: "Docker", imgAlt: "Docker icon", isActive: true },
   { title: "Nginx", imgAlt: "Nginx icon", isActive: true },
   { title: "Nuxt", imgAlt: "Nuxt icon", isActive: true },
-  { title: 'Electron', imgAlt: 'Electron icon', isActive: true },
-  { title: 'ThreeJs', imgAlt: 'ThreeJs icon', isActive: true },
-  { title: 'CapacitorJs', imgAlt: 'CapacitorJs icon', isActive: true },
+  { title: "Electron", imgAlt: "Electron icon", isActive: true },
+  { title: "ThreeJs", imgAlt: "ThreeJs icon", isActive: true },
+  { title: "CapacitorJs", imgAlt: "CapacitorJs icon", isActive: true },
   // { title: 'Bash', imgAlt: 'Bash icon', isActive: true },
   // { title: 'NestJs', imgAlt: 'NestJs icon', isActive: true },
 ]);
+
+const relevantTags = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim();
+  if (!q) return null;
+
+  const tags = new Set<string>();
+  projectsList.forEach((project) => {
+    const searchableFields = [
+      project.title.en,
+      project.title.ar,
+      project.title.es,
+      project.desc.en,
+      project.desc.ar,
+      project.desc.es,
+      ...project.tags,
+    ];
+
+    if (
+      searchableFields.some((field) => field?.toLowerCase().includes(q))
+    ) {
+      project.tags.forEach((tag) => tags.add(tag.toLowerCase()));
+    }
+  });
+  return tags;
+});
+
+const displayedList = computed(() => {
+  if (!relevantTags.value) return list.value;
+  return list.value.filter((item) =>
+    relevantTags.value!.has(item.title.toLowerCase()),
+  );
+});
 
 // @ts-expect-error: item has an implicit any type
 const toggleActive = (item) => {
@@ -118,7 +150,9 @@ const toggleActive = (item) => {
 };
 
 const activeItems = computed(() => {
-  return list.value.filter((item) => item.isActive).map((item) => item.title);
+  return displayedList.value
+    .filter((item) => item.isActive)
+    .map((item) => item.title);
 });
 
 const saveActiveItems = () => {

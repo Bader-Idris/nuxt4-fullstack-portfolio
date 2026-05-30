@@ -10,7 +10,6 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # ─────────────────────────────────────────────
 # Stage 2: Install dependencies via pnpm
 # This stage is ONLY invalidated when package.json or lock files change.
-# Never pass CACHEBUST here — reinstalling 2600 packages is expensive.
 # ─────────────────────────────────────────────
 FROM base AS deps
 RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev

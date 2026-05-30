@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: ./server/config/nginx/test.Dockerfile
+      args:
+        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.4.0-testing-prod
     container_name: nginx
     ports:
       - "5000:80"
@@ -25,7 +27,7 @@ services:
         - NODE_ENV=production
         - PORT=3000
     # image: baderidris/nuxt-portfolio:3.2.5-testing-bun-prod
-    image: baderidris/nuxt-portfolio:3.3.4-testing-prod
+    image: baderidris/nuxt-portfolio:3.4.0-testing-prod
     # image: baderidris/nuxt-portfolio:3.2.5-testing-deno-prod
     restart: always
     deploy:
