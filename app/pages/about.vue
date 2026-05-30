@@ -82,9 +82,9 @@
         <ResizeHandle @resize="handleResize" @start="isResizing = true" @stop="isResizing = false" />
       </aside>
 
-      <main class="about-main-content">
+      <section class="about-main-content">
         <NuxtPage />
-      </main>
+      </section>
     </div>
   </div>
 </template>

@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="cont">
+  <div class="cont">
     <div v-if="!isSubmitted" class="messaging">
       <div class="input-group">
         <label for="name">{{ t("contact.form.name") }}</label>
@@ -298,11 +298,11 @@ onBeforeUnmount(() => {
         <Icon name="material-symbols:content-copy" /> Copy Value
       </button>
     </ContextMenu>
-  </main>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-main.cont {
+.cont {
   width: 100%;
   height: 100%;
   @include flex-container(row, nowrap, space-around, flex-start);

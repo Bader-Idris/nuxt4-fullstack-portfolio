@@ -1,12 +1,14 @@
 <template>
   <div>
     <NavBar v-if="!hideLayout" />
-    <slot />
     <!-- <div>
       <div>Full path: {{  route.fullPath }}</div>
       <div>Params: {{  route.params }}</div>
       <div>Page Name: {{  route.name }}</div>
     </div> -->
+    <main>
+      <slot />
+    </main>
     <FooterComp v-if="!hideLayout" />
   </div>
 </template>

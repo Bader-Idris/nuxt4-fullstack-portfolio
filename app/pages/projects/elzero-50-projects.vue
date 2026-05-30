@@ -81,9 +81,9 @@
       </aside>
 
       <!-- Code Workspace / Dynamic Content Page -->
-      <main class="workspace-main">
+      <section class="workspace-main">
         <NuxtPage />
-      </main>
+      </section>
     </div>
   </div>
 </template>

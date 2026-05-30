@@ -38,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import { gsap } from "gsap";
 import { SplitText } from "gsap/all";
 
 const { t, locale } = useI18n();
@@ -80,129 +81,83 @@ onMounted(async () => {
     windowHeight.value = window.innerHeight;
 
     await document.fonts.ready;
-    // await fontReadyPromise;
     await nextTick();
-    useGSAP().registerPlugin(SplitText);
+    
+    // Ensure direction is set before splitting text
     setInfoDirection();
 
-    const isMobileWidth = useMobile();
+    // Small delay to ensure Nuxt hydration is fully settled
+    setTimeout(() => {
+      gsap.registerPlugin(SplitText);
+      
+      const mm = gsap.matchMedia();
 
-    if (import.meta.dev)
-      console.log(
-        "THIS IS EXCLUSIVE TO DEV MODE, ON PROD IT FUNCTIONS PROPERLY",
-      );
-    const splitGreeting = SplitText.create(".info .greeting", {
-      type: "words",
-      // revertOnLoad: true
-      // you can do this instead of separating them:
-      // onSplit: (self) => {
-      //   useGSAP().to(self.words, {/* settings */})
-      // }
-    });
+      mm.add({
+        isDesktop: "(min-width: 768px)",
+        isMobile: "(max-width: 767px)"
+      }, (context) => {
+        const { isDesktop } = context.conditions!;
 
-    // const greetingEl = document.querySelector('.greeting') as HTMLElement | null
+        // 1. Split the text first while elements are still hidden by CSS
+        const splitGreeting = SplitText.create(".info .greeting", { type: "words" });
+        const splitName = SplitText.create(".info .name", { type: "lines,words" });
+        const splitRole = SplitText.create(".info .role", { type: "lines,words" });
 
-    // useGSAP().to(".info .greeting", {
-    useGSAP().to(splitGreeting.words, {
-      yPercent: "random([-50, 50])",
-      rotation: "random(-30, 30)",
-      repeat: -1,
-      yoyo: true,
-      autoAlpha: 1,
-      stagger: 0.05,
-      // stagger: {
-      //   each: 0.05,
-      //   from: 'start'
-      // },
-      delay: 0.6,
-      ease: "sine.inOut",
-    });
+        // 2. Force parent containers to be visible and opaque.
+        // The children (lines/words) will be hidden by the 'from' part of fromTo.
+        const containers = [".info > *", ".task > p", ".github-repo"];
+        gsap.set(containers, { visibility: "visible", autoAlpha: 1 });
 
-    const splitName = SplitText.create(".info .name", { type: "lines,words" });
+        const tl = gsap.timeline({
+          delay: 0.1,
+          defaults: { ease: "power3.out" }
+        });
 
-    // check: https://gsap.com/docs/v3/GSAP/Timeline
-    useGSAP().timeline().from(splitName.lines, {
-      rotationX: 100,
-      transformOrigin: "-50% -50% -160px",
-      autoAlpha: 0,
-      visibility: "hidden",
-      duration: 0.8,
-      ease: "power3",
-      stagger: 0.25,
-      delay: 0.4,
-      // onComplete: () => {// if we animate arabic letters as flowing down we can add chars type above then do this
-      //   splitName.revert()
-      // }
-    });
-    // .to(splitName.words, {
-    //   yPercent: "random([-50, 50])",
-    //   rotation: "random(-30, 30)",
-    //   repeat: -1,
-    //   yoyo: true,
-    //   autoAlpha: 1,
-    //   stagger: 0.05,
-    //   // stagger: {
-    //   //   each: 0.05,
-    //   //   from: 'start'
-    //   // },
-    //   delay: 0.6,
-    //   // repeat: -1
-    //   ease: 'power1.in'
-    // })
+        // 3. Greeting Loop (independent)
+        // Ensure greeting words are initially hidden before their loop starts
+        gsap.set(splitGreeting.words, { autoAlpha: 0 });
+        gsap.to(splitGreeting.words, {
+          yPercent: "random([-50, 50])",
+          rotation: "random(-30, 30)",
+          repeat: -1,
+          yoyo: true,
+          autoAlpha: 1,
+          stagger: 0.05,
+          delay: 0.6,
+          ease: "sine.inOut",
+        });
 
-    const splitRole = SplitText.create(".info .role", { type: "lines,words" });
+        // 4. Main Entrance Timeline
+        tl.fromTo(splitName.lines, 
+          { rotationX: 100, transformOrigin: "-50% -50% -160px", autoAlpha: 0 },
+          { rotationX: 0, autoAlpha: 1, duration: 0.8, stagger: 0.25 },
+          "start"
+        )
+        .fromTo(splitRole.lines,
+          { rotationX: -100, transformOrigin: "50% 50% -160px", autoAlpha: 0 },
+          { rotationX: 0, autoAlpha: 1, duration: 1, stagger: 0.25 },
+          "start+=0.4"
+        );
 
-    // separating mobiles from desktop
-    const tl = useGSAP().timeline().from(splitRole.lines, {
-      rotationX: -100,
-      transformOrigin: "50% 50% -160px",
-      autoAlpha: 0,
-      visibility: "hidden",
-      duration: 1,
-      ease: "power3",
-      stagger: 0.25,
-      delay: 0.4,
-    });
-
-    if (!isMobileWidth.value) {
-      tl.from(".task > p:first-of-type", {
-        rotationX: -100,
-        transformOrigin: "50% 50% -160px",
-        autoAlpha: 0,
-        duration: 1,
-        ease: "power3",
-        stagger: 0.25,
-      }).from(".task > p:nth-of-type(2)", {
-        rotationX: -100,
-        transformOrigin: "50% 50% -160px",
-        autoAlpha: 0,
-        duration: 1,
-        ease: "power3",
-        stagger: 0.25,
+        if (isDesktop) {
+          tl.fromTo([".task > p:first-of-type", ".task > p:nth-of-type(2)", ".github-repo"],
+            { rotationX: -100, transformOrigin: "50% 50% -160px", autoAlpha: 0 },
+            { rotationX: 0, autoAlpha: 1, duration: 1, stagger: 0.25 }
+          );
+        } else {
+          tl.fromTo(".github-repo > *",
+            { rotationX: -100, transformOrigin: "50% 50% -160px", autoAlpha: 0 },
+            { rotationX: 0, autoAlpha: 1, duration: 1, stagger: 0.25 }
+          );
+        }
+        
+        return () => {
+          splitGreeting.revert();
+          splitName.revert();
+          splitRole.revert();
+        };
       });
-    }
-    // tl.from('.github-repo p:first-of-type', {
-    if (!isMobileWidth.value) {
-      tl.from(".github-repo", {
-        rotationX: -100,
-        transformOrigin: "50% 50% -160px",
-        autoAlpha: 0,
-        duration: 1,
-        ease: "power3",
-        stagger: 0.25,
-        // delay: 0.4
-      });
-    } else {
-      tl.from(".github-repo > *", {
-        rotationX: -100,
-        transformOrigin: "50% 50% -160px",
-        autoAlpha: 0,
-        duration: 1,
-        ease: "power3",
-        stagger: 0.25,
-        // delay: 0.4
-      });
-    }
+    }, 100);
   }
 });
 
@@ -516,11 +471,11 @@ useSchemaOrg([
         }
       }
 
-      // .info > *,
-      // .task > p,
-      // .github-repo {
-      //   visibility: hidden;
-      // }
+      .info > *,
+      .task > p,
+      .github-repo {
+        visibility: hidden;
+      }
 
       @include mobile {
         height: 80dvh;

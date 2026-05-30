@@ -260,6 +260,7 @@ export default defineNuxtConfig({
       },
     },
     build: {
+      transpile: ["gsap"],
       sourcemap: "hidden", // test if this hides: #14 7.356  WARN
       // [plugin nuxt: components - loader]Sourcemap is likely to be incorrect: a plugin(nuxt: components- loader) was used to transform files,
       // but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help (x25)
@@ -636,7 +637,8 @@ export default defineNuxtConfig({
   // ...(process.env.IS_ELECTRON === "false") && {
   sitemap: {
     enabled: process.env.IS_ELECTRON !== "true",
-    // discoverImages: true,
+    discoverImages: true,
+    strictNuxtContentPaths: true,
   },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
