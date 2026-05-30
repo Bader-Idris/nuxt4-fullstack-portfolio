@@ -18,7 +18,7 @@ Español
 
 </div>
 
-[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt3-fullstack-portfolio/26e3f86aaa361639f25b0ce933df59ea982e5e41/client/public/thumbnail-ar.png)](https://baderidris.com)
+[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt4-fullstack-portfolio/d23114be7d8cdaf54c3a16baf012ae958734119b/public/thumbnail-ar.webp)](https://baderidris.com)
 
 تطبيق شامل متعدد الطبقات والميزات مبني باستخدام Nuxt 4، يحتوي على ميزات الاتصال الفوري (websocket)، التحقق من المستخدم (auth)، ويدعم العديد من المنصات. لمزيد من المعلومات التفصيلية، راجع [وثائق Nuxt](https://nuxt.com/docs/getting-started/introduction).
 

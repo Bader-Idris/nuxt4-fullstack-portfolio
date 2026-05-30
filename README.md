@@ -18,7 +18,7 @@ Español
 
 </div>
 
-[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt4-fullstack-portfolio/26e3f86aaa361639f25b0ce933df59ea982e5e41/client/public/thumbnail.webp)](https://baderidris.com)
+[![project img](https://raw.githubusercontent.com/Bader-Idris/nuxt4-fullstack-portfolio/d23114be7d8cdaf54c3a16baf012ae958734119b/public/thumbnail.webp)](https://baderidris.com)
 
 A comprehensive full-stack portfolio application built with Nuxt 4, featuring real-time communication, authentication, and multi-platform support. For more detailed information, refer to the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction).
 
