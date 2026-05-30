@@ -9,6 +9,7 @@ COPY --from=builder /app/.output/public /var/www/html
 
 # RUN [ "ls", "-R", "/var/www/html" ]
 
-COPY ./server/config/nginx/nginx_with_certbot_secured.conf /etc/nginx/conf.d/secured.conf
-COPY ./server/config/nginx/for_server_exclusively.html /usr/share/nginx/html/index.html
-COPY ./server/config/mailserver/mta-sts.txt /var/www/html/.well-known/mta-sts.txt
+# These are already in the compose file
+# COPY ./server/config/nginx/nginx_with_certbot_secured.conf /etc/nginx/conf.d/secured.conf
+# COPY ./server/config/nginx/for_server_exclusively.html /usr/share/nginx/html/index.html
+# COPY ./server/config/mailserver/mta-sts.txt /var/www/html/.well-known/mta-sts.txt
