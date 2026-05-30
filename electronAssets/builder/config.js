@@ -71,6 +71,29 @@ const baseConfig = {
   // afterSign: './createMD5List.js',
   appId: packageJson.appId,
   asar: true, // set true for securing the source code and some performances
+  // Performance optimizations for faster builds
+  concurrency: {
+    jobs: 4, // Limit to prevent OOM while keeping it fast
+  },
+  afterPack: async (context) => {
+    // Only apply to Linux
+    if (context.electronPlatformName !== "linux") return;
+
+    const fs = require("fs");
+    const path = require("path");
+    const sandboxPath = path.join(context.appOutDir, "chrome-sandbox");
+
+    if (fs.existsSync(sandboxPath)) {
+      try {
+        fs.unlinkSync(sandboxPath);
+        console.log(
+          "--- [AfterPack] Removed chrome-sandbox to force namespace sandboxing ---",
+        );
+      } catch (e) {
+        console.error("--- [AfterPack] Failed to remove chrome-sandbox:", e);
+      }
+    }
+  },
   // Skip rebuilding native modules for cross-platform builds
   // This is required when building Windows apps from Linux/macOS
   npmRebuild: false,
@@ -213,14 +236,24 @@ const baseConfig = {
   // },
   linux: {
     executableName: "portfolio", // Allow opening via "portfolio" command in terminal
+    executableArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
     icon: "electronAssets/resources/icon.png", // Explicitly point to PNG for app indicator support
     category: "Utility",
     target: linuxTargets,
-    // TODO: add the icon to deb version, it doesn't appear when trying to install
-    // and verify your ownership with it; because it says: potentially unsafe, packageJson.homepage is good, it appears the webapp
-    // TODO: fix snap distribution, it has a bug when trying to setup: failed to install file not supported
+    maintainer: "Bader Idris <contact@baderidris.com>",
+    desktop: {
+      entry: {
+        Name: "Bader Idris Portfolio",
+        Comment: "Full Stack Developer Portfolio",
+        Categories: "Utility;Development;",
+      },
+    },
   },
   deb: {
+    maintainer: "Bader Idris <contact@baderidris.com>",
+    vendor: "Bader Idris",
+    priority: "optional",
+    packageCategory: "utils",
     depends: [
       "libgtk-3-0",
       "libnotify4",
@@ -239,6 +272,12 @@ const baseConfig = {
       "libatk-bridge2.0-0", // Accessibility support
       "libcups2", // Printing support
       "libdrm2", // DRM support
+      "libx11-xcb1",
+      "libxcb-dri3-0",
+      "libxcomposite1",
+      "libxdamage1",
+      "libxfixes3",
+      "libxrandr2",
     ],
     // https://www.electron.build/electron-builder.interface.deboptions
     synopsis: "Bader's portfolio application",
@@ -270,12 +309,22 @@ const baseConfig = {
   snap: {
     grade: "stable",
     confinement: "strict",
-    // stagePackages: [
-    //   "default",
-    //   "libayatana-appindicator3-1",
-    //   "libgbm1",
-    //   "libasound2",
-    // ],
+    useTemplateApp: true,
+    stagePackages: [
+      "libnss3",
+      "libnspr4",
+      "libatk1.0-0",
+      "libatk-bridge2.0-0",
+      "libcups2",
+      "libdrm2",
+      "libgtk-3-0",
+      "libnotify4",
+      "libxss1",
+      "libasound2",
+      "libgbm1",
+      "libsecret-1-0",
+      "libayatana-appindicator3-1",
+    ],
     summary: "Bader's portfolio using Nuxt 4 + Vue 3 + Electron + Capacitor",
     description:
       packageJson.description ||

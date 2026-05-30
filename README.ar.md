@@ -349,6 +349,21 @@ bunx capacitor-assets generate --assetPath "./assets" --ios --android
    - `bun run build:electron:linux`: بناء لـ Linux فقط
    - `bun run build:electron:dir`: بناء في دليل غير مضغوط للاختبار
 
+### التثبيت على Linux
+
+بالنسبة لتوزيعات Linux، يتم دعم التنسيقات التالية:
+
+- **DEB**: الأفضل لـ Ubuntu/Debian. تثبيت سلس عبر الواجهة الرسومية أو الطرفية (Terminal) باستخدام `sudo dpkg -i <file>.deb`.
+- **AppImage**: محمول ويعمل على معظم التوزيعات. تأكد من منحه صلاحيات التنفيذ:
+  ```bash
+  chmod +x portfolio.AppImage
+  ./portfolio.AppImage
+  ```
+- **Snap**: محدود بشكل صارم وآمن. نظرًا لأن البناء المحلي غير موقع، يجب عليك التثبيت باستخدام الطرفية (Terminal):
+  ```bash
+  sudo snap install --dangerous nuxt4-fullstack-portfolio_3.4.0_linux_amd64.snap
+  ```
+
 ### تكوين النطاق
 
 تأكد من تحديث اسم النطاق `baderidris.com` في الملف `b.dev.yml` وفي ملفات التكوين المرتبطة باسم النطاق الخاص بك.

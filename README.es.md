@@ -349,6 +349,21 @@ Para crear una compilación de producción para Electron:
    - `bun run build:electron:linux`: Compilar solo para Linux
    - `bun run build:electron:dir`: Compilar en un directorio sin empaquetar para pruebas
 
+### Instalación en Linux
+
+Para las distribuciones de Linux, se admiten los siguientes formatos:
+
+- **DEB**: El mejor para Ubuntu/Debian. Instalación fluida a través de la GUI o la terminal usando `sudo dpkg -i <archivo>.deb`.
+- **AppImage**: Portátil y funciona en la mayoría de las distribuciones. Asegúrese de que tenga permisos de ejecución:
+  ```bash
+  chmod +x portfolio.AppImage
+  ./portfolio.AppImage
+  ```
+- **Snap**: Estrictamente confinado y seguro. Dado que las compilaciones locales no están firmadas, debe realizar la instalación a través de la terminal:
+  ```bash
+  sudo snap install --dangerous nuxt4-fullstack-portfolio_3.4.0_linux_amd64.snap
+  ```
+
 ## Aplicación Electrobun
 
 Una alternativa moderna y ligera a Electron que utiliza Bun y vistas web del sistema.

@@ -349,6 +349,21 @@ To create a production build for Electron:
    - `bun run build:electron:linux`: Build for Linux only
    - `bun run build:electron:dir`: Build in an unpackaged directory for testing
 
+### Linux Installation
+
+For Linux distributions, the following formats are supported:
+
+- **DEB**: Best for Ubuntu/Debian. Smooth installation via the GUI or terminal using `sudo dpkg -i <file>.deb`.
+- **AppImage**: Portable and works on most distributions. Ensure it has execution permissions:
+  ```bash
+  chmod +x portfolio.AppImage
+  ./portfolio.AppImage
+  ```
+- **Snap**: Strictly confined and secure. Since local builds are unsigned, you must install using the terminal:
+  ```bash
+  sudo snap install --dangerous nuxt4-fullstack-portfolio_3.4.0_linux_amd64.snap
+  ```
+
 ## Electrobun Application
 
 A modern, lightweight alternative to Electron using Bun and system webviews.
