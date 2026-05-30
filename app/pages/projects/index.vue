@@ -1,19 +1,24 @@
 <template>
   <div ref="projectsContainer" class="projects">
-    <NavbarProjects @toggle-sidebar="toggleSidebar" />
     <div class="projects-body">
-      <aside :style="{ display: sidebarDisplay }">
-        <ProjectsSidebar
-          :is-sidebar-hidden="isSidebarHidden"
-          :list="list"
-          @toggle-active="toggleActive"
-        />
-        <SelectedTabs :active-items="activeItems" @remove-item="removeItem" />
+      <aside :style="{ width: sidebarWidth + 'px' }" :class="{ 'is-resizing': isResizing }">
+        <NavbarProjects @toggle-sidebar="toggleSidebar" />
+        <div v-show="!isSidebarHidden" class="sidebar-scrollable-content">
+          <ProjectsSidebar
+            :is-sidebar-hidden="isSidebarHidden"
+            :list="list"
+            @toggle-active="toggleActive"
+          />
+        </div>
+        <ResizeHandle @resize="handleResize" @start="isResizing = true" @stop="isResizing = false" />
       </aside>
       
       <div class="projects-main-content">
-        <ProjectSearchBar @search="handleSearch" />
-        <FilteredProjects :active-items="activeItems" :search-query="searchQuery" />
+        <SelectedTabs :active-items="activeItems" @remove-item="removeItem" />
+        <div class="projects-inner-padded">
+          <ProjectSearchBar @search="handleSearch" />
+          <FilteredProjects :active-items="activeItems" :search-query="searchQuery" />
+        </div>
       </div>
     </div>
 
@@ -33,6 +38,16 @@ const { t, locale } = useI18n();
 const searchQuery = ref("");
 const handleSearch = (q: string) => {
   searchQuery.value = q;
+};
+
+// Sidebar resizing logic
+const sidebarWidth = ref(300);
+const isResizing = ref(false);
+
+const handleResize = (x: number) => {
+  if (x >= 200 && x <= 600) {
+    sidebarWidth.value = x;
+  }
 };
 
 // const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
@@ -74,7 +89,6 @@ useSchemaOrg([
   },
 ]);
 
-const sidebarDisplay = ref("block");
 const list = ref<Array<{ title: string; imgAlt: string; isActive: boolean }>>([
   { title: "HTML", imgAlt: "html icon", isActive: true },
   { title: "CSS", imgAlt: "css icon", isActive: true },
@@ -139,23 +153,14 @@ const removeItem = (itemTitle) => {
 
 const isSidebarHidden = ref(false);
 const toggleSidebar = () => {
-  if (isSidebarHidden.value) {
-    isSidebarHidden.value = false;
-    sidebarDisplay.value = "block"; // Show sidebar immediately
-  } else {
-    isSidebarHidden.value = true;
-    // Fade out and then set display to none
-    setTimeout(() => {
-      sidebarDisplay.value = "none"; // Set display to none after fade-out
-    }, 300); // Match this timing with your CSS transition duration
-  }
+  isSidebarHidden.value = !isSidebarHidden.value;
 };
 
 onMounted(() => {
   const isMobileWidth = useMobile();
   // this is an ugly solution, but because the whole project is old, I don't care about fixing it
   if (isMobileWidth.value) {
-    sidebarDisplay.value = "none";
+    isSidebarHidden.value = true;
     // query select .foldable-tab add .is-folded
     const foldableTab = document.querySelector(".foldable-tab");
     if (foldableTab) {
@@ -196,16 +201,21 @@ watch(list, saveActiveItems, { deep: true });
 }
 
 aside {
-  width: 300px;
+  position: relative;
   flex-shrink: 0;
   border-right: 1px solid $lines;
   background-color: $primary3;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  transition: width 0.1s ease-out;
+
+  &.is-resizing {
+    transition: none;
+    user-select: none;
+  }
 
   @include mobile {
-    width: 100%;
+    width: 100% !important;
     border-right: none;
     border-bottom: 1px solid $lines;
     flex-shrink: 0;
@@ -213,11 +223,24 @@ aside {
   }
 }
 
+.sidebar-scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .projects-main-content {
   flex: 1;
-  padding: 40px;
+  padding: 0; // Edge-to-edge for tabs
   overflow-y: auto;
   background-color: $primary2;
+
+  @include mobile {
+    padding: 0;
+  }
+}
+
+.projects-inner-padded {
+  padding: 0 40px 40px;
 
   @include mobile {
     padding: 20px 15px;

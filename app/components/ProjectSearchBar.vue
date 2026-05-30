@@ -71,7 +71,7 @@ const clearSearch = () => {
   position: relative;
   width: 100%;
   max-width: 600px;
-  margin: 0 auto 30px;
+  margin: 30px auto;
   z-index: 10;
 
   &.rtl-mode {

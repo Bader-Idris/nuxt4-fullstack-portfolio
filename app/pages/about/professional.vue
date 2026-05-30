@@ -22,5 +22,14 @@ useSchemaOrg({
 <style lang="scss" scoped>
 .professional-info {
   @include flex-container(row, nowrap, center, center);
+  width: 100%;
+  height: 100%;
+  color: $secondary4;
+  padding: 40px;
+  overflow-y: auto;
+
+  @include mobile {
+    padding: 20px 15px;
+  }
 }
 </style>

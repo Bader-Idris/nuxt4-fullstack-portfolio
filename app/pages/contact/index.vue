@@ -301,12 +301,10 @@ onBeforeUnmount(() => {
   </main>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 main.cont {
-  width: calc(100% - 300px);
-  position: absolute;
-  top: 0;
-  height: calc($full-viewport-height - 180px);
+  width: 100%;
+  height: 100%;
   @include flex-container(row, nowrap, space-around, flex-start);
   padding: 100px 10px;
 
@@ -333,7 +331,9 @@ main.cont {
   }
 
   @include tablet-to-up {
-    left: 300px;
+    // left: 300px;
+    // position: absolute;
+    // top: 0;
   }
 
   .messaging {

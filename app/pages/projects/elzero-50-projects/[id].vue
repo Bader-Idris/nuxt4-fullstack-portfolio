@@ -248,10 +248,6 @@ watch(
   border-bottom: 1px solid $lines;
   height: 35px;
   overflow-x: auto;
-
-  &::-webkit-scrollbar {
-    height: 0;
-  }
 }
 
 .tab-item {

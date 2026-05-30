@@ -107,12 +107,8 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 div {
-  @include tablet-to-up {
-    width: calc(100% - 300px);
-    left: 150px;
-    top: -320px;
-  }
-  height: 80dvh; /* Adjust as needed – you can also use 100vh for full-screen */
+  width: 100%;
+  height: 100%;
   position: relative;
 }
 

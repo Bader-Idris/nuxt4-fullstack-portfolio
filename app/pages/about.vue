@@ -1,89 +1,91 @@
 <template>
-  <div class="about-me">
-    <aside>
-      <div class="tab">
-        <img
-          v-for="(icon, index) in icons"
-          :key="icon.iconAlt"
-          :src="icon.iconSrc"
-          :alt="icon.iconAlt"
-          :class="{ active: activeIconIndex === index }"
-          loading="lazy"
-          @click="setActiveIcon(index)"
-        />
-      </div>
+  <div class="about-page">
+    <div class="about-body">
+      <aside :style="{ width: sidebarWidth + 'px' }" :class="{ 'is-resizing': isResizing }">
+        <div class="activity-bar">
+          <img
+            v-for="(icon, index) in icons"
+            :key="icon.iconAlt"
+            :src="icon.iconSrc"
+            :alt="icon.iconAlt"
+            :class="{ active: activeIconIndex === index }"
+            loading="lazy"
+            @click="setActiveIcon(index)"
+          />
+        </div>
 
-      <div class="lists">
-        <FoldableTab @toggle="toggleHobbies">
-          <p>personal_info</p>
-        </FoldableTab>
+        <div class="explorer-lists">
+          <FoldableTab @toggle="toggleHobbies">
+            <p>personal_info</p>
+          </FoldableTab>
 
-        <div
-          v-show="!isHobbiesHidden"
-          class="hobbies-bar"
-          :class="{ hidden: isHobbiesHidden }"
-        >
-          <p
-            v-for="(hobby, index) in hobbiesObj"
-            :key="index"
-            :class="{ active: activeHobbyIndex === index }"
-            @click="setActiveHobby(index)"
+          <div
+            v-show="!isHobbiesHidden"
+            class="hobbies-bar"
+            :class="{ hidden: isHobbiesHidden }"
           >
-            <img
-              :src="hobby.icon"
-              :alt="hobby.iconAlt"
-              width="20"
-              height="20"
-            />
-            {{ hobby.title }}
-          </p>
-        </div>
-
-        <FoldableTab :initially-folded="true" @toggle="toggleContact">
-          <p>contacts</p>
-        </FoldableTab>
-
-        <div
-          v-show="!isContactHidden"
-          class="personal-contact"
-          :class="{ hidden: isContactHidden }"
-        >
-          <ClientOnly>
-            <p @click="(openMailTo(0), copyToClipboard(0))">
-              <Icon
-                name="mdi:envelope"
-                width="30"
-                style="position: relative; top: 3px"
+            <p
+              v-for="(hobby, index) in hobbiesObj"
+              :key="index"
+              :class="{ active: activeHobbyIndex === index }"
+              @click="setActiveHobby(index)"
+            >
+              <img
+                :src="hobby.icon"
+                :alt="hobby.iconAlt"
+                width="20"
+                height="20"
               />
-              {{ displayContactInfo[0] }}
-              <Icon
-                v-if="showIcon[0]"
-                name="mdi:envelope"
-                width="24"
-                height="24"
-              />
+              {{ hobby.title }}
             </p>
-            <p @click="copyToClipboard(1)">
-              <Icon
-                name="ic:baseline-phone"
-                width="30"
-                style="position: relative; top: 3px"
-              />
-              {{ contInfo[1] }}
-              <Icon
-                v-if="showIcon[1]"
-                name="mingcute:copy-fill"
-                width="24"
-                height="24"
-              />
-            </p>
-          </ClientOnly>
+          </div>
+
+          <FoldableTab :initially-folded="true" @toggle="toggleContact">
+            <p>contacts</p>
+          </FoldableTab>
+
+          <div
+            v-show="!isContactHidden"
+            class="personal-contact"
+            :class="{ hidden: isContactHidden }"
+          >
+            <ClientOnly>
+              <p @click="(openMailTo(0), copyToClipboard(0))">
+                <Icon
+                  name="mdi:envelope"
+                  width="25"
+                />
+                {{ displayContactInfo[0] }}
+                <Icon
+                  v-if="showIcon[0]"
+                  name="mdi:envelope"
+                  width="24"
+                  height="24"
+                />
+              </p>
+              <p @click="copyToClipboard(1)">
+                <Icon
+                  name="ic:baseline-phone"
+                  width="25"
+                />
+                {{ contInfo[1] }}
+                <Icon
+                  v-if="showIcon[1]"
+                  name="mingcute:copy-fill"
+                  width="24"
+                  height="24"
+                />
+              </p>
+            </ClientOnly>
+          </div>
         </div>
-      </div>
-    </aside>
-    <main>
-      <NuxtPage />
-    </main>
+        <ResizeHandle @resize="handleResize" @start="isResizing = true" @stop="isResizing = false" />
+      </aside>
+
+      <main class="about-main-content">
+        <NuxtPage />
+      </main>
+    </div>
   </div>
 </template>
 
@@ -106,44 +108,30 @@ definePageMeta({
       }
 
       const localePath = useLocalePath();
-      // if (to.path === localePath('/about') || to.path === '/about') {
-      //   return navigateTo(localePath('/about/personal'), { replace: true })
-      // }
-
       if (
         to.path.replace(/\/$/, "") === localePath("/about").replace(/\/$/, "")
       ) {
-        return navigateTo(localePath("/about/personal"), { replace: true });
+        return navigateTo(localePath("/about/hobbies/bio"), { replace: true });
       }
     },
   ],
 });
-// we can put it as a middleware file: app/middleware/about-redirect.ts
-/*
-// app/middleware/about-redirect.ts
-export default defineNuxtRouteMiddleware((to) => {
-  const localePath = useLocalePath()
-  const aboutPath = localePath('/about')
-  const aboutPersonalPath = localePath('/about/personal')
-
-  if (to.path === aboutPath || to.path === '/about') {
-    return navigateTo(aboutPersonalPath, { replace: true })
-  }
-})
-*/
-// then use it as:
-/*
-definePageMeta({
-  middleware: ['about-redirect'],
-})
-*/
 
 const route = useRoute();
-const router = useRouter();
 const activeIconIndex = ref(1);
 const isHobbiesHidden = ref(false);
 const isContactHidden = ref(true);
 const activeHobbyIndex = ref(0);
+
+// Sidebar resizing logic
+const sidebarWidth = ref(300);
+const isResizing = ref(false);
+
+const handleResize = (x: number) => {
+  if (x >= 200 && x <= 600) {
+    sidebarWidth.value = x;
+  }
+};
 
 useSeoMeta({
   title: t("about.title"),
@@ -188,31 +176,35 @@ const copyToClipboard = async (index: number) => {
 
 const icons = useState("aboutIcons", () => [
   { iconSrc: "/imgs/svgs/shell.svg", iconAlt: "shell", path: "professional" },
-  { iconSrc: "/imgs/svgs/circle.svg", iconAlt: "circle", path: "personal" },
+  { iconSrc: "/imgs/svgs/circle.svg", iconAlt: "circle", path: "hobbies/bio" },
   { iconSrc: "/imgs/svgs/game.svg", iconAlt: "game", path: "hobbies" },
 ]);
 
 const hobbiesObj = useState("aboutHobbies", () => [
-  { title: "bio", icon: "/imgs/svgs/red-dir.svg", iconAlt: "red folder" },
+  { title: "bio", icon: "/imgs/svgs/red-dir.svg", iconAlt: "red folder", path: "bio" },
   {
     title: "interests",
     icon: "/imgs/svgs/green-dir.svg",
     iconAlt: "green folder",
+    path: "interests",
   },
   {
     title: "education",
     icon: "/imgs/svgs/purple-dir.svg",
     iconAlt: "purple folder",
+    path: "education",
   },
   {
     title: "high-school",
     icon: "/imgs/svgs/md-icon.svg",
     iconAlt: "markdown icon",
+    path: "high-school",
   },
   {
     title: "University",
     icon: "/imgs/svgs/md-icon.svg",
     iconAlt: "markdown icon",
+    path: "university",
   },
 ]);
 
@@ -238,19 +230,15 @@ if (import.meta.server) {
           return `${config.public.originUrl}${iconPath}`;
         }
       }
-      // Return WebP path with originUrl for SSR
       return `${config.public.originUrl}${webpPath}`;
     }
-    // Fallback to original path with originUrl
     return `${config.public.originUrl}${iconPath}`;
   };
 
-  // Process main icons
   for (const icon of icons.value) {
     icon.iconSrc = await processIcon(icon.iconSrc);
   }
 
-  // Process hobbies icons
   for (const hobby of hobbiesObj.value) {
     hobby.icon = await processIcon(hobby.icon);
   }
@@ -264,14 +252,16 @@ const toggleContact = () => {
 };
 const setActiveHobby = (index: number) => {
   activeHobbyIndex.value = index;
+  const hobby = hobbiesObj.value[index];
+  if (hobby && hobby.path) {
+    navigateTo(localePath(`/about/hobbies/${hobby.path}`));
+  }
 };
 
-// FIX: navigate only, don't set state (watcher is single source of truth)
 const setActiveIcon = (index: number) => {
   navigateTo(localePath(`/about/${icons.value[index].path}`));
 };
 
-// FIX: client-only, exact segment match instead of includes()
 const syncActiveIcon = (path: string) => {
   const segment = path.split("/").filter(Boolean).at(-1) ?? "";
   const index = icons.value.findIndex((icon) => icon.path === segment);
@@ -296,132 +286,129 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.about-me {
+.about-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(#{$full-viewport-height} - 87px);
+  overflow: hidden;
   @include mainMiddleSettings;
 
   @include mobile {
     @include phone-borders;
+    height: calc(#{$full-viewport-height} - 45px);
+  }
+}
+
+.about-body {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+
+  @include mobile {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+}
+
+aside {
+  position: relative;
+  flex-shrink: 0;
+  border-right: 1px solid $lines;
+  background-color: $primary3;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: row; //activity bar + explorer
+  transition: width 0.1s ease-out;
+
+  &.is-resizing {
+    transition: none;
+    user-select: none;
   }
 
   @include mobile {
-    overflow-y: scroll;
-    padding-bottom: 10dvh;
+    width: 100% !important;
+    flex-direction: column;
+    border-right: none;
+    border-bottom: 1px solid $lines;
+    flex-shrink: 0;
+    max-height: 50vh;
+  }
+}
+
+.activity-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60px;
+  flex-shrink: 0;
+  border-right: 1px solid $lines;
+  padding-top: 10px;
+
+  @include mobile {
+    display: none;
   }
 
-  aside {
-    width: 300px;
-    display: flex;
-
-    @include mobile {
-      width: calc($full-viewport-width - 30px);
+  img {
+    margin: 15px 0;
+    cursor: pointer;
+    width: 24px;
+    opacity: 0.4;
+    @include transition-ease;
+    
+    &:hover,
+    &.active {
+      filter: brightness(4);
+      opacity: 1;
     }
+  }
+}
 
-    .tab {
-      position: absolute;
-      display: inline-flex;
+.explorer-lists {
+  flex: 1;
+  overflow-y: auto;
+  
+  .hobbies-bar {
+    padding: 10px 0 10px 20px;
+    
+    p {
+      display: flex;
       align-items: center;
-      flex-direction: column;
-      height: $full-viewport-height;
-      width: 60px;
-      border-right: 1px solid $lines;
-
-      @include mobile {
-        display: none;
-      }
-
-      img {
-        margin: 10px;
-        cursor: pointer;
-        width: 24px;
-        @include transition-ease;
-        &:hover,
-        &.active {
-          filter: brightness(4);
-          opacity: 0.9;
-          @include transition-ease;
-        }
-      }
-    }
-
-    .lists {
-      left: 60px;
-      width: 240px;
-      position: relative;
-      display: inline-block;
-
-      @include mobile {
-        left: 0;
-      }
-
-      .hobbies-bar {
-        margin-left: 30px;
-        opacity: 1;
-        visibility: visible;
-        transition:
-          opacity 0.5s ease,
-          visibility 0.5s ease;
-
-        &.hidden {
-          opacity: 0;
-          visibility: hidden;
-          transition:
-            opacity 0.5s ease,
-            visibility 0.5s ease;
-        }
-
-        > p {
-          @include transition-ease;
-          &:hover {
-            color: $secondary4;
-            cursor: pointer;
-            @include transition-ease;
-          }
-
-          &.active {
-            color: $secondary4;
-          }
-        }
+      gap: 10px;
+      padding: 5px 0;
+      cursor: pointer;
+      color: $secondary1;
+      @include transition-ease;
+      
+      &:hover, &.active {
+        color: $secondary4;
       }
     }
   }
 
   .personal-contact {
-    position: relative;
-    margin-left: 25px;
-    opacity: 1;
-    visibility: visible;
-    transition:
-      opacity 0.5s ease,
-      visibility 0.5s ease;
-
-    @include mobile {
-      width: calc($full-viewport-width - 57px);
-    }
-
-    &.hidden {
-      opacity: 0;
-      visibility: hidden;
-      transition:
-        opacity 0.5s ease,
-        visibility 0.5s ease;
-    }
-
+    padding: 10px 0 10px 20px;
+    
     p {
-      @include transition-ease;
-      margin: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
       cursor: pointer;
-      width: fit-content;
-
-      @include mobile {
-        width: 100%;
-      }
-
+      color: $secondary1;
+      @include transition-ease;
+      
       &:hover {
-        @include transition-ease;
         color: $secondary4;
-        cursor: pointer;
       }
     }
   }
+}
+
+.about-main-content {
+  flex: 1;
+  overflow: hidden;
+  background-color: $primary2;
+  position: relative;
 }
 </style>

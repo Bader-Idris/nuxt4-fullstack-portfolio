@@ -1,5 +1,4 @@
 <template>
-  <span v-show="!isToggled" id="line" />
   <div class="nav-titled">
     <div
       class="foldable-tab"
@@ -33,41 +32,23 @@ watch(
 
 <style lang="scss" scoped>
 .nav-titled {
-  width: 301px;
+  width: 100%;
   color: $secondary4;
   position: relative;
-
-  #line {
-    position: relative;
-    user-select: none;
-    font-family: $main-font;
-    font-weight: bold;
-    letter-spacing: 0.7px;
-  }
-}
-
-@include tablet-to-up {
-  #line {
-    width: 1px;
-    top: 30px;
-    left: 331px;
-    position: fixed;
-    display: inline-block;
-    background: $lines;
-    height: calc($full-viewport-height - 80px);
-  }
 }
 
 .foldable-tab {
   @include flex-container(row, nowrap, unset, baseline);
   padding-left: 10px;
   user-select: none;
+  border-bottom: 1px solid $lines;
+  height: 35px;
+  align-items: center;
 
   @include mobile {
     background-color: $lines;
     height: 30px;
-    align-items: center;
-    width: calc($full-viewport-width - 30px);
+    width: 100%;
   }
 
   > svg {
@@ -75,10 +56,6 @@ watch(
     transition: transform 0.3s ease-in-out;
     padding: 2px;
     margin: 0px 5px 0;
-    @include tablet-to-up {
-      position: relative;
-      top: 4px;
-    }
   }
 }
 

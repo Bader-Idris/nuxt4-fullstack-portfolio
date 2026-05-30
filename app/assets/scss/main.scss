@@ -8,10 +8,6 @@
 html {
   scroll-behavior: smooth;
   color-scheme: dark light;
-
-  /* Standard properties (Supported by all major browsers in 2026) */
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 body {
@@ -64,9 +60,19 @@ ul {
 
 /* Custom scrollbar styles */
 @include tablet-to-up {
-  /* Standard scrollbar properties are used in html block above. */
-  ::scrollbar-thumb {
-    cursor: pointer;
+  /* Standard properties for all elements */
+  html,
+  body,
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.is-scrolling,
+    &:hover {
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+      transition: scrollbar-color 0.2s ease;
+    }
   }
 }
 

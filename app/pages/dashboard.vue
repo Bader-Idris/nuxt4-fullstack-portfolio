@@ -1418,8 +1418,6 @@ function formatDuration(seconds: number) {
   flex-direction: column;
   gap: 8px;
   scroll-behavior: smooth;
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
 }
 
 .date-separator {
