@@ -66,8 +66,8 @@
           {{ $t("home.medium") }}
         </button>
         <button
-          :class="{ active: winningScore === 670 }"
-          @click="setWinningScore(670)"
+          :class="{ active: winningScore === 200 }"
+          @click="setWinningScore(200)"
         >
           {{ $t("home.crazy") }}
         </button>

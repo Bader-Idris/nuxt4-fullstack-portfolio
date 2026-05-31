@@ -577,12 +577,13 @@ export default defineNuxtConfig({
   // },
   postcss: {
     plugins: {
-      // "postcss-nesting": {}, // it's already applied in scss
+      "postcss-nesting": {}, // enabled for automated prefixing support
       // https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-nesting#readme
       "postcss-custom-properties": {
         preserve: false,
       },
       "postcss-custom-media": {}, // simular to scss resuable media queries
+      "autoprefixer": {}, // added for robust automated prefixing
       // this supports newly released features in older browsers
       "postcss-preset-env": {
         autoprefixer: {

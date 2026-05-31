@@ -18,7 +18,7 @@
       <p
         v-if="gameOver && congratsMessage"
         class="outcome"
-        :class="{ 'gold-neon': winningScore === 670, 'blue-neon': winningScore === 30 }"
+        :class="{ 'gold-neon': winningScore === 200, 'blue-neon': winningScore === 30 }"
       >
         {{ isWon }}
       </p>
@@ -157,7 +157,7 @@ const formattedScore = computed(() =>
 // Computed property for win condition
 const isWon = computed(() => {
   if (score.value >= winningScore.value) {
-    if (winningScore.value === 670) {
+    if (winningScore.value === 200) {
       return t("home.hasWonCrazy");
     }
     if (winningScore.value === 30) {
@@ -254,7 +254,7 @@ function checkWinCondition() {
   if (score.value >= winningScore.value) {
     playSound("victory");
     if (isClient) {
-      if (winningScore.value === 670) {
+      if (winningScore.value === 200) {
         // Massive golden/emerald confetti celebration for Crazy mode!
         launchConfetti(12000, ["#43d9ad", "#4d5bce", "#ffd700", "#ffffff"]);
         launchConfettiInMiddle();
@@ -274,7 +274,7 @@ function checkWinCondition() {
       let congratsMsg = t("home.gameCongrats");
       if (winningScore.value === 30) {
         congratsMsg = t("home.gameCongratsMedium");
-      } else if (winningScore.value === 670) {
+      } else if (winningScore.value === 200) {
         congratsMsg = t("home.gameCongratsCrazy");
       }
       showNotification(congratsMsg);

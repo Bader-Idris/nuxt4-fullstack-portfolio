@@ -45,7 +45,10 @@
           v-for="(segment, index) in snake"
           :key="index"
           class="snake"
-          :style="{ gridColumn: segment.x, gridRow: segment.y }"
+          :style="[
+            { gridColumn: segment.x, gridRow: segment.y },
+            index === 0 ? headStyle : {}
+          ]"
           :class="{ head: index === 0 }"
         />
         <div class="food" :style="{ gridColumn: food.x, gridRow: food.y }" />
@@ -158,6 +161,17 @@ const activeModeLabel = computed(() => {
   if (winningScore.value === 670) return t("home.crazy");
   if (winningScore.value === 30) return t("home.medium");
   return t("home.normal");
+});
+
+// Snake head style based on direction
+const headStyle = computed(() => {
+  switch (direction.value) {
+    case "up": return { borderRadius: "10px 10px 0 0" };
+    case "down": return { borderRadius: "0 0 10px 10px" };
+    case "left": return { borderRadius: "10px 0 0 10px" };
+    case "right": return { borderRadius: "0 10px 10px 0" };
+    default: return { borderRadius: "10px 10px 0 0" };
+  }
 });
 
 // Food progress tracking reactive array
@@ -474,12 +488,13 @@ function handleStartClick() {
 function startGame(): void {
   if (!isClient) return;
   resetGame();
+  gameStarted.value = true;
   playSound("snakeHissing");
   resume();
 }
 
 function resetGame(): void {
-  gameStarted.value = true;
+  gameStarted.value = false;
   gameOver.value = false;
   congratsMessage.value = "";
   score.value = 0;
@@ -536,7 +551,7 @@ const onJoystickMove = (e: TouchEvent) => {
   console.log(`[Fallback Joystick] Touch Dragging. Offset: (${dx.toFixed(1)}, ${dy.toFixed(1)}), Clamped: (${x.toFixed(1)}, ${y.toFixed(1)}), Distance: ${distance.toFixed(1)}`);
   
   // Vector threshold before mapping to directions
-  const threshold = 12;
+  const threshold = 22;
   if (distance > threshold) {
     processCoords(x, y);
   } else {
@@ -551,7 +566,7 @@ const onJoystickEnd = () => {
 };
 
 const processCoords = (x: number, y: number) => {
-  const threshold = 12; // Universal deadzone threshold
+  const threshold = 22; // Increased deadzone threshold for "4 endpoints" feel
   const distance = Math.sqrt(x * x + y * y);
   
   console.log(`[Joystick Coords] Raw input: (${x.toFixed(1)}, ${y.toFixed(1)}), Distance: ${distance.toFixed(1)}`);
@@ -572,13 +587,13 @@ const processCoords = (x: number, y: number) => {
   // Left: 135° to 225°
   // Up: 225° to 315°
   if (angle >= 315 || angle < 45) {
-    nextDir = "ArrowRight";
+    nextDir = "right";
   } else if (angle >= 45 && angle < 135) {
-    nextDir = "ArrowDown";
+    nextDir = "down";
   } else if (angle >= 135 && angle < 225) {
-    nextDir = "ArrowLeft";
+    nextDir = "left";
   } else if (angle >= 225 && angle < 315) {
-    nextDir = "ArrowUp";
+    nextDir = "up";
   }
   
   console.log(`[Joystick Coords] Angle: ${angle.toFixed(1)}° -> Mapped Direction: ${nextDir}`);
@@ -656,28 +671,31 @@ onUnmounted(() => {
 <style lang="scss">
 .mobile-game-wrapper {
   position: absolute;
-  top: -60px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: calc(100% - 10px);
+  justify-content: center;
+  width: 90%;
+  max-width: 320px;
+  height: auto;
   box-sizing: border-box;
   font-family: $main-font;
-  padding: 10px 15px 20px;
+  padding: 5px 10px;
   background: #01080e; // Full theme background overlay to hide everything behind it
   z-index: 10;
+  border: 1px solid rgba(67, 217, 173, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
 
   .mobile-scores-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 250px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 
     .score-pill {
       background: rgba(1, 8, 14, 0.65);
@@ -775,7 +793,7 @@ onUnmounted(() => {
 
   .mobile-status-container {
     width: 250px;
-    margin: 8px 0;
+    margin: 4px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -786,25 +804,29 @@ onUnmounted(() => {
       color: $secondary1;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .food-box-container {
       background: rgba(1, 8, 14, 0.85);
       border: 1px solid rgba(67, 217, 173, 0.2);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 5px 8px;
       width: 100%;
+      height: 80px;
       box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
       box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
       
       // Horizontal scrolling for Crazy Mode
       &.crazy-mode {
         overflow-x: auto !important;
         overflow-y: hidden !important;
-        white-space: nowrap !important;
-        padding: 12px;
-        height: 48px;
+        padding: 5px 8px;
+        height: 80px;
 
         &::-webkit-scrollbar {
           height: 4px;
@@ -816,43 +838,16 @@ onUnmounted(() => {
       }
 
       .food-left {
-        position: static !important;
-        height: auto !important;
-        min-height: auto !important;
-        display: grid !important;
-        grid-template-columns: repeat(10, 1fr) !important;
-        gap: 6px !important;
+        position: relative !important;
+        height: 100% !important;
         width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        display: block !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
 
         &.crazy-mode {
-          display: flex !important;
-          flex-direction: row !important;
-          flex-wrap: nowrap !important;
-          gap: 6px !important;
           width: max-content !important;
-          height: 100% !important;
-          align-items: center !important;
-        }
-
-        & > span {
-          width: 12px !important;
-          height: 12px !important;
-          margin: 0 !important;
-          background-color: $accent2;
-          border-radius: 3px !important;
-          box-shadow: 0 0 4px rgba(67, 217, 173, 0.3) !important;
-          transition: all 0.3s ease;
-          animation: none !important;
-          flex-shrink: 0 !important;
-
-          &.eaten {
-            background-color: rgba(67, 217, 173, 0.1) !important;
-            border: 1px dashed rgba(67, 217, 173, 0.2) !important;
-            box-shadow: none !important;
-            opacity: 0.3;
-          }
         }
       }
     }
@@ -863,11 +858,11 @@ onUnmounted(() => {
     justify-content: space-between;
     gap: 6px;
     background: rgba(0, 0, 0, 0.4);
-    padding: 3px;
+    padding: 2px;
     border-radius: 6px;
     border: 1px solid rgba(67, 217, 173, 0.2);
     width: 250px;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 
     button {
       flex: 1;

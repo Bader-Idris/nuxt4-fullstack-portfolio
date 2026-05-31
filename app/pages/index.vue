@@ -36,28 +36,21 @@
     </div>
 
     <!-- Draggable Mobile Game Drawer -->
-    <!-- <div
+     <div
       v-if="isMobile"
       class="mobile-game-drawer"
-      :style="{ height: drawerHeight + 'px' }"
-      :class="{ 'is-dragging': isDragging, 'is-active': drawerHeight > 40 }"
+      :class="{ 'is-active': drawerActive }"
     >
-      <div
-        class="drag-handle"
-        @touchstart="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
-        @click="toggleDrawer"
-      >
-        <span class="handle-line" />
-        <span class="handle-text">
-          {{ drawerHeight > 100 ? $t("home.slideDownToClose") : $t("home.pullUpToPlay") }}
-        </span>
-      </div>
-      <div v-if="drawerHeight > 100" class="drawer-content">
+      <div v-if="drawerActive" class="drawer-content" @click.self="drawerActive = false">
+        <div class="close-trigger" @click="drawerActive = false">
+           <span>// {{ $t("home.slideDownToClose") }}</span>
+        </div>
         <LazyMobileSnakeGame />
       </div>
-    </div> -->
+      <div v-else class="open-trigger" @click="drawerActive = true">
+         <span>// {{ $t("home.pullUpToPlay") }}</span>
+      </div>
+    </div> 
   </div>
 </template>
 
@@ -70,52 +63,7 @@ const localePath = useLocalePath();
 const isMobile = useMobile();
 
 // Draggable Mobile Game Drawer State
-const drawerHeight = ref(40);
-const maxDrawerHeight = 650;
-const minDrawerHeight = 40;
-const startTouchY = ref(0);
-const startHeight = ref(0);
-const isDragging = ref(false);
-const hasMoved = ref(false);
-
-const onTouchStart = (e: TouchEvent) => {
-  startTouchY.value = e.touches[0].clientY;
-  startHeight.value = drawerHeight.value;
-  isDragging.value = true;
-  hasMoved.value = false;
-};
-
-const onTouchMove = (e: TouchEvent) => {
-  if (!isDragging.value) return;
-  const deltaY = startTouchY.value - e.touches[0].clientY; // Positive means drag UP
-  if (Math.abs(deltaY) > 5) {
-    hasMoved.value = true;
-  }
-  const newHeight = startHeight.value + deltaY;
-  drawerHeight.value = Math.max(minDrawerHeight, Math.min(newHeight, maxDrawerHeight));
-};
-
-const onTouchEnd = () => {
-  isDragging.value = false;
-  if (hasMoved.value) {
-    // Snap behavior: snap fully open if dragged > 180px, otherwise snap closed
-    if (drawerHeight.value > 180) {
-      drawerHeight.value = maxDrawerHeight;
-    } else {
-      drawerHeight.value = minDrawerHeight;
-    }
-  }
-};
-
-const toggleDrawer = () => {
-  if (hasMoved.value) return; // Ignore click if dragging occurred
-  if (drawerHeight.value > minDrawerHeight) {
-    drawerHeight.value = minDrawerHeight;
-  } else {
-    drawerHeight.value = maxDrawerHeight;
-  }
-};
-// const img = useImage()
+const drawerActive = ref(false);
 
 const windowWidth = ref(500);
 const windowHeight = ref(500);
@@ -595,61 +543,53 @@ useSchemaOrg([
         bottom: 0;
         left: 0;
         width: 100%;
-        background: linear-gradient(180deg, rgba(2, 18, 27, 0.95) 0%, rgba(1, 8, 14, 0.98) 100%);
-        backdrop-filter: blur(10px);
-        border-top: 1px solid rgba(67, 217, 173, 0.2);
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
+        height: auto;
         z-index: 1000;
-        transition: height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
         box-sizing: border-box;
 
-        &.is-dragging {
-          transition: none !important;
+        &.is-active {
+          top: 0;
+          height: 100%;
+          background: rgba(1, 8, 14, 0.9);
+          backdrop-filter: blur(10px);
         }
 
-        .drag-handle {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 40px;
-          cursor: grab;
-          user-select: none;
-          padding: 8px 0;
-          width: 100%;
-          box-sizing: border-box;
+        .open-trigger {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(1, 8, 14, 0.85);
+          border: 1px solid rgba(67, 217, 173, 0.4);
+          border-radius: 20px;
+          padding: 8px 16px;
+          color: $secondary1;
+          font-size: 11px;
+          font-weight: bold;
+          text-transform: uppercase;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
 
-          &:active {
-            cursor: grabbing;
-          }
-
-          .handle-line {
-            width: 40px;
-            height: 4px;
-            background-color: rgba(67, 217, 173, 0.4);
-            border-radius: 2px;
-            margin-bottom: 6px;
-          }
-
-          .handle-text {
-            font-size: 11px;
-            color: $secondary1;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
+        .close-trigger {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          color: $secondary1;
+          font-size: 11px;
+          font-weight: bold;
+          text-transform: uppercase;
+          cursor: pointer;
+          z-index: 1010;
         }
 
         .drawer-content {
-          flex: 1;
-          overflow-y: auto;
+          width: 100%;
+          height: 100%;
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 10px 10px 25px;
-          box-sizing: border-box;
+          position: relative;
         }
       }
     }
