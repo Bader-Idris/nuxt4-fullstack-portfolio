@@ -340,7 +340,7 @@ onUnmounted(() => {
 
   @include mobile {
     @include phone-borders;
-    height: calc(#{$full-viewport-height} - 45px);
+    height: calc(#{$full-viewport-height} - 90px);
   }
 }
 
@@ -377,7 +377,7 @@ aside {
     border-right: none;
     border-bottom: 1px solid $lines;
     flex-shrink: 0;
-    max-height: 50vh;
+    max-height: 50dvh;
   }
 }
 

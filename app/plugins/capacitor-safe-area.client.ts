@@ -80,7 +80,8 @@ export default defineNuxtPlugin(async () => {
       // For full viewport elements
       document.documentElement.style.setProperty(
         "--viewport-height",
-        `calc(100vh - ${adjustedInsets.top}px - ${adjustedInsets.bottom}px)`,
+        `calc(100dvh - ${adjustedInsets.top}px - ${adjustedInsets.bottom}px)`,
+
       );
 
       // Add Android-specific class if needed

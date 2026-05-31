@@ -119,7 +119,7 @@ const featuredProjects = computed(() => elzeroProjectsList.slice(0, 4));
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 50vh;
+  min-height: 50dvh;
   margin-bottom: 40px;
 }
 
@@ -144,10 +144,11 @@ const featuredProjects = computed(() => elzeroProjectsList.slice(0, 4));
   font-weight: 800;
   margin-bottom: 15px;
   background: linear-gradient(135deg, $secondary4 0%, $accent2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
 
   @include mobile {
+
     font-size: 2rem;
   }
 }

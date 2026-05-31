@@ -1,6 +1,6 @@
 {
   "name": "nuxt4-fullstack-portfolio",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "private": true,
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",
   "author": "Bader Idris <contact@baderidris.com> (http://baderidris.com/)",

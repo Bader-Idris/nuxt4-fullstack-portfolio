@@ -69,9 +69,7 @@
       <!-- Status: Food Left Progress Indicator -->
       <div class="mobile-status-container">
         <span class="status-title">{{ $t("home.foodLeft") }}</span>
-        <div class="food-box-container" :class="{ 'crazy-mode': winningScore === 670 }">
-          <LazyFoodComp :food-left="foodLeft" />
-        </div>
+        <LazyFoodComp :food-left="foodLeft" />
       </div>
 
       <!-- Difficulty Selectors (Compact Mode) -->
@@ -163,7 +161,7 @@ const onScreenTouchMove = (e: TouchEvent) => {
     y: Math.sin(angle) * clampedRadius
   };
   
-  if (distance > 35) processCoords(dx, dy);
+  processCoords(dx, dy);
 };
 
 const onScreenTouchEnd = () => {
@@ -461,7 +459,7 @@ function resetGame(): void {
 }
 
 function processCoords(x: number, y: number) {
-  const threshold = 20; // Reduced for higher sensitivity
+  const threshold = 12; // Lower threshold for better sensitivity
   const distance = Math.sqrt(x * x + y * y);
   
   if (distance < threshold) return;
@@ -608,9 +606,9 @@ onUnmounted(() => { pause(); });
   }
 
   .mobile-game-screen {
-    width: 90vw;
+    width: 90dvw;
     max-width: 300px;
-    height: 60vh;
+    height: 60dvh;
     box-shadow: inset 1px 5px 11px 0 #02121b, 0 0 15px rgba(67, 217, 173, 0.15);
     background-color: rgba(1, 8, 14, 0.8);
     border: 2px solid rgba(67, 217, 173, 0.3);
@@ -681,6 +679,7 @@ onUnmounted(() => { pause(); });
     flex-direction: column;
     align-items: flex-start; /* Align children to the left */
     position: relative;
+    transform: translateY(-30px);
 
     .status-title {
       font-size: 11px;
@@ -689,50 +688,6 @@ onUnmounted(() => { pause(); });
       letter-spacing: 0.5px;
       margin-bottom: 4px;
       align-self: flex-start; /* Ensure title is left-aligned */
-    }
-
-    .food-box-container {
-      background: rgba(1, 8, 14, 0.85);
-      border: 1px solid rgba(67, 217, 173, 0.2);
-      border-radius: 8px;
-      padding: 5px;
-      width: 100%;
-      height: 80px;
-      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      
-      &.crazy-mode {
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        padding: 5px 8px;
-        height: 80px;
-
-        &::-webkit-scrollbar {
-          height: 4px;
-        }
-        &::-webkit-scrollbar-thumb {
-          background: $accent2;
-          border-radius: 2px;
-        }
-      }
-
-      .food-left {
-        position: relative !important;
-        height: 100% !important;
-        width: 100% !important;
-        display: block !important;
-        top: 0 !important;
-        left: 0 !important;
-        transform: none !important;
-
-        &.crazy-mode {
-          width: max-content !important;
-        }
-      }
     }
   }
 

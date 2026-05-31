@@ -1290,10 +1290,10 @@ div {
   transition: all 0.3s ease;
 
   @include mobile {
-    height: calc(100vh - 180px);
+    height: calc(100dvh - 90px);
   }
   @include tablet-to-up {
-    height: calc(100vh - 180px);
+    height: calc(100dvh - 180px);
   }
 
   &.is-fullscreen {
@@ -1307,13 +1307,15 @@ div {
   }
 }
 canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
   @include mobile {
     width: calc(100dvw - 30px);
     height: calc(100dvh - 90px);
     position: fixed;
+  }
+  @include tablet-to-up {
+    width: calc(100dvw - 30px);
+    height: calc(100dvh - 90px);
+    /* position: fixed; */
   }
 }
 .fullscreen-btn {

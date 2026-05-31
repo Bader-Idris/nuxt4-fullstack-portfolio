@@ -1515,8 +1515,8 @@ function formatDuration(seconds: number) {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    width: 100dvw !important;
+    height: 100dvh !important;
     z-index: 99999 !important;
     border-radius: 0 !important;
   }
