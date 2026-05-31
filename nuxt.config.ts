@@ -18,7 +18,7 @@ const isDesktop = isElectron || isElectrobun;
 const isSSR = process.env.NUXT_SSR !== "false" && !isDesktop && !isCapacitor;
 
 // Unified Site URL for SEO and i18n consistency
-const siteUrl = process.env.DOMAIN_NAME || "https://baderidris.com";
+const siteUrl = process.env.DOMAIN_NAME || "http://localhost:3000";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -527,7 +527,7 @@ export default defineNuxtConfig({
   // },
   i18n: {
     // Force baseUrl here for build-time SEO tag generation
-    baseUrl: process.env.DOMAIN_NAME || "https://baderidris.com",
+    baseUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
     langDir: "../app/i18n/locales/",
     locales: [
       {
