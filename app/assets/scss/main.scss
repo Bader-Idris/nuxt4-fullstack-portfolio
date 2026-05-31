@@ -33,6 +33,11 @@ ul {
     /* Hide scrollbar on mobile */
     scrollbar-width: none;
   }
+
+  body {
+    /* Disable pull-to-refresh on mobile to prevent accidental reloads */
+    overscroll-behavior-y: none;
+  }
 }
 /* End Global Rules */
 

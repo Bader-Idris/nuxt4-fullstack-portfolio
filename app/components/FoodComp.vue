@@ -5,14 +5,16 @@
     role="img"
     :aria-label="`Food items: ${foodLeft.filter(f => !f.eaten).length} remaining`"
   >
-    <canvas
-      ref="canvasRef"
-      :style="{ 
-        width: `${canvasDisplayWidth}px`, 
-        height: `${canvasDisplayHeight}px`,
-        transform: `translate(-${currentSafeZone}px, -${currentSafeZone}px)`
-      }"
-    />
+    <client-only>
+      <canvas
+        ref="canvasRef"
+        :style="{ 
+          width: `${canvasDisplayWidth}px`, 
+          height: `${canvasDisplayHeight}px`,
+          transform: `translate(-${currentSafeZone}px, -${currentSafeZone}px)`
+        }"
+      />
+    </client-only>
   </div>
 </template>
 
