@@ -36,6 +36,7 @@
     </div>
 
     <!-- Draggable Mobile Game Drawer -->
+    <client-only>
      <div
       v-if="isMobile"
       class="mobile-game-drawer"
@@ -45,12 +46,13 @@
         <div class="close-trigger" @click="drawerActive = false">
            <span>// {{ $t("home.slideDownToClose") }}</span>
         </div>
-        <LazyMobileSnakeGame />
+        <LazyMobileSnakeGame @close="drawerActive = false" />
       </div>
       <div v-else class="open-trigger" @click="drawerActive = true">
          <span>// {{ $t("home.pullUpToPlay") }}</span>
       </div>
-    </div> 
+    </div>
+    </client-only> 
   </div>
 </template>
 

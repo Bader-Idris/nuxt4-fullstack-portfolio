@@ -2,13 +2,17 @@
   <div class="contact-page">
     <div class="contact-body">
       <aside :style="{ width: sidebarWidth + 'px' }" :class="{ 'is-resizing': isResizing }">
-        <FoldableTab @toggle="toggleContact">
+        <FoldableTab
+          :initially-folded="isMobile"
+          :class="{ 'is-folded': isContactHidden }"
+          @toggle="toggleContact"
+        >
           <p>contacts</p>
         </FoldableTab>
         <div
           :style="{ display: contactDisplay }"
           class="personal-contact"
-          :class="{ hidden: isContactHidden }"
+          :class="{ hidden: isContactHidden, 'is-folded': isContactHidden }"
         >
           <ClientOnly>
             <p @click="(openMailTo(0), copyToClipboard(0))">
@@ -34,13 +38,17 @@
           </ClientOnly>
         </div>
 
-        <FoldableTab @toggle="toggleSocials">
+        <FoldableTab
+          :initially-folded="isMobile"
+          :class="{ 'is-folded': isSocialsHidden }"
+          @toggle="toggleSocials"
+        >
           <p>find-me-also-in</p>
         </FoldableTab>
         <div
           :style="{ display: socialsDisplay }"
           class="personal-socials"
-          :class="{ hidden: isSocialsHidden }"
+          :class="{ hidden: isSocialsHidden, 'is-folded': isSocialsHidden }"
         >
           <ul>
             <li>
@@ -114,10 +122,11 @@
 // import { useUserStore } from '~/stores/UserNameStore';
 import { useUserStore } from "~/stores/useUserSocket";
 const localePath = useLocalePath();
+const isMobile = useMobile();
 // const { t } = useI18n()
 
-const contactDisplay = ref("block");
-const socialsDisplay = ref("block");
+const contactDisplay = ref(isMobile.value ? "none" : "block");
+const socialsDisplay = ref(isMobile.value ? "none" : "block");
 const authStore = useUserStore();
 
 // Sidebar resizing logic
@@ -131,8 +140,8 @@ const handleResize = (x: number) => {
 };
 
 // State variables for toggling contact and socials
-const isContactHidden = ref<boolean>(false);
-const isSocialsHidden = ref<boolean>(false);
+const isContactHidden = ref<boolean>(isMobile.value);
+const isSocialsHidden = ref<boolean>(isMobile.value);
 
 const toggleContact = () => {
   if (isContactHidden.value) {

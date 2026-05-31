@@ -2,7 +2,7 @@
   <div ref="projectsContainer" class="projects">
     <div class="projects-body">
       <aside :style="{ width: sidebarWidth + 'px' }" :class="{ 'is-resizing': isResizing }">
-        <NavbarProjects @toggle-sidebar="toggleSidebar" />
+        <NavbarProjects :initially-folded="isSidebarHidden" @toggle-sidebar="toggleSidebar" />
         <div v-show="!isSidebarHidden" class="sidebar-scrollable-content">
           <ProjectsSidebar
             :is-sidebar-hidden="isSidebarHidden"
@@ -192,14 +192,8 @@ const toggleSidebar = () => {
 
 onMounted(() => {
   const isMobileWidth = useMobile();
-  // this is an ugly solution, but because the whole project is old, I don't care about fixing it
   if (isMobileWidth.value) {
     isSidebarHidden.value = true;
-    // query select .foldable-tab add .is-folded
-    const foldableTab = document.querySelector(".foldable-tab");
-    if (foldableTab) {
-      foldableTab.classList.add("is-folded");
-    }
   }
 
   loadActiveItems();
