@@ -168,6 +168,11 @@ export default defineNuxtConfig({
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
+        // "/auth/callback": {},
+        // "/user/forgot-password": {},
+        // "/user/reset-password": {},
+        // "/user/unsubscribe": {},
+        // "/user/verify-email": {},
       },
       // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
@@ -705,6 +710,13 @@ export default defineNuxtConfig({
       
     //   return routes;
     // },
+    exclude: [
+      "/auth/callback",
+      "/user/forgot-password",
+      "/user/reset-password",
+      "/user/unsubscribe",
+      "/user/verify-email",
+    ],
   },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
