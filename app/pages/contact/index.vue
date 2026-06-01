@@ -9,6 +9,7 @@ const { t, locale } = useI18n();
 useSeoMeta({
   title: t("contact.title"),
   description: t("contact.description"),
+  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
 });
 
 useSchemaOrg([

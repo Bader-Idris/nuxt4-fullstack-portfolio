@@ -29,6 +29,12 @@
         <component :is="Component" v-else :key="$route.fullPath" />
       </NuxtPage>
     </NuxtLayout>
+    
+    <section class="seo-content" style="display: none; visibility: hidden;">
+      <h1>Bader Idris Portfolio</h1>
+      <p>Senior Full Stack Developer specializing in crafting high-performance, interactive web experiences using Vue.js, Nuxt 4, Node.js, and Three.js.</p>
+      <p>I build immersive 3D web scenes, scalable cross-platform desktop applications, and mobile solutions, combined with robust DevOps practices.</p>
+    </section>
   </template>
   <!-- </UApp> -->
 </template>
@@ -46,7 +52,8 @@ useSeoMeta({
   titleTemplate: "%s | Bader Idris",
   ogSiteName: "Bader Idris - Portfolio",
   ogType: "website",
-  ogUrl: config.public.originUrl,
+  ogUrl: `${config.public.originUrl}${useLocalePath()(useRoute().path)}`,
+  description: "Senior Full Stack Developer specializing in crafting high-performance, interactive web experiences using Vue.js, Nuxt 4, Node.js, and Three.js.",
   twitterCard: "summary_large_image",
   twitterSite: "@bader_idri8628",
   appleMobileWebAppCapable: "yes",

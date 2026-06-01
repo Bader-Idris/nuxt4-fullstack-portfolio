@@ -101,6 +101,7 @@ useSeoMeta({
   description: () => t("about.personal.description"),
   ogTitle: () => t("about.personal.title"),
   ogDescription: () => t("about.personal.description"),
+  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
   ogImage: () => profileImage.value,
   twitterCard: "summary_large_image",
   twitterTitle: () => t("about.personal.title"),

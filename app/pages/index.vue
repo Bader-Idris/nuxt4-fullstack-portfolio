@@ -53,6 +53,18 @@
       </div>
     </div>
     </client-only> 
+
+    <section class="seo-content" style="display: none;">
+      <h2>Bader Idris - Full Stack Developer</h2>
+      <p>
+        Welcome to the portfolio of Bader Idris, a senior Full Stack Developer specializing in crafting high-performance, 
+        interactive web experiences using Vue.js, Nuxt 4, Node.js, and Three.js. 
+      </p>
+      <p>
+        My expertise includes building immersive 3D web scenes, scalable cross-platform desktop applications with Electron, 
+        and mobile solutions using Capacitor, combined with robust DevOps practices.
+      </p>
+    </section>
   </div>
 </template>
 
@@ -217,7 +229,7 @@ useSeoMeta({
   ogTitle: t("home.title"),
   description: t("home.description"),
   ogDescription: t("home.description"),
-  ogUrl: useRuntimeConfig().public.originUrl,
+  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
   ogImage: optimizedThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,

@@ -18,7 +18,7 @@ const isDesktop = isElectron || isElectrobun;
 const isSSR = process.env.NUXT_SSR !== "false" && !isDesktop && !isCapacitor;
 
 // Unified Site URL for SEO and i18n consistency
-const siteUrl = process.env.DOMAIN_NAME || "http://localhost:3000";
+const siteUrl = process.env.DOMAIN_NAME;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -527,7 +527,7 @@ export default defineNuxtConfig({
   // },
   i18n: {
     // Force baseUrl here for build-time SEO tag generation
-    baseUrl: process.env.DOMAIN_NAME || "http://localhost:3000",
+    baseUrl: process.env.DOMAIN_NAME,
     langDir: "../app/i18n/locales/",
     locales: [
       {
@@ -640,12 +640,33 @@ export default defineNuxtConfig({
     enabled: process.env.IS_ELECTRON !== "true",
     discoverImages: true,
     strictNuxtContentPaths: true,
+    urls: async () => {
+      const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
+      const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
+      
+      return staticRoutes.map((route) => ({
+        loc: `${baseUrl}${route}`,
+        lastmod: new Date().toISOString(),
+      }));
+    },
+
+    /* we have to use it with dynamics, not statics!
+    urls: async () => {
+          const response = await fetch('https://api.example.com/posts')
+          const posts = await response.json()
+          return posts.map(post => ({
+            loc: `/blog/${post.slug}`,
+            lastmod: post.updated_at,
+          }))
+        }
+    */
   },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
   site: {
-    url: isElectron ? "./" : siteUrl,
-    name: "Bader Idris", // ! Causes stupid duplicate head.title
+    // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
+    url: process.env.NUXT_SITE_URL || "https://baderidris.com",
+    name: process.env.NUXT_SITE_NAME || "Bader Idris",
     description:
       "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
     defaultLocale: "en",
@@ -676,13 +697,7 @@ export default defineNuxtConfig({
   }),
   robots: {
     disallow: ["/contact/admin"],
-    sitemap: [
-      "/sitemap.xml",
-      "/sitemap_index.xml",
-      "/__sitemap__/en.xml",
-      "/__sitemap__/ar.xml",
-      "/__sitemap__/es.xml",
-    ],
+    // The sitemap module automatically detects and generates sitemaps based on the site.url
     robotsTxt: process.env.IS_ELECTRON !== "true",
   },
 

@@ -62,6 +62,7 @@ useSeoMeta({
   description: t("projects.description"),
   ogTitle: t("projects.title"),
   ogDescription: t("projects.description"),
+  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
   ogImage: optimizedProjectsThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,

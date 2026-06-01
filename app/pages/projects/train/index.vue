@@ -20,6 +20,7 @@ useSeoMeta({
   description: () => trainDescription.value,
   ogTitle: () => trainTitle.value,
   ogDescription: () => trainDescription.value,
+  ogUrl: `${runtimeConfig.public.originUrl}${useLocalePath()(route.path)}`,
   ogImage: trainSeoImage,
   ogImageWidth: 1200,
   ogImageHeight: 630,
