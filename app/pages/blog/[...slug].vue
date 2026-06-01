@@ -1,90 +1,109 @@
 <template>
   <div ref="blogPostContainer" class="blog-post-page" dir="auto">
-    <div v-if="pending" class="loader-container">
+    <div v-if="status === 'pending'" class="loader-container">
       <CustomLoader />
     </div>
     <div v-else-if="error" class="error-container">
       <h1>{{ t('blog.notFound', 'Post Not Found') }}</h1>
-      <NuxtLink to="/">{{ t('blog.backHome', 'Go Back Home') }}</NuxtLink>
+      <NuxtLink :to="localePath('/blog')">{{ t('blog.backToBlog', 'Back to Blog') }}</NuxtLink>
     </div>
-    <article v-else-if="post" class="post-article">
+    <article v-else-if="postData" class="post-article">
       <header class="post-header">
-        <h1 class="post-title" dir="auto">{{ post.metadata.title }}</h1>
+        <div v-if="!postData.published" class="unpublished-badge">
+          Draft
+        </div>
+        <h1 class="post-title" dir="auto">{{ postData.title }}</h1>
         <div class="post-meta">
-          <time :datetime="post.metadata.date">{{ post.metadata.date }}</time>
-          <span v-if="post.metadata.author" class="author">By {{ post.metadata.author }}</span>
+          <time :datetime="postData.createdAt">{{ formatDate(postData.createdAt) }}</time>
+          <span class="author">By {{ postData.author.name }}</span>
+          <span class="views"><Icon name="material-symbols:visibility" /> {{ postData.viewCount }}</span>
+          <span class="language-badge">{{ postData.language.toUpperCase() }}</span>
         </div>
       </header>
       
-      <BlogContent :content="htmlContent" />
+      <BlogContent :content="postData.content" />
       
       <footer class="post-footer">
-        <div v-if="post.metadata.tags" class="tags">
-          <span v-for="tag in post.metadata.tags.split(',')" :key="tag" class="tag">#{{ tag.trim() }}</span>
+        <div v-if="postData.summary" class="post-summary">
+          <h3>Summary</h3>
+          <p>{{ postData.summary }}</p>
+        </div>
+        
+        <div class="post-actions" v-if="postData.isAuthor || isAdmin">
+          <button @click="editPost" class="edit-btn">
+            <Icon name="material-symbols:edit" /> Edit Post
+          </button>
         </div>
       </footer>
+
+      <!-- Comment Section -->
+      <section class="comments-section">
+        <h3>Comments ({{ postData.commentCount }})</h3>
+        <BlogCommentSection :post-slug="slug" />
+      </section>
     </article>
     <ScrollToTop :target="blogPostContainer" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from "~/stores/useUserSocket";
+
 const blogPostContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(blogPostContainer);
 
 const route = useRoute();
+const localePath = useLocalePath();
 const { t, locale } = useI18n();
 const config = useRuntimeConfig();
-// TODO: is zod useful here??
+const userStore = useUserStore();
 
 const slug = computed(() => {
   const s = route.params.slug;
   return Array.isArray(s) ? s.join('/') : s;
 });
 
-const { data: post, pending, error } = await useAsyncData(`blog-${slug.value}-${locale.value}`, () => {
-  return $fetch(`/api/v1/blog/${slug.value}`, {
-    headers: {
-      'x-locale': locale.value
-    }
-  });
+const { data: response, status, error } = await useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
+  key: `blog-${slug.value}-${locale.value}`,
+  headers: {
+    'x-locale': locale.value
+  }
 });
 
-// For now, we'll assume the API returns HTML or we convert it here.
-// In a real scenario, we'd use a proper markdown to HTML converter.
-const htmlContent = computed(() => {
-  if (!post.value) return '';
-  // Very simple MD to HTML for demonstration, in production use marked or similar
-  return post.value.content
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
-    .replace(/\*(.*)\*/gim, '<i>$1</i>')
-    .replace(/\n/g, '<br>');
-});
+const postData = computed(() => response.value?.data);
+const isAdmin = computed(() => userStore.getUserRole === 'admin');
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString(locale.value, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function editPost() {
+  // Navigation to editor page
+  navigateTo(localePath(`/blog/edit/${slug.value}`));
+}
 
 // Dynamic SEO
 useSeoMeta({
-  title: () => post.value?.metadata.title || t('blog.loading', 'Loading...'),
-  description: () => post.value?.metadata.description,
-  ogTitle: () => post.value?.metadata.title,
-  ogDescription: () => post.value?.metadata.description,
-  ogImage: () => post.value?.metadata.ogImage || `${config.public.originUrl}/thumbnail.webp`,
+  title: () => postData.value?.title || t('blog.loading', 'Loading...'),
+  description: () => postData.value?.summary,
+  ogTitle: () => postData.value?.title,
+  ogDescription: () => postData.value?.summary,
+  ogImage: () => `${config.public.originUrl}/thumbnail.webp`,
   twitterCard: 'summary_large_image',
 });
 
-// Schema.org
 useSchemaOrg([
   defineArticle({
-    headline: () => post.value?.metadata.title,
-    description: () => post.value?.metadata.description,
-    datePublished: () => post.value?.metadata.date,
+    headline: () => postData.value?.title,
+    description: () => postData.value?.summary,
+    datePublished: () => postData.value?.createdAt,
     author: [
-      { name: post.value?.metadata.author || 'Bader Idris' }
+      { name: postData.value?.author.name || 'Bader Idris' }
     ],
-    image: () => post.value?.metadata.ogImage || `${config.public.originUrl}/thumbnail.webp`,
   })
 ]);
 </script>
@@ -92,52 +111,112 @@ useSchemaOrg([
 <style lang="scss" scoped>
 .blog-post-page {
   @include mainMiddleSettings;
+  padding: 2rem;
 
   @include mobile {
     @include phone-borders;
     overflow-y: scroll !important;
-    padding-right: 0;
+    padding: 1rem;
   }
 }
 
 .post-header {
-  margin-bottom: 40px;
+  margin-bottom: 3rem;
   border-bottom: 1px solid $lines;
-  padding-bottom: 20px;
+  padding-bottom: 1.5rem;
+  position: relative;
+
+  .unpublished-badge {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    background: var(--accent-error);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
 
   .post-title {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 3rem;
+    margin-bottom: 1rem;
     color: $gradients1;
+    line-height: 1.2;
     
     @include mobile {
-      font-size: 1.8rem;
+      font-size: 2rem;
     }
   }
 
   .post-meta {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: $secondary1;
     display: flex;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+
+    .views, .language-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .language-badge {
+      background: $primary3;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.75rem;
+    }
   }
 }
 
 .post-footer {
-  margin-top: 60px;
-  padding-top: 20px;
+  margin-top: 4rem;
+  padding-top: 2rem;
   border-top: 1px solid $lines;
 
-  .tags {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+  .post-summary {
+    background: $primary3;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    h3 { margin-top: 0; color: $secondary1; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+    p { margin-bottom: 0; font-style: italic; }
+  }
 
-    .tag {
-      color: $accent1;
+  .post-actions {
+    display: flex;
+    justify-content: flex-end;
+    
+    .edit-btn {
+      background: $accent1;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-weight: bold;
-      font-size: 0.85rem;
+      transition: opacity 0.2s;
+      &:hover { opacity: 0.8; }
     }
+  }
+}
+
+.comments-section {
+  margin-top: 4rem;
+  h3 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    color: $secondary2;
+    border-bottom: 2px solid $lines;
+    padding-bottom: 10px;
+    display: inline-block;
   }
 }
 
@@ -146,6 +225,7 @@ useSchemaOrg([
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 50dvh;
+  min-height: 400px;
+  text-align: center;
 }
 </style>

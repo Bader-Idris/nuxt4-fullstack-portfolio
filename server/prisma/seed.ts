@@ -1,78 +1,63 @@
 import "dotenv/config";
-import { prisma } from "@server/plugins/prisma"; // adjust relative/alias path as needed
+import { prisma } from "../plugins/prisma";
 
 const userData = [
   {
     name: "Bader",
     email: "contact@baderidris.com",
+    mongodbId: "seed-user-bader",
     role: "admin",
     posts: {
       create: [
         {
           title: "Join the Portfolio Discord",
           slug: "join-the-portfolio-discord",
-          content: "Welcome to our community! Join us on Discord to discuss development and more.",
+          content: "<h1>Welcome!</h1><p>Join us on Discord to discuss development.</p>",
+          language: "en",
           published: true,
         },
       ],
     },
   },
   {
-    name: "Wife", // I have to marry her first 😉
-    email: "info@baderidris.com",
+    name: "System Editor",
+    email: "editor@baderidris.com",
+    mongodbId: "seed-user-editor",
     role: "editor",
     posts: {
       create: [
         {
-          title: "Follow Portfolio on Twitter",
-          slug: "follow-portfolio-on-twitter",
-          content: "Stay updated with the latest news by following us on Twitter.",
+          title: "Mastering Nuxt 4",
+          slug: "mastering-nuxt-4",
+          content: "<h1>Advanced Nuxt</h1><p>Learn the latest features of Nuxt 4.</p>",
+          language: "en",
           published: true,
-          viewCount: 42,
-        },
-      ],
-    },
-  },
-  {
-    name: "Mahmoud",
-    email: "mahmoud@baderidris.com",
-    role: "user",
-    posts: {
-      create: [
-        {
-          title: "Ask a question about Portfolio on GitHub",
-          slug: "ask-on-github",
-          content: "Have a question? Open a discussion on our GitHub repository.",
-          published: true,
-          viewCount: 128,
-        },
-        {
-          title: "Portfolio on YouTube",
-          slug: "portfolio-on-youtube",
-          content: "Check out our video tutorials and showcases on YouTube.",
-          published: false, // Unpublished example
         },
       ],
     },
   },
 ];
+
 async function main() {
-  console.log(`Start seeding ...`);
+  console.log(`🌱 Start seeding ...`);
   if (!prisma) {
     throw new Error("Prisma client not initialized");
   }
+
   for (const u of userData) {
-    const user = await prisma.user.create({
-      data: u,
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: u,
     });
-    console.log(`Created user with id: ${user.id}`);
+    console.log(`✅ Upserted user: ${user.name}`);
   }
-  console.log(`Seeding finished.`);
+  console.log(`🏁 Seeding finished.`);
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect(); // clean shutdown for script
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
     console.error(e);

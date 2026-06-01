@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client" // "prisma-client" required in v7+
   output   = env("PRISMA_GEN_PATH")
@@ -17,34 +14,55 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  role  String  @default("user")
-  posts Post[]
+  id        Int      @id @default(autoincrement())
+  mongodbId String   @unique
+  email     String   @unique
+  name      String?
+  role      String   @default("user")
+  posts     Post[]
+  comments  Comment[]
 
   @@map("users")
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   title     String
-  slug      String?  @unique
-  content   String?
-  published Boolean  @default(false)
-  viewCount Int      @default(0)
-  author    User     @relation(fields: [authorId], references: [id])
+  slug      String    @unique
+  content   String?   // Tiptap HTML content
+  published Boolean   @default(false)
+  viewCount Int       @default(0)
+  language  String    @default("en") // en, es, ar
+  summary   String?
+  author    User      @relation(fields: [authorId], references: [id])
   authorId  Int
+  comments  Comment[]
 
   @@map("posts")
 }
 
+model Comment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  parentId  Int?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
 // for nuxt content
 model Content {
-  path     String @id
-  body     String // Full markdown content (including YAML frontmatter)
+  path      String   @id
+  body      String   // Full markdown content (including YAML frontmatter)
   updatedAt DateTime @updatedAt
 
   @@map("contents")
@@ -52,7 +70,7 @@ model Content {
 
 model Storage {
   key   String @id
-  value Json? // For search index data (MiniSearch JSON)
+  value Json?  // For search index data (MiniSearch JSON)
 
   @@map("storages")
 }

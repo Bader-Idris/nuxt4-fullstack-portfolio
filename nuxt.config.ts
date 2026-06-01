@@ -637,6 +637,9 @@ export default defineNuxtConfig({
   },
   // ...(process.env.IS_ELECTRON === "false") && {
   sitemap: {
+    // in debugging with devtools, you can view raw sitemaps here:
+    // url: /__sitemap__/debug.json
+    // prerendered file: .output/public/__sitemap__/debug.json
     enabled: process.env.IS_ELECTRON !== "true",
     discoverImages: true,
     strictNuxtContentPaths: true,
@@ -644,22 +647,29 @@ export default defineNuxtConfig({
       const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
       const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
       
-      return staticRoutes.map((route) => ({
+      const routes = staticRoutes.map((route) => ({
         loc: `${baseUrl}${route}`,
         lastmod: new Date().toISOString(),
       }));
-    },
 
-    /* we have to use it with dynamics, not statics!
-    urls: async () => {
-          const response = await fetch('https://api.example.com/posts')
-          const posts = await response.json()
-          return posts.map(post => ({
-            loc: `/blog/${post.slug}`,
-            lastmod: post.updated_at,
-          }))
+      try {
+        // Dynamic blog posts from PostgreSQL
+        const response = await fetch(`${process.env.DOMAIN_NAME || 'http://localhost:3000'}/api/v1/blog?publishedOnly=true`);
+        const result = await response.json();
+        if (result && result.data) {
+          result.data.forEach((post: any) => {
+            routes.push({
+              loc: `/blog/${post.slug}`,
+              lastmod: post.updatedAt,
+            });
+          });
         }
-    */
+      } catch (e) {
+        console.warn('Sitemap dynamic fetch failed (expected during early build):', e.message);
+      }
+      
+      return routes;
+    },
   },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true

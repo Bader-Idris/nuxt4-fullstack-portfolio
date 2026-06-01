@@ -3,7 +3,10 @@ import { Token } from "../models/mongo";
 import { getCookie } from "h3";
 
 export default defineEventHandler(async (event) => {
-  // Define protected API routes that require authentication
+  const path = event.path;
+  const method = event.method;
+
+  // Define protected routes that require authentication
   const protectedRoutes = [
     "/api/v1/auth/me",
     "/api/v1/received_emails",
@@ -12,9 +15,27 @@ export default defineEventHandler(async (event) => {
     "/api/v1/user/settings",
   ];
 
+  // Specific routes that require elevated roles (Admin/Editor)
+  const managementRoutes = ["/blog/create", "/blog/edit"];
+  const apiManagementPrefix = "/api/v1/blog";
+
   const isProtectedRoute = protectedRoutes.some((route) =>
-    event.path.startsWith(route),
+    path.startsWith(route),
   );
+
+  // We only protect the API blog routes if it's NOT a GET request
+  const isApiManagement =
+    path.startsWith(apiManagementPrefix) &&
+    ["POST", "PATCH", "DELETE"].includes(method);
+
+  const isPageManagement = managementRoutes.some((route) =>
+    path.startsWith(route),
+  );
+
+  const isManagementRoute = isApiManagement || isPageManagement;
+
+  // Add the base requirement for management routes to the protected list
+  const requiresAuth = isProtectedRoute || isManagementRoute;
 
   const accessToken = getCookie(event, "accessToken");
   const refreshTokenJWT = getCookie(event, "refreshToken");
@@ -25,45 +46,57 @@ export default defineEventHandler(async (event) => {
       const payload = isTokenValid(accessToken);
       if (payload && payload.user) {
         event.context.user = payload.user;
-        return;
       }
     } catch (error) {
-      // Access token is invalid or expired
       console.log("Access Token invalid, attempting refresh...");
     }
   }
 
-  // If no access token or it's invalid, and it's NOT a protected route, 
-  // we can skip refresh logic to save resources, but if there's a refresh token, we might want to refresh anyway
-  if (!refreshTokenJWT) {
-    if (isProtectedRoute) {
-      // For protected routes, we could throw here, but we'll let the endpoint handle it or just leave context.user undefined
-      // Actually, standard behavior is to leave it undefined and let checkPermissions handle it.
+  // If no user on context yet, try refresh token
+  if (!event.context.user && refreshTokenJWT) {
+    try {
+      const payload = isTokenValid(refreshTokenJWT);
+      if (payload && payload.user && payload.refreshToken) {
+        const existingToken = await Token.findOne({
+          user: payload.user.userId,
+          refreshToken: payload.refreshToken,
+        });
+
+        if (existingToken && existingToken.isValid) {
+          // Issue new tokens
+          attachCookiesToResponse(
+            event,
+            payload.user,
+            existingToken.refreshToken,
+          );
+          event.context.user = payload.user;
+          console.log("Token refreshed successfully");
+        }
+      }
+    } catch (error) {
+      console.log("Refresh token invalid.");
     }
-    return;
   }
 
-  try {
-    const payload = isTokenValid(refreshTokenJWT);
-    if (!payload || !payload.user || !payload.refreshToken) {
-      return;
-    }
+  // --- Final Auth Check ---
+  const user = event.context.user;
 
-    const existingToken = await Token.findOne({
-      user: payload.user.userId,
-      refreshToken: payload.refreshToken,
+  if (requiresAuth && !user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Authentication required",
     });
+  }
 
-    if (!existingToken || !existingToken.isValid) {
-      return;
+  if (isManagementRoute && user) {
+    const isAdmin = user.role === "admin";
+    const isEditor = user.role === "editor";
+
+    if (!isAdmin && !isEditor) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: "Insufficient permissions for management actions",
+      });
     }
-
-    // Issue new tokens
-    attachCookiesToResponse(event, payload.user, existingToken.refreshToken);
-    event.context.user = payload.user;
-    console.log("Token refreshed successfully");
-  } catch (error) {
-    console.log("Refresh token invalid.");
-    return;
   }
 });

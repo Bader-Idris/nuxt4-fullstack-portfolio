@@ -31,10 +31,13 @@ export default defineEventHandler(async (event) => {
         author: {
           select: {
             id: true,
+            mongodbId: true,
             name: true,
-            email: true,
             role: true,
           }
+        },
+        _count: {
+          select: { comments: true }
         }
       }
     });
@@ -46,23 +49,20 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Authorization check
-    const user = event.context.user; // Populated by auth middleware
+    const user = event.context.user;
     const isAdmin = user?.role === 'admin';
     const isEditor = user?.role === 'editor';
-    const isAuthor = user && post.authorId === Number(user.userId);
+    const isAuthor = user && post.author.mongodbId === user.userId;
     
-    // Professionals: admin, editor, or author can see unpublished
-    const isAuthorized = isAdmin || isEditor || isAuthor;
-
-    if (!post.published && !isAuthorized) {
+    // Auth check for unpublished posts
+    if (!post.published && !isAdmin && !isEditor && !isAuthor) {
       throw createError({
         statusCode: 403,
         statusMessage: 'You are not authorized to view this unpublished post',
       });
     }
 
-    // Professional touch: track views asynchronously
+    // Tracking views
     if (post.published) {
       prisma.post.update({
         where: { id: post.id },
@@ -73,28 +73,13 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: {
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        content: post.content,
-        published: post.published,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        viewCount: post.viewCount,
-        metadata: {
-          author: post.author.name || post.author.email,
-          role: post.author.role,
-          isAuthor: isAuthor || false,
-        },
-        author: {
-          id: post.author.id,
-          name: post.author.name,
-          role: post.author.role,
-        }
+        ...post,
+        commentCount: post._count.comments,
+        isAuthor: isAuthor || false,
       }
     };
   } catch (e: any) {
-    console.error(`[blog API] Error fetching ${slug}:`, e.message);
+    console.error(`[blog API GET] Error fetching ${slug}:`, e.message);
     throw createError({
       statusCode: e.statusCode || 500,
       statusMessage: e.statusMessage || 'Internal Server Error',

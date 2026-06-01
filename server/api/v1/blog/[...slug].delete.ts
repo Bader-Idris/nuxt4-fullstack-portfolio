@@ -2,13 +2,6 @@ import { prisma } from "@server/plugins/prisma";
 import { z } from "zod";
 
 const slugSchema = z.string().min(1).max(255).regex(/^[a-z0-9-/]+$/, "Invalid slug format");
-const updatePostSchema = z.object({
-  title: z.string().min(3).max(255).optional(),
-  content: z.string().min(10).optional(),
-  published: z.boolean().optional(),
-  language: z.enum(["en", "es", "ar"]).optional(),
-  summary: z.string().max(500).optional(),
-});
 
 export default defineEventHandler(async (event) => {
   const user = event.context.user;
@@ -23,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: "Authentication required to modify blog posts",
+      statusMessage: "Authentication required to delete blog posts",
     });
   }
 
@@ -38,16 +31,6 @@ export default defineEventHandler(async (event) => {
     });
   }
   const slug = slugValidation.data;
-
-  const body = await readBody(event);
-  const bodyValidation = updatePostSchema.safeParse(body);
-  if (!bodyValidation.success) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid update data: " + bodyValidation.error.issues[0].message,
-    });
-  }
-  const updateData = bodyValidation.data;
 
   try {
     const post = await prisma.post.findUnique({
@@ -69,22 +52,20 @@ export default defineEventHandler(async (event) => {
     if (!isAdmin && !isEditor && !isAuthor) {
       throw createError({
         statusCode: 403,
-        statusMessage: "You don't have permission to modify this post",
+        statusMessage: "You don't have permission to delete this post",
       });
     }
 
-    const updatedPost = await prisma.post.update({
+    await prisma.post.delete({
       where: { id: post.id },
-      data: updateData,
     });
 
     return {
       success: true,
-      message: "Post updated successfully",
-      data: updatedPost,
+      message: "Post deleted successfully",
     };
   } catch (e: any) {
-    console.error(`[blog API PATCH] Error updating ${slug}:`, e.message);
+    console.error(`[blog API DELETE] Error deleting ${slug}:`, e.message);
     throw createError({
       statusCode: e.statusCode || 500,
       statusMessage: e.statusMessage || 'Internal Server Error',
