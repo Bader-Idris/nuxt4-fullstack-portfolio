@@ -46,7 +46,8 @@
     "start": "node .output/server/index.mjs",
     "test": "bun lint && bun typecheck",
     "vapid-generate": "web-push generate-vapid-keys [--json]",
-    "//resolutions is for pnpm / yarn, overrides is for npm and bun": "null"
+    "//resolutions is for pnpm / yarn, overrides is for npm and bun": "null",
+    "prepare": "npx skilld prepare || true"
   },
   "dependencies": {
     "@capgo/capacitor-social-login": "^8.3.22",
@@ -94,6 +95,7 @@
     "mongoose": "9.6.3",
     "nodemailer": "^8.0.10",
     "nuxt": "4.4.6",
+    "nuxt-ai-ready": "^1.3.7",
     "nuxt-skew-protection": "^1.1.1",
     "nuxt-tiptap-editor": "3.4.0",
     "particles.js": "^2.0.0",

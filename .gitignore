@@ -58,3 +58,6 @@ electronAssets/builder/envs/Cert.pfx
 artifacts/
 # even after we put the app in /release/electrobun, the build/ isn't removed
 build/
+
+# Skilld references (recreated by `skilld install`)
+.skilld

@@ -286,6 +286,7 @@ export default defineNuxtConfig({
     "@nuxtjs/device",
     "@nuxtjs/seo",
     "nuxt-skew-protection",
+    "nuxt-ai-ready",
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     "@vueuse/nuxt",
@@ -740,6 +741,7 @@ export default defineNuxtConfig({
     },
   }),
   robots: {
+    // https://nuxtseo.com/docs/robots/guides/robots-txt#parsed-robotstxt
     disallow: ["/contact/admin"],
     // The sitemap module automatically detects and generates sitemaps based on the site.url
     robotsTxt: process.env.IS_ELECTRON !== "true",

@@ -1,0 +1,127 @@
+skills:
+  vue-skilld:
+    packageName: vue
+    version: 3.5.35
+    repo: vuejs/core
+    source: "https://github.com/vuejs/core/tree/v3.5.35/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-skilld:
+    packageName: nuxt
+    version: 4.4.6
+    repo: nuxt/nuxt
+    source: "https://nuxt.com/llms.txt"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-skew-protection-skilld:
+    packageName: nuxt-skew-protection
+    version: 1.1.1
+    repo: harlan-zw/nuxt-skew-protection
+    source: "https://github.com/harlan-zw/nuxt-skew-protection/tree/v1.1.1/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxtjs-seo-skilld:
+    packageName: "@nuxtjs/seo"
+    version: 5.1.3
+    repo: harlan-zw/nuxt-seo
+    source: "https://github.com/harlan-zw/nuxt-seo/tree/v5.1.3/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxtjs-device-skilld:
+    packageName: "@nuxtjs/device"
+    version: 4.0.0
+    repo: nuxt-modules/device
+    source: "ungh://nuxt-modules/device"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-ai-ready-skilld:
+    packageName: nuxt-ai-ready
+    version: 1.3.7
+    repo: harlan-zw/nuxt-ai-ready
+    source: "https://nuxtseo.com/llms.txt"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxtjs-i18n-skilld:
+    packageName: "@nuxtjs/i18n"
+    version: 10.4.0
+    repo: nuxt-modules/i18n
+    source: "https://i18n.nuxtjs.org/llms.txt"
+    syncedAt: 2026-06-01
+    generator: skilld
+  pinia-nuxt-skilld:
+    packageName: "@pinia/nuxt"
+    version: 0.11.3
+    repo: vuejs/pinia
+    source: "https://pinia.vuejs.org/ssr/nuxt.html/**"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-tiptap-editor-skilld:
+    packageName: nuxt-tiptap-editor
+    version: 3.4.0
+    repo: modbender/nuxt-tiptap-editor
+    source: "https://github.com/modbender/nuxt-tiptap-editor/tree/v3.4.0/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-eslint-skilld:
+    packageName: "@nuxt/eslint"
+    version: 1.15.2
+    repo: nuxt/eslint
+    source: "https://github.com/nuxt/eslint/tree/v1.15.2/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-icon-skilld:
+    packageName: "@nuxt/icon"
+    version: 2.2.2
+    repo: nuxt/icon
+    source: "https://stackblitz.com/edit/nuxt-icon-playground?file=app.vue/**"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-image-skilld:
+    packageName: "@nuxt/image"
+    version: 2.0.0
+    repo: nuxt/image
+    source: "https://github.com/nuxt/image/tree/v2.0.0/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nuxt-scripts-skilld:
+    packageName: "@nuxt/scripts"
+    version: 1.1.1
+    repo: nuxt/scripts
+    source: "https://github.com/nuxt/scripts/tree/v1.1.1/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  vueuse-nuxt-skilld:
+    packageName: "@vueuse/nuxt"
+    version: 14.3.0
+    repo: vueuse/vueuse
+    source: "https://github.com/vueuse/vueuse/tree/v14.3.0/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  v-gsap-nuxt-skilld:
+    packageName: v-gsap-nuxt
+    version: 1.5.12
+    repo: holux-design/v-gsap-nuxt
+    source: "https://github.com/holux-design/v-gsap-nuxt/tree/v1.5.12/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  nitro-skilld:
+    packageName: nitro
+    version: 3.0.260522-beta
+    repo: nitrojs/nitro
+    source: "https://github.com/nitrojs/nitro/tree/v3.0.260522-beta/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  three-skilld:
+    packageName: three
+    version: 0.184.0
+    repo: mrdoob/three.js
+    source: "https://github.com/mrdoob/three.js/tree/master/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
+  pinia-skilld:
+    packageName: pinia
+    version: 3.0.4
+    repo: vuejs/pinia
+    source: "https://github.com/vuejs/pinia/tree/v3.0.4/docs"
+    syncedAt: 2026-06-01
+    generator: skilld
