@@ -4,6 +4,8 @@ import { defineSitemapSchema } from "@nuxtjs/sitemap/content";
 import { defineOgImageSchema } from "nuxt-og-image/content";
 import { defineSchemaOrgSchema } from "nuxt-schema-org/content";
 
+// https://nuxtseo.com/docs/sitemap/guides/content#setup-nuxt-content-v3
+
 const commonProjectSchema = z.object({
   title: z.string().nonempty(),
   url: z.string().url(),
