@@ -109,6 +109,17 @@ useSeoMeta({
   twitterImage: () => profileImage.value,
 });
 
+
+useSchemaOrg([
+  defineWebPage({
+    name: () => t("about.personal.title") + " | Bio",
+    description: () => t("about.personal.description"),
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio'
+  })
+])
+
 const bioContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(bioContainer);
 

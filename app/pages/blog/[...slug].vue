@@ -82,7 +82,6 @@ function formatDate(date: string) {
 }
 
 function editPost() {
-  // Navigation to editor page
   navigateTo(localePath(`/blog/edit/${slug.value}`));
 }
 
@@ -90,12 +89,14 @@ function editPost() {
 useSeoMeta({
   title: () => postData.value?.title || t('blog.loading', 'Loading...'),
   description: () => postData.value?.summary,
-  ogTitle: () => postData.value?.title,
-  ogDescription: () => postData.value?.summary,
-  ogImage: () => `${config.public.originUrl}/thumbnail.webp`,
-  twitterCard: 'summary_large_image',
 });
 
+defineOgImageComponent('Default', {
+  title: computed(() => postData.value?.title || 'Blog Post'),
+  description: computed(() => postData.value?.summary || "Read more on Bader Idris's blog."),
+});
+
+// Schema.org
 useSchemaOrg([
   defineArticle({
     headline: () => postData.value?.title,

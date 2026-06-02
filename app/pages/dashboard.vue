@@ -421,6 +421,11 @@
 </template>
 
 <script setup lang="ts">
+defineOgImageComponent('Default', {
+  title: 'Dashboard',
+  description: 'Secure Chat & Video Dashboard'
+})
+
 import { useSocketStore } from "~/stores/useSocketStore";
 import { useMessagesStore } from "~/stores/useMessagesStore";
 import { useOnlineUsersStore } from "~/stores/useOnlineUsersStore";

@@ -43,6 +43,11 @@
 </template>
 
 <script setup lang="ts">
+defineOgImageComponent('Default', {
+  title: 'Blog',
+  description: 'Explore insights on Vue, Nuxt, Node, and creative technologies.'
+});
+
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const selectedLang = ref(locale.value);

@@ -174,6 +174,9 @@ export default defineNuxtConfig({
         // "/user/unsubscribe": {},
         // "/user/verify-email": {},
       },
+      // for old used urls, redirect to new ones, so search engines update
+      // https://nuxtseo.com/learn-seo/nuxt/controlling-crawlers/redirects
+      "/about/personal": { redirect: { to: "/about/hobbies/bio", statusCode: 301 } },
       // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
@@ -265,7 +268,6 @@ export default defineNuxtConfig({
       },
     },
     build: {
-      transpile: ["gsap"],
       sourcemap: "hidden", // test if this hides: #14 7.356  WARN
       // [plugin nuxt: components - loader]Sourcemap is likely to be incorrect: a plugin(nuxt: components- loader) was used to transform files,
       // but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help (x25)
@@ -289,6 +291,7 @@ export default defineNuxtConfig({
     // "@vite-pwa/nuxt", // TODO: test if they fixed the security bug of not handling status codes anymore!!
     ...(isElectron ? ["nuxt-electron"] : []),
     "@nuxtjs/device",
+    "@nuxt/fonts",
     "@nuxtjs/seo",
     "nuxt-skew-protection",
     "nuxt-ai-ready",
@@ -637,9 +640,55 @@ export default defineNuxtConfig({
       ],
     },
   },
+  hooks: {
+    // ai ready: https://nuxtseo.com/docs/ai-ready/guides/llms-txt#hook
+    "ai-ready:llms-txt": (payload) => {
+      payload.sections.push({
+        title: 'Custom APIs',
+        links: [{ title: 'Search', href: '/projects/train', description: 'Search endpoint' }]
+      })
+      payload.notes.push('Custom note')
+    },
+    // to customize: https://nuxtseo.com/docs/ai-ready/guides/llms-txt#customizing-page-processing
+    "ai-ready:page:markdown": (ctx) => {
+      // ctx: { route, markdown, title, description }
+      ctx.markdown = `# ${ctx.title}\n\n${ctx.markdown}`
+    }
+  },
+  fonts: {
+    families: [
+      {
+        name: "Fira+Code", weights: [400, 600, 700],
+        global: true // critical for ogImage
+      }
+      // https://nuxtseo.com/docs/og-image/guides/custom-fonts#provider-configuration
+    ],
+  },
   ogImage: {
     // enabled: process.env.NUXT_SSR !== "false" && process.env.IS_ELECTRON !== "true",
     enabled: process.env.NUXT_SSR !== "false",
+    fonts: ['Fira+Code:400,600,700']
+  },
+  aiReady: {
+    // https://nuxtseo.com/docs/ai-ready/api/config#enabled
+    enabled: process.env.NUXT_SSR !== "false",
+    debug: process.env.IS_DEBUGGING !== "false",
+    contentSignal: process.env.NUXT_SSR !== "false" ? {
+      aiTrain: false,
+      search: true,
+      aiInput: true
+    } : false,
+    llmsTxt: {
+      // sections: [
+      //   {
+      //     title: 'API Reference',
+      //     links: [
+      //       { title: 'REST API', href: '/docs/api', description: 'API documentation' }
+      //     ]
+      //   }
+      // ],
+      notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
+    }
   },
   // ...(process.env.IS_ELECTRON === "false") && {
   sitemap: {
@@ -717,6 +766,7 @@ export default defineNuxtConfig({
       "/user/unsubscribe",
       "/user/verify-email",
     ],
+    // how could this image/video embedding be useful: https://nuxtseo.com/docs/sitemap/advanced/images-videos#sitemap-images
   },
   // },
   // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
@@ -730,17 +780,22 @@ export default defineNuxtConfig({
     indexable: !isElectron,
   },
   ...(process.env.IS_ELECTRON === "false" && {
+    // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-person
+    // this is important: https://unhead.unjs.io/docs/nuxt/schema-org/guides/core-concepts/nodes
     schemaOrg: {
+      // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-localbusiness
+      // or even OnlineStore with: defineOrganization; read line above!
       identity: definePerson({
         name: "Bader Idris",
         image: "/imgs/meTwentyFour.jpg",
         description:
-          "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js.",
+          "Full Stack Developer specializing in Vue, Nuxt, Nest.js, DevOps, GSAP, and Three.js.",
         url: "https://baderidris.com",
         sameAs: [
           "https://github.com/bader-idris",
           "https://linkedin.com/in/bader-idrees",
           "https://www.facebook.com/Bader.Idris.developer",
+          "https://twitter.com/bader_idri8628"
         ],
         jobTitle: "Full Stack Developer",
         worksFor: {
@@ -749,6 +804,7 @@ export default defineNuxtConfig({
           name: "Bader Idris Portfolio",
           url: "https://baderidris.com",
         },
+        logo: "/logo.svg",
       }),
     },
   }),
@@ -757,6 +813,7 @@ export default defineNuxtConfig({
     disallow: ["/contact/admin"],
     // The sitemap module automatically detects and generates sitemaps based on the site.url
     robotsTxt: process.env.IS_ELECTRON !== "true",
+    // https://nuxtseo.com/docs/robots/guides/ai-directives#programmatic-configuration
   },
 
   // }),
