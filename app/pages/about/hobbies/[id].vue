@@ -23,6 +23,17 @@ useSeoMeta({
   title: () => `${hobbyTitle.value} | Hobbies`,
   description: () => `Learn more about my ${hobbyTitle.value} hobby.`,
 });
+
+useSchemaOrg([
+  defineWebPage({
+    name: () => `${hobbyTitle.value} | Hobbies`,
+    description: () => `Learn more about my ${hobbyTitle.value} hobby.`,
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
 </script>
 
 <style lang="scss" scoped>

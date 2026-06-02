@@ -96,6 +96,17 @@ useSeoMeta({
     "Log in to Bader Idris's portfolio platform to explore projects, insights, and opportunities. Your gateway to cutting-edge web and multi-platform solutions.",
 });
 
+useSchemaOrg([
+  defineWebPage({
+    name: "Login",
+    description: "Log in to Bader Idris's portfolio platform.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 const route = useRoute();
 const router = useRouter();
 

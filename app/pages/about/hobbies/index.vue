@@ -7,8 +7,8 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: "under development hobbies nested page",
-  description: "this page requires fixes, so please stay tuned",
+  title: "Hobbies",
+  description: "Hobbies and interests of Bader Idris.",
 });
 
 useSchemaOrg([
@@ -16,10 +16,11 @@ useSchemaOrg([
     name: 'Hobbies',
     description: "Hobbies and interests of Bader Idris.",
   }),
-  // defineWebSite({
-  //   name: 'My Site'
-  // })
-])
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
 </script>
 
 <style lang="scss" scoped>

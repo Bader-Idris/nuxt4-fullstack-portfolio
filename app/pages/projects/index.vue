@@ -68,12 +68,16 @@ useSeoMeta({
   ogImageHeight: 630,
 });
 
+defineOgImageComponent('Default', {
+  title: t("projects.title"),
+  description: t("projects.description")
+});
+
 useSchemaOrg([
-  {
-    "@type": "CollectionPage",
-    name: t("projects.title"),
-    description: t("projects.description"),
-    dateModified: new Date().toISOString(),
+  defineWebPage({
+    name: () => t("projects.title"),
+    description: () => t("projects.description"),
+    // "@type": "CollectionPage",
     itemListElement: projectsList.map((project, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -87,7 +91,11 @@ useSchemaOrg([
           : `${useRuntimeConfig().public.originUrl}${project.img}`,
       },
     })),
-  },
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
 ]);
 
 const list = ref<Array<{ title: string; imgAlt: string; isActive: boolean }>>([

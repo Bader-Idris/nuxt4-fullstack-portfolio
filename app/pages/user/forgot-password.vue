@@ -36,6 +36,17 @@ useSeoMeta({
     "Explore projects by Bader Idris, showcasing expertise in responsive web design, e-commerce, multi-step forms, todo apps, and stunning agency web apps. Powered by Vue.js, TypeScript, Node.js, and more.",
 });
 
+useSchemaOrg([
+  defineWebPage({
+    name: "Forgot Password",
+    description: "Reset your password for Bader Idris Portfolio.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 async function forgotPassword() {
   if (!email.value) {
     toast("Please enter a valid email", { theme: "dark", type: "error" });

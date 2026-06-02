@@ -217,6 +217,17 @@ useSeoMeta({
       : "",
 });
 
+useSchemaOrg([
+  defineWebPage({
+    name: () => project.value ? (project.value.title[locale.value] || project.value.title.en) + " | Elzero 50" : "Project Not Found",
+    description: () => project.value ? (project.value.desc[locale.value] || project.value.desc.en) : "",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 // Simulate JS if on preview tab
 watch(
   [activeTab, project],

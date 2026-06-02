@@ -459,6 +459,17 @@ useSeoMeta({
     "Access exclusive content, resources, and services on Bader Idris's platform.",
 });
 
+useSchemaOrg([
+  defineWebPage({
+    name: "Dashboard",
+    description: "Access exclusive content, resources, and services.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 const isPushSupported = computed(
   () =>
     $push.isCapacitor ||

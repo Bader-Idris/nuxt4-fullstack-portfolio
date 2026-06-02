@@ -190,6 +190,17 @@ useSeoMeta({
   description:
     "Read the Terms and Conditions for using Bader Idris Portfolio services and goods, including full-stack development, digital products, and online courses.",
 });
+
+useSchemaOrg([
+  defineWebPage({
+    name: "Terms and Conditions - Bader Idris Portfolio",
+    description: "Read the Terms and Conditions for using Bader Idris Portfolio services and goods.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
 </script>
 
 <style lang="scss" scoped>

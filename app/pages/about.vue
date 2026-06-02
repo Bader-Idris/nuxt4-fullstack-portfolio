@@ -193,12 +193,14 @@ useSeoMeta({
 });
 
 useSchemaOrg([
-  {
-    "@type": "WebPage",
-    name: t("about.title"),
-    description: t("about.description"),
-    dateModified: new Date().toISOString(),
-  },
+  defineWebPage({
+    name: () => t("about.title"),
+    description: () => t("about.description"),
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
 ]);
 
 const checkScreenSize = () => {

@@ -89,6 +89,17 @@ useSeoMeta({
   description: "A redirect page for email verification via email",
 });
 
+useSchemaOrg([
+  defineWebPage({
+    name: "Verify Email",
+    description: "Email verification page.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 // Countdown timer
 const { pause } = useIntervalFn(() => {
   seconds.value--;

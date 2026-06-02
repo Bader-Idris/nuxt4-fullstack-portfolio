@@ -93,6 +93,17 @@ useSeoMeta({
     "Sign up on Bader Idris's platform to access exclusive content, resources, and services. Join a tech-savvy community led by a skilled full-stack developer.",
 });
 
+useSchemaOrg([
+  defineWebPage({
+    name: "Register",
+    description: "Sign up on Bader Idris's platform.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 const localePath = useLocalePath();
 const user = ref<string>("");
 const email = ref<string>("");

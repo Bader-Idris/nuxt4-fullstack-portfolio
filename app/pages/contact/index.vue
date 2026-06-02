@@ -13,11 +13,14 @@ useSeoMeta({
 });
 
 useSchemaOrg([
-  {
-    "@type": "ContactPage",
-    name: t("contact.title"),
-    description: t("contact.description"),
-  },
+  defineWebPage({
+    name: () => t("contact.title"),
+    description: () => t("contact.description"),
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
 ]);
 
 const { getFriendlyErrorMessage } = useApiError();

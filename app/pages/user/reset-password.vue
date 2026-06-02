@@ -39,6 +39,17 @@ const email = computed(() => route.query.email?.toString() || "");
 // TODO: fix this token to be brought from the cookies, or should it be sent from server, check forgot password function
 const token = computed(() => route.query.token?.toString() || "");
 
+useSchemaOrg([
+  defineWebPage({
+    name: "Reset Password",
+    description: "Reset your password for Bader Idris Portfolio.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
+
 async function resetPassword() {
   if (newPassword.value !== confirmPassword.value) {
     toast("Passwords do not match", { theme: "dark", type: "error" });

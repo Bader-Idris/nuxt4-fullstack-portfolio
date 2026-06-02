@@ -42,11 +42,14 @@ useSeoMeta({
 });
 
 useSchemaOrg([
-  {
-    "@type": "ContactPage",
-    name: t("contact.admin.title"),
-    description: t("contact.admin.description"),
-  },
+  defineWebPage({
+    name: () => t("contact.admin.title"),
+    description: () => t("contact.admin.description"),
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
 ]);
 
 interface Email {

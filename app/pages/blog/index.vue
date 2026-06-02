@@ -66,8 +66,9 @@ function formatDate(date: string) {
 
 <style lang="scss" scoped>
 .blog-list-page {
-  @include mainMiddleSettings;
+  overflow: auto;
   padding: 4rem 2rem;
+  @include mainMiddleSettings;
 
   @include mobile {
     padding: 2rem 1rem;

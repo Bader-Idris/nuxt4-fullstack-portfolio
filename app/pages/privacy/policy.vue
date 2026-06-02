@@ -237,6 +237,17 @@ useSeoMeta({
   description:
     "Learn how Bader Idris Portfolio collects, uses, and protects your data when using our full-stack development services, digital products, and online courses.",
 });
+
+useSchemaOrg([
+  defineWebPage({
+    name: "Privacy Policy - Bader Idris Portfolio",
+    description: "Learn how Bader Idris Portfolio collects, uses, and protects your data.",
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
+]);
 </script>
 
 <style lang="scss" scoped>

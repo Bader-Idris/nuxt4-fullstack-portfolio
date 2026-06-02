@@ -251,12 +251,14 @@ useSeoMeta({
 });
 
 useSchemaOrg([
-  {
-    "@type": "WebPage",
-    name: t("home.title"),
-    description: t("home.description"),
-    dateModified: new Date().toISOString(),
-  },
+  defineWebPage({
+    name: () => t("home.title"),
+    description: () => t("home.description"),
+  }),
+  defineWebSite({
+    name: 'Bader Idris Portfolio',
+    url: 'https://baderidris.com'
+  })
 ]);
 </script>
 
