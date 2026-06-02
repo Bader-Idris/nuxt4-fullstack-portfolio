@@ -106,13 +106,16 @@ export default defineNuxtConfig({
           'bcryptjs',
           'jsonwebtoken',
           'rate-limiter-flexible',
-          'ttf2woff2'
+          'ttf2woff2',
+          'better-sqlite3'
         ],
         // Force everything else to be inlined/bundled into chunks:
         inline: [
           // inline your own server code
           /^~/,
           /^@\//,
+          /drizzle-orm/,
+          /nuxt-ai-ready/,
           // inline smaller pure-JS deps that Nitro was unnecessarily externalizing
           'howler',
           'highlight.js',
@@ -271,6 +274,20 @@ export default defineNuxtConfig({
       sourcemap: "hidden", // test if this hides: #14 7.356  WARN
       // [plugin nuxt: components - loader]Sourcemap is likely to be incorrect: a plugin(nuxt: components- loader) was used to transform files,
       // but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help (x25)
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('three')) return 'vendor-three';
+              if (id.includes('gsap')) return 'vendor-gsap';
+              if (id.includes('highlight.js')) return 'vendor-highlight';
+              if (id.includes('@rive-app')) return 'vendor-rive';
+              if (id.includes('lowlight') || id.includes('highlight')) return 'vendor-highlight';
+              return 'vendor'; // all other node_modules
+            }
+          }
+        }
+      }
     },
   },
   typescript: {
@@ -642,32 +659,55 @@ export default defineNuxtConfig({
   },
   hooks: {
     // ai ready: https://nuxtseo.com/docs/ai-ready/guides/llms-txt#hook
-    "ai-ready:llms-txt": (payload) => {
-      payload.sections.push({
-        title: 'Custom APIs',
-        links: [{ title: 'Search', href: '/projects/train', description: 'Search endpoint' }]
-      })
-      payload.notes.push('Custom note')
-    },
+    // "ai-ready:llms-txt": (payload) => {
+    //   payload.sections.push({
+    //     title: 'Custom APIs',
+    //     links: [{ title: 'Search', href: '/projects/train', description: 'Search endpoint' }]
+    //   })
+    //   payload.notes.push('Custom note')
+    // },
     // to customize: https://nuxtseo.com/docs/ai-ready/guides/llms-txt#customizing-page-processing
-    "ai-ready:page:markdown": (ctx) => {
-      // ctx: { route, markdown, title, description }
-      ctx.markdown = `# ${ctx.title}\n\n${ctx.markdown}`
-    }
+    // "ai-ready:page:markdown": (ctx) => {
+    //   // ctx: { route, markdown, title, description }
+    //   ctx.markdown = `# ${ctx.title}\n\n${ctx.markdown}`
+    // }
   },
   fonts: {
     families: [
       {
-        name: "Fira+Code", weights: [400, 600, 700],
-        global: true // critical for ogImage
+        name: "Fira Code",
+        weights: [400, 600, 700],
+        global: true, // critical for ogImage
+        src: [
+          { url: '/fonts/fira-code-v27-latin-400.woff2', weight: '400', format: 'woff2' },
+          { url: '/fonts/fira-code-v27-latin-600.woff2', weight: '600', format: 'woff2' },
+          { url: '/fonts/fira-code-v27-latin-700.woff2', weight: '700', format: 'woff2' }
+        ]
+      },
+      {
+        name: "JetBrains Mono",
+        weights: [400, 700],
+        global: true,
+        src: [
+          { url: '/fonts/jetbrains-mono-v24-latin-400.woff2', weight: '400', format: 'woff2' },
+          { url: '/fonts/jetbrains-mono-v24-latin-700.woff2', weight: '700', format: 'woff2' }
+        ]
       }
       // https://nuxtseo.com/docs/og-image/guides/custom-fonts#provider-configuration
     ],
+    defaults: {
+      fallbacks: {
+        monospace: ['monospace']
+      }
+    },
+    experimental: {
+      processCSSVariables: true
+    }
   },
   ogImage: {
     // enabled: process.env.NUXT_SSR !== "false" && process.env.IS_ELECTRON !== "true",
     enabled: process.env.NUXT_SSR !== "false",
-    fonts: ['Fira+Code:400,600,700']
+    fonts: ['Fira Code:400,600,700', 'JetBrains Mono:400,700']
   },
   aiReady: {
     // https://nuxtseo.com/docs/ai-ready/api/config#enabled
@@ -678,17 +718,17 @@ export default defineNuxtConfig({
       search: true,
       aiInput: true
     } : false,
-    llmsTxt: {
-      // sections: [
-      //   {
-      //     title: 'API Reference',
-      //     links: [
-      //       { title: 'REST API', href: '/docs/api', description: 'API documentation' }
-      //     ]
-      //   }
-      // ],
-      notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
-    }
+    // llmsTxt: {
+    //   sections: [
+    //     {
+    //       title: 'API Reference',
+    //       links: [
+    //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
+    //       ]
+    //     }
+    //   ],
+    //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
+    // }
   },
   // ...(process.env.IS_ELECTRON === "false") && {
   sitemap: {

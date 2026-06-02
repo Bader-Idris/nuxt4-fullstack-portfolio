@@ -45,7 +45,8 @@
 <script setup lang="ts">
 defineOgImageComponent('Default', {
   title: 'Blog',
-  description: 'Explore insights on Vue, Nuxt, Node, and creative technologies.'
+  description: 'Explore insights on Vue, Nuxt, Node, and creative technologies.',
+  // we do beautiful things like: isPro: boolean,  colorMode: 'light' | 'dark',
 });
 
 const { t, locale } = useI18n();

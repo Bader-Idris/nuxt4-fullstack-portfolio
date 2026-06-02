@@ -226,6 +226,6 @@
     "not dead",
     "not ie 11"
   ],
-  "packageManager": "pnpm@11.5.0",
+  "packageManager": "pnpm@11.5.1",
   "appId": "com.baderidris.www"
 }
