@@ -732,8 +732,9 @@ export default defineNuxtConfig({
     enabled: process.env.NUXT_SSR !== "false",
     defaults: {
       component: 'Default',
+      renderer: 'takumi',
     },
-    // Using IBM Plex Sans Arabic as it's more stable in Satori/opentype.js
+    // Using IBM Plex Sans Arabic as it's more stable for OG images
     fonts: [
       'Inter:400',
       'Inter:700',

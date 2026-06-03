@@ -3,10 +3,19 @@ import { prisma } from "../plugins/prisma";
 export default defineNitroPlugin(async (nitroApp) => {
   if (!prisma) return;
 
-  try {
-    const postCount = await prisma.post.count();
-    
-    if (postCount === 0) {
+  // Run seeding in background to prevent blocking server startup if DB is slow/unreachable
+  // This avoids the "frozen" state the user experienced.
+  (async () => {
+    try {
+      // Set a local timeout for the initial count to fail fast if DB is down
+      const postCountPromise = prisma.post.count();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout during seeding')), 10000)
+      );
+
+      const postCount = await Promise.race([postCountPromise, timeoutPromise]) as number;
+
+      if (postCount === 0) {
       console.log('🌱 No blog posts found. Creating a testing post...');
       
       // Ensure a system/admin user exists in Postgres for the test post
@@ -34,8 +43,9 @@ export default defineNitroPlugin(async (nitroApp) => {
       });
       
       console.log('✅ Testing post created successfully.');
+      }
+    } catch (error) {
+      console.error('❌ Error during automatic blog seeding:', error);
     }
-  } catch (error) {
-    console.error('❌ Error during automatic blog seeding:', error);
-  }
+  })();
 });

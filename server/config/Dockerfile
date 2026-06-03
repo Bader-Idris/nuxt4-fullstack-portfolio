@@ -47,11 +47,18 @@ ARG PORT=3000
 # CACHEBUST only forces a rebuild of the npm run build step and everything after.
 # deps stage above is untouched — pnpm install stays cached.
 ARG CACHEBUST=0
+ARG NODE_ENV=production
 ENV PORT=${PORT}
+ENV NODE_ENV=${NODE_ENV}
 ENV NUXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=16384"
 
-RUN echo "Cache bust: $CACHEBUST" && npm run build
+RUN echo "Cache bust: $CACHEBUST" && \
+    if [ "$NODE_ENV" = "production" ]; then \
+      npm run build:prod; \
+    else \
+      npm run build; \
+    fi
 
 # ── Surgical pruning ─────────────────────────────────────────────────────────
 RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \

@@ -59,6 +59,20 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    // Invalidate Redis cache for blog lists
+    const redis = event.context.redis;
+    if (redis) {
+      try {
+        const keys = await redis.keys('blog:list:*');
+        if (keys.length > 0) {
+          await redis.del(...keys);
+          // console.log("🗑️ Blog list cache invalidated");
+        }
+      } catch (e) {
+        console.warn("⚠️ Failed to invalidate Redis cache:", e);
+      }
+    }
+
     return {
       success: true,
       message: "Post created successfully",
@@ -71,10 +85,10 @@ export default defineEventHandler(async (event) => {
         statusMessage: "A post with this slug already exists",
       });
     }
-    console.error("[blog API POST] Error creating post:", e.message);
+    console.error("[blog API POST] Error creating post:", e);
     throw createError({
       statusCode: 500,
-      statusMessage: "Internal Server Error",
+      statusMessage: "Internal Server Error: " + (e.message || "Unknown error"),
     });
   }
 });

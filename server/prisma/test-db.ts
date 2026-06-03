@@ -24,6 +24,7 @@ async function diag() {
 
   const pool = new Pool({
     connectionString: url,
+    connectionTimeoutMillis: 5000,
   });
 
   console.log("1. Checking tables via direct pg query...");
