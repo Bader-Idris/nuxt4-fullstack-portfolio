@@ -149,9 +149,23 @@
   "project_not_found": "Project not found in the explorer.",
   "back_to_dashboard": "Back to Dashboard",
   "blog": {
+    "title": "Blog",
+    "createPost": "Create Post",
     "notFound": "Post Not Found",
     "backHome": "Go Back Home",
-    "loading": "Loading post..."
+    "loading": "Loading post...",
+    "addComment": "Add a public comment...",
+    "postComment": "Post Comment",
+    "noComments": "No comments yet. Be the first to share your thoughts!",
+    "backToBlog": "Back to Blog",
+    "goBack": "Go Back",
+    "loginToComment": "Please login to leave a comment.",
+    "reply": "Reply",
+    "submitReply": "Submit Reply",
+    "cancel": "Cancel"
+    },
+    "auth": {
+    "login": "Login"
     },
     "dashboard": {
     "guest_placeholder": {

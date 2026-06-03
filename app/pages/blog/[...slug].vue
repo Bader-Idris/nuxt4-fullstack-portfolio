@@ -9,6 +9,9 @@
     </div>
     <article v-else-if="postData" class="post-article">
       <header class="post-header">
+        <NuxtLink :to="localePath('/blog')" class="back-link">
+          <Icon name="material-symbols:arrow-back" /> {{ t('blog.goBack', 'Go Back') }}
+        </NuxtLink>
         <div v-if="!postData.published" class="unpublished-badge">
           Draft
         </div>
@@ -29,17 +32,22 @@
           <p>{{ postData.summary }}</p>
         </div>
         
-        <div class="post-actions" v-if="postData.isAuthor || isAdmin">
-          <button @click="editPost" class="edit-btn">
-            <Icon name="material-symbols:edit" /> Edit Post
-          </button>
+        <div class="post-actions">
+          <NuxtLink :to="localePath('/blog')" class="back-to-blog-btn">
+            <Icon name="material-symbols:grid-view-outline" /> {{ t('blog.backToBlog', 'Back to Blog') }}
+          </NuxtLink>
+          <div v-if="postData.isAuthor || isAdmin">
+            <button @click="editPost" class="edit-btn">
+              <Icon name="material-symbols:edit" /> Edit Post
+            </button>
+          </div>
         </div>
       </footer>
 
       <!-- Comment Section -->
       <section class="comments-section">
         <h3>Comments ({{ postData.commentCount }})</h3>
-        <BlogCommentSection :post-slug="slug" />
+        <BlogCommentSection :post-slug="slug" @comment-added="refresh" />
       </section>
     </article>
     <ScrollToTop :target="blogPostContainer" />
@@ -63,12 +71,17 @@ const slug = computed(() => {
   return Array.isArray(s) ? s.join('/') : s;
 });
 
-const { data: response, status, error } = await useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
+const { data: response, status, error, refresh } = await useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
   key: `blog-${slug.value}-${locale.value}`,
   headers: {
     'x-locale': locale.value
   }
 });
+
+const cachedPost = useState<any>("active-blog-post");
+watch(() => response.value?.data, (newData) => {
+  if (newData) cachedPost.value = newData;
+}, { immediate: true });
 
 const postData = computed(() => response.value?.data);
 const isAdmin = computed(() => userStore.getUserRole === 'admin');
@@ -91,7 +104,7 @@ useSeoMeta({
   description: () => postData.value?.summary,
 });
 
-defineOgImageComponent('Default', {
+defineOgImage('Default', {
   title: computed(() => postData.value?.title || 'Blog Post'),
   description: computed(() => postData.value?.summary || "Read more on Bader Idris's blog."),
 });
@@ -110,14 +123,41 @@ useSchemaOrg([
 </script>
 
 <style lang="scss" scoped>
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: $secondary1;
+  text-decoration: none;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  width: fit-content;
+  &:hover { color: $accent1; }
+}
+
+.back-to-blog-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: $primary3;
+  border: 1px solid $lines;
+  color: $secondary1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  &:hover { border-color: $accent1; color: $accent1; }
+}
+
 .blog-post-page {
-  @include mainMiddleSettings;
+  overflow: auto !important;
   padding: 2rem;
+  @include mainMiddleSettings;
 
   @include mobile {
-    @include phone-borders;
     overflow-y: scroll !important;
     padding: 1rem;
+    @include phone-borders;
   }
 }
 
@@ -129,47 +169,45 @@ useSchemaOrg([
 
   .unpublished-badge {
     position: absolute;
-    top: -20px;
-    left: 0;
-    background: var(--accent-error);
+    top: 0;
+    right: 0;
+    background: $accent2;
     color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
     font-weight: bold;
+    text-transform: uppercase;
   }
 
   .post-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
+    color: $secondary4;
     margin-bottom: 1rem;
-    color: $gradients1;
     line-height: 1.2;
-    
-    @include mobile {
-      font-size: 2rem;
-    }
+    @include mobile { font-size: 1.8rem; }
   }
 
   .post-meta {
-    font-size: 0.95rem;
-    color: $secondary1;
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
-    align-items: center;
-
-    .views, .language-badge {
+    gap: 1.5rem;
+    color: $secondary1;
+    font-size: 0.9rem;
+    
+    .views {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .language-badge {
       background: $primary3;
-      padding: 2px 6px;
+      padding: 2px 8px;
       border-radius: 4px;
+      font-size: 0.7rem;
       font-weight: bold;
-      font-size: 0.75rem;
+      border: 1px solid $lines;
     }
   }
 }
@@ -190,7 +228,9 @@ useSchemaOrg([
 
   .post-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
     
     .edit-btn {
       background: $accent1;

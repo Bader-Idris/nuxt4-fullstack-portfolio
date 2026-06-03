@@ -2,6 +2,7 @@
   <div
     class="tiptap-editor-wrapper"
     :class="{ 'is-focused': isFocused }"
+    dir="auto"
     @click="handleWrapperClick"
     @dblclick="handleDoubleClick"
     @contextmenu.prevent="handleContextMenu"
@@ -50,6 +51,27 @@ const isFocused = ref(false);
 const showFormattingMenu = ref(false);
 const menuPosition = reactive({ x: 0, y: 0 });
 
+// Custom extension to handle text direction automatically
+const Direction = TiptapExtension.create({
+  name: "direction",
+  addGlobalAttributes() {
+    return [
+      {
+        types: ["paragraph", "heading", "blockquote", "codeBlock", "listItem"],
+        attributes: {
+          dir: {
+            default: "auto",
+            renderHTML: (attributes) => ({
+              dir: attributes.dir,
+            }),
+            parseHTML: (element) => element.getAttribute("dir") || "auto",
+          },
+        },
+      },
+    ];
+  },
+});
+
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
@@ -64,6 +86,7 @@ const editor = useEditor({
     MyPlaceholder.configure({
       placeholder: props.placeholder || "Start typing...",
     }),
+    Direction,
   ],
   onUpdate: ({ editor }) => {
     emit("update:modelValue", editor.getHTML());

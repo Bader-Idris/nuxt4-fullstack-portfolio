@@ -421,7 +421,7 @@
 </template>
 
 <script setup lang="ts">
-defineOgImageComponent('Default', {
+defineOgImage('Default', {
   title: 'Dashboard',
   description: 'Secure Chat & Video Dashboard'
 })

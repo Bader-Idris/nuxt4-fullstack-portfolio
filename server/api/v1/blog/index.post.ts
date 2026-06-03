@@ -4,7 +4,9 @@ import { z } from "zod";
 
 const createPostSchema = z.object({
   title: z.string().min(3).max(255),
-  slug: z.string().min(3).max(255).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  slug: z.string().min(3).max(255).refine(val => /^[\p{L}0-9-]+$/u.test(val), {
+    message: "Slug must be lowercase alphanumeric (including Unicode) with hyphens"
+  }),
   content: z.string().optional(),
   published: z.boolean().default(false),
   language: z.enum(["en", "es", "ar"]).default("en"),

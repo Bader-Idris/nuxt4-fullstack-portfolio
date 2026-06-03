@@ -149,8 +149,12 @@
   "project_not_found": "المشروع غير موجود في المستكشف.",
   "back_to_dashboard": "العودة إلى لوحة القيادة",
   "blog": {
+    "title": "مدونة",
+    "createPost": "أنشئ مقالاً",
     "notFound": "المقال غير موجود",
     "backHome": "العودة للرئيسية",
+    "backToBlog": "العودة للمدونة",
+    "goBack": "العودة",
     "loading": "جاري تحميل المقال..."
     },
     "dashboard": {

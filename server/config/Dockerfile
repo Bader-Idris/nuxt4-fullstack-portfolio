@@ -5,7 +5,12 @@
 # ─────────────────────────────────────────────
 FROM node:24.16-alpine AS base
 WORKDIR /app
+RUN npm install -g npm@11.16.0
 RUN corepack enable && corepack prepare pnpm@latest --activate
+
+RUN --mount=type=cache,target=/var/cache/apk \
+    ln -s /var/cache/apk /etc/apk/cache && \
+    apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
 
 # ─────────────────────────────────────────────
 # Stage 2: Install dependencies via pnpm
@@ -15,6 +20,10 @@ FROM base AS deps
 RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
 COPY server/prisma/ ./server/prisma/
+
+# Set flag to suppress local development tooling hooks
+ENV DOCKER_BUILD=true
+
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --shamefully-hoist --force
 
@@ -45,34 +54,35 @@ ENV NODE_OPTIONS="--max-old-space-size=16384"
 RUN echo "Cache bust: $CACHEBUST" && npm run build
 
 # ── Surgical pruning ─────────────────────────────────────────────────────────
-RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \
-    ! -name 'sharp-linuxmusl-x64' \
-    ! -name 'sharp-libvips-linuxmusl-x64' \
-    ! -name 'colour' \
-    -exec rm -rf {} +
+# RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \
+#     ! -name 'sharp-linuxmusl-x64' \
+#     ! -name 'sharp-libvips-linuxmusl-x64' \
+#     ! -name 'colour' \
+#     -exec rm -rf {} +
 
 # @resvg: keep only the musl-x64 binary + the main package (has the JS entry point)
-RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -o -type l \) \
-    ! -name 'resvg-js' \
-    ! -name 'resvg-js-linux-x64-musl' \
-    -exec rm -rf {} +
+# RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -o -type l \) \
+#     ! -name 'resvg-js' \
+#     ! -name 'resvg-js-linux-x64-musl' \
+#     -exec rm -rf {} +
 # saves ~200MB
 
-RUN find .output/server/node_modules -type f \( \
-    -name '*.md' \
-    -o -name 'CHANGELOG*' \
-    -o -name 'LICENSE*' \
-    -o -name '*.d.ts' \
-    -o -name '*.d.ts.map' \
-    -o -name '*.map' \
-    \) -delete 2>/dev/null || true
+# make sure this doesn't conflict with ai-ready generated md files
+# RUN find .output/server/node_modules -type f \( \
+#     -name '*.md' \
+#     -o -name 'CHANGELOG*' \
+#     -o -name 'LICENSE*' \
+#     -o -name '*.d.ts' \
+#     -o -name '*.d.ts.map' \
+#     -o -name '*.map' \
+#     \) -delete 2>/dev/null || true
 
-RUN find .output/server/node_modules -type d \( \
-    -name '__tests__' \
-    -o -name 'docs' \
-    -o -name 'example' \
-    -o -name 'examples' \
-    \) -exec rm -rf {} + 2>/dev/null || true
+# RUN find .output/server/node_modules -type d \( \
+#     -name '__tests__' \
+#     -o -name 'docs' \
+#     -o -name 'example' \
+#     -o -name 'examples' \
+#     \) -exec rm -rf {} + 2>/dev/null || true
 
 # ─────────────────────────────────────────────
 # Stage 4: Lean production runner

@@ -48,6 +48,11 @@ Authorized users (Admin/Editor) can manage content through:
 *   `GET /blog/create`: Interface to create a new post with real-time **Review Mode**.
 *   `GET /blog/edit/[slug]`: Interface to modify existing posts.
 
+#### Advanced Editing Features
+*   **Data Caching:** Uses Nuxt `useState` to cache post data when viewing a post. If the author decides to edit, the system retrieves data from the cache first, eliminating redundant database hits.
+*   **Change Detection:** The system compares the current form state with the initial data. If no changes are detected, it prevents unnecessary API calls and informs the user.
+*   **Partial Patching:** On save, the system calculates the delta between original and current states. Only modified fields are sent to the `PATCH` endpoint, ensuring efficient and surgical updates.
+
 ---
 
 ## 5. Testing the CMS
@@ -74,6 +79,7 @@ The system includes a Nitro plugin (`server/plugins/seed-blog.ts`) that automati
 
 ## 6. SEO & Dynamic Discovery
 *   **Nuxt SEO:** Integrated with `@nuxtjs/seo` for automatic meta tag generation and sitemap management.
+*   **Unicode Slugs:** Slugs support full Unicode characters (including Arabic). The system automatically generates sanitized, SEO-friendly Unicode slugs from titles while maintaining standard URL encoding.
 *   **Dynamic Sitemap:** The `nuxt.config.ts` is configured to dynamically fetch all published post slugs from the PostgreSQL database, ensuring search engines always have an up-to-date list of content without requiring a site rebuild.
 *   **View Tracking:** View counts are tracked asynchronously on each GET request for published posts to avoid blocking the main response thread.
 
@@ -115,4 +121,4 @@ curl -X POST http://localhost:3000/api/v1/blog/my-new-post/comments \
 ```
 
 ---
-*Last Updated: June 1, 2026*
+*Last Updated: June 3, 2026*

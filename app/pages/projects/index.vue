@@ -68,7 +68,7 @@ useSeoMeta({
   ogImageHeight: 630,
 });
 
-defineOgImageComponent('Default', {
+defineOgImage('Default', {
   title: t("projects.title"),
   description: t("projects.description")
 });

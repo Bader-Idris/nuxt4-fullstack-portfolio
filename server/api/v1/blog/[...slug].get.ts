@@ -1,7 +1,7 @@
 import { prisma } from "@server/plugins/prisma";
 import { z } from "zod";
 
-const slugSchema = z.string().min(1).max(255).regex(/^[a-z0-9-/]+$/, "Invalid slug format");
+const slugSchema = z.string().min(1).max(255).refine(val => /^[\p{L}0-9-\/]+$/u.test(val), { message: "Invalid slug format" });
 
 export default defineEventHandler(async (event) => {
   const slugParams = getRouterParam(event, 'slug');

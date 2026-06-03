@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const commentSchema = z.object({
   content: z.string().min(1).max(1000),
-  parentId: z.number().optional(),
+  parentId: z.union([z.number(), z.null()]).optional(),
 });
 
 export default defineEventHandler(async (event) => {

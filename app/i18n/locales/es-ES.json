@@ -149,9 +149,13 @@
   "project_not_found": "Proyecto no encontrado en el explorador.",
   "back_to_dashboard": "Volver al Panel",
   "blog": {
-  "notFound": "Publicación no encontrada",
-  "backHome": "Volver al inicio",
-  "loading": "Cargando publicación..."
+    "title": "Blog",
+    "createPost": "Crear Post",
+    "notFound": "Publicación no encontrada",
+    "backHome": "Volver al inicio",
+    "backToBlog": "Volver al blog",
+    "goBack": "Volver",
+    "loading": "Cargando publicación..."
   },
   "dashboard": {
   "guest_placeholder": {

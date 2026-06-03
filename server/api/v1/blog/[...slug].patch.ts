@@ -1,7 +1,7 @@
 import { prisma } from "@server/plugins/prisma";
 import { z } from "zod";
 
-const slugSchema = z.string().min(1).max(255).regex(/^[a-z0-9-/]+$/, "Invalid slug format");
+const slugSchema = z.string().min(1).max(255).refine(val => /^[\p{L}0-9-\/]+$/u.test(val), { message: "Invalid slug format" });
 const updatePostSchema = z.object({
   title: z.string().min(3).max(255).optional(),
   content: z.string().min(10).optional(),

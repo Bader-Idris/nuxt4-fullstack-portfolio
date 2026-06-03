@@ -24,9 +24,13 @@ export default defineEventHandler(async (event) => {
   );
 
   // We only protect the API blog routes if it's NOT a GET request
+  // AND NOT a comment POST request (which is allowed for authenticated users)
+  const isCommentPost = path.match(/^\/api\/v1\/blog\/.*\/comments$/) && method === "POST";
+  
   const isApiManagement =
     path.startsWith(apiManagementPrefix) &&
-    ["POST", "PATCH", "DELETE"].includes(method);
+    ["POST", "PATCH", "DELETE"].includes(method) &&
+    !isCommentPost;
 
   const isPageManagement = managementRoutes.some((route) =>
     path.startsWith(route),

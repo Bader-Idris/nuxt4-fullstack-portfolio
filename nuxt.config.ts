@@ -107,15 +107,12 @@ export default defineNuxtConfig({
           'jsonwebtoken',
           'rate-limiter-flexible',
           'ttf2woff2',
-          'better-sqlite3'
         ],
         // Force everything else to be inlined/bundled into chunks:
         inline: [
           // inline your own server code
           /^~/,
           /^@\//,
-          /drizzle-orm/,
-          /nuxt-ai-ready/,
           // inline smaller pure-JS deps that Nitro was unnecessarily externalizing
           'howler',
           'highlight.js',
@@ -123,7 +120,7 @@ export default defineNuxtConfig({
           'particles.js',
           'vue3-toastify',
         ],
-    },
+      },
 
     minify: true,       // ← shrinks chunks/ from 53MB further (~30-40%)
 
@@ -274,20 +271,22 @@ export default defineNuxtConfig({
       sourcemap: "hidden", // test if this hides: #14 7.356  WARN
       // [plugin nuxt: components - loader]Sourcemap is likely to be incorrect: a plugin(nuxt: components- loader) was used to transform files,
       // but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help (x25)
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('three')) return 'vendor-three';
-              if (id.includes('gsap')) return 'vendor-gsap';
-              if (id.includes('highlight.js')) return 'vendor-highlight';
-              if (id.includes('@rive-app')) return 'vendor-rive';
-              if (id.includes('lowlight') || id.includes('highlight')) return 'vendor-highlight';
-              return 'vendor'; // all other node_modules
-            }
-          }
-        }
-      }
+      
+      // check if this is the crash cuase!
+      // rollupOptions: {
+      //   output: {
+      //     manualChunks(id) {
+      //       if (id.includes('node_modules')) {
+      //         if (id.includes('three')) return 'vendor-three';
+      //         if (id.includes('gsap')) return 'vendor-gsap';
+      //         if (id.includes('highlight.js')) return 'vendor-highlight';
+      //         if (id.includes('@rive-app')) return 'vendor-rive';
+      //         if (id.includes('lowlight') || id.includes('highlight')) return 'vendor-highlight';
+      //         return 'vendor'; // all other node_modules
+      //       }
+      //     }
+      //   }
+      // }
     },
   },
   typescript: {
@@ -326,18 +325,32 @@ export default defineNuxtConfig({
     // "@teages/nuxt-legacy", // Removed: using @vitejs/plugin-legacy directly in vite config
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!
   ],
-  // skewProtection: {
-  //   // Persistent storage for build assets ensures Googlebot and users on old tabs don't hit 404/500s.
-  //   // Using Redis as the backend for cross-deployment persistence in Docker/Cluster environments.
-  //   storage: process.env.REDIS_URL ? {
-  //     driver: 'redis',
-  //     options: {
-  //       url: process.env.REDIS_URL,
-  //     }
-  //   } : {
-  //     driver: 'fs',
-  //   },
-  // },
+  skewProtection: {
+    //   // Persistent storage for build assets ensures Googlebot and users on old tabs don't hit 404/500s.
+    //   // Using Redis as the backend for cross-deployment persistence in Docker/Cluster environments.
+    //   storage: process.env.REDIS_URL ? {
+    //     driver: 'redis',
+    //     options: {
+    //       url: process.env.REDIS_URL,
+    //     }
+    //   } : {
+    //     driver: 'fs',
+    //   },
+  
+    retentionDays: 45, // Keep versions for 45 days
+    maxNumberOfVersions: 15, // Keep maximum 15 versions
+    // https://nuxtseo.com/docs/skew-protection/guides/storage-configuration#redis
+    // storage: {
+    //   driver: 'redis',
+    
+    //   // host: process.env.REDIS_HOST || 'localhost',
+    //   // port: Number(process.env.REDIS_PORT) || 6379,
+    //   // password: process.env.REDIS_PASSWORD,
+    //   redisUrl: process.env.REDIS_URL,
+    //   db: 0,
+    //   base: 'skew-protection'
+    // }
+  },
   ...(isDesktop && {
     router: {
       options: {
@@ -552,8 +565,9 @@ export default defineNuxtConfig({
   //   },
   // },
   i18n: {
+    debug: process.env.IS_DEBUGGING !== "false",
     // Force baseUrl here for build-time SEO tag generation
-    baseUrl: process.env.DOMAIN_NAME,
+    baseUrl: isElectron ? "./" : siteUrl,
     langDir: "../app/i18n/locales/",
     locales: [
       {
@@ -679,9 +693,9 @@ export default defineNuxtConfig({
         weights: [400, 600, 700],
         global: true, // critical for ogImage
         src: [
-          { url: '/fonts/fira-code-v27-latin-400.woff2', weight: '400', format: 'woff2' },
-          { url: '/fonts/fira-code-v27-latin-600.woff2', weight: '600', format: 'woff2' },
-          { url: '/fonts/fira-code-v27-latin-700.woff2', weight: '700', format: 'woff2' }
+          { url: '/fonts/fira-code-v27-latin-400.woff2', format: 'woff2' },
+          { url: '/fonts/fira-code-v27-latin-600.woff2', format: 'woff2' },
+          { url: '/fonts/fira-code-v27-latin-700.woff2', format: 'woff2' }
         ]
       },
       {
@@ -689,15 +703,25 @@ export default defineNuxtConfig({
         weights: [400, 700],
         global: true,
         src: [
-          { url: '/fonts/jetbrains-mono-v24-latin-400.woff2', weight: '400', format: 'woff2' },
-          { url: '/fonts/jetbrains-mono-v24-latin-700.woff2', weight: '700', format: 'woff2' }
+          { url: '/fonts/jetbrains-mono-v24-latin-400.woff2', format: 'woff2' },
+          { url: '/fonts/jetbrains-mono-v24-latin-700.woff2', format: 'woff2' }
         ]
+      },
+      {
+        name: "IBM Plex Sans Arabic",
+        weights: [400, 700],
+        global: true,
+      },
+      {
+        name: "Noto Sans JP",
+        weights: [400, 700],
+        global: true,
       }
-      // https://nuxtseo.com/docs/og-image/guides/custom-fonts#provider-configuration
     ],
     defaults: {
       fallbacks: {
-        monospace: ['monospace']
+        monospace: ['monospace'],
+        'sans-serif': ['IBM Plex Sans Arabic', 'Noto Sans JP', 'sans-serif']
       }
     },
     experimental: {
@@ -705,9 +729,17 @@ export default defineNuxtConfig({
     }
   },
   ogImage: {
-    // enabled: process.env.NUXT_SSR !== "false" && process.env.IS_ELECTRON !== "true",
     enabled: process.env.NUXT_SSR !== "false",
-    fonts: ['Fira Code:400,600,700', 'JetBrains Mono:400,700']
+    defaults: {
+      component: 'Default',
+    },
+    // Using IBM Plex Sans Arabic as it's more stable in Satori/opentype.js
+    fonts: [
+      'Inter:400',
+      'Inter:700',
+      'IBM+Plex+Sans+Arabic:400',
+      'IBM+Plex+Sans+Arabic:700',
+    ],
   },
   aiReady: {
     // https://nuxtseo.com/docs/ai-ready/api/config#enabled
@@ -750,7 +782,7 @@ export default defineNuxtConfig({
     debug: process.env.IS_DEBUGGING !== "false",
     credits: false,
     discoverImages: true, // default
-    strictNuxtContentPaths: true,
+    // strictNuxtContentPaths: true,
     // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
     autoI18n: true,// make sure it uses my strategy: prefix_except_default
     // sitemaps: {
@@ -774,7 +806,7 @@ export default defineNuxtConfig({
     // // replace it with: sources: []
     //   const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
     //   const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
-      
+
     //   const routes = staticRoutes.map((route) => ({
     //     loc: `${baseUrl}${route}`,
     //     lastmod: new Date().toISOString(),
@@ -796,7 +828,7 @@ export default defineNuxtConfig({
     //   } catch (e) {
     //     console.warn('Sitemap dynamic fetch failed (expected during early build):', e.message);
     //   }
-      
+    
     //   return routes;
     // },
     exclude: [
@@ -880,11 +912,11 @@ export default defineNuxtConfig({
 
       // if not electron
       // ...(process.env.IS_ELECTRON === "false") && {
-      i18n: {
-        // ssr: process.env.NUXT_SSR !== "false",
-        // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-        baseUrl: isElectron ? "./" : siteUrl,
-      },
+      // i18n: {
+      //   // ssr: process.env.NUXT_SSR !== "false",
+      //   // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+      //   baseUrl: isElectron ? "./" : siteUrl,
+      // },
       scripts: {
         googleTagManager: {
           // .env
