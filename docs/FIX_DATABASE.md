@@ -1,43 +1,84 @@
 # Production Database Fix Guide
 
-This guide provides the steps to resolve the `relation "public.users" does not exist` error by applying Prisma migrations to your production PostgreSQL database.
+This guide provides the steps to resolve database schema issues (like missing columns or tables) by applying Prisma migrations to your production PostgreSQL database.
 
-## Why this is happening
+## Common Errors
 
-The database is running inside a Docker network (`portfolio_app-network`), but the tables haven't been created yet. Running migrations from the host fails because the database port (5432) isn't exposed and the internal Docker IP is not reachable from the host's Prisma CLI.
+- `relation "public.users" does not exist`: Tables are not created yet.
+- `column "role" of relation "users" does not exist`: Schema is drifted; migrations are missing columns.
+- `P1001: Can't reach database server`: Prisma CLI on the host cannot reach the internal Docker database IP.
 
 ## Resolution Steps
 
-### 1. Apply Migrations (Dynamic PSQL Approach)
+### 1. Robust Migration (Recommended)
 
-Run this command from your project root on the **production server**. It automatically finds all `migration.sql` files, sorts them by their timestamped folder names, and pipes them into the container:
+Run this command from your project root on the **production server**. It starts a temporary container on the same network as your database, mounts your local migrations and config, and runs the Prisma deploy command.
 
 ```bash
+docker run --rm \
+  --network portfolio_app-network \
+  -v $(pwd)/server/prisma:/app/server/prisma \
+  -v $(pwd)/prisma.config.ts:/app/prisma.config.ts \
+  -v $(pwd)/package.json:/app/package.json \
+  -v $(pwd)/bun.lock:/app/bun.lock \
+  -v $(pwd)/.env:/app/.env \
+  -w /app \
+  oven/bun:alpine \
+  sh -c "bun install prisma --silent && bunx prisma migrate deploy"
+```
+
+_Note: Replace `portfolio_app-network` with your actual network name if different (check `docker network ls`)._
+
+### 2. Manual SQL Apply (Fallback)
+
+If the above fails or you don't have Bun/Prisma ready, you can manually pipe the migrations into the `psql` container. 
+
+**Warning:** This bypasses Prisma's migration tracking (`_prisma_migrations` table) and will show errors for tables/columns that already exist. It is best used for initial setup or emergency fixes.
+
+```bash
+# Apply all migrations (will skip existing ones with errors)
 find server/prisma/migrations -name "migration.sql" | sort | xargs cat | docker exec -i psql psql -U postgres -d articles
 ```
 
-### 2. Verify Tables
+### 3. Seed Database (Optional)
 
-Confirm that the tables now exist:
+To populate the database with initial data (like the Admin user):
+
+```bash
+docker run --rm \
+  --network portfolio_app-network \
+  -v $(pwd)/server/prisma:/app/server/prisma \
+  -v $(pwd)/prisma.config.ts:/app/prisma.config.ts \
+  -v $(pwd)/package.json:/app/package.json \
+  -v $(pwd)/bun.lock:/app/bun.lock \
+  -v $(pwd)/.env:/app/.env \
+  -v $(pwd)/server/utils:/app/server/utils \
+  -v $(pwd)/server/plugins:/app/server/plugins \
+  -w /app \
+  oven/bun:alpine \
+  sh -c "bun install prisma tsx --silent && bunx prisma db seed"
+```
+
+### 4. Verify Tables
+
+Confirm that the tables and columns now exist:
 
 ```bash
 docker exec -it psql psql -U postgres -d articles -c "\dt"
+docker exec -it psql psql -U postgres -d articles -c "\d users"
 ```
 
-_Expected output: A list containing `users`, `posts`, `contents`, and `storages`._
+_Expected output: `users` table should now have the `role` column._
 
-### 3. Note on Prisma Sync
+### 5. Restart Application
 
-Since this bypasses the `prisma migrate` command, Prisma might warn about drift later. To fully sync the migration history without using a Node image, you would need to manually insert records into the `_prisma_migrations` table, which is usually not necessary unless you plan to run more migrations later via Prisma CLI.
-
-### 4. Restart Application
-
-Restart your app containers to ensure they connect to the new tables:
+Restart your app containers to ensure they connect to the updated schema:
 
 ```bash
 docker compose -f a.prod-certbot.yml restart app
 ```
 
-## Security Note
+## Troubleshooting Connectivity
 
-The `PSQL_URL` used above matches your `a.prod-certbot.yml` defaults. If you have changed your `POSTGRES_PASSWORD` or `POSTGRES_DB` in your `.env`, update the URL accordingly.
+If `P1001` persists even inside Docker, ensure your `PSQL_URL` in `.env` uses the service name `psql` instead of a hardcoded IP:
+`PSQL_URL=postgresql://postgres:example@psql:5432/articles`
