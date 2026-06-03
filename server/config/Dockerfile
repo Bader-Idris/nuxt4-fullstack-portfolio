@@ -54,17 +54,17 @@ ENV NODE_OPTIONS="--max-old-space-size=16384"
 RUN echo "Cache bust: $CACHEBUST" && npm run build
 
 # ── Surgical pruning ─────────────────────────────────────────────────────────
-# RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \
-#     ! -name 'sharp-linuxmusl-x64' \
-#     ! -name 'sharp-libvips-linuxmusl-x64' \
-#     ! -name 'colour' \
-#     -exec rm -rf {} +
+RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \
+    ! -name 'sharp-linuxmusl-x64' \
+    ! -name 'sharp-libvips-linuxmusl-x64' \
+    ! -name 'colour' \
+    -exec rm -rf {} +
 
 # @resvg: keep only the musl-x64 binary + the main package (has the JS entry point)
-# RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -o -type l \) \
-#     ! -name 'resvg-js' \
-#     ! -name 'resvg-js-linux-x64-musl' \
-#     -exec rm -rf {} +
+RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -o -type l \) \
+    ! -name 'resvg-js' \
+    ! -name 'resvg-js-linux-x64-musl' \
+    -exec rm -rf {} +
 # saves ~200MB
 
 # make sure this doesn't conflict with ai-ready generated md files
