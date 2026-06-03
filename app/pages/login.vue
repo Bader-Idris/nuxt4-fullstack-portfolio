@@ -10,8 +10,10 @@
           name="email"
           type="text"
           class="input"
+          :class="{ invalid: formErrors.email }"
           aria-labelledby="email"
         />
+        <span v-if="formErrors.email" class="error-msg">{{ formErrors.email }}</span>
       </div>
       <div class="input-container">
         <label for="password">Password</label>
@@ -21,8 +23,10 @@
           name="password"
           type="password"
           class="input"
+          :class="{ invalid: formErrors.password }"
           aria-labelledby="password"
         />
+        <span v-if="formErrors.password" class="error-msg">{{ formErrors.password }}</span>
       </div>
       <button class="btn" :disabled="isAnyLoading">
         <span v-if="loading" class="loader">
@@ -62,15 +66,14 @@
     </div>
 
     <div v-if="userNotFound" class="prompt">
-      <CustomButton button-type="ghost">
-        <CustomLink
-          aria-label="register page"
-          :to="localePath('/register')"
-          class="internal-link"
-        >
-          No account found? Register here
-        </CustomLink>
-      </CustomButton>
+      <span class="prompt-text">No account found?</span>
+      <CustomLink
+        aria-label="register page"
+        to="/register"
+        class="prompt-link"
+      >
+        Register here
+      </CustomLink>
     </div>
   </div>
 </template>
@@ -82,6 +85,7 @@ import { useApiError } from "~/composables/useApiError";
 import { CapacitorCookies } from "@capacitor/core";
 // import { useUserStore } from '~/stores/UserNameStore';
 import { useUserStore } from "~/stores/useUserSocket";
+import { z } from "zod";
 
 // Define page meta
 definePageMeta({
@@ -110,6 +114,7 @@ useSchemaOrg([
 const route = useRoute();
 const router = useRouter();
 
+const { t } = useI18n();
 const localePath = useLocalePath();
 const { getFriendlyErrorMessage } = useApiError();
 
@@ -123,6 +128,50 @@ const userNotFound = ref<boolean>(false); // State to show registration link
 // Access token from cookie
 const accessToken = useCookie<string | undefined>("accessToken");
 const isCapacitorDevice: Promise<boolean> = useCapacitorDevice();
+
+const loginSchema = z.object({
+  email: z.string()
+    .min(1, t("auth.errors.email_required", "Email is required."))
+    .email(t("auth.errors.email_invalid", "Please enter a valid email address.")),
+  password: z.string()
+    .min(1, t("auth.errors.password_required", "Password is required."))
+    .min(6, t("auth.errors.password_min", "Password must be at least 6 characters.")),
+});
+
+const formErrors = ref<Record<string, string>>({});
+
+const validateForm = (): boolean => {
+  formErrors.value = {};
+  const result = loginSchema.safeParse({
+    email: email.value,
+    password: password.value,
+  });
+
+  if (!result.success) {
+    result.error.issues.forEach((issue) => {
+      const path = issue.path[0] as string;
+      if (!formErrors.value[path]) {
+        formErrors.value[path] = issue.message;
+      }
+    });
+    return false;
+  }
+  return true;
+};
+
+const handleRedirect = async () => {
+  const redirectPath = route.query.redirect as string;
+  if (redirectPath) {
+    const hasLocalePrefix = /^\/(es|ar)(\/|$)/.test(redirectPath);
+    if (hasLocalePrefix) {
+      await navigateTo(redirectPath);
+    } else {
+      await navigateTo(localePath(redirectPath));
+    }
+  } else {
+    await navigateTo(localePath("/dashboard"));
+  }
+};
 
 // Computed property to disable buttons during any login process
 const isAnyLoading = computed(
@@ -149,6 +198,8 @@ interface User {
 
 // Function to handle login
 const login = async (): Promise<void> => {
+  if (!validateForm()) return;
+
   loading.value = true;
   userNotFound.value = false;
 
@@ -182,13 +233,7 @@ const login = async (): Promise<void> => {
     });
 
     // Redirect after successful login
-    router.push({
-      path: localePath("/dashboard"),
-      query: { redirect: route.fullPath },
-    });
-    // await navigateTo(localePath('/dashboard'), {
-    //   redirectCode: 302,
-    // });
+    await handleRedirect();
   } catch (error: any) {
     console.error(
       "Login error: ",
@@ -381,10 +426,8 @@ const handleSocialLoginSuccess = async (response: any, provider: string) => {
     dangerouslyHTMLString: true,
   });
 
-  console.log("Navigating to dashboard...");
-  await navigateTo(localePath("/dashboard"), {
-    redirectCode: 302,
-  });
+  console.log("Navigating to target redirect path...");
+  await handleRedirect();
 };
 
 // Helper to handle social login errors
@@ -456,6 +499,17 @@ const handleSocialLoginError = (error: any, provider: string) => {
         border: 1px solid gray;
         padding: 10px;
         border-radius: 5px;
+
+        &.invalid {
+          border-color: var(--accent-error, #e99287) !important;
+        }
+      }
+
+      .error-msg {
+        color: var(--accent-error, #e99287);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: block;
       }
     }
 
@@ -476,6 +530,52 @@ const handleSocialLoginError = (error: any, provider: string) => {
         @include flex-container(row, nowrap, center, center);
         height: 100%;
       }
+    }
+  }
+}
+
+.social .fb {
+  color: #3b5998;
+}
+
+.prompt {
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  background: rgba(1, 18, 33, 0.4);
+  border: 1px solid var(--lines-color, #1e2d3d);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: $main-font;
+  font-size: 0.95rem;
+
+  @include mobile {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .prompt-text {
+    color: var(--text-secondary, #607b96);
+    margin: 0;
+  }
+
+  .prompt-link {
+    color: var(--accent-primary, #fea55f);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-bottom: 1px dashed var(--accent-primary, #fea55f);
+    padding-bottom: 2px;
+
+    &:hover {
+      color: var(--accent-warning, #ffd714);
+      border-color: var(--accent-warning, #ffd714);
+      text-decoration: none;
     }
   }
 }

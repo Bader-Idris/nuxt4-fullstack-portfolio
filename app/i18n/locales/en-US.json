@@ -160,12 +160,28 @@
     "backToBlog": "Back to Blog",
     "goBack": "Go Back",
     "loginToComment": "Please login to leave a comment.",
+    "loginToCommentLock": "This comment section is locked. Please login to post a comment.",
+    "loginButton": "Login to Comment",
     "reply": "Reply",
     "submitReply": "Submit Reply",
     "cancel": "Cancel"
     },
     "auth": {
-    "login": "Login"
+    "login": "Login",
+    "register": "Register",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "agreePolicies": "I agree to the Terms and Conditions and Privacy Policy.",
+    "errors": {
+      "username_min": "Username must be at least 3 characters.",
+      "username_required": "Username is required.",
+      "email_invalid": "Please enter a valid email address.",
+      "email_required": "Email is required.",
+      "password_min": "Password must be at least 6 characters.",
+      "password_required": "Password is required.",
+      "policies_required": "You must agree to the Terms and Conditions and Privacy Policy."
+    }
     },
     "dashboard": {
     "guest_placeholder": {

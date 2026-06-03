@@ -155,7 +155,30 @@
     "backHome": "Volver al inicio",
     "backToBlog": "Volver al blog",
     "goBack": "Volver",
-    "loading": "Cargando publicación..."
+    "loading": "Cargando publicación...",
+    "loginToComment": "Por favor inicia sesión para dejar un comentario.",
+    "loginToCommentLock": "Esta sección de comentarios está bloqueada. Por favor, inicia sesión para publicar un comentario.",
+    "loginButton": "Iniciar sesión para comentar",
+    "reply": "Responder",
+    "submitReply": "Enviar respuesta",
+    "cancel": "Cancelar"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "agreePolicies": "Acepto los Términos y Condiciones y la Política de Privacidad.",
+    "errors": {
+      "username_min": "El nombre de usuario debe tener al menos 3 caracteres.",
+      "username_required": "El nombre de usuario es obligatorio.",
+      "email_invalid": "Por favor, introduce una dirección de correo electrónico válida.",
+      "email_required": "El correo electrónico es obligatorio.",
+      "password_min": "La contraseña debe tener al menos 6 caracteres.",
+      "password_required": "La contraseña es obligatoria.",
+      "policies_required": "Debes aceptar los Términos y Condiciones y la Política de Privacidad."
+    }
   },
   "dashboard": {
   "guest_placeholder": {
