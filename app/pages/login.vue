@@ -1,9 +1,9 @@
 <template>
   <div class="login">
     <form class="form" @submit.prevent="login">
-      <h1>Login</h1>
+      <h1>{{ t("auth.login") }}</h1>
       <div class="input-container">
-        <label for="email">Email</label>
+        <label for="email">{{ t("auth.email") }}</label>
         <input
           id="email"
           v-model="email"
@@ -12,11 +12,12 @@
           class="input"
           :class="{ invalid: formErrors.email }"
           aria-labelledby="email"
+          :placeholder="t('auth.placeholder_email')"
         />
         <span v-if="formErrors.email" class="error-msg">{{ formErrors.email }}</span>
       </div>
       <div class="input-container">
-        <label for="password">Password</label>
+        <label for="password">{{ t("auth.password") }}</label>
         <input
           id="password"
           v-model="password"
@@ -25,6 +26,7 @@
           class="input"
           :class="{ invalid: formErrors.password }"
           aria-labelledby="password"
+          :placeholder="t('auth.placeholder_password')"
         />
         <span v-if="formErrors.password" class="error-msg">{{ formErrors.password }}</span>
       </div>
@@ -32,7 +34,7 @@
         <span v-if="loading" class="loader">
           <CustomLoader />
         </span>
-        <span v-else> Login </span>
+        <span v-else> {{ t("auth.login") }} </span>
       </button>
     </form>
 
@@ -66,13 +68,13 @@
     </div>
 
     <div v-if="userNotFound" class="prompt">
-      <span class="prompt-text">No account found?</span>
+      <span class="prompt-text">{{ t("auth.no_account") }}</span>
       <CustomLink
         aria-label="register page"
-        to="/register"
+        :to="localePath('/register')"
         class="prompt-link"
       >
-        Register here
+        {{ t("auth.register_here") }}
       </CustomLink>
     </div>
   </div>
@@ -87,6 +89,9 @@ import { CapacitorCookies } from "@capacitor/core";
 import { useUserStore } from "~/stores/useUserSocket";
 import { z } from "zod";
 
+const { t } = useI18n();
+const localePath = useLocalePath();
+
 // Define page meta
 definePageMeta({
   layout: "default",
@@ -95,15 +100,14 @@ definePageMeta({
 
 // SEO Meta
 useSeoMeta({
-  title: "Login Page",
-  description:
-    "Log in to Bader Idris's portfolio platform to explore projects, insights, and opportunities. Your gateway to cutting-edge web and multi-platform solutions.",
+  title: t("auth.login_title"),
+  description: t("auth.login_description"),
 });
 
 useSchemaOrg([
   defineWebPage({
-    name: "Login",
-    description: "Log in to Bader Idris's portfolio platform.",
+    name: () => t("auth.login_title"),
+    description: () => t("auth.login_description"),
   }),
   defineWebSite({
     name: 'Bader Idris Portfolio',
@@ -114,8 +118,6 @@ useSchemaOrg([
 const route = useRoute();
 const router = useRouter();
 
-const { t } = useI18n();
-const localePath = useLocalePath();
 const { getFriendlyErrorMessage } = useApiError();
 
 // State for email, password, and loading
@@ -225,7 +227,7 @@ const login = async (): Promise<void> => {
     userStore.setUser(user);
 
     // Display success toast message
-    toast("Successfully logged in", {
+    toast(t("auth.success_login", "Successfully logged in"), {
       theme: "auto",
       type: "success",
       position: "top-center",
@@ -419,7 +421,7 @@ const handleSocialLoginSuccess = async (response: any, provider: string) => {
   };
   userStore.setUser(userData);
 
-  toast(`Successfully logged in with ${provider}`, {
+  toast(t("auth.success_login_provider", { provider }, `Successfully logged in with ${provider}`), {
     theme: "auto",
     type: "success",
     position: "top-center",
@@ -446,7 +448,7 @@ const handleSocialLoginError = (error: any, provider: string) => {
     );
   }
 
-  toast(`${provider} sign-in failed. Please try again or use email.`, {
+  toast(t("auth.failed_login_provider", { provider }, `${provider} sign-in failed. Please try again or use email.`), {
     theme: "dark",
     type: "error",
     position: "top-center",

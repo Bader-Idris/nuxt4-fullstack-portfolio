@@ -1,41 +1,80 @@
 <template>
   <div class="register">
     <form class="form" @submit.prevent="register">
-      <h1>Register</h1>
-      <label for="user">user name</label>
-      <input v-model="user" name="user" type="text" class="input" />
-      <label for="email">email</label>
-      <input v-model="email" name="email" type="email" class="input" />
-      <label for="password">Password</label>
-      <input v-model="password" name="password" type="text" class="input" />
+      <h1>{{ t("auth.register") }}</h1>
+      <div class="input-container">
+        <label for="user">{{ t("auth.username") }}</label>
+        <input
+          id="user"
+          v-model="user"
+          name="user"
+          type="text"
+          class="input"
+          :class="{ invalid: formErrors.username }"
+          aria-labelledby="user"
+          :placeholder="t('auth.placeholder_username')"
+        />
+        <span v-if="formErrors.username" class="error-msg">{{ formErrors.username }}</span>
+      </div>
+
+      <div class="input-container">
+        <label for="email">{{ t("auth.email") }}</label>
+        <input
+          id="email"
+          v-model="email"
+          name="email"
+          type="email"
+          class="input"
+          :class="{ invalid: formErrors.email }"
+          aria-labelledby="email"
+          :placeholder="t('auth.placeholder_email')"
+        />
+        <span v-if="formErrors.email" class="error-msg">{{ formErrors.email }}</span>
+      </div>
+
+      <div class="input-container">
+        <label for="password">{{ t("auth.password") }}</label>
+        <input
+          id="password"
+          v-model="password"
+          name="password"
+          type="password"
+          class="input"
+          :class="{ invalid: formErrors.password }"
+          aria-labelledby="password"
+          :placeholder="t('auth.placeholder_password')"
+        />
+        <span v-if="formErrors.password" class="error-msg">{{ formErrors.password }}</span>
+      </div>
 
       <div class="policy-checklist">
         <label class="checkbox-label">
           <input v-model="agreePolicies" type="checkbox" />
-          I agree to the
+          {{ t("auth.agree_i_agree") }}
           <CustomLink
-            to="/legal/terms"
+            :to="localePath('/legal/terms')"
             target="_blank"
             aria-label="Terms and Conditions"
             class="policy-link"
-            >Terms and Conditions</CustomLink
+            >{{ t("auth.agree_terms") }}</CustomLink
           >
-          and
+          {{ t("auth.agree_and") }}
           <CustomLink
-            to="/privacy/policy"
+            :to="localePath('/privacy/policy')"
             target="_blank"
             aria-label="Privacy Policy"
             class="policy-link"
-            >Privacy Policy</CustomLink
+            >{{ t("auth.agree_privacy") }}</CustomLink
           >
         </label>
+        <span v-if="formErrors.agreePolicies" class="error-msg">{{ formErrors.agreePolicies }}</span>
       </div>
 
       <button class="btn" :disabled="loading">
         <span v-if="loading" class="loader">
           <CustomLoader />
         </span>
-        <span v-else> Register </span>
+        <span v-else> {{ t("auth.register") }} </span>
       </button>
     </form>
 
@@ -67,7 +106,7 @@
           :to="localePath('/login')"
           class="internal-link"
         >
-          Go to login page
+          {{ t("auth.go_to_login") }}
         </CustomLink>
       </CustomButton>
     </div>
@@ -80,6 +119,10 @@ import { useUserStore } from "~/stores/useUserSocket";
 import { toast } from "vue3-toastify";
 import "vue3-toastify/dist/index.css";
 import { CapacitorCookies } from "@capacitor/core";
+import { z } from "zod";
+
+const { t } = useI18n();
+const localePath = useLocalePath();
 
 // Important for disabling layouts
 definePageMeta({
@@ -88,15 +131,14 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: "Register page",
-  description:
-    "Sign up on Bader Idris's platform to access exclusive content, resources, and services. Join a tech-savvy community led by a skilled full-stack developer.",
+  title: t("auth.register_title"),
+  description: t("auth.register_description"),
 });
 
 useSchemaOrg([
   defineWebPage({
-    name: "Register",
-    description: "Sign up on Bader Idris's platform.",
+    name: () => t("auth.register_title"),
+    description: () => t("auth.register_description"),
   }),
   defineWebSite({
     name: 'Bader Idris Portfolio',
@@ -104,7 +146,6 @@ useSchemaOrg([
   })
 ]);
 
-const localePath = useLocalePath();
 const user = ref<string>("");
 const email = ref<string>("");
 const password = ref<string>("");
@@ -127,27 +168,46 @@ interface RegisterResponse {
 // Access token from cookie
 const accessToken = useCookie<string | undefined>("accessToken");
 
-const register = async (): Promise<void> => {
-  // Input validation to avoid unnecessary API calls
-  if (!user.value || !email.value || !password.value) {
-    toast("All fields are required.", {
-      theme: "dark",
-      type: "error",
-      position: "top-center",
-      dangerouslyHTMLString: true,
-    });
-    return;
-  }
+const registerSchema = z.object({
+  username: z.string()
+    .min(1, t("auth.errors.username_required", "Username is required."))
+    .min(3, t("auth.errors.username_min", "Username must be at least 3 characters.")),
+  email: z.string()
+    .min(1, t("auth.errors.email_required", "Email is required."))
+    .email(t("auth.errors.email_invalid", "Please enter a valid email address.")),
+  password: z.string()
+    .min(1, t("auth.errors.password_required", "Password is required."))
+    .min(6, t("auth.errors.password_min", "Password must be at least 6 characters.")),
+  agreePolicies: z.boolean().refine((val) => val === true, {
+    message: t("auth.errors.policies_required", "You must agree to the Terms and Conditions and Privacy Policy."),
+  }),
+});
 
-  if (!agreePolicies.value) {
-    toast("You must agree to the Terms and Conditions and Privacy Policy.", {
-      theme: "dark",
-      type: "error",
-      position: "top-center",
-      dangerouslyHTMLString: true,
+const formErrors = ref<Record<string, string>>({});
+
+const validateForm = (): boolean => {
+  formErrors.value = {};
+  const result = registerSchema.safeParse({
+    username: user.value,
+    email: email.value,
+    password: password.value,
+    agreePolicies: agreePolicies.value,
+  });
+
+  if (!result.success) {
+    result.error.issues.forEach((issue) => {
+      const path = issue.path[0] as string;
+      if (!formErrors.value[path]) {
+        formErrors.value[path] = issue.message;
+      }
     });
-    return;
+    return false;
   }
+  return true;
+};
+
+const register = async (): Promise<void> => {
+  if (!validateForm()) return;
 
   loading.value = true;
   showPrompt.value = false;
@@ -175,7 +235,7 @@ const register = async (): Promise<void> => {
       });
 
       toast(
-        "Successfully Registered! Please check your email to verify your account.",
+        t("auth.success_register", "Successfully Registered! Please check your email to verify your account."),
         {
           theme: "auto",
           type: "success",
@@ -363,7 +423,7 @@ const handleSocialRegisterSuccess = async (response: any, provider: string) => {
     role: response.user.role,
   });
 
-  toast(`Successfully authenticated with ${provider}`, {
+  toast(t("auth.success_auth_provider", { provider }, `Successfully authenticated with ${provider}`), {
     theme: "auto",
     type: "success",
     position: "top-center",
@@ -391,7 +451,7 @@ const handleSocialRegisterError = (error: any, provider: string) => {
     );
   }
 
-  toast(`${provider} sign-up failed. Please try again or use email.`, {
+  toast(t("auth.failed_register_provider", { provider }, `${provider} sign-up failed. Please try again or use email.`), {
     theme: "dark",
     type: "error",
     position: "top-center",
@@ -426,11 +486,31 @@ const handleSocialRegisterError = (error: any, provider: string) => {
       width: calc(100% - 30px);
     }
 
-    .input {
-      border: 1px solid gray;
-      padding: 10px;
+    .input-container {
+      @include flex-container(column, nowrap, unset, unset);
       margin-bottom: 20px;
-      border-radius: 5px;
+
+      label {
+        margin-bottom: 5px;
+      }
+
+      .input {
+        border: 1px solid gray;
+        padding: 10px;
+        border-radius: 5px;
+        width: 100%;
+
+        &.invalid {
+          border-color: var(--accent-error, #e99287) !important;
+        }
+      }
+
+      .error-msg {
+        color: var(--accent-error, #e99287);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: block;
+      }
     }
 
     .policy-checklist {
@@ -455,6 +535,13 @@ const handleSocialRegisterError = (error: any, provider: string) => {
           text-decoration: underline;
           color: #0056b3;
         }
+      }
+
+      .error-msg {
+        color: var(--accent-error, #e99287);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: block;
       }
     }
 
