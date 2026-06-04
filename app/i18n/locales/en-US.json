@@ -209,6 +209,10 @@
     "online_users": "Online Users",
     "no_users": "No users online.",
     "connection_status": "Connection Status",
+    "date": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
     "connecting": "Connecting...",
     "disconnected": "Disconnected",
     "transport": "Transport",

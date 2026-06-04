@@ -37,9 +37,11 @@
         {{ t("home.contact") }}
       </CustomLink>
     </div>
-    <div v-if="showBurgerNav" class="burger-nav" @click="togglePhoneMenu">
-      <span v-for="i in 3" :key="i" />
-    </div>
+    <ClientOnly>
+      <div v-if="showBurgerNav" class="burger-nav" @click="togglePhoneMenu">
+        <span v-for="i in 3" :key="i" />
+      </div>
+    </ClientOnly>
     <div v-show="showPhoneMenu" class="phone-menu">
       <Icon
         name="hugeicons:cancel-02"
@@ -92,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { useDebounceFn, useTimeoutFn } from "@vueuse/core";
+import { useDebounceFn, useTimeoutFn, useMediaQuery } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n({ useScope: "global" });
@@ -103,13 +105,8 @@ const { start, stop } = useTimeoutFn(() => {
   count.value = 0;
 }, 5000);
 
-const showBurgerNav = ref(false);
 const showPhoneMenu = ref(false);
 const currentPath = ref("");
-
-const handleResize = useDebounceFn(() => {
-  showBurgerNav.value = window.outerWidth <= 768;
-}, 300); // Debounce with 300ms delay
 
 const togglePhoneMenu = () => {
   const menu = document.querySelector(".phone-menu"); // Select the menu
@@ -138,6 +135,9 @@ const handleTripleClick = () => {
     stop();
   }
 };
+
+// Use VueUse useMediaQuery for responsive reactivity
+const showBurgerNav = useMediaQuery('(max-width: 768px)');
 
 onMounted(() => {
   if (import.meta.client) {
@@ -181,15 +181,9 @@ onMounted(() => {
     // END gsap underneath indicator
     // --------------------------------------------
 
-    showBurgerNav.value = window.outerWidth <= 768;
-    window.addEventListener("resize", handleResize);
   }
 });
 
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-  if (import.meta.client) stop();
-});
 </script>
 
 <style lang="scss">

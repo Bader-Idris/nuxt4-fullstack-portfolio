@@ -339,7 +339,7 @@
               
               <template v-for="(msg, index) in messagesStore.getMessagesForRecipient(recipientUserId)" :key="msg.id">
                 <div v-if="shouldShowDateSeparator(messagesStore.getMessagesForRecipient(recipientUserId), index)" class="date-separator">
-                  <span>{{ formatDateSeparator(msg.timestamp) }}</span>
+                  <span>{{ formatDateRelative(msg.timestamp) }}</span>
                 </div>
                 
                 <!-- System Message / Call Fingerprint (Localized) -->
@@ -1107,16 +1107,22 @@ function shouldShowDateSeparator(messages: any[], index: number) {
   return currentMsgDate !== prevMsgDate;
 }
 
-function formatDateSeparator(timestamp: string | number | Date) {
+const { formatDateSeparator: formatDateGeneric } = useDateFormatter();
+
+// ... existing logic ...
+
+// Renamed to avoid collision with composable
+function formatDateRelative(timestamp: string | number | Date) {
   const date = new Date(timestamp);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return date.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
+  if (date.toDateString() === today.toDateString()) return t('dashboard.date.today');
+  if (date.toDateString() === yesterday.toDateString()) return t('dashboard.date.yesterday');
+  return formatDateGeneric(timestamp);
 }
+
 
 function formatDuration(seconds: number) {
   const mins = Math.floor(seconds / 60);

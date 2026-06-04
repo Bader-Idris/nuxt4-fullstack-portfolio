@@ -206,6 +206,10 @@
   "online_users": "Usuarios en línea",
   "no_users": "No hay usuarios en línea.",
   "connection_status": "Estado de la conexión",
+  "date": {
+    "today": "Hoy",
+    "yesterday": "Ayer"
+  },
   "connecting": "Conectando...",
   "disconnected": "Desconectado",
   "transport": "Transporte",

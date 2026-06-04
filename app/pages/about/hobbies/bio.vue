@@ -47,7 +47,7 @@
       </div>
       <div class="code-block-container">
         <button class="copy-code-btn" @click="copyCode" aria-label="Copy code">
-          <Icon :name="copied ? 'mdi:check' : 'mdi:content-copy'" />
+          <Icon :name="copied ? 'mdi:check' : 'mdi:content-copy'" size="20" />
         </button>
         <ClientOnly>
           <TiptapEditorContent v-if="editor" :editor="editor" />
@@ -134,6 +134,7 @@ const copyCode = async () => {
       autoClose: 1000,
       type: "success",
       position: "bottom-right",
+      theme: "dark",
     });
     setTimeout(() => (copied.value = false), 2000);
   }
@@ -566,7 +567,7 @@ onBeforeMount(() => {
       }
     }
 
-    & *:not(.code-author, .code-author *, .ProseMirror *) {
+    & *:not(.code-author, .code-author *, .ProseMirror *, .copy-code-btn, .copy-code-btn *) {
       background-color: $code-snippets-bg;
       border-radius: 15px;
       padding: 0 5px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="received-set">
+  <div class="admin-contact-panel">
     <h1>Admin Panel</h1>
     <div v-if="pending" class="loading-indicator">
       <span>Loading emails...</span>
@@ -12,9 +12,9 @@
           <strong>Created At:</strong>
           {{ new Date(email.createdAt).toLocaleString() }}
         </p>
-        <p class="message">
-          {{ email.message }}
-        </p>
+        <div class="message-content">
+          <ReadonlyTiptap :content="email.message" />
+        </div>
       </li>
     </ul>
     <p v-else>No emails to display.</p>
@@ -241,49 +241,64 @@ if (import.meta.server) {
 </script>
 
 <style lang="scss">
-.received-set {
-  height: 580px;
-  overflow: auto scroll;
-  position: absolute;
-  height: 100%;
-  top: 0;
-  color: #4d5bce;
-  font-weight: bold;
-  background: #fea55f;
-  padding: 20px 40px;
-  text-align: center;
-  @include flex-container(column, nowrap, flex-start, center);
-
-  @include mobile {
-    width: calc(100% - 10px);
-    margin-left: 20px;
-  }
+.admin-contact-panel {
+  padding: 40px 20px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   @include tablet-to-up {
-    width: 50%;
-    margin-left: 350px;
+    padding: 60px 40px;
   }
 
   h1 {
-    text-align: center;
+    margin-bottom: 30px;
+    color: var(--accent-primary);
+    font-size: 2rem;
   }
 
   ul {
-    @include flex-container(column, nowrap, unset, unset);
-    gap: 10px;
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
 
     li {
-      padding: 20px 0;
-      @include flex-container(row, wrap, center, center);
-      border: 2px solid;
+      padding: 25px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--lines-color);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+      &:hover {
+        border-color: var(--accent-secondary);
+      }
     }
   }
 
-  .message {
-    border: 5px dotted #43d9ad;
-    padding: 15px;
-    flex: 1;
-    flex-basis: 100%;
+  .message-content {
+    border: 1px solid var(--lines-color);
+    padding: 20px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-radius: 12px;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  strong {
+    color: var(--accent-secondary);
+    margin-right: 5px;
   }
 }
 </style>

@@ -80,12 +80,12 @@
       "description": "محتوى حصري لمدير الموقع، ومهندسه الذري صنعه كمطور فل ستاك"
     },
     "form": {
-      "name": ":الاسم",
-      "email": ":الإيميل",
-      "message": ":الرسالة",
-      "submit": ":أرسل_الرسالة",
+      "name": "الاسم:",
+      "email": "الإيميل:",
+      "message": "الرسالة:",
+      "submit": "أرسل_الرسالة:",
       "sending": "يتم الإرسال...",
-      "send_new": ":أرسل_رسالة_جديدة",
+      "send_new": "أرسل_رسالة_جديدة:",
       "name_placeholder": "فلان الفلاني",
       "email_placeholder": "Fulan﹫gmail.com",
       "message_placeholder": "اكتب رسالتك هنا",
@@ -206,6 +206,10 @@
     "online_users": "المستخدمون المتصلون",
     "no_users": "لا يوجد مستخدمون متصلون.",
     "connection_status": "حالة الاتصال",
+    "date": {
+      "today": "اليوم",
+      "yesterday": "أمس"
+    },
     "connecting": "جاري الاتصال...",
     "disconnected": "غير متصل",
     "transport": "وسيلة النقل",

@@ -128,23 +128,16 @@ const validateForm = (): boolean => {
   return true;
 };
 
-// Format date function with i18n support
-function formatDate(inputDate: Date): string {
-  return new Intl.DateTimeFormat(locale.value, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(inputDate);
-}
+const { formatDateRelative } = useDateFormatter();
 
 // Update the date periodically using VueUse's useIntervalFn (SSR-friendly)
 const date = ref<Date>(new Date());
-const formattedDate = ref<string>(formatDate(date.value));
+const formattedDate = ref<string>(formatDateRelative(date.value));
 
 const { pause } = useIntervalFn(
   () => {
     date.value = new Date();
-    formattedDate.value = formatDate(date.value);
+    formattedDate.value = formatDateRelative(date.value);
   },
   1000,
   { immediate: false },
@@ -177,7 +170,7 @@ const copyToClipboard = async (text: string) => {
 onMounted(() => {
   if (import.meta.client) {
     date.value = new Date();
-    formattedDate.value = formatDate(date.value);
+    formattedDate.value = formatDateRelative(date.value);
   }
 });
 
@@ -190,7 +183,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="cont">
-    <div v-if="!isSubmitted" class="messaging">
+    <div v-if="!isSubmitted" class="messaging" :class="{ 'rtl': locale === 'ar' }">
       <div class="input-group">
         <label for="name">{{ t("contact.form.name") }}</label>
         <input
@@ -332,6 +325,12 @@ onBeforeUnmount(() => {
       width: 100%;
       padding: 0 10px;
     }
+  }
+
+  .messaging.rtl {
+    direction: rtl;
+    text-align: right;
+    
   }
 
   @include tablet-to-up {

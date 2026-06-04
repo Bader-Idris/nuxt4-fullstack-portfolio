@@ -42,7 +42,7 @@
             <h2 class="post-card-title">{{ post.title }}</h2>
             <p class="post-summary">{{ post.summary || '...' }}</p>
             <div class="post-meta">
-              <time class="post-date">{{ formatDate(post.createdAt) }}</time>
+              <time class="post-date">{{ formatDateSeparator(post.createdAt) }}</time>
               <span class="post-views"><Icon name="material-symbols:visibility" /> {{ post.viewCount }}</span>
             </div>
           </div>
@@ -66,6 +66,7 @@ defineOgImage('Default', {
 const userStore = useUserStore();
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
+const { formatDateSeparator } = useDateFormatter();
 const selectedLang = ref(locale.value);
 
 const canCreate = computed(() => {
@@ -79,10 +80,6 @@ const { data: response, pending } = await useFetch<any>('/api/v1/blog', {
 });
 
 const posts = computed(() => response.value?.data || []);
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString(locale.value, { year: 'numeric', month: 'short', day: 'numeric' });
-}
 
 useSeoMeta({
   title: 'Blog | Bader Idris',

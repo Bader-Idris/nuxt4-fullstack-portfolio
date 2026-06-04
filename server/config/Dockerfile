@@ -68,11 +68,17 @@ RUN find .output/server/node_modules/@img -mindepth 1 -maxdepth 1 -type d \
     -exec rm -rf {} +
 
 # @resvg: keep only the musl-x64 binary + the main package (has the JS entry point)
-RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -o -type l \) \
-    ! -name 'resvg-js' \
-    ! -name 'resvg-js-linux-x64-musl' \
-    -exec rm -rf {} +
+# RUN find .output/server/node_modules/@resvg -mindepth 1 -maxdepth 1 \( -type d -o -type l \) \
+#     ! -name 'resvg-js' \
+#     ! -name 'resvg-js-linux-x64-musl' \
+#     -exec rm -rf {} +
 # saves ~200MB
+
+RUN find .output/server/node_modules/@takumi-rs -mindepth 1 -maxdepth 1 -type d \
+    ! -name 'core' \
+    ! -name 'helpers' \
+    ! -name 'core-linux-x64-musl' \
+    -exec rm -rf {} +
 
 # make sure this doesn't conflict with ai-ready generated md files
 # RUN find .output/server/node_modules -type f \( \
