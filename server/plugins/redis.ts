@@ -1,7 +1,8 @@
 import Redis from "ioredis";
 
+const config = useRuntimeConfig();
 // Create and export a single Redis client instance
-const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+const redisUrl = config.redisUrl || "redis://localhost:6379";
 let redisClient: Redis | null = null;
 
 if (

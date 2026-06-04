@@ -12,6 +12,9 @@ const props = defineProps({
 
 // ai is ugly at making simple things complicated, OMG!
 // check how simple it is: https://nuxtseo.com/docs/og-image/getting-started/installation#next-steps
+const config = useRuntimeConfig();
+const origin = config.public.originUrl;
+
 const siteConfig = useSiteConfig();
 
 const displayTitle = computed(() => props.title || siteConfig.name || "Bader Idris")
@@ -20,6 +23,7 @@ const displayDescription = computed(() => props.description || siteConfig.descri
 const isRtl = computed(() => {
   // Support for Arabic, Hebrew, Persian, etc.
   const rtlRegex = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+  // Use a fallback or explicit check if necessary for SSR/Client consistency
   return rtlRegex.test(displayTitle.value);
 });
 
@@ -30,7 +34,7 @@ const truncatedDescription = computed(() => {
 </script>
 
 <template>
-  <div class="root" :style="{ fontFamily: isRtl ? 'IBM Plex Sans Arabic, sans-serif' : 'Fira Code, monospace' }">
+  <div class="root" :style="{ fontFamily: 'Cascadia Code, monospace' }">
     <div class="bg-base"></div>
     <div class="bg-glow-teal"></div>
     <div class="bg-glow-indigo"></div>

@@ -688,35 +688,16 @@ export default defineNuxtConfig({
   },
   fonts: {
     families: [
-      {
-        name: "Fira Code",
-        weights: [400, 600, 700],
-        global: true, // critical for ogImage
+      { name: "Fira Code", weights: [400, 600, 700], global: true,
         src: [
           { url: '/fonts/fira-code-v27-latin-400.woff2', format: 'woff2' },
           { url: '/fonts/fira-code-v27-latin-600.woff2', format: 'woff2' },
           { url: '/fonts/fira-code-v27-latin-700.woff2', format: 'woff2' }
         ]
       },
-      {
-        name: "JetBrains Mono",
-        weights: [400, 700],
-        global: true,
-        src: [
-          { url: '/fonts/jetbrains-mono-v24-latin-400.woff2', format: 'woff2' },
-          { url: '/fonts/jetbrains-mono-v24-latin-700.woff2', format: 'woff2' }
-        ]
-      },
-      {
-        name: "IBM Plex Sans Arabic",
-        weights: [400, 700],
-        global: true,
-      },
-      {
-        name: "Noto Sans JP",
-        weights: [400, 700],
-        global: true,
-      }
+      { name: "JetBrains Mono", weights: [400, 700], global: true },
+      { name: "IBM Plex Sans Arabic", weights: [400, 700], global: true },
+      { name: "Noto Sans JP", weights: [400, 700], global: true }
     ],
     defaults: {
       fallbacks: {
@@ -729,18 +710,35 @@ export default defineNuxtConfig({
     }
   },
   ogImage: {
+    // https://nuxtseo.com/docs/og-image/api/config
     enabled: process.env.NUXT_SSR !== "false",
+    debug: process.env.IS_DEBUGGING !== "false",
     defaults: {
-      component: 'Default',
-      renderer: 'takumi',
+      // https://nuxtseo.com/docs/og-image/guides/jpegs#best-practices
+      extension: 'png',
+      width: 1200,
+      height: 600,
+      emojis: 'noto',
+      cacheMaxAgeSeconds: 60 * 60 * 24 * 3
     },
+    // crashes docker building!
+    // security: {
+    //   strict: true,
+    //   secret: process.env.NUXT_SECRET
+    // },
+    buildCache: true,
+    // runtimeCacheStorage make it redis with our uri
+    runtimeCacheStorage: 'redis',
+    // https://nuxtseo.com/docs/og-image/guides/runtime-cache#quick-start
+
+    fontSubsets: ['latin'],
     // Using IBM Plex Sans Arabic as it's more stable for OG images
-    fonts: [
-      'Inter:400',
-      'Inter:700',
-      'IBM+Plex+Sans+Arabic:400',
-      'IBM+Plex+Sans+Arabic:700',
-    ],
+    // fonts: [
+    //   'Inter:400',
+    //   'Inter:700',
+    //   'IBM+Plex+Sans+Arabic:400',
+    //   'IBM+Plex+Sans+Arabic:700',
+    // ],
   },
   aiReady: {
     // https://nuxtseo.com/docs/ai-ready/api/config#enabled

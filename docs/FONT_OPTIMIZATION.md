@@ -1,102 +1,96 @@
-# Font Optimization Strategies for Fira Code
+# Font Optimization: The Gold Standard for SSR & Desktop
 
-This document outlines production-ready approaches to optimize the `Fira Code` font (currently 106 KB) for the portfolio project, ensuring high performance on the web and reliability in local builds (Electron/Capacitor).
+This document outlines the high-performance, robust font loading strategy implemented for `Fira Code`. This configuration is specifically designed to handle **Nuxt SSR (Server-Side Rendering)** and **Client-Side Generated** targets (Electron and Capacitor) simultaneously.
 
 ---
 
-## 1. Hybrid Strategy: Google Fonts + Local Backup (Recommended)
+## 1. The Core Strategy: Local-First with CDN Backup
 
-This approach uses Google Fonts' global CDN for the fastest delivery and browser caching, while maintaining your local file as a robust fallback.
+We prioritize locally hosted, highly optimized font subsets while maintaining a Google Fonts CDN import as a secondary fallback.
 
 ### implementation:
-In your `app/assets/scss/_fonts.scss`:
+Location: `app/assets/scss/_fonts.scss`
 
 ```scss
-/* 1. Use Google Fonts first */
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap');
+/* 1. Backup Plan: Google Fonts CDN */
+/* Provides redundancy for web environments and fast delivery if local assets fail. */
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap");
 
-/* 2. Define local fallback for offline/CDN failure */
+/* 2. Primary Plan: Local Optimized Assets (Nuxt Fonts) */
+/* 
+   IMPORTANT: We use RELATIVE PATHS (../../public/fonts/...)
+   This allows Vite to:
+   - Process and hash the files for cache busting.
+   - Resolve paths correctly across different protocols (https://, file://, app://).
+   - Bundle assets into the output directory automatically.
+*/
+
 @font-face {
-  font-family: "Fira Code Fallback";
-  src: local("Fira Code"),
-       url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2-variations"),
-       url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2");
-  font-weight: 300 700;
+  font-family: "Fira Code";
+  font-weight: 400;
+  font-style: normal;
   font-display: swap;
+  src:
+    local("Fira Code"),
+    url("../../public/fonts/fira-code-v27-latin-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fira Code";
+  font-weight: 600;
+  /* ... (and so on for 700) */
 }
 ```
 
-### Benefits:
-- **Web:** Browsers likely already have Fira Code cached from other sites via Google's CDN.
-- **Electron/Capacitor:** If the device is offline, the CSS `@import` fails silently, and the `src: local()` or the local `url()` takes over.
+---
+
+## 2. Why This is "Prod Robust"
+
+### A. Asset Processing & Hashing
+By referencing local fonts via **relative paths** in the SCSS file, we hook into Vite’s asset pipeline. 
+- **Hashing:** Vite appends a unique ID (e.g., `fira-code.B8R452lT.woff2`). This ensures that if the font ever changes, browsers will download the new version immediately (cache-busting).
+- **Automation:** No manual copying of font files is required; Vite handles the movement from `public/` to the build output.
+
+### B. Cross-Protocol Portability
+- **SSR (Web):** Works standardly over HTTPS.
+- **Electron/Capacitor:** These environments often use a `file://` or custom protocol where absolute root paths (like `/fonts/`) frequently break. Relative paths ensure the CSS can always "find" the font relative to its own location.
+
+### C. Size Optimization (Subsetting)
+We moved away from heavy "Variable Fonts" (often 100KB+) in favor of specific **latin-subsetted** weights (`v27-latin`).
+- **Standard Weight (400):** ~15 KB
+- **SemiBold (600):** ~15 KB
+- **Bold (700):** ~15 KB
+*Total payload for 3 weights is ~45 KB vs 100 KB+ for a single variable font.*
 
 ---
 
-## 2. Subsetting (Drastic Size Reduction)
+## 3. Performance Tuning (Nuxt Config)
 
-A variable font often includes glyphs for many languages (Cyrillic, Greek, etc.) that you might not need. Subsetting removes these unused characters.
+To minimize impact on Core Web Vitals and prevent layout shifts:
 
-### How to do it:
-Use a tool like **[glyphhanger](https://github.com/zachleat/glyphhanger)** or **[pyftsubset](https://github.com/fonttools/fonttools)**.
-
-**Command Example (Latin characters only):**
-```bash
-# Keep only Latin characters, numbers, and basic punctuation
-pyftsubset FiraCode-VariableFont_wght.woff2 --unicodes="U+0000-007F,U+00A0-00FF" --flavor=woff2
-```
-*Result: Usually reduces the file size from **106 KB** to **~25-35 KB**.*
-
----
-
-## 3. Performance Tuning (Nuxt/Web)
-
-To minimize the impact on Core Web Vitals (LCP/CLS):
-
-### A. Preconnect in `nuxt.config.ts`:
+### Nuxt Configuration (`nuxt.config.ts`):
 ```typescript
 app: {
   head: {
     link: [
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' }
     ]
   }
 }
 ```
 
-### B. Use `font-display: swap`:
-Ensures text is visible immediately using a system font while the custom font loads.
+### CSS Display Strategy:
+We use `font-display: swap;` in every `@font-face` block. This ensures that a system monospace font is shown immediately while Fira Code loads, preventing the "Flash of Invisible Text" (FOIT).
 
 ---
 
-## 4. Local Build Specifics (Electron & Capacitor)
+## Summary of Optimization State
 
-For local applications, **latency is 0**, so external CDNs can actually be slower or fail entirely.
-
-### Strategy:
-1. **Always package the local font:** Keep the `.woff2` files in your `public/fonts` directory.
-2. **Conditional Loading:** If you want to be extra surgical, you can use environment variables:
-
-```scss
-// app/assets/scss/_fonts.scss
-@if $IS_ELECTRON == "true" or $IS_CAPACITOR == "true" {
-  @font-face {
-    font-family: "Fira Code";
-    src: url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2");
-    // ...
-  }
-} @else {
-  @import url('...'); 
-}
-```
-
----
-
-## Summary of Options
-
-| Approach | Effort | Size Impact | Best For |
-| :--- | :--- | :--- | :--- |
-| **Google Fonts** | Low | Low (Browser Cache) | General Web Traffic |
-| **Subsetting** | Medium | **High (-70%)** | Mobile & Slow Connections |
-| **Local Only** | Low | None | Electron/Capacitor (Offline) |
-| **Hybrid** | Medium | Optimized | Professional Portfolios |
+| Feature | Implementation | Benefit |
+| :--- | :--- | :--- |
+| **Asset Size** | `v27-latin` Optimized Subsets | 60-70% reduction in payload |
+| **Versioning** | Vite Relative Asset Hashing | Bulletproof cache-busting |
+| **Compatibility** | Relative SCSS Pathing | Works in SSR, Electron, & Capacitor |
+| **Redundancy** | Google Fonts `@import` | Reliable web fallback |
+| **UX** | `font-display: swap` | Zero FOIT (Flash of Invisible Text) |

@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from "~/stores/useUserSocket";
+import { useDateFormatter } from "~/composables/useDateFormatter";
 
 const blogPostContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(blogPostContainer);
@@ -86,12 +87,9 @@ watch(() => response.value?.data, (newData) => {
 const postData = computed(() => response.value?.data);
 const isAdmin = computed(() => userStore.getUserRole === 'admin');
 
+const { formatDateSeparator } = useDateFormatter();
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString(locale.value, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  return formatDateSeparator(date);
 }
 
 function editPost() {
@@ -100,8 +98,10 @@ function editPost() {
 
 // Dynamic SEO
 useSeoMeta({
-  title: () => postData.value?.title || t('blog.loading', 'Loading...'),
+  title: () => postData.value?.title || t("blog.loading", "Loading..."),
   description: () => postData.value?.summary,
+  // this didn't add originUrl prefix to ogImage, why?
+  ogImage: () => `${config.public.originUrl}/_og/r/blog/${slug.value}.png`,
 });
 
 defineOgImage('Default', {
@@ -181,10 +181,11 @@ useSchemaOrg([
   }
 
   .post-title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     color: $secondary4;
     margin-bottom: 1rem;
     line-height: 1.2;
+    font-weight: 600;
     @include mobile { font-size: 1.8rem; }
   }
 

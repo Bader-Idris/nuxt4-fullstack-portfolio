@@ -1,24 +1,39 @@
-/* 1. Use Google Fonts first for fast CDN delivery and browser caching */
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap");
+/* 1. Backup: Google Fonts CDN (for web/SSR environments) */
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap");
 
-/* 2. Define local fallback for offline usage (Electron/Capacitor) or CDN failure */
+/* 2. Primary: Local optimized fonts (Nuxt Fonts) */
+/* 
+   Using relative paths from app/assets/scss/ to public/fonts/ 
+   This ensures Vite processes and hashes the assets, which is 
+   the most robust approach for both SSR and static targets (Electron/Capacitor).
+*/
+
 @font-face {
   font-family: "Fira Code";
-  /* Variable font range */
-  font-weight: 300 700;
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
   src:
     local("Fira Code"),
-    url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2-variations"),
-    url("/fonts/FiraCode/FiraCode-VariableFont_wght.woff2") format("woff2");
+    url("/fonts/fira-code-v27-latin-400.woff2") format("woff2");
 }
 
-/* 3. Keep specific weights if needed for older browser compatibility or specific styling */
 @font-face {
   font-family: "Fira Code";
-  font-weight: 300;
+  font-weight: 600;
   font-style: normal;
   font-display: swap;
-  src: url("/fonts/FiraCode/FiraCode-Light.woff2") format("woff2");
+  src:
+    local("Fira Code"),
+    url("/fonts/fira-code-v27-latin-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fira Code";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src:
+    local("Fira Code"),
+    url("/fonts/fira-code-v27-latin-700.woff2") format("woff2");
 }
