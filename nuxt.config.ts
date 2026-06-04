@@ -107,6 +107,7 @@ export default defineNuxtConfig({
           'jsonwebtoken',
           'rate-limiter-flexible',
           'ttf2woff2',
+          'better-sqlite3',
         ],
         // Force everything else to be inlined/bundled into chunks:
         inline: [
@@ -287,6 +288,7 @@ export default defineNuxtConfig({
       //     }
       //   }
       // }
+      chunkSizeWarningLimit: 1000, // kB
     },
   },
   typescript: {

@@ -1,4 +1,4 @@
-import { PushNotifications, type Token } from "@capacitor/push-notifications";
+import { type Token } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
 import { toast } from "vue3-toastify";
 import "vue3-toastify/dist/index.css";
@@ -109,6 +109,7 @@ export const usePushNotifications = () => {
       return;
     }
 
+    const { PushNotifications } = await import("@capacitor/push-notifications");
     const result = await PushNotifications.requestPermissions();
     if (result.receive === "granted") {
       await PushNotifications.register();
@@ -123,8 +124,9 @@ export const usePushNotifications = () => {
     }
   };
 
-  const initialize = () => {
+  const initialize = async () => {
     if (isCapacitor) {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
       PushNotifications.addListener("registration", async (token: Token) => {
         console.log("Push registration success, token:", token.value);
         try {

@@ -1,4 +1,5 @@
 import { useUserStore } from "~/stores/useUserSocket";
+import { useSocketStore } from "~/stores/useSocketStore";
 
 interface Message {
   fromName: string;
@@ -80,7 +81,6 @@ export const useMessagesStore = defineStore("messages", {
       if (this.isLoadingContacts || !this.hasMoreContacts) return;
 
       this.isLoadingContacts = true;
-      const { useSocketStore } = await import("~/stores/useSocketStore");
       const socketStore = useSocketStore();
 
       socketStore.socket?.emit(
