@@ -31,7 +31,7 @@
 
     <ClientOnly>
       <div v-if="activeReplyId === comment.id" class="reply-form">
-        <TiptapEditor 
+        <LazyTiptapEditor 
           v-model="localReplyContent" 
           :placeholder="t('blog.addComment', 'Add a reply...')" 
         />

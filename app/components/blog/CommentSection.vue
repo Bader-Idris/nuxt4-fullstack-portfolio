@@ -5,7 +5,7 @@
       <div v-if="userStore.isAuthenticated">
         <!-- Add Comment Form -->
         <div class="add-comment-form">
-          <TiptapEditor 
+          <LazyTiptapEditor 
             v-model="newComment" 
             :placeholder="t('blog.addComment', 'Add a public comment...')" 
           />

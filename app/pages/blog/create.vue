@@ -41,7 +41,7 @@
 
       <div class="form-group">
         <label>Content</label>
-        <TiptapEditor v-model="form.content" placeholder="Write your masterpiece..." />
+        <LazyTiptapEditor v-model="form.content" placeholder="Write your masterpiece..." />
       </div>
 
       <div class="form-actions">
