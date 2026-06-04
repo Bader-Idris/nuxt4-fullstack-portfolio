@@ -24,6 +24,10 @@ COPY server/prisma/ ./server/prisma/
 # Set flag to suppress local development tooling hooks
 ENV DOCKER_BUILD=true
 
+# Ensure no stale node_modules from build context and handle pnpm conflicts
+RUN rm -rf node_modules && \
+    mkdir -p /root/.local/share/pnpm/store
+
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --shamefully-hoist --force
 

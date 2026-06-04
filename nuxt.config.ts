@@ -188,6 +188,7 @@ export default defineNuxtConfig({
 
     serveStatic:
       process.env.NODE_ENV === "production" && isSSR ? false : true,
+    ...(!isDesktop && {
       publicAssets: [
         {
           // Feed prior build manifests so skew protection works across deploys.
@@ -198,6 +199,7 @@ export default defineNuxtConfig({
           maxAge: 0, // never cache manifests
         },
       ],
+    }),
   },
 
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
@@ -566,6 +568,16 @@ export default defineNuxtConfig({
   //     enabled: true,
   //   },
   // },
+  ...(!isDesktop && !isCapacitor && {
+    icon: {
+      // Prevent massive server-side bundling of icons
+      // By scanning for used icons and bundling them for the client
+      clientBundle: {
+        scan: true,
+        includeCustomCollections: true,
+      },
+    },
+  }),
   i18n: {
     debug: process.env.IS_DEBUGGING !== "false",
     // Force baseUrl here for build-time SEO tag generation
