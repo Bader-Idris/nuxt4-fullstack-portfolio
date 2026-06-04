@@ -184,6 +184,9 @@ onMounted(() => {
   }
 });
 
+onUnmounted(() => {
+  if (import.meta.client) stop();
+});
 </script>
 
 <style lang="scss">
