@@ -67,10 +67,10 @@ const getIconName = (title: string): string => {
     Nginx: "simple-icons:nginx",
     Nuxt: "lineicons:nuxt",
     Electron: "file-icons:electron",
-    Bash: "devicon-plain:bash",
+    Bash: "simple-icons:gnubash",
     NestJs: "file-icons:nestjs",
     ThreeJs: "tabler:brand-threejs",
-    CapacitorJs: "devicon-plain:capacitor",
+    CapacitorJs: "simple-icons:capacitor",
   };
 
   return iconMap[title] || "mdi:code-tags"; // Default icon if title not found

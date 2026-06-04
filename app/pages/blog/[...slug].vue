@@ -36,11 +36,13 @@
           <NuxtLink :to="localePath('/blog')" class="back-to-blog-btn">
             <Icon name="material-symbols:grid-view-outline" /> {{ t('blog.backToBlog', 'Back to Blog') }}
           </NuxtLink>
-          <div v-if="postData.isAuthor || isAdmin">
-            <button @click="editPost" class="edit-btn">
+          <ClientOnly>
+        <div v-if="postData.isAuthor || isAdmin">
+            <button class="edit-btn" @click="editPost">
               <Icon name="material-symbols:edit" /> Edit Post
             </button>
           </div>
+        </ClientOnly>
         </div>
       </footer>
 
