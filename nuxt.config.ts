@@ -705,6 +705,7 @@ export default defineNuxtConfig({
   },
   ...(isSSR && {
     fonts: {
+      devtools: isDebug,
       families: [
         { name: "Fira Code", weights: [400, 600, 700], global: true,
           src: [
