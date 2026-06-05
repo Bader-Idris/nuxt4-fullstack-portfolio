@@ -135,16 +135,18 @@ useSeoMeta({
   description: t("auth.register_description"),
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("auth.register_title"),
-    description: () => t("auth.register_description"),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("auth.register_title"),
+      description: () => t("auth.register_description"),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 
 const user = ref<string>("");
 const email = ref<string>("");

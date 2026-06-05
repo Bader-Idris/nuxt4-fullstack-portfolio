@@ -250,16 +250,18 @@ useSeoMeta({
     "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("home.title"),
-    description: () => t("home.description"),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("home.title"),
+      description: () => t("home.description"),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 </script>
 
 <style lang="scss" scoped>

@@ -11,16 +11,18 @@ useSeoMeta({
   description: "Hobbies and interests of Bader Idris.",
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: 'Hobbies',
-    description: "Hobbies and interests of Bader Idris.",
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: 'Hobbies',
+      description: "Hobbies and interests of Bader Idris.",
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 </script>
 
 <style lang="scss" scoped>

@@ -68,35 +68,39 @@ useSeoMeta({
   ogImageHeight: 630,
 });
 
-defineOgImage('Default', {
-  title: t("projects.title"),
-  description: t("projects.description")
-});
+if (import.meta.server) {
+  defineOgImage('Default', {
+    title: t('projects.title'),
+    description: t('projects.description'),
+  });
+}
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("projects.title"),
-    description: () => t("projects.description"),
-    // "@type": "CollectionPage",
-    itemListElement: projectsList.map((project, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "CreativeWork",
-        name: project.title[locale.value] || project.title.en,
-        description: project.desc[locale.value] || project.desc.en,
-        url: project.url,
-        image: project.img.startsWith("http")
-          ? project.img
-          : `${useRuntimeConfig().public.originUrl}${project.img}`,
-      },
-    })),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("projects.title"),
+      description: () => t("projects.description"),
+      // "@type": "CollectionPage",
+      itemListElement: projectsList.map((project, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "CreativeWork",
+          name: project.title[locale.value] || project.title.en,
+          description: project.desc[locale.value] || project.desc.en,
+          url: project.url,
+          image: project.img.startsWith("http")
+            ? project.img
+            : `${useRuntimeConfig().public.originUrl}${project.img}`,
+        },
+      })),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 
 const list = ref<Array<{ title: string; imgAlt: string; isActive: boolean }>>([
   { title: "HTML", imgAlt: "html icon", isActive: true },

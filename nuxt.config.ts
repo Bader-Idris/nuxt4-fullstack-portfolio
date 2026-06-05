@@ -16,6 +16,7 @@ const isElectrobun = process.env.IS_ELECTROBUN === "true";
 const isCapacitor = process.env.IS_CAPACITOR === "true";
 const isDesktop = isElectron || isElectrobun;
 const isSSR = process.env.NUXT_SSR !== "false" && !isDesktop && !isCapacitor;
+const isDebug = process.env.IS_DEBUGGING !== "false";
 
 // Unified Site URL for SEO and i18n consistency
 const siteUrl = process.env.DOMAIN_NAME;
@@ -32,7 +33,7 @@ export default defineNuxtConfig({
       enabled: true,
     },
   },
-  debug: process.env.IS_DEBUGGING !== "false",
+  debug: isDebug,
   srcDir: path.join(__dirname, "./app"),
   alias: {
     "@": path.join(__dirname, "./app"),
@@ -230,6 +231,7 @@ export default defineNuxtConfig({
         "gsap/all",
         "howler", // CJS
         "lowlight",
+        // can these three cause issues? I think not
         "node:fs",
         "node:path",
         "sharp", // CJS
@@ -240,6 +242,7 @@ export default defineNuxtConfig({
         "three/examples/jsm/loaders/DRACOLoader.js",
         "three/examples/jsm/loaders/GLTFLoader.js",
         "vue3-toastify",
+        "zod"
       ],
       exclude: ["@dimforge/rapier3d-compat"],
     },
@@ -579,7 +582,7 @@ export default defineNuxtConfig({
     },
   }),
   i18n: {
-    debug: process.env.IS_DEBUGGING !== "false",
+    debug: isDebug,
     // Force baseUrl here for build-time SEO tag generation
     baseUrl: isElectron ? "./" : siteUrl,
     langDir: "../app/i18n/locales/",
@@ -700,33 +703,35 @@ export default defineNuxtConfig({
     //   ctx.markdown = `# ${ctx.title}\n\n${ctx.markdown}`
     // }
   },
-  fonts: {
-    families: [
-      { name: "Fira Code", weights: [400, 600, 700], global: true,
-        src: [
-          { url: '/fonts/fira-code-v27-latin-400.woff2', format: 'woff2' },
-          { url: '/fonts/fira-code-v27-latin-600.woff2', format: 'woff2' },
-          { url: '/fonts/fira-code-v27-latin-700.woff2', format: 'woff2' }
-        ]
+  ...(isSSR && {
+    fonts: {
+      families: [
+        { name: "Fira Code", weights: [400, 600, 700], global: true,
+          src: [
+            { url: '/fonts/fira-code-v27-latin-400.woff2', format: 'woff2' },
+            { url: '/fonts/fira-code-v27-latin-600.woff2', format: 'woff2' },
+            { url: '/fonts/fira-code-v27-latin-700.woff2', format: 'woff2' }
+          ]
+        },
+        { name: "JetBrains Mono", weights: [400, 700], global: true },
+        { name: "IBM Plex Sans Arabic", weights: [400, 700], global: true },
+        { name: "Noto Sans JP", weights: [400, 700], global: true }
+      ],
+      defaults: {
+        fallbacks: {
+          monospace: ['monospace'],
+          'sans-serif': ['IBM Plex Sans Arabic', 'Noto Sans JP', 'sans-serif']
+        }
       },
-      { name: "JetBrains Mono", weights: [400, 700], global: true },
-      { name: "IBM Plex Sans Arabic", weights: [400, 700], global: true },
-      { name: "Noto Sans JP", weights: [400, 700], global: true }
-    ],
-    defaults: {
-      fallbacks: {
-        monospace: ['monospace'],
-        'sans-serif': ['IBM Plex Sans Arabic', 'Noto Sans JP', 'sans-serif']
+      experimental: {
+        processCSSVariables: true
       }
     },
-    experimental: {
-      processCSSVariables: true
-    }
-  },
+  }),
   ogImage: {
     // https://nuxtseo.com/docs/og-image/api/config
-    enabled: process.env.NUXT_SSR !== "false",
-    debug: process.env.IS_DEBUGGING !== "false",
+    enabled: isSSR,
+    debug: isDebug,
     defaults: {
       // https://nuxtseo.com/docs/og-image/guides/jpegs#best-practices
       extension: 'png',
@@ -756,9 +761,9 @@ export default defineNuxtConfig({
   },
   aiReady: {
     // https://nuxtseo.com/docs/ai-ready/api/config#enabled
-    enabled: process.env.NUXT_SSR !== "false",
-    debug: process.env.IS_DEBUGGING !== "false",
-    contentSignal: process.env.NUXT_SSR !== "false" ? {
+    enabled: isSSR,
+    debug: isDebug,
+    contentSignal: isSSR ? {
       aiTrain: false,
       search: true,
       aiInput: true
@@ -777,7 +782,7 @@ export default defineNuxtConfig({
   },
   // ...(process.env.IS_ELECTRON === "false") && {
   sitemap: {
-    enabled: process.env.IS_ELECTRON !== "true",
+    enabled: isSSR,
     // in debugging with devtools, you can view raw sitemaps here:
     // url: /__sitemap__/debug.json
     // prerendered file: .output/public/__sitemap__/debug.json
@@ -792,7 +797,7 @@ export default defineNuxtConfig({
       { "label": "Images", "width": "5%", "select": "count(image:image)" },
     ],
     xslTips: process.env.IS_DEBUGGING !== "false",
-    debug: process.env.IS_DEBUGGING !== "false",
+    debug: isDebug,
     credits: false,
     discoverImages: true, // default
     // strictNuxtContentPaths: true,
@@ -862,42 +867,41 @@ export default defineNuxtConfig({
     description:
       "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
     defaultLocale: "en",
-    indexable: !isElectron,
+    indexable: isSSR,
   },
-  ...(process.env.IS_ELECTRON === "false" && {
-    // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-person
-    // this is important: https://unhead.unjs.io/docs/nuxt/schema-org/guides/core-concepts/nodes
-    schemaOrg: {
-      // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-localbusiness
-      // or even OnlineStore with: defineOrganization; read line above!
-      identity: definePerson({
-        name: "Bader Idris",
-        image: "/imgs/meTwentyFour.jpg",
-        description:
-          "Full Stack Developer specializing in Vue, Nuxt, Nest.js, DevOps, GSAP, and Three.js.",
+  // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-person
+  // this is important: https://unhead.unjs.io/docs/nuxt/schema-org/guides/core-concepts/nodes
+  schemaOrg: {
+    enabled: isSSR,
+    // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-localbusiness
+    // or even OnlineStore with: defineOrganization; read line above!
+    identity: definePerson({
+      name: "Bader Idris",
+      image: "/imgs/meTwentyFour.jpg",
+      description:
+        "Full Stack Developer specializing in Vue, Nuxt, Nest.js, DevOps, GSAP, and Three.js.",
+      url: "https://baderidris.com",
+      sameAs: [
+        "https://github.com/bader-idris",
+        "https://linkedin.com/in/bader-idrees",
+        "https://www.facebook.com/Bader.Idris.developer",
+        "https://twitter.com/bader_idri8628"
+      ],
+      jobTitle: "Full Stack Developer",
+      worksFor: {
+        "@id": "https://baderidris.com/#organization",
+        "@type": "Organization",
+        name: "Bader Idris Portfolio",
         url: "https://baderidris.com",
-        sameAs: [
-          "https://github.com/bader-idris",
-          "https://linkedin.com/in/bader-idrees",
-          "https://www.facebook.com/Bader.Idris.developer",
-          "https://twitter.com/bader_idri8628"
-        ],
-        jobTitle: "Full Stack Developer",
-        worksFor: {
-          "@id": "https://baderidris.com/#organization",
-          "@type": "Organization",
-          name: "Bader Idris Portfolio",
-          url: "https://baderidris.com",
-        },
-        logo: "/logo.svg",
-      }),
-    },
-  }),
+      },
+      logo: "/logo.svg",
+    }),
+  },
   robots: {
     // https://nuxtseo.com/docs/robots/guides/robots-txt#parsed-robotstxt
     disallow: ["/contact/admin"],
     // The sitemap module automatically detects and generates sitemaps based on the site.url
-    robotsTxt: process.env.IS_ELECTRON !== "true",
+    robotsTxt: isSSR,
     // https://nuxtseo.com/docs/robots/guides/ai-directives#programmatic-configuration
   },
 

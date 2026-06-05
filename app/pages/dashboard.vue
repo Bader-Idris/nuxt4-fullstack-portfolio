@@ -421,10 +421,12 @@
 </template>
 
 <script setup lang="ts">
-defineOgImage('Default', {
-  title: 'Dashboard',
-  description: 'Secure Chat & Video Dashboard'
-})
+if (import.meta.server) {
+  defineOgImage('Default', {
+    title: 'Dashboard',
+    description: 'Secure Chat & Video Dashboard'
+  })
+}
 
 import { useSocketStore } from "~/stores/useSocketStore";
 import { useMessagesStore } from "~/stores/useMessagesStore";
@@ -459,16 +461,18 @@ useSeoMeta({
     "Access exclusive content, resources, and services on Bader Idris's platform.",
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: "Dashboard",
-    description: "Access exclusive content, resources, and services.",
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: "Dashboard",
+      description: "Access exclusive content, resources, and services.",
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 
 const isPushSupported = computed(
   () =>

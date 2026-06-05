@@ -101,16 +101,18 @@ useSeoMeta({
   description: () => t("elzero_dashboard.subtitle", "A comprehensive collection of 50 frontend challenges."),
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("elzero_dashboard.title", "Elzero 50 Projects"),
-    description: () => t("elzero_dashboard.subtitle", "A comprehensive collection of 50 frontend challenges."),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("elzero_dashboard.title", "Elzero 50 Projects"),
+      description: () => t("elzero_dashboard.subtitle", "A comprehensive collection of 50 frontend challenges."),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 </script>
 
 <style lang="scss" scoped>

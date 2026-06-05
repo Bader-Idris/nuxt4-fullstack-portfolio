@@ -12,11 +12,13 @@ useSeoMeta({
   description: t("about.professional.description"),
 });
 
-useSchemaOrg({
-  "@type": "AboutPage", // or "WebPage"
-  name: "Professional Background",
-  description: "Professional experience of Bader Idris.",
-});
+if (import.meta.server) {
+  useSchemaOrg({
+    "@type": "AboutPage", // or "WebPage"
+    name: "Professional Background",
+    description: "Professional experience of Bader Idris.",
+  });
+}
 </script>
 
 <style lang="scss" scoped>

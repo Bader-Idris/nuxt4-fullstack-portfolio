@@ -104,16 +104,18 @@ useSeoMeta({
   description: t("auth.login_description"),
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("auth.login_title"),
-    description: () => t("auth.login_description"),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("auth.login_title"),
+      description: () => t("auth.login_description"),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 
 const route = useRoute();
 const router = useRouter();

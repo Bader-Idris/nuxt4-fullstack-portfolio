@@ -41,16 +41,18 @@ useSeoMeta({
   description: t("contact.admin.description"),
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("contact.admin.title"),
-    description: () => t("contact.admin.description"),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("contact.admin.title"),
+      description: () => t("contact.admin.description"),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 
 interface Email {
   id: string;

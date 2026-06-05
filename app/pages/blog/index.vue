@@ -58,10 +58,12 @@
 <script setup lang="ts">
 import { useUserStore } from "~/stores/useUserSocket";
 
-defineOgImage('Default', {
-  title: 'Blog | Bader Idris',
-  description: 'Explore insights on Vue, Nuxt, Node, and creative technologies.',
-});
+if (import.meta.server) {
+  defineOgImage('Default', {
+    title: 'Blog | Bader Idris',
+    description: 'Explore insights on Vue, Nuxt, Node, and creative technologies.',
+  });
+}
 
 const userStore = useUserStore();
 const { t, locale } = useI18n();

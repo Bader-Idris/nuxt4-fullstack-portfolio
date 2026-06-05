@@ -104,24 +104,29 @@ useSeoMeta({
   description: () => postData.value?.summary,
   // this didn't add originUrl prefix to ogImage, why?
   ogImage: () => `${config.public.originUrl}/_og/r/blog/${slug.value}.png`,
+  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
 });
 
-defineOgImage('Default', {
-  title: computed(() => postData.value?.title || 'Blog Post'),
-  description: computed(() => postData.value?.summary || "Read more on Bader Idris's blog."),
-});
+if (import.meta.server) {
+  defineOgImage('Default', {
+    title: computed(() => postData.value?.title || 'Blog Post'),
+    description: computed(() => postData.value?.summary || "Read more on Bader Idris's blog."),
+  });
+}
 
 // Schema.org
-useSchemaOrg([
-  defineArticle({
-    headline: () => postData.value?.title,
-    description: () => postData.value?.summary,
-    datePublished: () => postData.value?.createdAt,
-    author: [
-      { name: postData.value?.author.name || 'Bader Idris' }
-    ],
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineArticle({
+      headline: () => postData.value?.title,
+      description: () => postData.value?.summary,
+      datePublished: () => postData.value?.createdAt,
+      author: [
+        { name: postData.value?.author.name || 'Bader Idris' }
+      ],
+    })
+  ]);
+}
 </script>
 
 <style lang="scss" scoped>

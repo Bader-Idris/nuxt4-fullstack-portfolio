@@ -31,15 +31,17 @@ useSeoMeta({
   twitterImage: trainSeoImage,
 });
 
-useSchemaOrg([
-  defineArticle({
-    headline: () => trainTitle.value,
-    description: () => trainDescription.value,
-    image: trainSeoImage,
-    datePublished: "2026-04-13",
-    author: [{ name: "Bader Idris", url: "https://baderidris.com" }],
-  }),
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineArticle({
+      headline: () => trainTitle.value,
+      description: () => trainDescription.value,
+      image: trainSeoImage,
+      datePublished: "2026-04-13",
+      author: [{ name: "Bader Idris", url: "https://baderidris.com" }],
+    }),
+  ]);
+}
 
 // Initialize from URL on client to avoid hydration mismatch
 const isFullscreen = ref(false);

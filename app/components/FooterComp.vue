@@ -126,7 +126,7 @@ const navigateToChild = (child: string) => {
 
 // Add structured data for social profiles using Nuxt SEO
 // We only use this on the server for SEO, or if properly supported
-if (config.public.originUrl) {
+if (import.meta.server && config.public.originUrl) {
   useSchemaOrg([
     definePerson({
       name: "Bader Idris",

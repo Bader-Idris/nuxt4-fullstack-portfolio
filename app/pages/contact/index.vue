@@ -12,16 +12,18 @@ useSeoMeta({
   ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
 });
 
-useSchemaOrg([
-  defineWebPage({
-    name: () => t("contact.title"),
-    description: () => t("contact.description"),
-  }),
-  defineWebSite({
-    name: 'Bader Idris Portfolio',
-    url: 'https://baderidris.com'
-  })
-]);
+if (import.meta.server) {
+  useSchemaOrg([
+    defineWebPage({
+      name: () => t("contact.title"),
+      description: () => t("contact.description"),
+    }),
+    defineWebSite({
+      name: 'Bader Idris Portfolio',
+      url: 'https://baderidris.com'
+    })
+  ]);
+}
 
 const { getFriendlyErrorMessage } = useApiError();
 const isSubmitted = ref<boolean>(false);
