@@ -165,7 +165,7 @@ export const projectsList: Project[] = [
       es: "50 desafíos de interfaz de usuario: Edición Elzero",
     },
     url: "/projects/elzero-50-projects",
-    img: "https://raw.githubusercontent.com/Bader-Idris/50projects50days/master/expanding-cards/screenshot.png",
+    img: "/imgs/patterns/cubes.png",
     imgAlt: "Elzero 50 Projects Challenge Showcase",
     desc: {
       en: "A premium, interactive showcase of 50 frontend challenges from the Elzero Web School. Features a VSCode-style explorer, live playground previews, and full support for English, Arabic, and Spanish.",
