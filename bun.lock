@@ -19,7 +19,7 @@
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.8.0",
         "@resvg/resvg-js": "^2.6.2",
-        "@rive-app/canvas": "^2.37.8",
+        "@rive-app/canvas": "^2.38.0",
         "@socket.io/redis-streams-adapter": "^0.3.1",
         "@tiptap/extension-bubble-menu": "^3.26.0",
         "@tiptap/extension-code-block": "^3.26.0",
@@ -1342,7 +1342,7 @@
 
     "@resvg/resvg-js-win32-x64-msvc": ["@resvg/resvg-js-win32-x64-msvc@2.6.2", "", { "os": "win32", "cpu": "x64" }, "sha512-ZXtYhtUr5SSaBrUDq7DiyjOFJqBVL/dOBN7N/qmi/pO0IgiWW/f/ue3nbvu9joWE5aAKDoIzy/CxsY0suwGosQ=="],
 
-    "@rive-app/canvas": ["@rive-app/canvas@2.37.8", "", {}, "sha512-nffrPG+VkBKHAxZdcqYlP5M+n/mOAoagj774HH397UPTsfC27gwQURg64i6dX7WswMc5qIVX0rzCrZ86Wb2HOA=="],
+    "@rive-app/canvas": ["@rive-app/canvas@2.38.0", "", {}, "sha512-tTrPXsWJZLARBa3H9rOPVMrWp5IRwaVABHLISdBogGGebp0sIAAmfDAD1eK/bP+UODejsT4X3mPBI3GPNln44g=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 

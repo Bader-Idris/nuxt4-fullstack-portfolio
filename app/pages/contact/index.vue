@@ -130,16 +130,16 @@ const validateForm = (): boolean => {
   return true;
 };
 
-const { formatDateRelative } = useDateFormatter();
+const { formatDateShort } = useDateFormatter();
 
 // Update the date periodically using VueUse's useIntervalFn (SSR-friendly)
 const date = ref<Date>(new Date());
-const formattedDate = ref<string>(formatDateRelative(date.value));
+const formattedDate = ref<string>(formatDateShort(date.value).toUpperCase());
 
 const { pause } = useIntervalFn(
   () => {
     date.value = new Date();
-    formattedDate.value = formatDateRelative(date.value);
+    formattedDate.value = formatDateShort(date.value).toUpperCase();
   },
   1000,
   { immediate: false },
@@ -172,7 +172,7 @@ const copyToClipboard = async (text: string) => {
 onMounted(() => {
   if (import.meta.client) {
     date.value = new Date();
-    formattedDate.value = formatDateRelative(date.value);
+    formattedDate.value = formatDateShort(date.value).toUpperCase();
   }
 });
 

@@ -1,26 +1,49 @@
+import { withTrailingSlash, withoutTrailingSlash } from 'ufo'
+
+/**
+ * HYDRATION & ROUTING MIDDLEWARE
+ * Purpose: Ensures robust navigation across SSR and Desktop (Electron) platforms.
+ */
 export default defineNuxtRouteMiddleware((to) => {
-  // Skip during initial client hydration to avoid 
-  // "Error preloading payload" and routing paralysis
-  const nuxtApp = useNuxtApp();
+  const nuxtApp = useNuxtApp()
+
+  /**
+   * 1. SSR HYDRATION GUARD
+   * Standard Nuxt 3 pattern to avoid "Error preloading payload" and "routing paralysis".
+   * We skip redirection logic during the initial client-side hydration phase 
+   * if the page was already rendered by the server. 
+   * In Electron/CSR, 'serverRendered' is false, so the guard correctly passes through.
+   */
   if (
     import.meta.client &&
     nuxtApp.isHydrating &&
-    nuxtApp.payload.serverRendered
+    nuxtApp.payload?.serverRendered
   ) {
-    return;
+    return
   }
 
-  const localePath = useLocalePath();
-  const path = to.path;
+  const localePath = useLocalePath()
   
-  // Robust check for blog path to ensure trailing slash consistency if needed
-  // or just to follow the user's "robust nav solution" pattern
-  const blogBase = localePath('/blog').replace(/\/$/, "");
+  /**
+   * 2. IDENTIFY TARGET PATHS
+   * We use 'localePath' to stay i18n-compliant across all locales.
+   */
+  const blogPath = localePath('/blog')
+  const currentPath = to.path
   
-  // If the user specifically mentioned /blog vs /blog/ causing crashes,
-  // we ensure that /blog always redirects to /blog/ (or vice versa depending on intent)
-  // Based on the user hint, they seem to prefer /blog/
-  if (path === blogBase) {
-    return navigateTo(blogBase + '/', { replace: true });
+  /**
+   * 3. TRAILING SLASH ENFORCEMENT
+   * Standardizes '/blog' -> '/blog/' to prevent hydration mismatches and SEO issues.
+   * Functional in:
+   * - SSR: Triggers a 301 redirect.
+   * - Electron: Correctly handles hash-based routing (e.g., #/blog -> #/blog/).
+   */
+  const targetPathBase = withoutTrailingSlash(blogPath)
+  
+  if (currentPath === targetPathBase && !currentPath.endsWith('/')) {
+    return navigateTo(withTrailingSlash(blogPath), { 
+      replace: true,
+      redirectCode: 301 // Permanent redirect for SSR/SEO
+    })
   }
-});
+})

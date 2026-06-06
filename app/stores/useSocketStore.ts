@@ -67,7 +67,7 @@ export const useSocketStore = defineStore("socket", () => {
       },
     };
 
-    const newSocket = io(config.public.originUrl, options);
+    const newSocket = io(config.public.socketUrl, options);
     socket.value = newSocket;
 
     bindBaseEvents();

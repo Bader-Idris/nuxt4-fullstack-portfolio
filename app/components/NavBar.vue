@@ -6,21 +6,21 @@
       </div>
       <nav class="nav">
         <CustomLink
-          :to="localePath('/')"
+          to="/"
           class="sub-navs"
           :class="{ active: $route.path === localePath('/') }"
         >
           {{ t("home.hello") }}
         </CustomLink>
         <CustomLink
-          :to="localePath('/about')"
+          to="/about"
           class="sub-navs"
           :class="{ active: $route.path.startsWith(localePath('/about')) }"
         >
           {{ t("home.about") }}
         </CustomLink>
         <CustomLink
-          :to="localePath('/projects')"
+          to="/projects"
           class="sub-navs"
           :class="{ active: $route.path.startsWith(localePath('/projects')) }"
         >
@@ -30,7 +30,7 @@
       <!-- <ThemeMode /> -->
       <LanguageSwitcher />
       <CustomLink
-        :to="localePath('/contact')"
+        to="/contact"
         class="contact sub-navs"
         :class="{ active: $route.path.startsWith(localePath('/contact')) }"
       >
@@ -55,7 +55,7 @@
         </div>
         <ul>
           <CustomLink
-            :to="localePath('/')"
+            to="/"
             class="phone-sub-navs"
             :class="{ active: $route.path === localePath('/') }"
             @click="togglePhoneMenu"
@@ -63,7 +63,7 @@
             {{ t("home.hello") }}
           </CustomLink>
           <CustomLink
-            :to="localePath('/about')"
+            to="/about"
             class="phone-sub-navs"
             :class="{ active: $route.path.startsWith(localePath('/about')) }"
             @click="togglePhoneMenu"
@@ -71,7 +71,7 @@
             {{ t("home.about") }}
           </CustomLink>
           <CustomLink
-            :to="localePath('/projects')"
+            to="/projects"
             class="phone-sub-navs"
             :class="{ active: $route.path.startsWith(localePath('/projects')) }"
             @click="togglePhoneMenu"
@@ -79,7 +79,7 @@
             {{ t("home.projects") }}
           </CustomLink>
           <CustomLink
-            :to="localePath('/contact')"
+            to="/contact"
             class="contact-phone phone-sub-navs"
             :class="{ active: $route.path.startsWith(localePath('/contact')) }"
             @click="togglePhoneMenu"

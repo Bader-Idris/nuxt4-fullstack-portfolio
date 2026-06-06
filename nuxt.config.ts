@@ -27,7 +27,7 @@ export default defineNuxtConfig({
   // read this for compatibility https://nitro.build/config#compatibilitydate
   compatibilityDate: "2026-05-28",
   devtools: {
-    enabled: true,
+    enabled: isDebug,
 
     timeline: {
       enabled: true,
@@ -107,7 +107,7 @@ export default defineNuxtConfig({
           'bcryptjs',
           'jsonwebtoken',
           'rate-limiter-flexible',
-          'ttf2woff2',
+          // 'ttf2woff2',
           'better-sqlite3',
         ],
         // Force everything else to be inlined/bundled into chunks:
