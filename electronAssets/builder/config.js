@@ -236,7 +236,7 @@ const baseConfig = {
   // },
   linux: {
     executableName: "portfolio", // Allow opening via "portfolio" command in terminal
-    executableArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
+    executableArgs: ["--no-sandbox", "--disable-setuid-sandbox"], // "--disable-dev-shm-usage" // hides loges, but doesn't solve unabilty to open uncompressed version!
     icon: "electronAssets/resources/icon.png", // Explicitly point to PNG for app indicator support
     category: "Utility",
     target: linuxTargets,

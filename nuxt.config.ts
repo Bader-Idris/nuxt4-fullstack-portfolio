@@ -141,8 +141,10 @@ export default defineNuxtConfig({
         "/dashboard": { prerender: true },
         "/blog": { prerender: true },
         "/blog/create": { prerender: true },
-        "/blog/edit/**": { prerender: true },
+        "/blog/edit/**": { ssr: false, prerender: false },
         "/projects": { prerender: true },
+        "/api/**": { ssr: false, prerender: false },
+        "/socket.io/**": { ssr: false, prerender: false },
       }),
       '/_nuxt/builds/**': {
         headers: {
@@ -333,9 +335,9 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/content",
     "nuxt-tiptap-editor",
-    "@nuxt/eslint",
+    // "@nuxt/eslint", // Removed: replaced by oxlint + oxfmt
     "@nuxt/scripts",
-    "@nuxt/eslint",
+    // "@nuxt/eslint", // Removed: duplicate entry, replaced by oxlint + oxfmt
     "v-gsap-nuxt",
     // "@teages/nuxt-legacy", // Removed: using @vitejs/plugin-legacy directly in vite config
     // "@nuxtjs/ionic", // todo: useless with ssr, causing many issues!

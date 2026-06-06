@@ -11,6 +11,7 @@ if (process.platform === "linux") {
   electronApp.commandLine.appendSwitch("no-sandbox");
   electronApp.commandLine.appendSwitch("disable-setuid-sandbox");
   electronApp.commandLine.appendSwitch("disable-gpu-sandbox");
+  electronApp.commandLine.appendSwitch("disable-dev-shm-usage");
   
   // Set environment variable as an extra layer of defense
   process.env.ELECTRON_DISABLE_SANDBOX = "1";

@@ -155,6 +155,13 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
         }
 
         const normalizedPath = pathname.replace(/\\/g, "/").toLowerCase();
+        
+        // Prevent intercepting API and Socket.io routes as local files
+        if (normalizedPath.includes("/api/") || normalizedPath.includes("/socket.io/")) {
+          console.log(`[Electron Protocol] Bypassing file interceptor for dynamic route: ${pathname}`);
+          return callback({ statusCode: 404 });
+        }
+
         const isAppAsset = isAppAssetList.some((pattern) => {
           const cleanNormalized = normalizedPath.replace(/^[a-z]:\//, "");
           return (
