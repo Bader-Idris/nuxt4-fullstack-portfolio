@@ -121,6 +121,7 @@ export default defineNuxtConfig({
           'canvas-confetti',
           'particles.js',
           'vue3-toastify',
+          // if using deno/bun, 'ofetch', 'defu', 'ufo', 'ipx'
         ],
       },
 
@@ -927,6 +928,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // ? publicly for client
     public: {
+      // Expose desktop/electron flags so client plugins/middleware can
+      // guard Electron-specific behaviour (e.g. skip ServiceWorker, skip
+      // SSR-only redirects) without needing process.env access at runtime.
+      isElectron: isElectron,
+      isDesktop: isDesktop,
       originUrl: isElectron ? "./" : siteUrl,
       socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
       isCapacitor: process.env.IS_CAPACITOR === "true",
@@ -993,7 +999,12 @@ export default defineNuxtConfig({
   },
   content: {
     // check out content.config.ts file
-    experimental: { nativeSqlite: true },
+    // Using better-sqlite3 instead of Node.js 22's native node:sqlite.
+    // node:sqlite leaks into the Electron renderer bundle via Vite's lack of
+    // tree-shaking in dev mode, causing "Dynamic require of 'tty'" errors on
+    // /blog and /projects. better-sqlite3 is a stable native addon that stays
+    // server-side via Nitro externals and works correctly in all environments.
+    // experimental: { nativeSqlite: false },
     //   database: {
     //     type: "postgres",
     //     url: String(process.env.PSQL_URL),

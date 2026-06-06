@@ -85,6 +85,7 @@
     "@tiptap/vue-3": "^3.26.0",
     "@vueuse/nuxt": "14.3.0",
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
     "canvas-confetti": "^1.9.4",
     "electrobun": "^1.18.1",
     "firebase-admin": "^13.10.0",
