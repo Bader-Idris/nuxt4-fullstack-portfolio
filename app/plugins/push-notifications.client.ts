@@ -9,9 +9,14 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
   } = usePushNotifications();
 
   if (import.meta.client) {
+    const config = useRuntimeConfig();
+
     if (isCapacitor) {
       initialize();
-    } else {
+    } else if (!config.public.isDesktop) {
+      // Service Workers are NOT supported in Electron renderer processes.
+      // Attempting to register one throws InvalidStateError in the renderer.
+      // Skip SW registration entirely for all desktop (Electron/Electrobun) builds.
       if ("serviceWorker" in navigator) {
         try {
           console.log("Registering service worker...");
