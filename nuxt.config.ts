@@ -137,6 +137,12 @@ export default defineNuxtConfig({
         "/": {
           prerender: true,
         },
+        "/contact/admin": { prerender: true },
+        "/dashboard": { prerender: true },
+        "/blog": { prerender: true },
+        "/blog/create": { prerender: true },
+        "/blog/edit/**": { prerender: true },
+        "/projects": { prerender: true },
       }),
       '/_nuxt/builds/**': {
         headers: {
@@ -183,7 +189,6 @@ export default defineNuxtConfig({
       // for old used urls, redirect to new ones, so search engines update
       // https://nuxtseo.com/learn-seo/nuxt/controlling-crawlers/redirects
       "/about/personal": { redirect: { to: "/about/hobbies/bio", statusCode: 301 } },
-      // '/projects/**': { redirect: '/:lang/projects/**' } // For i18n
     },
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     experimental: {
@@ -235,7 +240,6 @@ export default defineNuxtConfig({
         "gsap/all",
         "howler", // CJS
         "lowlight",
-        // can these three cause issues? I think not
         "node:fs",
         "node:path",
         "sharp", // CJS
