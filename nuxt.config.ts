@@ -160,12 +160,14 @@ export default defineNuxtConfig({
         // TODO: create a middleware for cors, this only provides boolean value
       },
       "/contact/admin": {
+        prerender: false,
         cache: false,
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       },
       "/dashboard": {
+        prerender: false,
         cache: false,
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -176,6 +178,8 @@ export default defineNuxtConfig({
         // "/user/unsubscribe": {},
         // "/user/verify-email": {},
       },
+      "/blog/create": { prerender: false },
+      "/blog/edit/**": { prerender: false },
       // for old used urls, redirect to new ones, so search engines update
       // https://nuxtseo.com/learn-seo/nuxt/controlling-crawlers/redirects
       "/about/personal": { redirect: { to: "/about/hobbies/bio", statusCode: 301 } },
