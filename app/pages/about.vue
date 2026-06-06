@@ -266,9 +266,13 @@ const hobbiesObj = useState("aboutHobbies", () => [
 const config = useRuntimeConfig();
 
 if (import.meta.server) {
-  const fs = await import("node:fs");
-  const path = await import("node:path");
-  const sharp = (await import("sharp")).default;
+  // Use dynamic imports to keep Node-only modules out of the client bundle
+  const [fs, path, sharpModule] = await Promise.all([
+    import("node:fs"),
+    import("node:path"),
+    import("sharp"),
+  ]);
+  const sharp = sharpModule.default;
 
   const processIcon = async (iconPath: string) => {
     const inputPath = path.join(process.cwd(), "public", iconPath);
