@@ -303,12 +303,23 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .cont {
   width: 100%;
-  height: 100%;
-  @include flex-container(row, nowrap, space-around, flex-start);
-  padding: 100px 10px;
+  margin: auto 0;
+  @include flex-container(row, nowrap, space-evenly, flex-start);
+  padding: 10px;
 
   @media screen and (max-height: 668px) {
     padding: 30px 10px;
+  }
+
+  @media screen and (max-width: 1024px) {
+    .beautiful-results,
+    > span {
+      display: none;
+    }
+    .messaging {
+      width: 100% !important;
+      padding: 0 20px;
+    }
   }
 
   @include mobile {
@@ -318,10 +329,6 @@ onBeforeUnmount(() => {
     overflow: auto;
     padding-top: 10px;
     display: flex;
-
-    .beautiful-results {
-      display: none;
-    }
 
     .messaging {
       width: 100%;
@@ -352,7 +359,7 @@ onBeforeUnmount(() => {
 
     @include tablet-to-up {
       margin-bottom: 60px;
-      height: calc($full-viewport-height - 260px);
+      max-height: calc($full-viewport-height - 260px);
       position: relative;
       overflow-y: scroll;
       padding-right: 20px;
@@ -469,7 +476,7 @@ onBeforeUnmount(() => {
       background: $lines;
       margin: 0 10px;
       position: relative;
-      top: -100px;
+      top: 0;
     }
   }
 
@@ -519,7 +526,7 @@ onBeforeUnmount(() => {
       margin-bottom: 10px;
       @include tablet-to-up {
         margin-bottom: 60px;
-        height: calc($full-viewport-height - 260px);
+        max-height: calc($full-viewport-height - 260px);
         position: relative;
         overflow-y: scroll;
       }

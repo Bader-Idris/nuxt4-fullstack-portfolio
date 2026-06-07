@@ -208,9 +208,14 @@ const copyToClipboard = async (index: number): Promise<void> => {
 .contact-page {
   display: flex;
   flex-direction: column;
-  height: calc(#{$full-viewport-height} - 87px);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   @include mainMiddleSettings;
+
+  @include tablet-to-up {
+    height: auto; // Override fixed height from mixin
+  }
 
   @include mobile {
     @include phone-borders;
@@ -326,9 +331,12 @@ aside {
   padding: 40px;
   overflow-y: auto;
   background-color: $primary2;
+  display: flex;
+  flex-direction: column;
 
   @include mobile {
     padding: 20px 15px;
+    display: block;
   }
 }
 

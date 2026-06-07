@@ -501,37 +501,53 @@ onBeforeMount(() => {
   height: 100%;
   padding: 40px;
   overflow-y: auto;
+  gap: 60px;
 
   @include mobile {
     position: relative;
     @include flex-container(column, nowrap, unset, center);
     padding: 20px 15px;
+    gap: 30px;
   }
 
   > * {
     flex: 1;
-    padding: 0 20px;
     min-width: 0;
 
     @include mobile {
       width: 100%;
-      padding: 0 20px;
       flex: none;
     }
   }
 
   .personal-bio {
-    height: 50dvh;
-    overflow-y: scroll;
+    max-height: 50vh;
+    overflow-y: auto;
     cursor: grab;
     user-select: none;
+    padding: 10px 0;
+    
+    // Dynamic scroll shadows using mask-image for transparency compatibility
+    mask-image: linear-gradient(to bottom, 
+      transparent, 
+      black 40px, 
+      black calc(100% - 40px), 
+      transparent
+    );
 
     &.grabbing {
       cursor: grabbing;
     }
 
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
     @include mobile {
       height: inherit;
+      max-height: none;
+      mask-image: none;
+      padding: 0;
       & p {
         margin-bottom: 30px;
       }
@@ -539,50 +555,71 @@ onBeforeMount(() => {
   }
 
   .code-snippet {
-    border-radius: 40px;
+    border-radius: 28px;
     overflow-y: auto;
-    max-height: 400px;
-    padding: 20px;
+    max-height: 50vh;
+    padding: 30px;
+    background-color: rgba($code-snippets-bg, 0.4);
+    border: 1px solid rgba($lines, 0.8);
+    backdrop-filter: blur(16px);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+    &:hover {
+      border-color: rgba($accent2, 0.4);
+      transform: translateY(-5px);
+    }
 
     @include mobile {
-      margin-left: 10px;
-      width: calc($full-viewport-width - 30px);
+      margin-left: 0;
+      width: 100%;
+      max-height: none;
+      border-radius: 15px;
+      padding: 15px;
     }
 
     .code-author {
       @include flex-container(row, nowrap, unset, center);
+      margin-bottom: 15px;
+
       .mi-imagen {
-        width: 40px;
-        height: 40px;
-        border-radius: 12em;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
         border: 2px solid $lines;
         margin-right: 15px;
         cursor: pointer;
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: scale(1.1);
+        }
       }
 
       & p:first-of-type {
         color: $gradients1;
         font-weight: bold;
+        margin: 0;
       }
 
       & p:nth-of-type(2) {
         font-size: $labels-size * 0.8;
-      }
-
-      & p {
-        margin: 10px 0;
+        opacity: 0.7;
+        margin: 4px 0 0 0;
       }
     }
 
-    & *:not(.code-author, .code-author *, .ProseMirror *, .copy-code-btn, .copy-code-btn *) {
-      background-color: $code-snippets-bg;
-      border-radius: 15px;
-      padding: 0 5px;
-      margin: 20px 0;
+    // Target the code block background specifically
+    .code-block-container {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba($lines, 0.4);
     }
 
     .ProseMirror {
       outline: none;
+      background: transparent !important;
     }
   }
 }

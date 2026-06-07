@@ -446,9 +446,13 @@ body {
 
 #__nuxt {
   margin: 30px;
+  height: calc(var(--full-viewport-height) - 60px);
+  display: flex;
+  flex-direction: column;
 
   @include mobile {
     margin: 15px;
+    height: calc(var(--full-viewport-height) - 30px);
   }
 }
 
