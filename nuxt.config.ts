@@ -217,6 +217,11 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/normalize.css", "~/assets/scss/main.scss"],
   vite: {
+    define: {
+      // Build-time constant — Rollup will dead-code-eliminate any branch
+      // guarded by `import.meta.env.IS_CAPACITOR` when building for SSR/web.
+      "import.meta.env.IS_CAPACITOR": JSON.stringify(isCapacitor),
+    },
     optimizeDeps: {
       include: [
         "@capacitor/app",

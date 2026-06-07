@@ -1,3 +1,5 @@
 # yo, this should be overlooked from robots nuxt pkgs! read: https://nuxtseo.com/docs/robots/guides/robots-txt#parsed-robotstxt
 # also test it with this: https://nuxtseo.com/tools/robots-txt-generator
 # if untrusted bots get crazy, this could be useful: https://nuxtseo.com/docs/robots/guides/bot-detection#automation-tools-untrusted
+User-agent: *
+Disallow: /api

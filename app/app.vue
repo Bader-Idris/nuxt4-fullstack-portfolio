@@ -363,6 +363,7 @@ const initNetworkListener = async () => {
 
 const initPushNotifications = async () => {
   try {
+    if (!import.meta.env.IS_CAPACITOR) return;
     const { PushNotifications } = await import("@capacitor/push-notifications");
     let permStatus = await PushNotifications.checkPermissions();
     if (permStatus.receive === "prompt") {
