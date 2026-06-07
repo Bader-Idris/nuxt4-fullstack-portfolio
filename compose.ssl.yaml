@@ -1,0 +1,305 @@
+# SSL production compose — secrets-filtered clone of b.comp.prod.yaml
+# All secrets are injected via environment variables (keep them in .env.production, gitignored).
+# TODO: a.prod-certbot has the initial setup for ssl
+# ? after you get the certs, stop nginx container and use this instead
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./server/config/nginx/Dockerfile
+    # image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # If it doesn't exist; do "openssl dhparam -out dhparam.pem 2048" in server, migth need chmod 600 /etc/nginx/dhparam.pem, default unix path for certs is: /etc/ssl/certs
+      - dhparam:/etc/ssl/certs # ! it'll mount the Diffie-Hellman key to nginx container
+      - ./server/config/nginx/nginx_with_certbot_secured.conf:/etc/nginx/conf.d/secured.conf
+      # - ./.output/public:/var/www/html
+      - app-data:/var/www/html
+      # instead, we'll mount from nginx to certbot
+      # - certbot-webroot:/var/www/html
+
+      - ./server/config/nginx/for_server_exclusively.html:/usr/share/nginx/html/index.html:ro
+      - certbot-etc:/etc/letsencrypt     # ? certs and keys
+      - certbot-var:/var/lib/letsencrypt # ? default working dir
+      # requries renewal every 90 days, it'll update the certs within 30 days of expiration
+      # TODO: navigate to the ssl_renew.sh file in nginx conf dir and check its teaching comment
+
+      # to add mta-sts, we need this txt file:
+      - ./server/config/mailserver/mta-sts.txt:/var/www/html/.well-known/mta-sts.txt:ro
+      # fail2ban running on host, connect to this container
+      - /var/log/nginx:/var/log/nginx
+      # docker cp nginx:/etc/nginx /path/on/hosing-machine
+      # Mount logs for Fail2Ban persistence
+      # - nginx-logs:/var/log/nginx
+    restart: always
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      # - ./.output/public:/var/www/html
+      # - app-data:/var/www/html
+      - certbot-webroot:/var/www/certbot
+
+    depends_on:
+      - nginx
+    # TODO: you're required to add move certs from staging to prod versions, check file a.prod-certbot.yml
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN} -d www.${DOMAIN} -d mail.${DOMAIN} -d mta-sts.${DOMAIN}
+
+  app:
+    build:
+      context: .
+      # dockerfile: ./server/config/bun.Dockerfile
+      dockerfile: ./server/config/Dockerfile
+      args:
+        NODE_ENV: production
+    # image: baderidris/nuxt-portfolio:3.2.5-testing-bun-prod
+
+    # image: baderidris/nuxt-portfolio:3.3.3-production-slim
+    image: baderidris/nuxt-portfolio:3.4.1-testing-prod
+    # image: baderidris/nuxt-portfolio:3.3.2-testing-prod
+    restart: always
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 15s
+      labels:
+        - "com.docker.swarm.service.name={{.Service.Name}}-{{.Task.Slot}}"
+      resources:
+        limits:
+          cpus: '0.45'
+          memory: 250m  # Max memory
+        reservations:
+          memory: 200m  # Minimum memory guaranteed
+    mem_limit: 250m
+    memswap_limit: 1200m
+    volumes:
+      - app-data:/app/.output/public:ro
+    env_file:
+      - ./.env.production
+    # environment:
+    #   - PORT={PORT}
+    #   - NODE_ENV=production
+    #   - MONGO_USER={MONGO_USER}
+    #   - MONGO_PASSWORD={MONGO_PASSWORD}
+    #   - SESSION_SECRET={SESSION_SECRET}
+    #   - REDIS_USER={REDIS_USER}
+    #   - REDIS_PASSWORD={REDIS_PASSWORD}
+    #   - POSTGRES_PASSWORD={POSTGRES_PASSWORD}
+    #   - POSTGRES_DB={POSTGRES_DB}
+    #   - JWT_SECRET={JWT_SECRET}
+    #   - JWT_LIFETIME={JWT_LIFETIME} # zach says 2 weeks for prod!
+    #   - SENDGRID_API_KEY={SENDGRID_API_KEY}
+    #   - MAIL_USER={MAIL_USER}
+    #   - MAIL_PASS={MAIL_PASS}
+    #   - CYPRESS_RECORD_KEY={CYPRESS_RECORD_KEY}
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - GOOGLE_TAG_MANAGER_ID=${GOOGLE_TAG_MANAGER_ID}
+      - NUXT_PUBLIC_GOOGLE_TAG_MANAGER_ID=${NUXT_PUBLIC_GOOGLE_TAG_MANAGER_ID}
+
+      - SESSION_SECRET=${SESSION_SECRET}
+      - REDIS_USER=${REDIS_USER:-default}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_LIFETIME=${JWT_LIFETIME:-3h} # zach says 2 weeks for prod!
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - ORIGIN_URL=${ORIGIN_URL}
+      - MAIL_USER=${MAIL_USER}
+      - MAIL_PASS=${MAIL_PASS}
+      - CYPRESS_RECORD_KEY=${CYPRESS_RECORD_KEY}
+
+      # TODO: get yours from https://console.developers.google.com/
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # TODO: get yours from https://developers.facebook.com/
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
+
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/portfolio?authSource=admin
+      - REDIS_URL=redis://${REDIS_USER:-default}:${REDIS_PASSWORD}@redis:6379
+      # for prisma, we might add postgres.js/pg or bun.sql
+      # - PSQL_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@psql:5432/${POSTGRES_DB}?schema=public
+
+      # Add V8 heap limit for Bun/Node.js (adjust based on your app's needs)
+      - NODE_OPTIONS=--max-old-space-size=1200
+    depends_on:
+      - mongo
+      - postgres
+    # command: bun start
+    command: npm start
+    networks:
+      - app-network
+
+  mongo:
+    # image: mongo:4.4 # TODO: old cpus!
+    image: mongo:8.2
+    container_name: mongo
+    restart: always
+
+    # TODO: modify it as needed
+    mem_limit: 300m
+    memswap_limit: 300m
+
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo-db:/data/db:rw
+      - ./server/config/mongo/mongod.conf:/etc/mongod.conf:ro
+    command: mongod --config /etc/mongod.conf
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    volumes:
+      - redis-data:/data:rw
+      - ./server/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    environment:
+      - REDIS_USER=${REDIS_USER:-default}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - app-network
+    privileged: true
+    command: >
+      sh -c "sysctl vm.overcommit_memory=1 &&
+      redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD} &&
+      AUTH default ${REDIS_PASSWORD} &&
+      save 60 1"
+  # TODO: with binding the data volume we can do backup services as:
+  # redis-backup:
+  #   image: backup-service
+  #   volumes:
+  #     - redis-data:/backup/redis:ro
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: psql
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - psql-data:/var/lib/postgresql/data:rw
+      - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+
+    networks:
+      - app-network
+  # adminer:  # I think it's not important to obtain
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+
+  # rabbitMQ doc https://hub.docker.com/_/rabbitmq
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitMQ
+  #   restart: always
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=bader  # user
+  #     - RABBITMQ_DEFAULT_PASS=secret # password
+  #   ports:
+  #     - "5672:5672" # AMQP port
+  #     - "15672:15672" # management interface port
+  #   networks:
+  #     - app-network
+
+  mail:
+    image: mailserver/docker-mailserver:14.0 # same as image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mail
+    # Provide the FQDN of your mail server here (Your DNS MX record should point to this value)
+    hostname: ${MAIL_HOSTNAME}
+    env_file: ./server/config/mailserver/mailserver.env
+    # More information about the mail-server ports:
+    # https://docker-mailserver.github.io/docker-mailserver/latest/config/security/understanding-the-ports/
+    ports:
+      - "25:25"    # SMTP  (explicit TLS => STARTTLS, Authentication is DISABLED => use port 465/587 instead)
+      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+      - "465:465"  # ESMTP (implicit TLS)
+      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+      - "993:993"  # IMAP4 (implicit TLS)
+    volumes:
+      - ./server/mailserver/mail-data:/var/mail/
+      - ./server/mailserver/mail-state:/var/mail-state/
+      # - ./server/mailserver/mail-logs:/var/log/mail/ # TODO: fix its disk vulnerability
+      - ./server/mailserver/config/:/tmp/docker-mailserver/
+      - /etc/localtime:/etc/localtime:ro
+
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-var:/var/lib/letsencrypt:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'  # 20% of 1 core
+          memory: 200m  # Max memory
+        reservations:
+          memory: 150m  # Minimum memory guaranteed
+    memswap_limit: 350m
+    restart: always
+    stop_grace_period: 1m
+    # Uncomment if using `ENABLE_FAIL2BAN=1`: # TODO: use the host one instead!
+    cap_add:
+      - NET_ADMIN
+    healthcheck:
+      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+      timeout: 3s
+      retries: 0
+    networks:
+      - app-network
+# postfix configuration files are:  /etc/postfix/main.cf and /usr/share/postfix/main.cf.dist The 2nd is the global one
+# dovecot conf file: /etc/dovecot/dovecot.conf
+# also check /etc/dovecot/userdb /etc/dovecot/masterdb
+
+# ufw allow 25 ; ufw allow 465 ; ufw allow 587 ; ufw allow 993
+# as of 2020, best in retrieving is 993 => imaps, see https://datatracker.ietf.org/doc/html/rfc8314
+# and we can use 143 for backwards compatibility
+
+volumes:
+  # TODO check if separating them in a and b files will causes issues??
+  app-data:
+  mongo-db:
+  psql-data:
+  redis-data:
+  certbot-etc:
+  certbot-var:
+  certbot-webroot:
+  dhparam:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./server/config/certbot/dhparam
+      o: bind
+  # nginx-logs:
+
+networks:
+  app-network:
+    driver: bridge
+
+# to allow icmp protocol for ping, use:
+# sudo ufw allow proto icmp # or use the firewalls Inbound Rules => new rule => ICMP
+# # then use this to limit them to 5/second
+# sudo iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 5/s --limit-burst 100 -j ACCEPT
+# check https://cloud.digitalocean.com/networking/firewalls
+
+# TODO: to view real time memory usage use:
+# docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"

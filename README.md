@@ -395,6 +395,37 @@ Make sure to update the domain name `baderidris.com` in the `b.dev.yml` file and
 
 ### SSL Certificate Management
 
+> [!IMPORTANT]
+> **`compose.ssl.yaml` is the secrets-safe SSL template for production.**
+> It is a filtered clone of `b.comp.prod.yaml` where every hardcoded secret has been replaced with an environment variable reference. **Never run it without first populating your env file.**
+
+Before starting, copy the example env file and fill in your secrets:
+
+```bash
+cp .env.ssl.example .env.production
+# then edit .env.production and set all required values
+```
+
+| Variable | Description |
+|---|---|
+| `DOMAIN` | Your root domain (e.g. `baderidris.com`) |
+| `MAIL_HOSTNAME` | Mail server FQDN (e.g. `mail.baderidris.com`) |
+| `CERTBOT_EMAIL` | Email used for Let's Encrypt notifications |
+| `MONGO_INITDB_ROOT_USERNAME` / `MONGO_INITDB_ROOT_PASSWORD` | MongoDB root credentials |
+| `REDIS_PASSWORD` | Redis auth password |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | PostgreSQL credentials |
+| `SESSION_SECRET` / `JWT_SECRET` | App session and JWT signing secrets |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth credentials |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook OAuth credentials |
+| `SENDGRID_API_KEY` | SendGrid API key for transactional emails |
+| `MAIL_USER` / `MAIL_PASS` | SMTP mail account credentials |
+
+Then launch with:
+
+```bash
+docker compose -f compose.ssl.yaml --env-file .env.production up -d
+```
+
 #### Certificate Renewal Setup
 
 To automate certificate renewals, create a cron job by modifying the paths in the `/server/config/nginx/ssl_renew.sh` file, then add this to your crontab:

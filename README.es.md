@@ -413,6 +413,37 @@ Los lanzamientos se organizarán y fecharán en `./release/electrobun/${version}
 
 ### Gestión de certificados SSL
 
+> [!IMPORTANT]
+> **`compose.ssl.yaml` es la plantilla SSL segura para producción.**
+> Es un clon filtrado de `b.comp.prod.yaml` donde cada secreto hardcodeado ha sido reemplazado por una referencia a variable de entorno. **Nunca lo ejecute sin antes rellenar su archivo de entorno.**
+
+Antes de comenzar, copie el archivo de entorno de ejemplo y complete sus secretos:
+
+```bash
+cp .env.ssl.example .env.production
+# luego edite .env.production y establezca todos los valores requeridos
+```
+
+| Variable | Descripción |
+|---|---|
+| `DOMAIN` | Su dominio raíz (ej. `baderidris.com`) |
+| `MAIL_HOSTNAME` | FQDN del servidor de correo (ej. `mail.baderidris.com`) |
+| `CERTBOT_EMAIL` | Correo usado para notificaciones de Let's Encrypt |
+| `MONGO_INITDB_ROOT_USERNAME` / `MONGO_INITDB_ROOT_PASSWORD` | Credenciales raíz de MongoDB |
+| `REDIS_PASSWORD` | Contraseña de autenticación de Redis |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Credenciales de PostgreSQL |
+| `SESSION_SECRET` / `JWT_SECRET` | Secretos de sesión y firma JWT |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Credenciales OAuth de Facebook |
+| `SENDGRID_API_KEY` | Clave API de SendGrid para correos transaccionales |
+| `MAIL_USER` / `MAIL_PASS` | Credenciales de cuenta de correo SMTP |
+
+Luego inicie con:
+
+```bash
+docker compose -f compose.ssl.yaml --env-file .env.production up -d
+```
+
 #### Configuración de renovación de certificados
 
 Para automatizar las renovaciones de certificados, cree un trabajo cron modificando las rutas en el archivo `/server/config/nginx/ssl_renew.sh`, luego agregue esto a su crontab:

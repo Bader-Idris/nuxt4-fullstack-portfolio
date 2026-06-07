@@ -377,6 +377,37 @@ bunx capacitor-assets generate --assetPath "./assets" --ios --android
 
 ### إدارة شهادة SSL
 
+> [!IMPORTANT]
+> **`compose.ssl.yaml` هو القالب الآمن للإنتاج مع SSL.**
+> إنه نسخة مفلترة من `b.comp.prod.yaml` حيث تم استبدال كل سر مُضمَّن بمرجع متغير بيئي. **لا تشغّله أبدًا قبل ملء ملف البيئة الخاص بك.**
+
+قبل البدء، انسخ ملف البيئة النموذجي واملأ بياناتك:
+
+```bash
+cp .env.ssl.example .env.production
+# ثم عدّل .env.production وأدخل جميع القيم المطلوبة
+```
+
+| المتغير | الوصف |
+|---|---|
+| `DOMAIN` | النطاق الرئيسي (مثل `baderidris.com`) |
+| `MAIL_HOSTNAME` | الاسم الكامل لخادم البريد (مثل `mail.baderidris.com`) |
+| `CERTBOT_EMAIL` | البريد الإلكتروني المستخدم لإشعارات Let's Encrypt |
+| `MONGO_INITDB_ROOT_USERNAME` / `MONGO_INITDB_ROOT_PASSWORD` | بيانات اعتماد MongoDB الجذرية |
+| `REDIS_PASSWORD` | كلمة مرور مصادقة Redis |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | بيانات اعتماد PostgreSQL |
+| `SESSION_SECRET` / `JWT_SECRET` | أسرار توقيع الجلسة و JWT |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | بيانات اعتماد OAuth لـ Google |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | بيانات اعتماد OAuth لـ Facebook |
+| `SENDGRID_API_KEY` | مفتاح API لـ SendGrid لإرسال الرسائل |
+| `MAIL_USER` / `MAIL_PASS` | بيانات اعتماد حساب البريد SMTP |
+
+ثم شغّل الخدمات بـ:
+
+```bash
+docker compose -f compose.ssl.yaml --env-file .env.production up -d
+```
+
 #### إعداد تجديد الشهادة
 
 لأتمتة تجديد الشهادات، أنشئ مهمة cron عن طريق تعديل المسارات في الملف `/server/config/nginx/ssl_renew.sh`، ثم أضف هذا إلى crontab:
