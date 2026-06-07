@@ -31,7 +31,7 @@ const hideLayout = computed(() => route.meta.hideLayout || false);
     display: flex;
     flex-direction: column;
     min-height: 0;
-    overflow: hidden; // Ensure children handle their own scrolling
+    overflow: visible; // Allow shadows and pseudo-elements to bleed out
   }
 }
 </style>
