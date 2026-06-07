@@ -125,7 +125,6 @@ onMounted(() => {
 
 .progress-text {
   color: #00c853;
-  /* get rid of it, use cascade code instead */
   font-family: "Cascadia Code", monospace;
   font-size: 18px;
   font-weight: bold;
