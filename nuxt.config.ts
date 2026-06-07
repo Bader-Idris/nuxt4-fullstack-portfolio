@@ -939,6 +939,7 @@ export default defineNuxtConfig({
       // SSR-only redirects) without needing process.env access at runtime.
       isElectron: isElectron,
       isDesktop: isDesktop,
+      isSSR: isSSR,
       originUrl: isElectron ? "./" : siteUrl,
       socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
       isCapacitor: process.env.IS_CAPACITOR === "true",

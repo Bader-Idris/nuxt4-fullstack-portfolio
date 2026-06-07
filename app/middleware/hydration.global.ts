@@ -1,10 +1,19 @@
-import { withTrailingSlash, withoutTrailingSlash } from 'ufo'
-
 /**
  * HYDRATION & ROUTING MIDDLEWARE
  * Purpose: Ensures robust navigation across SSR and Desktop (Electron) platforms.
  */
 export default defineNuxtRouteMiddleware((to) => {
+  const config = useRuntimeConfig()
+  
+  /**
+   * 0. SSR GUARD
+   * We skip this middleware if SSR is disabled (e.g. Electron, Capacitor, or NUXT_SSR=false).
+   * This ensures that hydration-specific logic doesn't interfere with CSR-only builds.
+   */
+  if (!config.public.isSSR) {
+    return
+  }
+
   const nuxtApp = useNuxtApp()
 
   /**
@@ -20,30 +29,5 @@ export default defineNuxtRouteMiddleware((to) => {
     nuxtApp.payload?.serverRendered
   ) {
     return
-  }
-
-  const localePath = useLocalePath()
-  
-  /**
-   * 2. IDENTIFY TARGET PATHS
-   * We use 'localePath' to stay i18n-compliant across all locales.
-   */
-  const blogPath = localePath('/blog')
-  const currentPath = to.path
-  
-  /**
-   * 3. TRAILING SLASH ENFORCEMENT
-   * Standardizes '/blog' -> '/blog/' to prevent hydration mismatches and SEO issues.
-   * Functional in:
-   * - SSR: Triggers a 301 redirect.
-   * - Electron: Correctly handles hash-based routing (e.g., #/blog -> #/blog/).
-   */
-  const targetPathBase = withoutTrailingSlash(blogPath)
-  
-  if (currentPath === targetPathBase && !currentPath.endsWith('/')) {
-    return navigateTo(withTrailingSlash(blogPath), { 
-      replace: true,
-      redirectCode: 301 // Permanent redirect for SSR/SEO
-    })
   }
 })
