@@ -720,32 +720,39 @@ export default defineNuxtConfig({
     //   ctx.markdown = `# ${ctx.title}\n\n${ctx.markdown}`
     // }
   },
-  ...(isSSR && {
-    fonts: {
-      devtools: isDebug,
-      families: [
-        { name: "Fira Code", weights: [400, 600, 700], global: true,
-          src: [
-            { url: '/fonts/fira-code-v27-latin-400.woff2', format: 'woff2' },
-            { url: '/fonts/fira-code-v27-latin-600.woff2', format: 'woff2' },
-            { url: '/fonts/fira-code-v27-latin-700.woff2', format: 'woff2' }
-          ]
-        },
-        { name: "JetBrains Mono", weights: [400, 700], global: true },
-        { name: "IBM Plex Sans Arabic", weights: [400, 700], global: true },
-        { name: "Noto Sans JP", weights: [400, 700], global: true }
-      ],
-      defaults: {
-        fallbacks: {
-          monospace: ['monospace'],
-          'sans-serif': ['IBM Plex Sans Arabic', 'Noto Sans JP', 'sans-serif']
-        }
+  fonts: {
+    devtools: isDebug,
+    families: [
+      { name: "Fira Code", weights: [400, 600, 700], global: true,
+        src: [
+          { url: '/fonts/fira-code-v27-latin-400.woff2', format: 'woff2' },
+          { url: '/fonts/fira-code-v27-latin-600.woff2', format: 'woff2' },
+          { url: '/fonts/fira-code-v27-latin-700.woff2', format: 'woff2' }
+        ]
       },
-      experimental: {
-        processCSSVariables: true
+      { name: "Cascadia Code", weights: [400, 700], global: true,
+        src: [
+          { url: '/fonts/cascadia-code/CascadiaCode-Regular.woff2', format: 'woff2' },
+          { url: '/fonts/cascadia-code/CascadiaCode-Bold.woff2', format: 'woff2' }
+        ]
+      },
+      { name: "IBM Plex Sans Arabic", weights: [400, 700], global: true,
+        src: [
+          { url: '/fonts/ibm-plex-sans-arabic/IBMPlexSansArabic-Regular.woff2', format: 'woff2' },
+          { url: '/fonts/ibm-plex-sans-arabic/IBMPlexSansArabic-Bold.woff2', format: 'woff2' }
+        ]
+      }
+    ],
+    defaults: {
+      fallbacks: {
+        monospace: ['monospace'],
+        'sans-serif': ['IBM Plex Sans Arabic', 'sans-serif']
       }
     },
-  }),
+    experimental: {
+      processCSSVariables: true
+    }
+  },
   ogImage: {
     // https://nuxtseo.com/docs/og-image/api/config
     enabled: isSSR,

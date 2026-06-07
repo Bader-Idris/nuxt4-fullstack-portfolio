@@ -176,58 +176,38 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
             cleanPath = cleanPath.substring(3);
           }
 
-          // Try unpacked location first
-          const unpackedPath = path.join(
-            unpackedBase,
-            ".output",
-            "public",
-            cleanPath,
-          );
-          console.log(`[Electron Protocol] Trying unpacked: ${unpackedPath}`);
-
-          fs.stat(unpackedPath, (err, stats) => {
-            if (!err && stats.isFile()) {
-              console.log(
-                `[Electron Protocol] Serving unpacked: ${unpackedPath}`,
-              );
-              callback({ path: unpackedPath });
-            } else {
-              const altPath = path.join(unpackedBase, ".output", cleanPath);
-              console.log(`[Electron Protocol] Trying alternative: ${altPath}`);
-
-              fs.stat(altPath, (_altErr, altStats) => {
-                if (!_altErr && altStats.isFile()) {
-                  console.log(
-                    `[Electron Protocol] Serving alternative: ${altPath}`,
-                  );
-                  callback({ path: altPath });
-                } else {
-                  // Fallback to ASAR
-                  const asarPath = path.join(
-                    resourcesBase,
-                    "app.asar",
-                    ".output",
-                    "public",
-                    cleanPath,
-                  );
-                  console.log(`[Electron Protocol] Trying ASAR: ${asarPath}`);
-
-                  fs.stat(asarPath, (asarErr, _asarStats) => {
-                    if (asarErr) {
-                      console.error(
-                        `[Electron Protocol] File not found: ${cleanPath}`,
-                      );
-                      callback({ statusCode: 404 });
-                    } else {
-                      console.log(
-                        `[Electron Protocol] Serving ASAR: ${asarPath}`,
-                      );
-                      callback({ path: asarPath });
+          // Function to check and serve file or directory index
+          const tryServe = (basePath: string, subPath: string, callback: any, next: () => void) => {
+            const fullPath = path.join(basePath, subPath);
+            fs.stat(fullPath, (err, stats) => {
+              if (!err) {
+                if (stats.isFile()) {
+                  console.log(`[Electron Protocol] Serving file: ${fullPath}`);
+                  return callback({ path: fullPath });
+                } else if (stats.isDirectory()) {
+                  const indexPath = path.join(fullPath, "index.html");
+                  fs.stat(indexPath, (indexErr, indexStats) => {
+                    if (!indexErr && indexStats.isFile()) {
+                      console.log(`[Electron Protocol] Serving directory index: ${indexPath}`);
+                      return callback({ path: indexPath });
                     }
+                    next();
                   });
+                  return;
                 }
+              }
+              next();
+            });
+          };
+
+          // Try unpacked public -> unpacked alt -> ASAR public -> Fallback to main index
+          tryServe(path.join(unpackedBase, ".output", "public"), cleanPath, callback, () => {
+            tryServe(path.join(unpackedBase, ".output"), cleanPath, callback, () => {
+              tryServe(path.join(resourcesBase, "app.asar", ".output", "public"), cleanPath, callback, () => {
+                console.warn(`[Electron Protocol] Asset not found, falling back to root index.html: ${cleanPath}`);
+                callback({ path: Constants.APP_INDEX_URL_PROD });
               });
-            }
+            });
           });
         } else {
           if (process.platform === "win32") {
