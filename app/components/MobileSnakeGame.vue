@@ -96,16 +96,12 @@
     </div>
     
     <!-- Floating Joystick Area -->
-    <div 
+    <MobileJoystick 
       ref="joystickRef"
-      class="floating-joystick"
-      :class="{ 'active': isJoystickActive, 'is-hint': !gameStarted }"
-      :style="isJoystickActive ? { top: `${joystickCenter.y - 45}px`, left: `${joystickCenter.x - 45}px` } : {}"
-    >
-      <div class="joystick-base">
-        <div class="joystick-handle" :style="handleStyle" />
-      </div>
-    </div>
+      :is-hint="!gameStarted"
+      @move="handleInput"
+      @start="initializeSounds"
+    />
   </div>
 </template>
 
@@ -126,51 +122,26 @@ import confetti from "canvas-confetti";
 // --- Emits ---
 const emit = defineEmits(['close']);
 
-const isJoystickActive = ref(false);
-const joystickPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
-const joystickCenter = ref<{ x: number; y: number }>({ x: 0, y: 0 });
+const joystickRef = ref<any>(null);
 
 const onScreenTouchStart = (e: TouchEvent) => {
-  // Restrict triggering to only within the game screen
-  const target = e.target as HTMLElement;
-  const gameScreen = target.closest('.mobile-game-screen');
-  
-  if (!gameScreen) {
-    return;
+  if (joystickRef.value) {
+    joystickRef.value.handleTouchStart(e);
   }
-  
-  const touch = e.touches[0];
-  isJoystickActive.value = true;
-  joystickCenter.value = { x: touch.clientX, y: touch.clientY };
-  initializeSounds();
 };
 
 const onScreenTouchMove = (e: TouchEvent) => {
-  if (!isJoystickActive.value) return;
-  const touch = e.touches[0];
-  const dx = touch.clientX - joystickCenter.value.x;
-  const dy = touch.clientY - joystickCenter.value.y;
-  
-  const maxRadius = 38;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  const clampedRadius = Math.min(distance, maxRadius);
-  const angle = Math.atan2(dy, dx);
-  
-  joystickPos.value = {
-    x: Math.cos(angle) * clampedRadius,
-    y: Math.sin(angle) * clampedRadius
-  };
-  
-  processCoords(dx, dy);
+  if (joystickRef.value) {
+    joystickRef.value.handleTouchMove(e);
+  }
 };
 
 const onScreenTouchEnd = () => {
-  isJoystickActive.value = false;
-  joystickPos.value = { x: 0, y: 0 };
+  if (joystickRef.value) {
+    joystickRef.value.handleTouchEnd();
+  }
 };
 
-// --- Existing logic ... ---
-// (Re-including necessary state variables and logic to make file valid)
 const sounds = ref<SoundsMap | null>(null);
 const board = ref<HTMLElement | null>(null);
 const isClient = import.meta.client;
@@ -214,13 +185,6 @@ const foodLeft = ref<{ eaten: boolean }[]>(Array.from({ length: winningScore.val
 
 watch(winningScore, (newVal) => {
   foodLeft.value = Array.from({ length: newVal }, () => ({ eaten: false }));
-});
-
-const handleStyle = computed(() => {
-  return {
-    transform: `translate(${joystickPos.value.x}px, ${joystickPos.value.y}px)`,
-    transition: isJoystickActive.value ? "none" : "transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1)"
-  };
 });
 
 const initializeSounds = () => {
@@ -398,7 +362,11 @@ function move(): void {
   checkWinCondition();
 }
 
-function increaseSpeed(): void { if (gameSpeedDelay.value > 50) gameSpeedDelay.value -= 10; }
+function increaseSpeed(): void {
+  const decrement = winningScore.value === 10 ? 5 : 10;
+  const minDelay = winningScore.value === 10 ? 80 : 50;
+  if (gameSpeedDelay.value > minDelay) gameSpeedDelay.value -= decrement;
+}
 
 function checkCollision(): void {
   if (!isClient) return;
@@ -458,24 +426,6 @@ function resetGame(): void {
   inputQueue.value = [];
 }
 
-function processCoords(x: number, y: number) {
-  const threshold = 12; // Lower threshold for better sensitivity
-  const distance = Math.sqrt(x * x + y * y);
-  
-  if (distance < threshold) return;
-  
-  let angle = Math.atan2(y, x) * (180 / Math.PI);
-  if (angle < 0) angle += 360;
-  
-  let nextDir = "";
-  if (angle >= 315 || angle < 45) nextDir = "right";
-  else if (angle >= 45 && angle < 135) nextDir = "down";
-  else if (angle >= 135 && angle < 225) nextDir = "left";
-  else if (angle >= 225 && angle < 315) nextDir = "up";
-  
-  handleInput(nextDir);
-}
-
 onMounted(() => {
   snake.value = Array.from({ length: 10 }, (_, index) => ({ x: 10, y: 20 + index }));
   food.value = generateFood();
@@ -523,47 +473,6 @@ onUnmounted(() => { pause(); });
   width: 100%;
   height: 100%;
   justify-content: space-evenly;
-}
-
-.floating-joystick {
-  position: fixed;
-  display: none; /* Hidden by default */
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(1, 8, 14, 0.45) 0%, rgba(2, 18, 27, 0.7) 100%);
-  border: 2px solid rgba(67, 217, 173, 0.25);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 2px 5px rgba(255, 255, 255, 0.05);
-  justify-content: center;
-  align-items: center;
-  touch-action: none;
-  z-index: 9999;
-  transition: transform 0.1s;
-
-  &.active {
-    display: flex !important; /* Shown when active */
-  }
-
-  .joystick-base {
-    width: 80px;
-    height: 80px;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    .joystick-handle {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(67, 217, 173, 0.85) 0%, rgba(77, 91, 206, 0.9) 100%);
-      box-shadow: 0 2px 8px rgba(67, 217, 173, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      position: absolute;
-      cursor: pointer;
-      z-index: 10;
-    }
-  }
 }
 
 .mobile-scores-header {
