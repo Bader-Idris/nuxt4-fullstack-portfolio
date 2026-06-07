@@ -46,6 +46,10 @@ const UserSchema = new Schema<IUser>(
     passwordToken: { type: String, index: true },
     passwordTokenExpirationDate: Date,
     lastActiveChat: { type: String },
+    isSubscribed: {
+      type: Boolean,
+      default: true,
+    },
     // add its type to IUser
     settings: {
       openLastChat: { type: Boolean, default: false },

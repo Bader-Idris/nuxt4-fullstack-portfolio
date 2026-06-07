@@ -35,9 +35,14 @@ const route = useRoute();
 const newPassword = ref("");
 const confirmPassword = ref("");
 
-const email = computed(() => route.query.email?.toString() || "");
-// TODO: fix this token to be brought from the cookies, or should it be sent from server, check forgot password function
-const token = computed(() => route.query.token?.toString() || "");
+const email = computed(() => {
+  const val = route.query.email;
+  return (Array.isArray(val) ? val[0] : val)?.toString() || "";
+});
+const token = computed(() => {
+  const val = route.query.token;
+  return (Array.isArray(val) ? val[0] : val)?.toString() || "";
+});
 
 if (import.meta.server) {
   useSchemaOrg([

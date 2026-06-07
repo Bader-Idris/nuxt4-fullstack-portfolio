@@ -1,6 +1,42 @@
 <template>
   <div class="register">
-    <form class="form" @submit.prevent="register">
+    <div v-if="successRegistered" class="success-container">
+      <div class="success-card">
+        <div class="icon-wrapper">
+          <Icon name="line-md:email-opened" width="80" height="80" class="mail-icon" />
+        </div>
+        <h2>{{ t("auth.success_register_title", "Check your inbox") }}</h2>
+        <p class="success-msg">
+          {{ t("auth.success_register", "We've sent a verification link to {email}. Please check your email to activate your account.", { email: email }) }}
+        </p>
+        <div class="instructions">
+          <p>{{ t("auth.success_register_hint", "Can't find it? Check your spam folder.") }}</p>
+        </div>
+        <div class="resend-wrapper">
+          <CustomButton
+            button-type="ghost"
+            class="resend-btn"
+            :disabled="resendCooldown > 0 || resendLoading"
+            @click="resendEmail"
+          >
+            <span v-if="resendLoading">
+              <CustomLoader />
+            </span>
+            <span v-else-if="resendCooldown > 0">
+              {{ t("auth.resend_wait", { seconds: resendCooldown }) }}
+            </span>
+            <span v-else>
+              {{ t("auth.resend_email") }}
+            </span>
+          </CustomButton>
+        </div>
+        <CustomButton button-type="primary" class="back-btn" @click="navigateTo(localePath('/login'))">
+          <span>{{ t("auth.go_to_login") }}</span>
+        </CustomButton>
+      </div>
+    </div>
+
+    <form v-else class="form" @submit.prevent="register">
       <h1>{{ t("auth.register") }}</h1>
       <div class="input-container">
         <label for="user">{{ t("auth.username") }}</label>
@@ -78,7 +114,7 @@
       </button>
     </form>
 
-    <div class="social-auth">
+    <div v-if="!successRegistered" class="social-auth">
       <button class="btn social google" @click="socialLogin('google')">
         <Icon
           name="flat-color-icons:google"
@@ -99,7 +135,7 @@
       </button>
     </div>
 
-    <div v-if="showPrompt" class="prompt">
+    <div v-if="showPrompt && !successRegistered" class="prompt">
       <CustomButton button-type="ghost">
         <CustomLink
           aria-label="login page"
@@ -121,7 +157,7 @@ import "vue3-toastify/dist/index.css";
 import { CapacitorCookies } from "@capacitor/core";
 import { z } from "zod";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const localePath = useLocalePath();
 
 // Important for disabling layouts
@@ -154,17 +190,60 @@ const password = ref<string>("");
 const agreePolicies = ref<boolean>(false);
 const loading = ref<boolean>(false);
 const showPrompt = ref<boolean>(false);
+const successRegistered = ref<boolean>(false);
+
+const resendCooldown = ref(0);
+const resendLoading = ref(false);
+
+const { pause: pauseResend, resume: resumeResend } = useIntervalFn(() => {
+  if (resendCooldown.value > 0) {
+    resendCooldown.value--;
+  } else {
+    pauseResend();
+  }
+}, 1000, { immediate: false });
+
+const resendEmail = async () => {
+  if (resendCooldown.value > 0 || resendLoading.value) return;
+
+  resendLoading.value = true;
+  try {
+    await $fetch("/api/v1/auth/resend-verification-email", {
+      method: "POST",
+      body: { email: email.value, locale: locale.value },
+      baseURL: useRuntimeConfig().public.originUrl,
+    });
+
+    toast(t("auth.resend_success"), {
+      theme: "auto",
+      type: "success",
+      position: "top-center",
+    });
+
+    resendCooldown.value = 60; // 60 seconds cooldown
+    resumeResend();
+  } catch (error: any) {
+    toast(error.data?.message || "Failed to resend email", {
+      theme: "dark",
+      type: "error",
+      position: "top-center",
+    });
+  } finally {
+    resendLoading.value = false;
+  }
+};
 
 // const router = useRouter();
 const route = useRoute();
 
 // Utility type for server response
 interface RegisterResponse {
-  user: {
+  user?: {
     name: string;
     userId: string;
     role: string;
   };
+  message?: string;
 }
 
 // Access token from cookie
@@ -219,6 +298,7 @@ const register = async (): Promise<void> => {
     name: user.value,
     email: email.value,
     password: password.value,
+    locale: locale.value,
   };
 
   try {
@@ -228,15 +308,10 @@ const register = async (): Promise<void> => {
       baseURL: useRuntimeConfig().public.originUrl,
     });
 
-    if (response && response.user) {
-      // Set user in store
-      useUserStore().setUser({
-        username: response.user.name,
-        userId: response.user.userId,
-        role: response.user.role,
-      });
-
-      toast(
+    // If verification email is sent (standard registration)
+    if (response && !response.user) {
+       successRegistered.value = true;
+       toast(
         t("auth.success_register", "Successfully Registered! Please check your email to verify your account."),
         {
           theme: "auto",
@@ -245,31 +320,47 @@ const register = async (): Promise<void> => {
           dangerouslyHTMLString: true,
         },
       );
+      return;
+    }
 
-      const redirectPath = (route.query.redirect as string) || "/dashboard";
+    if (response && response.user) {
+      // Set user in store (fallback or social-like flow)
+      useUserStore().setUser({
+        username: response.user.name,
+        userId: response.user.userId,
+        role: response.user.role,
+      });
+
+      const val = route.query.redirect;
+      const redirectPath = (Array.isArray(val) ? val[0] : val)?.toString() || "/dashboard";
       await navigateTo(localePath(redirectPath));
     }
   } catch (error: any) {
-    // Handle network or unexpected errors
-    console.error(
-      "Registration error:",
-      JSON.stringify(error, Object.getOwnPropertyNames(error)),
-    );
     const msg =
       error.data?.message ||
       error.data?.statusMessage ||
-      "Network error. Please try again.";
+      "An unexpected error occurred. Please try again.";
 
-    // If email already exists, show the login prompt
+    // If email already exists, show the login prompt but don't leak details in console
     if (msg.toLowerCase().includes("exists")) {
       showPrompt.value = true;
+      toast(t("auth.errors.email_exists", "An account with this email already exists."), {
+        theme: "dark",
+        type: "info",
+        position: "top-center",
+      });
+    } else {
+      toast(msg, {
+        theme: "dark",
+        type: "error",
+        position: "top-center",
+      });
     }
-
-    toast(msg, {
-      theme: "dark",
-      type: "error",
-      position: "top-center",
-    });
+    
+    // Log only essential info for debugging, avoid leaking stack traces or sensitive data
+    if (import.meta.dev) {
+      console.warn("Registration attempt unsuccessful:", msg);
+    }
   } finally {
     loading.value = false;
   }
@@ -432,7 +523,8 @@ const handleSocialRegisterSuccess = async (response: any, provider: string) => {
     dangerouslyHTMLString: true,
   });
 
-  const redirectPath = (route.query.redirect as string) || "/dashboard";
+  const val = route.query.redirect;
+  const redirectPath = (Array.isArray(val) ? val[0] : val)?.toString() || "/dashboard";
   console.log("Navigating to:", redirectPath);
   await navigateTo(localePath(redirectPath));
 };
@@ -469,23 +561,41 @@ const handleSocialRegisterError = (error: any, provider: string) => {
 </script>
 
 <style lang="scss">
-.register {
-  @include mainMiddleSettings;
-  @include mobile {
-    @include phone-borders;
-    height: calc($full-viewport-height - 30px);
+html[lang="ar-PS"] {
+  .register {
+    .form {
+      direction: rtl;
+    }
   }
-  @include tablet-to-up {
-    height: calc($full-viewport-height - 60px);
+}
+
+html[lang="es-ES"] {
+  // Spanish specific overrides if any
+}
+
+.register {
+  @include flex-container(column, nowrap, center, center);
+  width: calc(100dvw - 60px);
+  height: calc(100dvh - 60px);
+  margin: auto;
+  background-color: var(--body-bg, #010c15);
+  overflow: hidden;
+
+  @include mobile {
+    width: calc(100dvw - 30px);
+    height: calc(100dvh - 60px);
+    @include phone-borders;
   }
 
   .form {
     @include flex-container(column, nowrap, unset, unset);
     max-width: 400px;
-    margin: 0 auto;
+    width: 100%;
+    margin-bottom: 2rem;
+    padding: 0 1.5rem;
 
     @include mobile {
-      width: calc(100% - 30px);
+      padding: 0 1rem;
     }
 
     .input-container {
@@ -493,14 +603,24 @@ const handleSocialRegisterError = (error: any, provider: string) => {
       margin-bottom: 20px;
 
       label {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        color: var(--text-secondary, #607b96);
       }
 
       .input {
-        border: 1px solid gray;
-        padding: 10px;
-        border-radius: 5px;
+        background: rgba(1, 18, 33, 0.4);
+        border: 1px solid var(--lines-color, #1e2d3d);
+        color: white;
+        padding: 12px 15px;
+        border-radius: 8px;
         width: 100%;
+        transition: border-color 0.3s ease;
+
+        &:focus {
+          border-color: var(--accent-primary, #fea55f);
+          outline: none;
+        }
 
         &.invalid {
           border-color: var(--accent-error, #e99287) !important;
@@ -510,7 +630,7 @@ const handleSocialRegisterError = (error: any, provider: string) => {
       .error-msg {
         color: var(--accent-error, #e99287);
         font-size: 0.8rem;
-        margin-top: 0.25rem;
+        margin-top: 0.4rem;
         display: block;
       }
     }
@@ -520,40 +640,52 @@ const handleSocialRegisterError = (error: any, provider: string) => {
 
       .checkbox-label {
         @include flex-container(row, nowrap, unset, center);
-        font-size: 0.9rem;
-        color: #fff;
-        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary, #607b96);
+        line-height: 1.4;
 
         input {
-          margin-right: 0.5rem;
+          margin-right: 0.75rem;
+          cursor: pointer;
         }
       }
 
       .policy-link {
-        color: #007bff;
+        color: var(--accent-primary, #fea55f);
         text-decoration: none;
 
         &:hover {
           text-decoration: underline;
-          color: #0056b3;
         }
       }
 
       .error-msg {
         color: var(--accent-error, #e99287);
         font-size: 0.8rem;
-        margin-top: 0.25rem;
+        margin-top: 0.4rem;
         display: block;
       }
     }
 
     .btn {
-      background-color: #2c3e50;
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
+      background-color: var(--accent-primary, #fea55f);
+      color: #011221;
+      padding: 14px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: opacity 0.3s ease;
+
+      &:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     }
   }
 }
@@ -562,30 +694,125 @@ const handleSocialRegisterError = (error: any, provider: string) => {
   height: 100%;
 }
 .social-auth {
-  margin: 2rem auto;
+  margin: 0 auto;
   max-width: 400px;
+  width: 100%;
+  padding: 0 1.5rem; // Align with form padding
   @include flex-container(row, nowrap, space-evenly, center);
-  gap: 1rem;
+  gap: 1.5rem;
 
   @include mobile {
-    width: calc(100% - 30px);
+    padding: 0 1rem;
   }
-  .btn {
-    cursor: pointer;
-  }
-}
 
-.btn.social {
-  @include flex-container(row, nowrap, center, center);
-  gap: 1rem;
-  padding: 10px 20px;
-  height: 50px;
-  cursor: pointer;
-}
-.social .fb {
-  color: #3b5998;
+  .btn.social {
+    @include flex-container(row, nowrap, center, center);
+    background: rgba(1, 18, 33, 0.4);
+    border: 1px solid var(--lines-color, #1e2d3d);
+    border-radius: 8px;
+    padding: 10px;
+    width: 60px;
+    height: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(1, 18, 33, 0.8);
+      border-color: var(--accent-primary, #fea55f);
+    }
+
+    &.facebook {
+      .fb {
+        color: #1877f2;
+      }
+    }
+  }
 }
 .prompt {
   text-align: center;
+}
+
+.success-container {
+  @include flex-container(column, nowrap, center, center);
+  width: 100%;
+  height: 100%; // Take full height of parent
+  flex: 1;      // Ensure it grows to fill space
+  padding: 1.5rem;
+
+  .success-card {
+    background: rgba(1, 18, 33, 0.4);
+    border: 1px solid var(--lines-color, #1e2d3d);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+    @include phone-borders;
+
+    @include tablet-to-up {
+      padding: 4rem 3rem;
+    }
+
+    .icon-wrapper {
+      margin-bottom: 2rem;
+      .mail-icon {
+        color: var(--accent-primary, #fea55f);
+      }
+    }
+
+    h2 {
+      color: #fff;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .success-msg {
+      color: var(--text-secondary, #607b96);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .instructions {
+      background: rgba(2, 18, 33, 0.6);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      p {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #607b96);
+        margin: 0;
+      }
+    }
+
+    .back-btn {
+      width: 100%;
+    }
+
+    .resend-wrapper {
+      margin-bottom: 1.5rem;
+      .resend-btn {
+        width: 100%;
+        height: 45px;
+        font-size: 0.9rem;
+        border: 1px dashed var(--lines-color, #1e2d3d);
+        @include flex-container(row, nowrap, center, center);
+        
+        span {
+          @include flex-container(row, nowrap, center, center);
+          width: 100%;
+          height: 100%;
+
+          :deep(.loader-wrapper) {
+            transform: scale(0.7);
+          }
+        }
+
+        &:disabled {
+          cursor: not-allowed;
+          opacity: 0.7;
+        }
+      }
+    }
+  }
 }
 </style>

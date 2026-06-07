@@ -164,7 +164,8 @@ const validateForm = (): boolean => {
 };
 
 const handleRedirect = async () => {
-  const redirectPath = route.query.redirect as string;
+  const val = route.query.redirect;
+  const redirectPath = (Array.isArray(val) ? val[0] : val)?.toString();
   if (redirectPath) {
     const hasLocalePrefix = /^\/(es|ar)(\/|$)/.test(redirectPath);
     if (hasLocalePrefix) {
@@ -465,44 +466,73 @@ const handleSocialLoginError = (error: any, provider: string) => {
 </script>
 
 <style lang="scss">
-.login {
-  @include mainMiddleSettings;
-  @include mobile {
-    @include phone-borders;
-    height: calc($full-viewport-height - 30px);
+html[lang="ar-PS"] {
+  .login {
+    .form {
+      direction: rtl;
+    }
   }
-  @include tablet-to-up {
-    height: calc($full-viewport-height - 60px);
+}
+
+html[lang="es-ES"] {
+  // Spanish overrides
+}
+
+.login {
+  @include flex-container(column, nowrap, center, center);
+  width: calc(100dvw - 60px);
+  height: calc(100dvh - 60px);
+  margin: auto;
+  background-color: var(--body-bg, #010c15);
+  overflow: hidden;
+
+  @include mobile {
+    width: calc(100dvw - 30px);
+    height: calc(100dvh - 60px);
+    @include phone-borders;
   }
 
   .form {
-    width: 384px;
-    height: 520px;
+    max-width: 384px;
+    width: 100%;
     position: relative;
-    margin: auto;
     @include flex-container(column, nowrap, center, stretch);
+    padding: 0 1.5rem;
+    margin-bottom: 2rem; // Added margin to separate from social-auth
 
     @include mobile {
-      width: calc(100% - 30px);
+      padding: 0 1rem;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 50px;
+      margin-bottom: 40px;
     }
 
     .input-container {
       @include flex-container(column, nowrap, unset, unset);
       margin-bottom: 20px;
+      width: 100%;
 
       label {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        color: var(--text-secondary, #607b96);
       }
 
       .input {
-        border: 1px solid gray;
-        padding: 10px;
-        border-radius: 5px;
+        background: rgba(1, 18, 33, 0.4);
+        border: 1px solid var(--lines-color, #1e2d3d);
+        color: white;
+        padding: 12px 15px;
+        border-radius: 8px;
+        width: 100%;
+        transition: border-color 0.3s ease;
+
+        &:focus {
+          border-color: var(--accent-primary, #fea55f);
+          outline: none;
+        }
 
         &.invalid {
           border-color: var(--accent-error, #e99287) !important;
@@ -512,23 +542,34 @@ const handleSocialLoginError = (error: any, provider: string) => {
       .error-msg {
         color: var(--accent-error, #e99287);
         font-size: 0.8rem;
-        margin-top: 0.25rem;
+        margin-top: 0.4rem;
         display: block;
       }
     }
 
     .btn {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
+      padding: 14px 20px;
+      background-color: var(--accent-primary, #fea55f);
+      color: #011221;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      font-weight: 500;
-      font-size: 20px;
+      font-weight: 600;
+      font-size: 1rem;
       letter-spacing: 1px;
       text-transform: uppercase;
-      margin-top: 50px;
+      margin-top: 30px;
+      width: 100%;
+      transition: opacity 0.3s ease;
+
+      &:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
       .loader {
         @include flex-container(row, nowrap, center, center);
@@ -536,10 +577,6 @@ const handleSocialLoginError = (error: any, provider: string) => {
       }
     }
   }
-}
-
-.social .fb {
-  color: #3b5998;
 }
 
 .prompt {
@@ -585,16 +622,38 @@ const handleSocialLoginError = (error: any, provider: string) => {
 }
 
 .social-auth {
-  margin: 0 auto;
+  margin: 1.5rem auto;
   max-width: 400px;
+  width: 100%;
+  padding: 0 1.5rem; // Align with form padding
   @include flex-container(row, nowrap, space-evenly, center);
-  gap: 1rem;
+  gap: 1.5rem;
 
   @include mobile {
-    width: calc(100% - 30px);
+    padding: 0 1rem;
   }
-  .btn {
+
+  .btn.social {
+    @include flex-container(row, nowrap, center, center);
+    background: rgba(1, 18, 33, 0.4);
+    border: 1px solid var(--lines-color, #1e2d3d);
+    border-radius: 8px;
+    padding: 10px;
+    width: 60px;
+    height: 50px;
     cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(1, 18, 33, 0.8);
+      border-color: var(--accent-primary, #fea55f);
+    }
+
+    &.facebook {
+      .fb {
+        color: #1877f2;
+      }
+    }
   }
 }
 </style>

@@ -159,6 +159,11 @@ El proyecto incluye configuración de entorno para diferentes plataformas:
 
 ### Comandos de MongoDB CLI v8
 
+```sh
+# para acceder a la cli:
+docker exec -it mongo mongosh "mongodb://<Mongo_user>:<Mongo_password>@localhost:27017/portfolio?authSource=admin"
+```
+
 ```js
 show dbs
 // su MONGO_DB_NAME

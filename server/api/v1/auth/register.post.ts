@@ -9,8 +9,16 @@ import {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { email, name, password, provider, profile, accessToken, idToken } =
-    body;
+  const {
+    email,
+    name,
+    password,
+    provider,
+    profile,
+    accessToken,
+    idToken,
+    locale,
+  } = body;
 
   // --- Capacitor Social Login handling ---
   if (provider && provider !== "email") {
@@ -104,6 +112,7 @@ export default defineEventHandler(async (event) => {
     // @ts-ignore fix its types
     verificationToken: user.verificationToken,
     origin: useRuntimeConfig().originUrl,
+    locale: locale || "en",
   });
 
   return {

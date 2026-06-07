@@ -160,6 +160,11 @@ cp .env.example .env
 
 ### أوامر MongoDB CLI v8
 
+```sh
+# للوصول إلى CLI:
+docker exec -it mongo mongosh "mongodb://<Mongo_user>:<Mongo_password>@localhost:27017/portfolio?authSource=admin"
+```
+
 ```js
 show dbs
 // اسم قاعدة البيانات الخاصة بك MONGO_DB_NAME

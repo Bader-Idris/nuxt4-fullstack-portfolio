@@ -241,6 +241,7 @@ export default defineNuxtConfig({
         "capacitor-plugin-safe-area",
         "gsap",
         "gsap/all",
+        "highlight.js", // CJS — must pre-bundle for ESM default export
         "howler", // CJS
         "lowlight",
         "node:fs",

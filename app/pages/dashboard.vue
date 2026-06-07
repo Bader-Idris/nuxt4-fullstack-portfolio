@@ -39,8 +39,15 @@
             </div>
           </aside>
 
-          <h3>{{ $t('dashboard.online_users') }} ({{ onlineUsersStore.users.length }})</h3>
-          <div v-if="onlineUsersStore.users.length === 0" class="no-users">
+          <h3>{{ $t('dashboard.online_users') }} <template v-if="!userStore.isGuest">({{ onlineUsersStore.users.length }})</template><template v-else>(<Icon name="ion:locked" width="12" height="12" mode="svg" />)</template></h3>
+          <div v-if="userStore.isGuest" class="guest-view-prompt">
+            <i18n-t keypath="dashboard.guest_view_users" scope="global">
+              <template #link>
+                <NuxtLink :to="localePath('/login')">{{ $t('dashboard.guest_view_link') }}</NuxtLink>
+              </template>
+            </i18n-t>
+          </div>
+          <div v-else-if="onlineUsersStore.users.length === 0" class="no-users">
             {{ $t('dashboard.no_users') }}
           </div>
           <ul>
@@ -1235,6 +1242,9 @@ function formatDuration(seconds: number) {
   @include mobile {
     display: flex;
     flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0; // Fix for flex container height issues
   }
 }
 
@@ -1244,6 +1254,12 @@ function formatDuration(seconds: number) {
   padding: 15px;
   border: 1px solid var(--lines-color);
   overflow-y: auto;
+
+  @include mobile {
+    max-height: 35%; // Slightly reduced to give more space to chat
+    flex-shrink: 0;
+  }
+
   h3 { color: var(--text-primary); font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--lines-color); padding-bottom: 10px; }
   ul { list-style: none; padding: 0; margin: 0; }
 }
@@ -1297,6 +1313,11 @@ function formatDuration(seconds: number) {
   border: 1px solid var(--lines-color);
   overflow: hidden;
   position: relative;
+
+  @include mobile {
+    flex: 1;
+    min-height: 0;
+  }
 
   &::before {
     content: "";

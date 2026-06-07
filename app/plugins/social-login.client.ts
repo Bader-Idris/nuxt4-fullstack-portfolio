@@ -1,5 +1,3 @@
-import { SocialLogin } from "@capgo/capacitor-social-login";
-
 export default defineNuxtPlugin(async () => {
   if (import.meta.server) return;
 
@@ -7,6 +5,7 @@ export default defineNuxtPlugin(async () => {
   const isCapacitor = config.public.isCapacitor;
 
   if (isCapacitor) {
+    const { SocialLogin } = await import("@capgo/capacitor-social-login");
     console.log("--- SocialLogin Plugin Initialization ---");
     try {
       await SocialLogin.initialize({

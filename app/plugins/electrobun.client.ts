@@ -1,7 +1,6 @@
-import Electrobun, { Electroview } from "electrobun/view";
-
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin(async () => {
   if (process.env.IS_ELECTROBUN === "true") {
+    const { default: Electrobun } = await import("electrobun/view");
     const electroview = new Electrobun.Electroview();
     
     // Expose it globally for our utility

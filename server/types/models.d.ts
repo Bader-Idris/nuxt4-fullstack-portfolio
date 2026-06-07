@@ -37,6 +37,7 @@ declare global {
     passwordToken?: string;
     passwordTokenExpirationDate?: Date;
     lastActiveChat?: string;
+    isSubscribed: boolean;
     settings?: IUserSettings;
     comparePassword(candidatePassword: string): Promise<boolean>;
   }
