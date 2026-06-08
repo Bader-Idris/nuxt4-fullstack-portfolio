@@ -209,11 +209,7 @@
     "nuxi": "3.x.x",
     "vue": "3.5.35",
     "vue-router": "5.1.0",
-    "nuxt": "4.4.6",
-    "@nuxt/kit": "4.4.6",
-    "@nuxt/schema": "4.4.6",
-    "@nuxt/vite-builder": "4.4.6",
-    "@nuxt/nitro-server": "4.4.6"
+    "nuxt": "4.4.6"
   },
   "overrides": {
     "@intlify/shared": "11.4.2",
@@ -221,11 +217,7 @@
     "nuxi": "3.x.x",
     "vue": "3.5.35",
     "vue-router": "5.1.0",
-    "nuxt": "4.4.6",
-    "@nuxt/kit": "4.4.6",
-    "@nuxt/schema": "4.4.6",
-    "@nuxt/vite-builder": "4.4.6",
-    "@nuxt/nitro-server": "4.4.6"
+    "nuxt": "4.4.6"
   },
   "browserslist": [
     "> 1%",
