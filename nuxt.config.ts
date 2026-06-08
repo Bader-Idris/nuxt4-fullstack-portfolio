@@ -822,27 +822,54 @@ export default defineNuxtConfig({
     //   'IBM+Plex+Sans+Arabic:700',
     // ],
   },
+
+  robots: {
+    // https://nuxtseo.com/docs/robots/guides/robots-txt#parsed-robotstxt
+    disallow: ["/contact/admin"],
+    // The sitemap module automatically detects and generates sitemaps based on the site.url
+    robotsTxt: isSSR,
+    // https://nuxtseo.com/docs/robots/guides/ai-directives#programmatic-configuration
+  },
+  // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-person
+  // this is important: https://unhead.unjs.io/docs/nuxt/schema-org/guides/core-concepts/nodes
+  schemaOrg: {
+    enabled: isSSR,
+    reactive: true,
+    // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-localbusiness
+    // or even OnlineStore with: defineOrganization; read line above!
+    identity: {
+      type: "Person",
+      name: "Bader Idris",
+      image: "/imgs/meTwentyFour.jpg",
+      description:
+        "Full Stack Developer specializing in Vue, Nuxt, Nest.js, DevOps, GSAP, and Three.js.",
+      url: "https://baderidris.com",
+      sameAs: [
+        "https://github.com/bader-idris",
+        "https://linkedin.com/in/bader-idrees",
+        "https://www.facebook.com/Bader.Idris.developer",
+        "https://twitter.com/bader_idri8628"
+      ],
+      jobTitle: "Full Stack Developer",
+      worksFor: {
+        "@id": "https://baderidris.com/#organization",
+        "@type": "Organization",
+        name: "Bader Idris Portfolio",
+        url: "https://baderidris.com",
+      },
+      logo: "/logo.svg",
+    },
+  },
+
   ...(!isDesktop) && {
-    aiReady: {
-      // https://nuxtseo.com/docs/ai-ready/api/config#enabled
-      enabled: isSSR,
-      debug: isDebug,
-      contentSignal: isSSR ? {
-        aiTrain: false,
-        search: true,
-        aiInput: true
-      } : false,
-      // llmsTxt: {
-      //   sections: [
-      //     {
-      //       title: 'API Reference',
-      //       links: [
-      //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
-      //       ]
-      //     }
-      //   ],
-      //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
-      // }
+    site: {
+      // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
+      url: process.env.NUXT_SITE_URL || "https://baderidris.com",
+      name: process.env.NUXT_SITE_NAME || "Bader Idris",
+      description:
+        "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
+      defaultLocale: "en",
+      indexable: isSSR,
     },
     sitemap: {
       enabled: isSSR,
@@ -921,54 +948,30 @@ export default defineNuxtConfig({
       ],
       // how could this image/video embedding be useful: https://nuxtseo.com/docs/sitemap/advanced/images-videos#sitemap-images
     },
-  },
-  ...(!isDesktop) && {
-    site: {
-      // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
-      url: process.env.NUXT_SITE_URL || "https://baderidris.com",
-      name: process.env.NUXT_SITE_NAME || "Bader Idris",
-      description:
-        "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
-      defaultLocale: "en",
-      indexable: isSSR,
-    },
-  },
-  // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-person
-  // this is important: https://unhead.unjs.io/docs/nuxt/schema-org/guides/core-concepts/nodes
-  schemaOrg: {
-    enabled: isSSR,
-    reactive: true,
-    // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-localbusiness
-    // or even OnlineStore with: defineOrganization; read line above!
-    identity: {
-      type: "Person",
-      name: "Bader Idris",
-      image: "/imgs/meTwentyFour.jpg",
-      description:
-        "Full Stack Developer specializing in Vue, Nuxt, Nest.js, DevOps, GSAP, and Three.js.",
-      url: "https://baderidris.com",
-      sameAs: [
-        "https://github.com/bader-idris",
-        "https://linkedin.com/in/bader-idrees",
-        "https://www.facebook.com/Bader.Idris.developer",
-        "https://twitter.com/bader_idri8628"
-      ],
-      jobTitle: "Full Stack Developer",
-      worksFor: {
-        "@id": "https://baderidris.com/#organization",
-        "@type": "Organization",
-        name: "Bader Idris Portfolio",
-        url: "https://baderidris.com",
+    aiReady: {
+      // https://nuxtseo.com/docs/ai-ready/api/config#enabled
+      enabled: isSSR,
+      debug: isDebug,
+      contentSignal: isSSR ? {
+        aiTrain: false,
+        search: true,
+        aiInput: true
+      } : false,
+      database: {
+        type: 'sqlite',
       },
-      logo: "/logo.svg",
+      // llmsTxt: {
+      //   sections: [
+      //     {
+      //       title: 'API Reference',
+      //       links: [
+      //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
+      //       ]
+      //     }
+      //   ],
+      //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
+      // }
     },
-  },
-  robots: {
-    // https://nuxtseo.com/docs/robots/guides/robots-txt#parsed-robotstxt
-    disallow: ["/contact/admin"],
-    // The sitemap module automatically detects and generates sitemaps based on the site.url
-    robotsTxt: isSSR,
-    // https://nuxtseo.com/docs/robots/guides/ai-directives#programmatic-configuration
   },
 
   // }),
@@ -1000,13 +1003,16 @@ export default defineNuxtConfig({
       // iOSClientId: 'YOUR_IOS_CLIENT_ID',        // Required for iOS
       // iOSServerClientId: 'YOUR_WEB_CLIENT_ID',  // Required for iOS offline mode and server authorization (same as webClientId)
 
-      // if not electron
-      // ...(process.env.IS_ELECTRON === "false") && {
-      // i18n: {
-      //   // ssr: process.env.NUXT_SSR !== "false",
-      //   // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-      //   baseUrl: isElectron ? "./" : siteUrl,
-      // },
+      // @ts-nocheck Doesn't work, how to silence public {} for this!
+      ...(!isDesktop && !isCapacitor) && {
+        i18n: {
+          // ssr: process.env.NUXT_SSR !== "false",
+          // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+          baseUrl: siteUrl,
+          // critical to fix ugly warning: in env var file:
+          // NUXT_PUBLIC_I18N_BASE_URL=https://baderidris.com
+        },
+      },
       scripts: {
         googleTagManager: {
           // .env
