@@ -85,11 +85,12 @@ const canCreate = computed(() => {
   return role === "admin" || role === "editor";
 });
 
-const { data: response, pending } = await useFetch<any>("/api/v1/blog", {
+const { data: response, pending, error } = useFetch<any>("/api/v1/blog", {
   query: { lang: selectedLang },
   watch: [selectedLang],
   baseURL: config.public.originUrl,
   headers,
+  lazy: true,
 });
 
 const posts = computed(() => response.value?.data || []);
@@ -231,7 +232,7 @@ useSeoMeta({
   padding: 4rem;
 }
 
-.no-posts {
+.no-posts, .error-container {
   text-align: center;
   padding: 4rem;
   color: #607b96;

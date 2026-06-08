@@ -17,6 +17,8 @@ const isCapacitor = process.env.IS_CAPACITOR === "true";
 const isDesktop = isElectron || isElectrobun;
 const isSSR = process.env.NUXT_SSR !== "false" && !isDesktop && !isCapacitor;
 const isDebug = process.env.IS_DEBUGGING !== "false";
+const isBun = process.env.IS_BUN === "true" || process.env.NITRO_PRESET === "bun";
+const isDeno = process.env.IS_DENO === "true" || process.env.NITRO_PRESET === "deno_server";
 
 // Unified Site URL for SEO and i18n consistency
 const siteUrl = process.env.DOMAIN_NAME;
@@ -125,17 +127,19 @@ export default defineNuxtConfig({
         'particles.js',
         'vue3-toastify',
         // if using deno/bun, 'ofetch', 'defu', 'ufo', 'ipx'
-        'ofetch',
-        'defu',
-        'ufo',
-        'ipx',
-        'bcryptjs',
-        'unenv',
-        'destr',
-        'scule',
-        'klona',
-        'std-env',
-        'ohash',
+        ...(isBun || isDeno ? [
+          'ofetch',
+          'defu',
+          'ufo',
+          'ipx',
+          'bcryptjs',
+          'unenv',
+          'destr',
+          'scule',
+          'klona',
+          'std-env',
+          'ohash',
+        ] : []),
       ],
     },
 

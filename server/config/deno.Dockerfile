@@ -55,6 +55,7 @@ ARG NODE_ENV=production
 ENV PORT=${PORT}
 ENV NODE_ENV=${NODE_ENV}
 ENV NUXT_TELEMETRY_DISABLED=1
+ENV IS_DENO=true
 ENV NODE_OPTIONS="--max-old-space-size=16384"
 
 RUN echo "Cache bust: $CACHEBUST" && \

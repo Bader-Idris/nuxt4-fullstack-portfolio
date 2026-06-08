@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <div ref="blogPostContainer" class="blog-post-page" dir="auto">
-    <div v-if="status === 'pending'" class="loader-container">
+    <div v-if="status === 'pending' && !response" class="loader-container">
       <CustomLoader />
     </div>
     <div v-else-if="error" class="error-container">
@@ -100,10 +100,11 @@ const {
   status,
   error,
   refresh,
-} = await useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
+} = useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
   key: `blog-${slug.value}-${locale.value}`,
   baseURL: config.public.originUrl,
   headers: fetchHeaders,
+  lazy: true
 });
 
 const cachedPost = useState<any>("active-blog-post");

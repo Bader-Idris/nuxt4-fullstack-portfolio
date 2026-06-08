@@ -1,33 +1,55 @@
-import Redis from "ioredis";
+import Redis, { type Cluster } from "ioredis";
 
 const config = useRuntimeConfig();
 // Create and export a single Redis client instance
 const redisUrl = config.redisUrl || "redis://localhost:6379";
-let redisClient: Redis | null = null;
+const isCluster = config.redisCluster === "true" || !!config.redisClusterNodes;
+
+let redisClient: Redis | Cluster | null = null;
 
 if (
   process.env.NODE_ENV === "development" ||
   process.env.NODE_ENV === "production"
 ) {
   try {
-    redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryStrategy(times) {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      connectTimeout: 10000,
-    });
+    if (isCluster) {
+      console.log("🚀 Initializing Redis Cluster...");
+      const nodes = config.redisClusterNodes 
+        ? JSON.parse(config.redisClusterNodes) 
+        : [{ host: "localhost", port: 6379 }];
+      
+      redisClient = new Redis.Cluster(nodes, {
+        redisOptions: {
+          maxRetriesPerRequest: 3,
+          connectTimeout: 10000,
+          retryStrategy(times) {
+            return Math.min(times * 50, 2000);
+          },
+        },
+        clusterRetryStrategy(times) {
+          return Math.min(times * 50, 2000);
+        },
+      });
+    } else {
+      redisClient = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        retryStrategy(times) {
+          return Math.min(times * 50, 2000);
+        },
+        connectTimeout: 10000,
+      });
+    }
 
     // Verify connection
     redisClient
       .ping()
       .then(() => {
-        console.log("✅ Connected to Redis");
+        console.log(`✅ Connected to Redis ${isCluster ? "Cluster" : "Single Instance"}`);
       })
       .catch((error) => {
         console.error("❌ Failed to ping Redis:", error);
-        redisClient = null;
+        // Don't nullify if it's just a transient ping failure during startup
+        // but we keep track of it
       });
 
     // Handle runtime errors
@@ -40,7 +62,7 @@ if (
     });
 
     redisClient.on("ready", () => {
-      console.log("✅ Redis client ready");
+      console.log(`✅ Redis ${isCluster ? "Cluster" : "Client"} ready`);
     });
   } catch (error) {
     console.error("❌ Failed to initialize Redis:", error);
@@ -63,6 +85,7 @@ export default defineNitroPlugin(async (nitroApp) => {
   }
 
   // Inject Redis client into Nitro app and H3 event context
+  // @ts-ignore
   nitroApp.redis = redisClient;
   nitroApp.h3App?.stack?.push({
     route: "/",
