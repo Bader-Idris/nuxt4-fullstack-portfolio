@@ -29,7 +29,7 @@ declare global {
     name: string;
     email: string;
     password: string;
-    role: "admin" | "user" | "guest";
+    role: "admin" | "user" | "guest" | "editor" | "premium";
     provider: "email" | "google" | "facebook";
     verificationToken?: string;
     isVerified: boolean;

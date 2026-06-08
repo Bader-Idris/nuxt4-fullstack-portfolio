@@ -1,48 +1,57 @@
-<template>
+﻿<template>
   <div ref="blogPostContainer" class="blog-post-page" dir="auto">
     <div v-if="status === 'pending'" class="loader-container">
       <CustomLoader />
     </div>
     <div v-else-if="error" class="error-container">
-      <h1>{{ t('blog.notFound', 'Post Not Found') }}</h1>
-      <NuxtLink :to="localePath('/blog')">{{ t('blog.backToBlog', 'Back to Blog') }}</NuxtLink>
+      <h1>{{ t("blog.notFound", "Post Not Found") }}</h1>
+      <NuxtLink :to="localePath('/blog')">{{
+        t("blog.backToBlog", "Back to Blog")
+      }}</NuxtLink>
     </div>
     <article v-else-if="postData" class="post-article">
       <header class="post-header">
         <NuxtLink :to="localePath('/blog')" class="back-link">
-          <Icon name="material-symbols:arrow-back" /> {{ t('blog.goBack', 'Go Back') }}
+          <Icon name="material-symbols:arrow-back" />
+          {{ t("blog.goBack", "Go Back") }}
         </NuxtLink>
-        <div v-if="!postData.published" class="unpublished-badge">
-          Draft
-        </div>
+        <div v-if="!postData.published" class="unpublished-badge">Draft</div>
         <h1 class="post-title" dir="auto">{{ postData.title }}</h1>
         <div class="post-meta">
-          <time :datetime="postData.createdAt">{{ formatDate(postData.createdAt) }}</time>
+          <time :datetime="postData.createdAt">{{
+            formatDate(postData.createdAt)
+          }}</time>
           <span class="author">By {{ postData.author.name }}</span>
-          <span class="views"><Icon name="material-symbols:visibility" /> {{ postData.viewCount }}</span>
-          <span class="language-badge">{{ postData.language.toUpperCase() }}</span>
+          <span class="views"
+            ><Icon name="material-symbols:visibility" />
+            {{ postData.viewCount }}</span
+          >
+          <span class="language-badge">{{
+            postData.language.toUpperCase()
+          }}</span>
         </div>
       </header>
-      
+
       <BlogContent :content="postData.content" />
-      
+
       <footer class="post-footer">
         <div v-if="postData.summary" class="post-summary">
           <h3>Summary</h3>
           <p>{{ postData.summary }}</p>
         </div>
-        
+
         <div class="post-actions">
           <NuxtLink :to="localePath('/blog')" class="back-to-blog-btn">
-            <Icon name="material-symbols:grid-view-outline" /> {{ t('blog.backToBlog', 'Back to Blog') }}
+            <Icon name="material-symbols:grid-view-outline" />
+            {{ t("blog.backToBlog", "Back to Blog") }}
           </NuxtLink>
           <ClientOnly>
-        <div v-if="postData.isAuthor || isAdmin">
-            <button class="edit-btn" @click="editPost">
-              <Icon name="material-symbols:edit" /> Edit Post
-            </button>
-          </div>
-        </ClientOnly>
+            <div v-if="postData.isAuthor || isAdmin">
+              <button class="edit-btn" @click="editPost">
+                <Icon name="material-symbols:edit" /> Edit Post
+              </button>
+            </div>
+          </ClientOnly>
         </div>
       </footer>
 
@@ -71,23 +80,43 @@ const userStore = useUserStore();
 
 const slug = computed(() => {
   const s = route.params.slug;
-  return Array.isArray(s) ? s.join('/') : s;
+  return Array.isArray(s) ? s.join("/") : s;
 });
 
-const { data: response, status, error, refresh } = await useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
-  key: `blog-${slug.value}-${locale.value}`,
-  headers: {
-    'x-locale': locale.value
+// Properly handle headers for both SSR and CSR
+const fetchHeaders = computed(() => {
+  const h: Record<string, string> = {
+    "x-locale": locale.value,
+  };
+  if (import.meta.server) {
+    const reqHeaders = useRequestHeaders(["cookie"]);
+    Object.assign(h, reqHeaders);
   }
+  return h;
+});
+
+const {
+  data: response,
+  status,
+  error,
+  refresh,
+} = await useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
+  key: `blog-${slug.value}-${locale.value}`,
+  baseURL: config.public.originUrl,
+  headers: fetchHeaders,
 });
 
 const cachedPost = useState<any>("active-blog-post");
-watch(() => response.value?.data, (newData) => {
-  if (newData) cachedPost.value = newData;
-}, { immediate: true });
+watch(
+  () => response.value?.data,
+  (newData) => {
+    if (newData) cachedPost.value = newData;
+  },
+  { immediate: true },
+);
 
 const postData = computed(() => response.value?.data);
-const isAdmin = computed(() => userStore.getUserRole === 'admin');
+const isAdmin = computed(() => userStore.getUserRole === "admin");
 
 const { formatDateSeparator } = useDateFormatter();
 function formatDate(date: string) {
@@ -102,15 +131,17 @@ function editPost() {
 useSeoMeta({
   title: () => postData.value?.title || t("blog.loading", "Loading..."),
   description: () => postData.value?.summary,
-  // this didn't add originUrl prefix to ogImage, why?
-  ogImage: () => `${config.public.originUrl}/_og/r/blog/${slug.value}.png`,
-  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
+  // originUrl can be "./" in Electron, so we use siteUrl for absolute SEO URLs
+  ogImage: () => `${config.public.siteUrl}/_og/r/blog/${slug.value}.png`,
+  ogUrl: () => `${config.public.siteUrl}${useLocalePath()(route.fullPath)}`,
 });
 
 if (import.meta.server) {
-  defineOgImage('Default', {
-    title: computed(() => postData.value?.title || 'Blog Post'),
-    description: computed(() => postData.value?.summary || "Read more on Bader Idris's blog."),
+  defineOgImage("Default", {
+    title: computed(() => postData.value?.title || "Blog Post"),
+    description: computed(
+      () => postData.value?.summary || "Read more on Bader Idris's blog.",
+    ),
   });
 }
 
@@ -121,10 +152,8 @@ if (import.meta.server) {
       headline: () => postData.value?.title,
       description: () => postData.value?.summary,
       datePublished: () => postData.value?.createdAt,
-      author: [
-        { name: postData.value?.author.name || 'Bader Idris' }
-      ],
-    })
+      author: [{ name: postData.value?.author.name || "Bader Idris" }],
+    }),
   ]);
 }
 </script>
@@ -139,7 +168,9 @@ if (import.meta.server) {
   font-size: 0.85rem;
   margin-bottom: 1rem;
   width: fit-content;
-  &:hover { color: $accent1; }
+  &:hover {
+    color: $accent1;
+  }
 }
 
 .back-to-blog-btn {
@@ -153,7 +184,10 @@ if (import.meta.server) {
   border-radius: 6px;
   text-decoration: none;
   font-size: 0.85rem;
-  &:hover { border-color: $accent1; color: $accent1; }
+  &:hover {
+    border-color: $accent1;
+    color: $accent1;
+  }
 }
 
 .blog-post-page {
@@ -193,7 +227,9 @@ if (import.meta.server) {
     margin-bottom: 1rem;
     line-height: 1.2;
     font-weight: 600;
-    @include mobile { font-size: 1.8rem; }
+    @include mobile {
+      font-size: 1.8rem;
+    }
   }
 
   .post-meta {
@@ -202,7 +238,7 @@ if (import.meta.server) {
     gap: 1.5rem;
     color: $secondary1;
     font-size: 0.9rem;
-    
+
     .views {
       display: flex;
       align-items: center;
@@ -230,8 +266,17 @@ if (import.meta.server) {
     padding: 1.5rem;
     border-radius: 12px;
     margin-bottom: 2rem;
-    h3 { margin-top: 0; color: $secondary1; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-    p { margin-bottom: 0; font-style: italic; }
+    h3 {
+      margin-top: 0;
+      color: $secondary1;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    p {
+      margin-bottom: 0;
+      font-style: italic;
+    }
   }
 
   .post-actions {
@@ -239,7 +284,7 @@ if (import.meta.server) {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    
+
     .edit-btn {
       background: $accent1;
       color: white;
@@ -252,7 +297,9 @@ if (import.meta.server) {
       gap: 8px;
       font-weight: bold;
       transition: opacity 0.2s;
-      &:hover { opacity: 0.8; }
+      &:hover {
+        opacity: 0.8;
+      }
     }
   }
 }
@@ -269,7 +316,8 @@ if (import.meta.server) {
   }
 }
 
-.loader-container, .error-container {
+.loader-container,
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;

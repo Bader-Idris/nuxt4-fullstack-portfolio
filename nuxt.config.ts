@@ -88,95 +88,109 @@ export default defineNuxtConfig({
     noExternals: false, // default, keep it
 
     externals: {
-        // These stay external (native binaries / too dynamic to inline):
-        external: [
-          'sharp',
-          '@prisma/client',
-          'prisma',
-          'pg',
-          'pg-native',
-          'mongoose',
-          'firebase-admin',
-          'nodemailer',
-          'socket.io',
-          'socket.io-client',
-          'ioredis',
-          'apn',
-          'web-push',
-          '@socket.io/redis-streams-adapter',
-          'bcryptjs',
-          'jsonwebtoken',
-          'rate-limiter-flexible',
-          // 'ttf2woff2',
-          'better-sqlite3',
-        ],
-        // Force everything else to be inlined/bundled into chunks:
-        inline: [
-          // inline your own server code
-          /^~/,
-          /^@\//,
-          // inline smaller pure-JS deps that Nitro was unnecessarily externalizing
-          'howler',
-          'highlight.js',
-          'canvas-confetti',
-          'particles.js',
-          'vue3-toastify',
-          // if using deno/bun, 'ofetch', 'defu', 'ufo', 'ipx'
-        ],
-      },
+      // These stay external (native binaries / too dynamic to inline):
+      external: [
+        'sharp',
+        '@prisma/client',
+        'prisma',
+        'pg',
+        'pg-native',
+        'mongoose',
+        'firebase-admin',
+        'nodemailer',
+        'socket.io',
+        'socket.io-client',
+        'ioredis',
+        'apn',
+        'web-push',
+        '@socket.io/redis-streams-adapter',
+        // 'bcryptjs', // Moved to inline for Deno/Bun compatibility
+        'jsonwebtoken',
+        'rate-limiter-flexible',
+        // 'ttf2woff2',
+        'better-sqlite3',
+      ],
+      // Force everything else to be inlined/bundled into chunks:
+      inline: [
+        // inline your own server code
+        /^~/,
+        /^@\//,
+        // inline smaller pure-JS deps that Nitro was unnecessarily externalizing
+        'unhead',
+        '@unhead/vue',
+        '@unhead/schema-org',
+        'howler',
+        'highlight.js',
+        'canvas-confetti',
+        'particles.js',
+        'vue3-toastify',
+        // if using deno/bun, 'ofetch', 'defu', 'ufo', 'ipx'
+        'ofetch',
+        'defu',
+        'ufo',
+        'ipx',
+        'bcryptjs',
+        'unenv',
+        'destr',
+        'scule',
+        'klona',
+        'std-env',
+        'ohash',
+      ],
+    },
 
-    minify: true,       // ← shrinks chunks/ from 53MB further (~30-40%)
+    minify: true, // ← shrinks chunks/ from 53MB further (~30-40%)
 
     compressPublicAssets: {
       gzip: process.env.NUXT_GZIP !== "false",
       // brotli: process.env.NUXT_BROTLI !== 'false'
       brotli: process.env.NUXT_GZIP !== "false",
     },
+
     routeRules: {
-      // this is critical for production version of electron, otherwise you'll lose index.html file
-      ...(isElectron && {
-        "/": {
-          prerender: true,
+      // Backend & Real-time routes - strictly no prerendering, no SSR, no cache
+      "/api/**": {
+        cors: true,
+        ssr: false,
+        prerender: false,
+        cache: false,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
         },
-        "/contact/admin": { prerender: true },
-        "/dashboard": { prerender: true },
-        "/blog": { prerender: true },
-        "/blog/create": { prerender: true },
-        "/blog/edit/**": { ssr: false, prerender: false },
-        "/projects": { prerender: true },
-        "/api/**": { ssr: false, prerender: false },
-        "/socket.io/**": { ssr: false, prerender: false },
-      }),
+      },
+      "/socket.io/**": {
+        ssr: false,
+        prerender: false,
+        cache: false,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
+
+      // Headers for builds to prevent caching issues
       '/_nuxt/builds/**': {
         headers: {
           'Cache-Control': 'no-store',
         },
       },
-      "/socket.io/**": {
-        cache: false,
-        prerender: false,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
+
+      // SEO Redirects
+      "/about/personal": {
+        redirect: { to: "/about/hobbies/bio", statusCode: 301 }
       },
-      "/api/**": {
-        cors: true,
-        prerender: false,
-        cache: false,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-        // TODO: create a middleware for cors, this only provides boolean value
-      },
+
+      // Dynamic/Protected pages - SSR false for web (handled by client/middleware), prerendered for Electron
       "/contact/admin": {
-        prerender: false,
+        ssr: false,
+        prerender: isElectron,
         cache: false,
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       },
       "/dashboard": {
-        prerender: false,
+        ssr: false,
+        prerender: isElectron,
         cache: false,
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -187,20 +201,31 @@ export default defineNuxtConfig({
         // "/user/unsubscribe": {},
         // "/user/verify-email": {},
       },
-      "/blog/create": { prerender: false },
-      "/blog/edit/**": { prerender: false },
-      // for old used urls, redirect to new ones, so search engines update
-      // https://nuxtseo.com/learn-seo/nuxt/controlling-crawlers/redirects
-      "/about/personal": { redirect: { to: "/about/hobbies/bio", statusCode: 301 } },
+      "/blog/create": {
+        ssr: false,
+        prerender: isElectron,
+      },
+      "/blog/edit/**": {
+        ssr: false,
+        prerender: false,
+      },
+
+      // Additional Electron-specific prerendering for main navigation pages
+      // This is critical for production Electron as it uses hashMode and local file loading
+      ...(isElectron && {
+        "/": { prerender: true },
+        "/blog": { prerender: true },
+        "/projects": { prerender: true },
+      }),
     },
+
     // errorHandler: "./server/error-handler.ts", // does it work on prod properly??
     experimental: {
       websocket: true,
-      // asyncContext: true,
+      asyncContext: true,
     },
 
-    serveStatic:
-      process.env.NODE_ENV === "production" && isSSR ? false : true,
+    serveStatic: process.env.NODE_ENV === "production" && isSSR ? false : true,
     ...(!isDesktop && {
       publicAssets: [
         {
@@ -947,7 +972,8 @@ export default defineNuxtConfig({
       isElectron: isElectron,
       isDesktop: isDesktop,
       isSSR: isSSR,
-      originUrl: isElectron ? "./" : siteUrl,
+      siteUrl: siteUrl,
+      originUrl: (isElectron || isCapacitor) ? (siteUrl || "http://localhost:3000") : siteUrl,
       socketUrl: process.env.SOCKET_URL || "ws://localhost:3000",
       isCapacitor: process.env.IS_CAPACITOR === "true",
       // for web-push pkg

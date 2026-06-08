@@ -2,23 +2,23 @@
   <div class="blog-list-container">
     <div class="blog-list-page">
       <header class="page-header">
-        <h1 class="page-title">{{ t('blog.title', 'Blog') }}</h1>
+        <h1 class="page-title">{{ t("blog.title", "Blog") }}</h1>
         <div class="header-actions">
           <ClientOnly>
-            <NuxtLink 
-              v-if="canCreate" 
-              :to="localePath('/blog/create')" 
+            <NuxtLink
+              v-if="canCreate"
+              :to="localePath('/blog/create')"
               class="create-post-btn"
             >
               <Icon name="material-symbols:add-circle-outline" />
-              {{ t('blog.createPost', 'Create Post') }}
+              {{ t("blog.createPost", "Create Post") }}
             </NuxtLink>
           </ClientOnly>
           <div class="language-filter">
-            <button 
-              v-for="l in ['en', 'es', 'ar']" 
-              :key="l" 
-              :class="{ 'active': selectedLang === l }"
+            <button
+              v-for="l in ['en', 'es', 'ar']"
+              :key="l"
+              :class="{ active: selectedLang === l }"
               @click="selectedLang = l"
             >
               {{ l.toUpperCase() }}
@@ -31,37 +31,44 @@
         <CustomLoader />
       </div>
       <div v-else-if="posts && posts.length > 0" class="posts-grid">
-        <NuxtLink 
-          v-for="post in posts" 
-          :key="post.id" 
+        <NuxtLink
+          v-for="post in posts"
+          :key="post.id"
           :to="localePath('/blog/' + post.slug)"
           class="post-card"
         >
           <div class="post-content">
             <span class="post-lang">{{ post.language.toUpperCase() }}</span>
             <h2 class="post-card-title">{{ post.title }}</h2>
-            <p class="post-summary">{{ post.summary || '...' }}</p>
+            <p class="post-summary">{{ post.summary || "..." }}</p>
             <div class="post-meta">
-              <time class="post-date">{{ formatDateSeparator(post.createdAt) }}</time>
-              <span class="post-views"><Icon name="material-symbols:visibility" /> {{ post.viewCount }}</span>
+              <time class="post-date">{{
+                formatDateSeparator(post.createdAt)
+              }}</time>
+              <span class="post-views"
+                ><Icon name="material-symbols:visibility" />
+                {{ post.viewCount }}</span
+              >
             </div>
           </div>
         </NuxtLink>
       </div>
       <div v-else class="no-posts">
-        <p>{{ t('blog.noPosts', 'No posts found.') }}</p>
+        <p>{{ t("blog.noPosts", "No posts found.") }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// make sure everything is ssr/ssg friendly, critical in electron!!!
 import { useUserStore } from "~/stores/useUserSocket";
 
 if (import.meta.server) {
-  defineOgImage('Default', {
-    title: 'Blog | Bader Idris',
-    description: 'Explore insights on Vue, Nuxt, Node, and creative technologies.',
+  defineOgImage("Default", {
+    title: "Blog | Bader Idris",
+    description:
+      "Explore insights on Vue, Nuxt, Node, and creative technologies.",
   });
 }
 
@@ -70,21 +77,25 @@ const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const { formatDateSeparator } = useDateFormatter();
 const selectedLang = ref(locale.value);
+const config = useRuntimeConfig();
+const headers = useRequestHeaders(["cookie"]);
 
 const canCreate = computed(() => {
   const role = userStore.getUserRole;
-  return role === 'admin' || role === 'editor';
+  return role === "admin" || role === "editor";
 });
 
-const { data: response, pending } = await useFetch<any>('/api/v1/blog', {
+const { data: response, pending } = await useFetch<any>("/api/v1/blog", {
   query: { lang: selectedLang },
-  watch: [selectedLang]
+  watch: [selectedLang],
+  baseURL: config.public.originUrl,
+  headers,
 });
 
 const posts = computed(() => response.value?.data || []);
 
 useSeoMeta({
-  title: 'Blog | Bader Idris',
+  title: "Blog | Bader Idris",
 });
 </script>
 
@@ -175,7 +186,9 @@ useSeoMeta({
   border-radius: 12px;
   padding: 1.5rem;
   text-decoration: none;
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
 }
 
 .post-card:hover {

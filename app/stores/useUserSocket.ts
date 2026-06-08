@@ -9,7 +9,7 @@ export interface UserSettings {
 export interface User {
   userId: string;
   username: string;
-  role: "admin" | "user" | "guest";
+  role: "admin" | "user" | "guest" | "editor" | "premium";
   provider?: "email" | "google" | "facebook";
   lastActiveChat?: string;
   settings?: UserSettings;

@@ -115,3 +115,10 @@ minimumReleaseAgeExclude:
   - '@tiptap/vue-3@3.26.0'
   - rate-limiter-flexible@11.1.1
   - '@rive-app/canvas@2.38.0'
+  - app-builder-lib@26.15.2
+  - dmg-builder@26.15.2
+  - electron-builder-squirrel-windows@26.15.2
+  - electron-builder@26.15.2
+  - electron-publish@26.15.1
+  - '@vue/language-core@3.3.4'
+  - vue-tsc@3.3.4
