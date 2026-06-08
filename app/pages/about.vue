@@ -195,13 +195,9 @@ useSeoMeta({
 if (import.meta.server) {
   useSchemaOrg([
     defineWebPage({
-      name: () => t("about.title"),
-      description: () => t("about.description"),
+      name: t("about.title"),
+      description: t("about.description"),
     }),
-    defineWebSite({
-      name: 'Bader Idris Portfolio',
-      url: 'https://baderidris.com'
-    })
   ]);
 }
 

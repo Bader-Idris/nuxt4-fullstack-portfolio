@@ -4,9 +4,6 @@
   "private": true,
   "description": "nuxt 4 production ready battle tested full stack portfolio with socket.io nginx dockerized pinia storing motions with gsap and capacitor for mobiles and electron for desktops",
   "author": "Bader Idris <contact@baderidris.com> (http://baderidris.com/)",
-  "workspaces": [
-    "."
-  ],
   "main": "dist-electron/main/index.js",
   "scripts": {
     "old:prebuild": "bunx prisma migrate deploy && bunx prisma generate --schema ./server/prisma/schema.prisma",
@@ -19,7 +16,7 @@
     "build:client": "cross-env NUXT_SSR=false nuxt build",
     "dev": "pnpm prebuild && cross-env IS_DEBUGGING=true nuxt dev",
     "dev:prod": "pnpm prebuild && cross-env NODE_ENV=production IS_DEBUGGING=false nuxt dev --dotenv .env.production",
-    "dev:electron": "pnpm prebuild && cross-env NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxt dev",
+    "dev:electron": "pnpm prebuild && cross-env NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false IS_DEBUGGING=true ELECTRON_ENABLE_LOGGING=true ELECTRON_ENABLE_STACK_DUMPING=true DEBUG=electron:*,vite:electron:*,nuxt-electron:* nuxt dev",
     "build:electron": "pnpm prebuild && cross-env NODE_OPTIONS=--max-old-space-size=4096 NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxi build --prerender --dotenv .env.electron && electron-builder --config=./electronAssets/builder/config.js",
     "build:electron:all": "pnpm prebuild && cross-env NODE_OPTIONS=--max-old-space-size=8192 NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxi build --prerender --dotenv .env.electron && electron-builder --config=./electronAssets/builder/config.js -wml",
     "build:electron:win": "pnpm prebuild && cross-env NODE_OPTIONS=--max-old-space-size=4096 NUXT_SSR=false IS_ELECTRON=true NUXT_GZIP=false nuxi build --prerender --dotenv .env.electron && electron-builder --config=./electronAssets/builder/config.js --windows",
@@ -163,12 +160,12 @@
     "@iconify-json/mingcute": "^1.2.7",
     "@iconify-json/raphael": "^1.2.1",
     "@iconify-json/ri": "^1.2.10",
-    "@iconify-json/simple-icons": "^1.2.85",
+    "@iconify-json/simple-icons": "^1.2.86",
     "@iconify-json/tabler": "^1.2.35",
     "@iconify-json/teenyicons": "^1.2.2",
     "@nuxt/test-utils": "4.0.3",
     "@nuxtjs/partytown": "^2.0.0",
-    "@nuxtjs/seo": "5.1.3",
+    "@nuxtjs/seo": "5.1.4",
     "@takumi-rs/core": "^1.7.0",
     "@types/bun": "^1.3.14",
     "@types/canvas-confetti": "^1.9.0",
@@ -186,8 +183,8 @@
     "electron": "^42.3.3",
     "electron-builder": "^26.15.2",
     "nuxt-electron": "^0.7.0",
-    "oxfmt": "^0.53.0",
-    "oxlint": "^1.68.0",
+    "oxfmt": "^0.54.0",
+    "oxlint": "^1.69.0",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.15",
     "postcss-custom-media": "^12.0.1",
@@ -211,14 +208,24 @@
     "nitropack": "2.x.x",
     "nuxi": "3.x.x",
     "vue": "3.5.35",
-    "vue-router": "5.1.0"
+    "vue-router": "5.1.0",
+    "nuxt": "4.4.6",
+    "@nuxt/kit": "4.4.6",
+    "@nuxt/schema": "4.4.6",
+    "@nuxt/vite-builder": "4.4.6",
+    "@nuxt/nitro-server": "4.4.6"
   },
   "overrides": {
     "@intlify/shared": "11.4.2",
     "nitropack": "2.x.x",
     "nuxi": "3.x.x",
     "vue": "3.5.35",
-    "vue-router": "5.1.0"
+    "vue-router": "5.1.0",
+    "nuxt": "4.4.6",
+    "@nuxt/kit": "4.4.6",
+    "@nuxt/schema": "4.4.6",
+    "@nuxt/vite-builder": "4.4.6",
+    "@nuxt/nitro-server": "4.4.6"
   },
   "browserslist": [
     "> 1%",

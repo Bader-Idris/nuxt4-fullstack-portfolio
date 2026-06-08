@@ -41,7 +41,7 @@
     "title": "Sobre Bader Idris - Carrera de Desarrollador Full Stack",
     "description": "Conoce a Bader Idris, Desarrollador Full Stack experto en Nuxt, Node, DevOps y GSAP. Descubre mi camino en apps web modernas.",
     "personal": {
-      "title": "Bader Idris - Biografía Personal y Experiencia",
+      "title": "Biografía Personal y Experiencia",
       "description": "Descubre mi camino como Desarrollador Full Stack, desde mis inicios hasta dominar Nuxt, Node y DevOps para crear soluciones digitales escalables.",
       "experienceDuration": "{years} años y {months} meses",
       "createdTimeAgo": "creado hace {time}",
@@ -51,6 +51,10 @@
         "description": "Aprender mas sobre Bader Idris, un desarrollador full-stack.",
         "jobTitle": "Desarrollador Full-Stack",
         "personDescription": "Un desarrollador full-stack especializado en Vue, Nuxt, Express.js y tecnologias web modernas. Creando experiencias web dinámicas y responsive."
+      },
+      "codeSnippet": {
+        "functionComment": "Función estandarizada de alta calidad",
+        "testComment": "Probar la salida"
       }
     },
     "professional": {
@@ -63,7 +67,7 @@
     }
   },
   "projects": {
-    "title": "Bader Idris - Proyectos Full Stack e Interactivos",
+    "title": "Proyectos Full Stack e Interactivos",
     "description": "Explora mis proyectos Full Stack con Nuxt, Vue, Node, GSAP y Three.js. Mostrando diseño responsivo y herramientas interactivas.",
     "caution": "Por favor, selecciona una herramienta de programación\n para ver mis proyectos. Tu elección es crucial para continuar.",
     "search_placeholder": "Buscar proyectos, tecnología o palabras clave...",
@@ -73,7 +77,7 @@
     }
   },
   "contact": {
-    "title": "Contactar a Bader Idris | Desarrollador Full Stack y Experto",
+    "title": "Servicios de Desarrollo Web Full Stack Experto",
     "description": "Contacta a Bader Idris para proyectos Full Stack, DevOps o GSAP/Three.js. Disponible vía email, teléfono o LinkedIn.",
     "admin": {
       "title": "Administración de emails | Bader Idris",

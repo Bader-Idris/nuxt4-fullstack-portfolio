@@ -51,6 +51,10 @@
         "description": "Learn more about Bader Idris, a full-stack developer.",
         "jobTitle": "Full-Stack Developer",
         "personDescription": "A skilled developer excelling in Nuxt.js, Express.js, and more."
+      },
+      "codeSnippet": {
+        "functionComment": "Standardized High-Premium Function",
+        "testComment": "Test the output"
       }
     },
     "professional": {
@@ -63,7 +67,7 @@
     }
   },
   "projects": {
-    "title": "Bader Idris - Full Stack & Interactive Projects",
+    "title": "Full Stack & Interactive Projects",
     "description": "Explore my portfolio of Full Stack projects built with Nuxt, Vue, Node, GSAP, and Three.js. Showcasing responsive design and interactive tools.",
     "caution": "Please select a programming tool to view my projects. \n Your choice is crucial to proceed.",
     "search_placeholder": "Search projects, tech, or keywords...",
@@ -73,7 +77,7 @@
     }
   },
   "contact": {
-    "title": "Contact Bader Idris | Expert Full Stack Developer & Designer",
+    "title": "Expert Full Stack Developer Contact & Services",
     "description": "Get in touch with Bader Idris for collaborations on Full Stack, DevOps, or GSAP/Three.js projects. Reach out via email, phone, or LinkedIn.",
     "admin": {
       "title": "Admin Emails | Bader Idris",

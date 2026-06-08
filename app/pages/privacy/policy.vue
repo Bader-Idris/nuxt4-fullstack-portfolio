@@ -243,10 +243,6 @@ if (import.meta.server) {
     defineWebPage({
       name: "Privacy Policy - Bader Idris Portfolio",
       description: "Learn how Bader Idris Portfolio collects, uses, and protects your data.",
-    }),
-    defineWebSite({
-      name: 'Bader Idris Portfolio',
-      url: 'https://baderidris.com'
     })
   ]);
 }

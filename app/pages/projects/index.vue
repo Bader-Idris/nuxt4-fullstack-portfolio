@@ -50,12 +50,20 @@ const handleResize = (x: number) => {
   }
 };
 
-// const optimizedProjectsThumbnail = img('/imgs/projects_thumbnail.webp', {
-//   width: 1200,
-//   height: 630,
-//   format: 'webp'
-// });
-const optimizedProjectsThumbnail = `${useRuntimeConfig().public.originUrl}/imgs/projects_thumbnail.webp`;
+const thumbnailEn = `${useRuntimeConfig().public.originUrl}/imgs/projects_thumbnail.webp`;
+const thumbnailEs = `${useRuntimeConfig().public.originUrl}/imgs/projects_thumbnail-es.webp`;
+const thumbnailAr = `${useRuntimeConfig().public.originUrl}/imgs/projects_thumbnail-ar.webp`;
+
+const optimizedProjectsThumbnail = computed(() => {
+  switch (locale.value) {
+    case "es":
+      return thumbnailEs;
+    case "ar":
+      return thumbnailAr;
+    default:
+      return thumbnailEn;
+  }
+});
 
 useSeoMeta({
   title: t("projects.title"),
@@ -78,8 +86,8 @@ if (import.meta.server) {
 if (import.meta.server) {
   useSchemaOrg([
     defineWebPage({
-      name: () => t("projects.title"),
-      description: () => t("projects.description"),
+      name: t("projects.title"),
+      description: t("projects.description"),
       // "@type": "CollectionPage",
       itemListElement: projectsList.map((project, index) => ({
         "@type": "ListItem",
@@ -94,10 +102,6 @@ if (import.meta.server) {
             : `${useRuntimeConfig().public.originUrl}${project.img}`,
         },
       })),
-    }),
-    defineWebSite({
-      name: 'Bader Idris Portfolio',
-      url: 'https://baderidris.com'
     })
   ]);
 }

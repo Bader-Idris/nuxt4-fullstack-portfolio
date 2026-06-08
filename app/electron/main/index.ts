@@ -30,6 +30,10 @@ async function startApp() {
   app.commandLine.appendSwitch("enable-gpu-rasterization");
   app.commandLine.appendSwitch("enable-zero-copy");
 
+  // Deep debugging: Enable logging for all actions and pipe renderer console to terminal
+  app.commandLine.appendSwitch("enable-logging");
+  app.commandLine.appendSwitch("v", "1"); // Verbose logging level 1
+
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
       app.quit();

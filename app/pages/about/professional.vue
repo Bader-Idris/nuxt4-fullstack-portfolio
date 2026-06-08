@@ -13,11 +13,12 @@ useSeoMeta({
 });
 
 if (import.meta.server) {
-  useSchemaOrg({
-    "@type": "AboutPage", // or "WebPage"
-    name: "Professional Background",
-    description: "Professional experience of Bader Idris.",
-  });
+  useSchemaOrg([
+    defineWebPage({
+      name: t("about.professional.title"),
+      description: t("about.professional.description"),
+    }),
+  ]);
 }
 </script>
 

@@ -48,6 +48,31 @@ import { useSound } from "@/composables/useSound";
 const { t } = useI18n({ useScope: "global" });
 const config = useRuntimeConfig();
 
+if (import.meta.server) {
+  useSchemaOrg([
+    definePerson({
+      name: "Bader Idris",
+      image: "/imgs/meTwentyFour.jpg",
+      description: () => t("about.personal.schema.personDescription"),
+      url: "https://baderidris.com",
+      sameAs: [
+        "https://github.com/bader-idris",
+        "https://linkedin.com/in/bader-idrees",
+        "https://www.facebook.com/Bader.Idris.developer",
+        "https://twitter.com/bader_idri8628"
+      ],
+      jobTitle: () => t("about.personal.schema.jobTitle"),
+      worksFor: {
+        "@id": "https://baderidris.com/#organization",
+        "@type": "Organization",
+        name: "Bader Idris Portfolio",
+        url: "https://baderidris.com",
+      },
+      logo: "/logo.svg",
+    }),
+  ]);
+}
+
 useSeoMeta({
   titleTemplate: "%s | Bader Idris",
   ogSiteName: "Bader Idris - Portfolio",

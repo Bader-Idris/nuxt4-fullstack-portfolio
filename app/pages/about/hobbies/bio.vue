@@ -118,13 +118,10 @@ useSeoMeta({
 if (import.meta.server) {
   useSchemaOrg([
     defineWebPage({
-      name: () => t("about.personal.title") + " | Bio",
-      description: () => t("about.personal.description"),
+      name: t("about.personal.title") + " | Bio",
+      description: t("about.personal.description"),
     }),
-    defineWebSite({
-      name: 'Bader Idris Portfolio'
-    })
-  ])
+  ]);
 }
 
 const bioContainer = ref<HTMLElement | null>(null);
@@ -174,7 +171,7 @@ const editor = useEditor({
   content: `
 <pre><code class="language-javascript">
   /**
-   * Standardized High-Premium Function
+   * ${t("about.personal.codeSnippet.functionComment")}
    */
   const pigIt = (str) => {
     return str.split(' ').map(e => {
@@ -184,7 +181,7 @@ const editor = useEditor({
     }).join(' ');
   };
 
-  // Test the output
+  // ${t("about.personal.codeSnippet.testComment")}
   console.log(pigIt('Pig latin is cool !'));
 </code></pre>
   `,
@@ -198,6 +195,27 @@ const editor = useEditor({
     }),
     Direction,
   ],
+});
+
+// Update editor content when locale changes
+watch(locale, () => {
+  editor.value?.commands.setContent(`
+<pre><code class="language-javascript">
+  /**
+   * ${t("about.personal.codeSnippet.functionComment")}
+   */
+  const pigIt = (str) => {
+    return str.split(' ').map(e => {
+      return e.length > 0 && !e.match(/[!?@#$%^&*]/)
+        ? e.substring(1) + e.slice(0, 1) + 'ay'
+        : e;
+    }).join(' ');
+  };
+
+  // ${t("about.personal.codeSnippet.testComment")}
+  console.log(pigIt('Pig latin is cool !'));
+</code></pre>
+  `);
 });
 
 onBeforeUnmount(() => {

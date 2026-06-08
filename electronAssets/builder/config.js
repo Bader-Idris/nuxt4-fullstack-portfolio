@@ -341,6 +341,13 @@ const baseConfig = {
     "!tests/**/*",
     "!release/**/*",
     "!node_modules/**/*",
+    "!android/**/*",
+    "!ios/**/*",
+    "!.agents/**/*",
+    "!.claude/**/*",
+    "!.antigravitycli/**/*",
+    "!.gemini/**/*",
+    "!.github/**/*",
   ],
 
   // check https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json

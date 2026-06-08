@@ -473,10 +473,6 @@ if (import.meta.server) {
     defineWebPage({
       name: "Dashboard",
       description: "Access exclusive content, resources, and services.",
-    }),
-    defineWebSite({
-      name: 'Bader Idris Portfolio',
-      url: 'https://baderidris.com'
     })
   ]);
 }

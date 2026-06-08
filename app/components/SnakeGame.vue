@@ -98,6 +98,7 @@ const isElectron = Capacitor.getPlatform() === "electron";
 const { t } = useI18n({ useScope: "global" });
 
 const isCapacitorDevice = useCapacitorDevice();
+const { proxy } = useScriptGoogleTagManager();
 
 // Define props with proper types
 const props = defineProps<{
@@ -400,6 +401,8 @@ function handleStartClick(event: MouseEvent) {
 
 function startGame(): void {
   if (!isClient) return;
+
+  proxy.dataLayer.push({ event: "start_game_pc" });
 
   resetGame();
   playSound("snakeHissing");

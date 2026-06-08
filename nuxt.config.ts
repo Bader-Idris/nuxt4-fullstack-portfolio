@@ -118,9 +118,6 @@ export default defineNuxtConfig({
         /^~/,
         /^@\//,
         // inline smaller pure-JS deps that Nitro was unnecessarily externalizing
-        'unhead',
-        '@unhead/vue',
-        '@unhead/schema-org',
         'howler',
         'highlight.js',
         'canvas-confetti',
@@ -253,42 +250,54 @@ export default defineNuxtConfig({
     },
     optimizeDeps: {
       include: [
-        "@capacitor/app",
-        "@capacitor/app-launcher",
-        "@capacitor/browser",
-        "@capacitor/core",
-        "@capacitor/device",
-        "@capacitor/haptics",
-        "@capacitor/keyboard",
-        "@capacitor/local-notifications",
-        "@capacitor/network",
-        "@capacitor/push-notifications",
-        "@capacitor/splash-screen",
-        "@capacitor/status-bar",
-        "@capacitor/toast",
-        "@rive-app/canvas", // CJS
-        "@tiptap/extension-code-block-lowlight",
-        "@unhead/schema-org/vue",
-        "@vue/devtools-core",
-        "@vue/devtools-kit",
-        "canvas-confetti",
-        "capacitor-plugin-safe-area",
-        "gsap",
-        "gsap/all",
-        "highlight.js", // CJS — must pre-bundle for ESM default export
-        "howler", // CJS
-        "lowlight",
-        "node:fs",
-        "node:path",
-        "sharp", // CJS
-        "socket.io-client",
-        "three",
-        "three/addons/loaders/GLTFLoader.js",
-        "three/examples/jsm/controls/OrbitControls.js",
-        "three/examples/jsm/loaders/DRACOLoader.js",
-        "three/examples/jsm/loaders/GLTFLoader.js",
-        "vue3-toastify",
-        "zod"
+        '@capacitor/app',
+        '@capacitor/app-launcher',
+        '@capacitor/browser',
+        '@capacitor/core',
+        '@capacitor/device',
+        '@capacitor/haptics',
+        '@capacitor/keyboard',
+        '@capacitor/local-notifications',
+        '@capacitor/network',
+        '@capacitor/push-notifications',
+        '@capacitor/splash-screen',
+        '@capacitor/status-bar',
+        '@capacitor/toast',
+        '@capgo/capacitor-social-login',
+        '@rive-app/canvas', // CJS
+        '@tiptap/extension-code-block-lowlight',
+        '@unhead/schema-org',
+        '@unhead/schema-org/vue',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        'canvas-confetti',
+        'capacitor-plugin-safe-area',
+        'electrobun/view',
+        'gsap',
+        'gsap/all',
+        'highlight.js',
+        'howler', // CJS
+        'lowlight',
+        'prosemirror-commands',
+        'prosemirror-dropcursor',
+        'prosemirror-gapcursor',
+        'prosemirror-history',
+        'prosemirror-inputrules',
+        'prosemirror-keymap',
+        'prosemirror-model',
+        'prosemirror-schema-list',
+        'prosemirror-state',
+        'prosemirror-transform',
+        'prosemirror-view',
+        'sharp', // CJS
+        'socket.io-client',
+        'three',
+        'three/addons/loaders/GLTFLoader.js',
+        'three/examples/jsm/controls/OrbitControls.js',
+        'three/examples/jsm/loaders/DRACOLoader.js',
+        'three/examples/jsm/loaders/GLTFLoader.js',
+        'vue3-toastify',
+        'zod',
       ],
       exclude: ["@dimforge/rapier3d-compat"],
     },
@@ -813,123 +822,126 @@ export default defineNuxtConfig({
     //   'IBM+Plex+Sans+Arabic:700',
     // ],
   },
-  aiReady: {
-    // https://nuxtseo.com/docs/ai-ready/api/config#enabled
-    enabled: isSSR,
-    debug: isDebug,
-    contentSignal: isSSR ? {
-      aiTrain: false,
-      search: true,
-      aiInput: true
-    } : false,
-    // llmsTxt: {
-    //   sections: [
-    //     {
-    //       title: 'API Reference',
-    //       links: [
-    //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
-    //       ]
-    //     }
-    //   ],
-    //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
-    // }
+  ...(!isDesktop) && {
+    aiReady: {
+      // https://nuxtseo.com/docs/ai-ready/api/config#enabled
+      enabled: isSSR,
+      debug: isDebug,
+      contentSignal: isSSR ? {
+        aiTrain: false,
+        search: true,
+        aiInput: true
+      } : false,
+      // llmsTxt: {
+      //   sections: [
+      //     {
+      //       title: 'API Reference',
+      //       links: [
+      //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
+      //       ]
+      //     }
+      //   ],
+      //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
+      // }
+    },
+    sitemap: {
+      enabled: isSSR,
+      // in debugging with devtools, you can view raw sitemaps here:
+      // url: /__sitemap__/debug.json
+      // prerendered file: .output/public/__sitemap__/debug.json
+  
+      // we can customize UI:
+      // https://nuxtseo.com/docs/sitemap/advanced/customising-ui#changing-the-columns
+      xslColumns: [
+        { label: 'URL', width: '50%' },
+        { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
+        { "label": "Last Updated", "width": "15%", "select": "concat(substring(sitemap:lastmod,0,11),concat(' ', substring(sitemap:lastmod,12,5)),concat(' ', substring(sitemap:lastmod,20,6)))" },
+        { label: 'Hreflangs', select: 'count(xhtml:link)', width: '5%' },
+        { "label": "Images", "width": "5%", "select": "count(image:image)" },
+      ],
+      xslTips: process.env.IS_DEBUGGING !== "false",
+      debug: isDebug,
+      credits: false,
+      discoverImages: true, // default
+      // strictNuxtContentPaths: true,
+      // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
+      autoI18n: true,// make sure it uses my strategy: prefix_except_default
+      // sitemaps: {
+      //   // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
+      //   posts: {
+      //     sources: ['/api/v1/blog'],
+      //     chunks: true, // Enable chunking
+      //     chunkSize: 2500 // Use 2500 URLs per chunk
+      //   },
+      //   pages: {
+      //     exclude: [
+      //       '/api/v1/blog',
+      //     ]
+      //   },
+      // },
+      sitemaps: true,// we can do {} || boolean; https://nuxtseo.com/docs/sitemap/guides/multi-sitemaps#enabling-multiple-sitemaps
+      // modify the chunk size if you need
+      defaultSitemapsChunkSize: 2000, // default 1000
+      // urls: async () => {
+      // // avoid for large sites: https://nuxtseo.com/docs/sitemap/guides/dynamic-urls
+      // // replace it with: sources: []
+      //   const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
+      //   const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
+  
+      //   const routes = staticRoutes.map((route) => ({
+      //     loc: `${baseUrl}${route}`,
+      //     lastmod: new Date().toISOString(),
+      //   }));
+  
+      //   try {
+      //     // Dynamic blog posts from PostgreSQL
+      //     // check this too: https://nuxtseo.com/docs/sitemap/advanced/loc-data#dynamic-lastmod-from-apis
+      //     const response = await fetch(`${process.env.DOMAIN_NAME || 'http://localhost:3000'}/api/v1/blog?publishedOnly=true`);
+      //     const result = await response.json();
+      //     if (result && result.data) {
+      //       result.data.forEach((post: any) => {
+      //         routes.push({
+      //           loc: `/blog/${post.slug}`,
+      //           lastmod: post.updatedAt,
+      //         });
+      //       });
+      //     }
+      //   } catch (e) {
+      //     console.warn('Sitemap dynamic fetch failed (expected during early build):', e.message);
+      //   }
+      
+      //   return routes;
+      // },
+      exclude: [
+        "/auth/callback",
+        "/user/forgot-password",
+        "/user/reset-password",
+        "/user/unsubscribe",
+        "/user/verify-email",
+      ],
+      // how could this image/video embedding be useful: https://nuxtseo.com/docs/sitemap/advanced/images-videos#sitemap-images
+    },
   },
-  // ...(process.env.IS_ELECTRON === "false") && {
-  sitemap: {
-    enabled: isSSR,
-    // in debugging with devtools, you can view raw sitemaps here:
-    // url: /__sitemap__/debug.json
-    // prerendered file: .output/public/__sitemap__/debug.json
-
-    // we can customize UI:
-    // https://nuxtseo.com/docs/sitemap/advanced/customising-ui#changing-the-columns
-    xslColumns: [
-      { label: 'URL', width: '50%' },
-      { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
-      { "label": "Last Updated", "width": "15%", "select": "concat(substring(sitemap:lastmod,0,11),concat(' ', substring(sitemap:lastmod,12,5)),concat(' ', substring(sitemap:lastmod,20,6)))" },
-      { label: 'Hreflangs', select: 'count(xhtml:link)', width: '5%' },
-      { "label": "Images", "width": "5%", "select": "count(image:image)" },
-    ],
-    xslTips: process.env.IS_DEBUGGING !== "false",
-    debug: isDebug,
-    credits: false,
-    discoverImages: true, // default
-    // strictNuxtContentPaths: true,
-    // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
-    autoI18n: true,// make sure it uses my strategy: prefix_except_default
-    // sitemaps: {
-    //   // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
-    //   posts: {
-    //     sources: ['/api/v1/blog'],
-    //     chunks: true, // Enable chunking
-    //     chunkSize: 2500 // Use 2500 URLs per chunk
-    //   },
-    //   pages: {
-    //     exclude: [
-    //       '/api/v1/blog',
-    //     ]
-    //   },
-    // },
-    sitemaps: true,// we can do {} || boolean; https://nuxtseo.com/docs/sitemap/guides/multi-sitemaps#enabling-multiple-sitemaps
-    // modify the chunk size if you need
-    defaultSitemapsChunkSize: 2000, // default 1000
-    // urls: async () => {
-    // // avoid for large sites: https://nuxtseo.com/docs/sitemap/guides/dynamic-urls
-    // // replace it with: sources: []
-    //   const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
-    //   const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
-
-    //   const routes = staticRoutes.map((route) => ({
-    //     loc: `${baseUrl}${route}`,
-    //     lastmod: new Date().toISOString(),
-    //   }));
-
-    //   try {
-    //     // Dynamic blog posts from PostgreSQL
-    //     // check this too: https://nuxtseo.com/docs/sitemap/advanced/loc-data#dynamic-lastmod-from-apis
-    //     const response = await fetch(`${process.env.DOMAIN_NAME || 'http://localhost:3000'}/api/v1/blog?publishedOnly=true`);
-    //     const result = await response.json();
-    //     if (result && result.data) {
-    //       result.data.forEach((post: any) => {
-    //         routes.push({
-    //           loc: `/blog/${post.slug}`,
-    //           lastmod: post.updatedAt,
-    //         });
-    //       });
-    //     }
-    //   } catch (e) {
-    //     console.warn('Sitemap dynamic fetch failed (expected during early build):', e.message);
-    //   }
-    
-    //   return routes;
-    // },
-    exclude: [
-      "/auth/callback",
-      "/user/forgot-password",
-      "/user/reset-password",
-      "/user/unsubscribe",
-      "/user/verify-email",
-    ],
-    // how could this image/video embedding be useful: https://nuxtseo.com/docs/sitemap/advanced/images-videos#sitemap-images
-  },
-  // },
-  // ...(process.env.NUXT_GZIP !== "false" && { // if we don't add the falsy value, it will be true
-  site: {
-    // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
-    url: process.env.NUXT_SITE_URL || "https://baderidris.com",
-    name: process.env.NUXT_SITE_NAME || "Bader Idris",
-    description:
-      "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
-    defaultLocale: "en",
-    indexable: isSSR,
+  ...(!isDesktop) && {
+    site: {
+      // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
+      url: process.env.NUXT_SITE_URL || "https://baderidris.com",
+      name: process.env.NUXT_SITE_NAME || "Bader Idris",
+      description:
+        "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
+      defaultLocale: "en",
+      indexable: isSSR,
+    },
   },
   // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-person
   // this is important: https://unhead.unjs.io/docs/nuxt/schema-org/guides/core-concepts/nodes
   schemaOrg: {
     enabled: isSSR,
+    reactive: true,
     // https://nuxtseo.com/docs/schema-org/guides/setup-identity#when-should-i-use-localbusiness
     // or even OnlineStore with: defineOrganization; read line above!
-    identity: definePerson({
+    identity: {
+      type: "Person",
       name: "Bader Idris",
       image: "/imgs/meTwentyFour.jpg",
       description:
@@ -949,7 +961,7 @@ export default defineNuxtConfig({
         url: "https://baderidris.com",
       },
       logo: "/logo.svg",
-    }),
+    },
   },
   robots: {
     // https://nuxtseo.com/docs/robots/guides/robots-txt#parsed-robotstxt

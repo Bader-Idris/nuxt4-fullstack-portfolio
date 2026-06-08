@@ -123,6 +123,7 @@ import confetti from "canvas-confetti";
 const emit = defineEmits(['close']);
 
 const joystickRef = ref<any>(null);
+const { proxy } = useScriptGoogleTagManager();
 
 const onScreenTouchStart = (e: TouchEvent) => {
   if (joystickRef.value) {
@@ -408,6 +409,9 @@ function handleStartClick() { initializeSounds(); startGame(); }
 
 function startGame(): void {
   if (!isClient) return;
+
+  proxy.dataLayer.push({ event: "start_game_mobile" });
+
   resetGame();
   gameStarted.value = true;
   playSound("snakeHissing");

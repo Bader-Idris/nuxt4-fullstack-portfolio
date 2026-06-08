@@ -6,21 +6,19 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n();
+
 useSeoMeta({
-  title: "Hobbies",
-  description: "Hobbies and interests of Bader Idris.",
+  title: t("about.hobbies.title"),
+  description: t("about.hobbies.description"),
 });
 
 if (import.meta.server) {
   useSchemaOrg([
     defineWebPage({
-      name: 'Hobbies',
-      description: "Hobbies and interests of Bader Idris.",
+      name: t("about.hobbies.title"),
+      description: t("about.hobbies.description"),
     }),
-    defineWebSite({
-      name: 'Bader Idris Portfolio',
-      url: 'https://baderidris.com'
-    })
   ]);
 }
 </script>
