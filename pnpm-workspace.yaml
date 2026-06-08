@@ -64,3 +64,8 @@ minimumReleaseAgeExclude:
   - nuxtseo-shared@5.1.4
   - oxfmt@0.54.0
   - oxlint@1.69.0
+  - '@nuxt/kit@4.4.8'
+  - '@nuxt/nitro-server@4.4.8'
+  - '@nuxt/schema@4.4.8'
+  - '@nuxt/vite-builder@4.4.8'
+  - nuxt@4.4.8
