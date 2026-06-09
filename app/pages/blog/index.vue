@@ -18,8 +18,8 @@
             <button
               v-for="l in ['en', 'es', 'ar']"
               :key="l"
-              :class="{ active: selectedLang === l }"
-              @click="selectedLang = l"
+              :class="{ active: selectedLangs.includes(l) }"
+              @click="toggleLang(l)"
             >
               {{ l.toUpperCase() }}
             </button>
@@ -27,10 +27,10 @@
         </div>
       </header>
 
-      <div v-if="pending" class="loader-container">
+      <div v-if="status === 'pending'" class="loader-container">
         <CustomLoader />
       </div>
-      <div v-else-if="posts && posts.length > 0" class="posts-grid">
+      <div v-else-if="posts.length > 0" class="posts-grid">
         <NuxtLink
           v-for="post in posts"
           :key="post.id"
@@ -61,7 +61,6 @@
 </template>
 
 <script setup lang="ts">
-// make sure everything is ssr/ssg friendly, critical in electron!!!
 import { useUserStore } from "~/stores/useUserSocket";
 
 if (import.meta.server) {
@@ -76,24 +75,104 @@ const userStore = useUserStore();
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const { formatDateSeparator } = useDateFormatter();
-const selectedLang = ref(locale.value);
 const config = useRuntimeConfig();
-const headers = useRequestHeaders(["cookie"]);
+const route = useRoute();
+const router = useRouter();
+
+// State
+const posts = computed(() => data.value || []);
+
+// Client-only toast initialization
+const showToast = (type: "success" | "error", message: string) => {
+  if (import.meta.client) {
+    import("vue3-toastify").then(({ toast }) => {
+      toast(message, {
+        theme: "auto",
+        type,
+        position: "top-center",
+        autoClose: 3000,
+      });
+    });
+  }
+};
+
+// Sync selectedLang with query string ?lang=ar,es
+const selectedLangs = computed({
+  get: () => {
+    const lang = route.query.lang;
+    if (!lang) return [locale.value];
+    return String(lang).split(",").filter(Boolean);
+  },
+  set: (val: string[]) => {
+    router.push({
+      query: { ...route.query, lang: val.join(",") || undefined }
+    });
+  }
+});
+
+const toggleLang = (l: string) => {
+  const current = [...selectedLangs.value];
+  const index = current.indexOf(l);
+  if (index > -1) {
+    if (current.length > 1) {
+      current.splice(index, 1);
+    }
+  } else {
+    current.push(l);
+  }
+  selectedLangs.value = current;
+};
 
 const canCreate = computed(() => {
   const role = userStore.getUserRole;
   return role === "admin" || role === "editor";
 });
 
-const { data: response, pending, error } = useFetch<any>("/api/v1/blog", {
-  query: { lang: selectedLang },
-  watch: [selectedLang],
-  baseURL: config.public.originUrl,
-  headers,
-  lazy: true,
-});
+// Fetch logic
+const fetchPosts = async () => {
+  try {
+    const headers: Record<string, string> = {
+      "x-locale": locale.value,
+    };
 
-const posts = computed(() => response.value?.data || []);
+    if (import.meta.server) {
+      const reqHeaders = useRequestHeaders(["cookie"]);
+      Object.assign(headers, reqHeaders);
+    }
+
+    const response: any = await $fetch("/api/v1/blog", {
+      baseURL: config.public.originUrl,
+      query: { 
+        lang: selectedLangs.value.join(","),
+        publishedOnly: canCreate.value ? 'false' : 'true'
+      },
+      headers,
+    });
+
+    if (response?.success) {
+      return response.data;
+    }
+    return [];
+  } catch (err: any) {
+    console.error("[Blog Index] Fetch error:", err);
+    if (import.meta.client) {
+      showToast("error", t("errors.serverError", "Failed to load posts"));
+    } else {
+      // Allow Nuxt to handle SSR errors
+      throw err;
+    }
+    return [];
+  }
+};
+
+const { status, data, refresh } = useAsyncData(
+  `blog-list-${route.fullPath}`,
+  () => fetchPosts(),
+  {
+    server: true,
+    watch: [() => route.query.lang],
+  }
+);
 
 useSeoMeta({
   title: "Blog | Bader Idris",

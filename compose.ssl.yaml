@@ -191,7 +191,7 @@ services:
   #     - redis-data:/backup/redis:ro
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: psql
     restart: always
     environment:
@@ -199,9 +199,47 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - psql-data:/var/lib/postgresql/data:rw
+      - psql-data-v18:/var/lib/postgresql:rw
       - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
 
+    networks:
+      - app-network
+
+  backup:
+    # image: nfrastack/container-db-backup:latest
+    image: tiredofit/db-backup:4.1.100
+    container_name: db-backup
+    restart: always
+    environment:
+      - TZ=UTC
+      - DEFAULT_BACKUP_INTERVAL=1440
+      - DEFAULT_CLEANUP_TIME=10080
+      - DEFAULT_BACKUP_LOCATION=FILESYSTEM
+      - DEFAULT_FILESYSTEM_PATH=/backup
+      # --- ROBUSTEN FEATURES ---
+      - DEFAULT_COMPRESSION=ZSTD # High-performance compression
+      - DEFAULT_COMPRESSION_LEVEL=3
+      - ENABLE_NOTIFICATIONS=TRUE
+      - NOTIFICATION_TYPE=CUSTOM
+      # Pass your monitoring URL in .env.production as BACKUP_PING_URL
+      - NOTIFICATION_CUSTOM_PING_URL=${BACKUP_PING_URL}
+      # --------------------------
+      - DB01_TYPE=pgsql
+      - DB01_HOST=psql
+      - DB01_USER=${POSTGRES_USER}
+      - DB01_PASS=${POSTGRES_PASSWORD}
+      - DB01_NAME=${POSTGRES_DB}
+      - DB02_TYPE=mongo
+      - DB02_HOST=mongo
+      - DB02_USER=${MONGO_INITDB_ROOT_USERNAME}
+      - DB02_PASS=${MONGO_INITDB_ROOT_PASSWORD}
+      - DB02_NAME=portfolio
+      - DB02_AUTH=admin
+    volumes:
+      - backup-data:/backup:rw
+    depends_on:
+      - postgres
+      - mongo
     networks:
       - app-network
   # adminer:  # I think it's not important to obtain
@@ -278,7 +316,8 @@ volumes:
   # TODO check if separating them in a and b files will causes issues??
   app-data:
   mongo-db:
-  psql-data:
+  psql-data-v18:
+  backup-data:
   redis-data:
   certbot-etc:
   certbot-var:

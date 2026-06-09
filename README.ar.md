@@ -209,6 +209,42 @@ docker exec -it mongo mongosh -u <Mongo_user> -p <Mongo_password> --authenticati
 
 ```
 
+### أمر الترحيل من PostgreSQL 16 إلى 18
+
+```sh
+# 1. إنشاء نسخة احتياطية من بياناتك
+docker exec psql pg_dump -U postgres articles > articles_backup.sql
+
+# 2. الحفاظ على البيانات القديمة (اختياري ولكن موصى به)
+docker volume create portfolio_psql-data-v16
+docker run --rm -v portfolio_psql-data:/from -v portfolio_psql-data-v16:/to alpine ash -c "cd /from ; cp -av . /to"
+
+# 3. تحديث ملف Docker Compose الخاص بك
+# تغيير الصورة إلى postgres:18-alpine
+# تغيير نقطة الربط من /var/lib/postgresql/data إلى /var/lib/postgresql
+
+# 4. بدء تشغيل الحاوية الجديدة واستعادة البيانات
+cat articles_backup.sql | docker exec -i psql psql -U postgres -d articles
+```
+
+### النسخ الاحتياطي الآلي (إعداد قوي)
+
+يتضمن المشروع الآن خدمة نسخ احتياطي مخصصة باستخدام `nfrastack/container-db-backup` تقوم تلقائيًا بنسخ كل من PostgreSQL و MongoDB احتياطيًا كل 24 ساعة.
+
+*   **التدوير (Rotation)**: يحتفظ بـ 7 أيام من النسخ الاحتياطية افتراضيًا (قابل للتكوين عبر `DEFAULT_CLEANUP_TIME`).
+*   **التخزين**: يتم تخزين النسخ الاحتياطية في وحدة تخزين `backup-data`.
+*   **دعم S3**: لتمكين النسخ الاحتياطي عن بُعد، قم بإلغاء التعليق وملء متغيرات بيئة S3 في `compose.prod.test.yaml` أو `compose.ssl.yaml`.
+
+لعرض حالة النسخ الاحتياطي:
+```sh
+docker logs db-backup
+```
+
+لسرد النسخ الاحتياطية:
+```sh
+docker exec db-backup ls -lh /backup
+```
+
 ## إعداد Docker
 
 ### بيئة التطوير
@@ -407,6 +443,9 @@ cp .env.ssl.example .env.production
 ```bash
 docker compose -f compose.ssl.yaml --env-file .env.production up -d
 ```
+
+> [!TIP]
+> لفهم شامل لنهج النسخ الاحتياطي "Robusten" الخاص بنا، وكيفية استعادة البيانات في حالات الطوارئ، وتكامل S3، راجع [**خطة النسخ الاحتياطي الرئيسية Robusten**](./docs/BACKUPS.md).
 
 #### إعداد تجديد الشهادة
 

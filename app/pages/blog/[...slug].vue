@@ -1,9 +1,9 @@
 <template>
   <div ref="blogPostContainer" class="blog-post-page" dir="auto">
-    <div v-if="status === 'pending' && !response" class="loader-container">
+    <div v-if="status === 'pending' && !postData" class="loader-container">
       <CustomLoader />
     </div>
-    <div v-else-if="error" class="error-container">
+    <div v-else-if="error || (!status === 'pending' && !postData)" class="error-container">
       <h1>{{ t("blog.notFound", "Post Not Found") }}</h1>
       <NuxtLink :to="localePath('/blog')">{{
         t("blog.backToBlog", "Back to Blog")
@@ -73,6 +73,7 @@ const blogPostContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(blogPostContainer);
 
 const route = useRoute();
+const router = useRouter();
 const localePath = useLocalePath();
 const { t, locale } = useI18n();
 const config = useRuntimeConfig();
@@ -83,41 +84,77 @@ const slug = computed(() => {
   return Array.isArray(s) ? s.join("/") : s;
 });
 
-// Properly handle headers for both SSR and CSR
-const fetchHeaders = computed(() => {
-  const h: Record<string, string> = {
-    "x-locale": locale.value,
-  };
-  if (import.meta.server) {
-    const reqHeaders = useRequestHeaders(["cookie"]);
-    Object.assign(h, reqHeaders);
+// Client-only toast initialization
+const showToast = (type: "success" | "error", message: string) => {
+  if (import.meta.client) {
+    import("vue3-toastify").then(({ toast }) => {
+      toast(message, {
+        theme: "auto",
+        type,
+        position: "top-center",
+        autoClose: 3000,
+      });
+    });
   }
-  return h;
-});
+};
 
-const {
-  data: response,
-  status,
-  error,
-  refresh,
-} = useFetch<any>(() => `/api/v1/blog/${slug.value}`, {
-  key: `blog-${slug.value}-${locale.value}`,
-  baseURL: config.public.originUrl,
-  headers: fetchHeaders,
-  lazy: true
-});
+const isAdmin = computed(() => userStore.getUserRole === "admin");
 
-const cachedPost = useState<any>("active-blog-post");
-watch(
-  () => response.value?.data,
-  (newData) => {
-    if (newData) cachedPost.value = newData;
-  },
-  { immediate: true },
+// Fetch logic encapsulating auth and error handling
+const fetchPost = async () => {
+  try {
+    const headers: Record<string, string> = {
+      "x-locale": locale.value,
+    };
+
+    if (import.meta.server) {
+      const reqHeaders = useRequestHeaders(["cookie"]);
+      Object.assign(headers, reqHeaders);
+    }
+
+    const response: any = await $fetch(`/api/v1/blog/${slug.value}`, {
+      baseURL: config.public.originUrl,
+      headers,
+    });
+
+    if (response?.success) {
+      return response.data;
+    }
+    return null;
+  } catch (err: any) {
+    const status = err.statusCode || 500;
+    
+    // Auth check for unpublished posts
+    if (status === 403 || status === 401) {
+      if (import.meta.client) {
+        showToast("error", t("errors.adminAccessRequired", "Access denied"));
+        router.push({
+          path: localePath("/login"),
+          query: { redirect: route.fullPath },
+        });
+      } else {
+        throw err;
+      }
+      return null;
+    }
+
+    console.error(`[Blog Detail] Fetch error for ${slug.value}:`, err);
+    if (import.meta.server && status !== 404) {
+      throw err;
+    }
+    return null;
+  }
+};
+
+const { status, data, error, refresh } = useAsyncData(
+  `blog-post-${slug.value}-${locale.value}`,
+  () => fetchPost(),
+  {
+    server: true,
+  }
 );
 
-const postData = computed(() => response.value?.data);
-const isAdmin = computed(() => userStore.getUserRole === "admin");
+const postData = computed(() => data.value);
 
 const { formatDateSeparator } = useDateFormatter();
 function formatDate(date: string) {
@@ -128,13 +165,16 @@ function editPost() {
   navigateTo(localePath(`/blog/edit/${slug.value}`));
 }
 
+// Pre-calculate path to avoid calling useLocalePath inside getters
+const fullPathWithLocale = computed(() => localePath(route.fullPath));
+
 // Dynamic SEO
 useSeoMeta({
   title: () => postData.value?.title || t("blog.loading", "Loading..."),
   description: () => postData.value?.summary,
   // originUrl can be "./" in Electron, so we use siteUrl for absolute SEO URLs
   ogImage: () => `${config.public.siteUrl}/_og/r/blog/${slug.value}.png`,
-  ogUrl: () => `${config.public.siteUrl}${useLocalePath()(route.fullPath)}`,
+  ogUrl: () => `${config.public.siteUrl}${fullPathWithLocale.value}`,
 });
 
 if (import.meta.server) {

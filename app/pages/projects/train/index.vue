@@ -15,12 +15,15 @@ const trainTitle = computed(() => t("projects.train.title"));
 const trainDescription = computed(() => t("projects.train.description"));
 const trainSeoImage = `${runtimeConfig.public.originUrl}/imgs/train-thumbnail-2026-05-5.webp`;
 
+const localePath = useLocalePath();
+const fullPathWithLocale = localePath(route.path);
+
 useSeoMeta({
   title: () => trainTitle.value,
   description: () => trainDescription.value,
   ogTitle: () => trainTitle.value,
   ogDescription: () => trainDescription.value,
-  ogUrl: `${runtimeConfig.public.originUrl}${useLocalePath()(route.path)}`,
+  ogUrl: `${runtimeConfig.public.originUrl}${fullPathWithLocale}`,
   ogImage: trainSeoImage,
   ogImageWidth: 1200,
   ogImageHeight: 630,

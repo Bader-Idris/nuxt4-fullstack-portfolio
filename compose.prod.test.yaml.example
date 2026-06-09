@@ -4,12 +4,13 @@ services:
       context: .
       dockerfile: ./server/config/nginx/test.Dockerfile
       args:
-        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.4.0-testing-prod
+        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.4.1-testing-prod
+    # image: nginx:stable-alpine
     container_name: nginx
     ports:
       - "5000:80"
     volumes:
-      - ./.output/public:/var/www/html:ro
+      # - ./.output/public:/var/www/html
       # - app-data:/var/www/html
       - ./server/config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
@@ -26,10 +27,13 @@ services:
       args:
         - NODE_ENV=production
         - PORT=3000
-    # image: baderidris/nuxt-portfolio:3.2.5-testing-bun-prod
-    image: baderidris/nuxt-portfolio:3.4.0-testing-prod
-    # image: baderidris/nuxt-portfolio:3.2.5-testing-deno-prod
+    image: baderidris/nuxt-portfolio:3.4.1-testing-prod
+    # image: baderidris/nuxt-portfolio:3.4.1-production-slim
+    # image: baderidris/nuxt-portfolio:3.4.1-testing-bun-prod
+    # image: baderidris/nuxt-portfolio:3.4.1-testing-deno-prod
     restart: always
+    # mem_limit: 2000m
+    # memswap_limit: 2000m
     deploy:
       replicas: 2
       restart_policy:
@@ -41,7 +45,7 @@ services:
         - "com.docker.swarm.service.name={{.Service.Name}}-{{.Task.Slot}}"
     volumes:
       - ./node_modules:/app/node_modules:ro
-      - app-data:/app/.output/public
+      # - app-data:/app/.output/public
     env_file:
       - ./.env.production
     depends_on:
@@ -82,8 +86,8 @@ services:
     privileged: true
     command: >
       sh -c "sysctl vm.overcommit_memory=1 &&
-      redis-server /usr/local/etc/redis/redis.conf --requirepass redis_password && 
-      AUTH default redis_password && 
+      redis-server /usr/local/etc/redis/redis.conf --requirepass redis_password &&
+      AUTH default redis_password &&
       save 60 1"
   # TODO: with binding the data volume we can do backup services as:
   # redis-backup:
@@ -91,7 +95,8 @@ services:
   #   volumes:
   #     - redis-data:/backup/redis:ro
   postgres:
-    image: postgres:16-alpine
+    # Latest stable version
+    image: postgres:18-alpine
     container_name: psql
     restart: always
     environment:
@@ -99,8 +104,46 @@ services:
       POSTGRES_PASSWORD: example
       POSTGRES_DB: articles
     volumes:
-      - psql-data:/var/lib/postgresql/data:rw
+      - psql-data-v18:/var/lib/postgresql:rw
       - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - app-network
+
+  backup:
+    # image: nfrastack/container-db-backup:latest
+    image: tiredofit/db-backup:4.1.100
+    container_name: db-backup
+    restart: always
+    environment:
+      - TZ=UTC
+      - DEFAULT_BACKUP_INTERVAL=1440
+      - DEFAULT_CLEANUP_TIME=10080
+      - DEFAULT_BACKUP_LOCATION=FILESYSTEM
+      - DEFAULT_FILESYSTEM_PATH=/backup
+      # --- ROBUSTEN FEATURES ---
+      - DEFAULT_COMPRESSION=ZSTD # Space efficient, mimics differential efficiency
+      - DEFAULT_COMPRESSION_LEVEL=3
+      - ENABLE_NOTIFICATIONS=TRUE
+      - NOTIFICATION_TYPE=CUSTOM
+      # Uncomment and add your Healthcheck URL (Uptime-Kuma, Healthchecks.io)
+      # - NOTIFICATION_CUSTOM_PING_URL=https://hc-ping.com/YOUR-UUID
+      # --------------------------
+      - DB01_TYPE=pgsql
+      - DB01_HOST=psql
+      - DB01_USER=postgres
+      - DB01_PASS=example
+      - DB01_NAME=articles
+      - DB02_TYPE=mongo
+      - DB02_HOST=mongo
+      - DB02_USER=Bader
+      - DB02_PASS=myPassword
+      - DB02_NAME=portfolio
+      - DB02_AUTH=admin
+    volumes:
+      - backup-data:/backup:rw
+    depends_on:
+      - postgres
+      - mongo
     networks:
       - app-network
 
@@ -149,15 +192,16 @@ services:
 #     networks:
 #       - app-network
 # # postfix configuration files are:  /etc/postfix/main.cf and /usr/share/postfix/main.cf.dist The 2nd is the global one
-# # dovecot conf file: /etc/dovecot/dovecot.conf 
+# # dovecot conf file: /etc/dovecot/dovecot.conf
 # # also check /etc/dovecot/userdb /etc/dovecot/masterdb
 
 
 volumes:
   # app-data:
   mongo-db:
-  psql-data:
+  psql-data-v18:
   redis-data:
+  backup-data:
 networks:
   app-network:
     driver: bridge

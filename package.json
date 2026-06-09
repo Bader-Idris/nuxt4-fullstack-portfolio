@@ -85,7 +85,7 @@
     "better-sqlite3": "^12.10.0",
     "canvas-confetti": "^1.9.4",
     "electrobun": "^1.18.1",
-    "firebase-admin": "^13.10.0",
+    "firebase-admin": "^14.0.0",
     "highlight.js": "^11.11.1",
     "howler": "^2.2.4",
     "ioredis": "^5.11.1",

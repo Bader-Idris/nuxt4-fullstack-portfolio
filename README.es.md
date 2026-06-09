@@ -208,6 +208,42 @@ docker exec -it mongo mongosh -u <Mongo_user> -p <Mongo_password>  --authenticat
 
 ```
 
+### Comando de migración de PostgreSQL 16 a 18
+
+```sh
+# 1. Crear una copia de seguridad de sus datos
+docker exec psql pg_dump -U postgres articles > articles_backup.sql
+
+# 2. Preservar los datos antiguos (Opcional pero recomendado)
+docker volume create portfolio_psql-data-v16
+docker run --rm -v portfolio_psql-data:/from -v portfolio_psql-data-v16:/to alpine ash -c "cd /from ; cp -av . /to"
+
+# 3. Actualice su archivo Docker Compose
+# Cambie la imagen a postgres:18-alpine
+# Cambie el punto de montaje de /var/lib/postgresql/data a /var/lib/postgresql
+
+# 4. Inicie el nuevo contenedor y restaure los datos
+cat articles_backup.sql | docker exec -i psql psql -U postgres -d articles
+```
+
+### Respaldos Automáticos (Configuración Robusta)
+
+El proyecto ahora incluye un servicio de respaldo dedicado que utiliza `nfrastack/container-db-backup` que respalda automáticamente tanto PostgreSQL como MongoDB cada 24 horas.
+
+*   **Rotación**: Mantiene 7 días de respaldos de forma predeterminada (configurable a través de `DEFAULT_CLEANUP_TIME`).
+*   **Almacenamiento**: Los respaldos se almacenan en el volumen `backup-data`.
+*   **Soporte S3**: Para habilitar respaldos remotos, desactive los comentarios y complete las variables de entorno S3 en `compose.prod.test.yaml` o `compose.ssl.yaml`.
+
+Para ver el estado del respaldo:
+```sh
+docker logs db-backup
+```
+
+Para listar los respaldos:
+```sh
+docker exec db-backup ls -lh /backup
+```
+
 ## Configuración de Docker
 
 ### Entorno de desarrollo
@@ -443,6 +479,9 @@ Luego inicie con:
 ```bash
 docker compose -f compose.ssl.yaml --env-file .env.production up -d
 ```
+
+> [!TIP]
+> Para una comprensión integral de nuestro enfoque de respaldo "Robusten", recuperación ante desastres e integración de S3, consulte el [**Plan Maestro de Respaldo Robusten**](./docs/BACKUPS.md).
 
 #### Configuración de renovación de certificados
 

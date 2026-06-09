@@ -65,12 +65,15 @@ const optimizedProjectsThumbnail = computed(() => {
   }
 });
 
+const localePath = useLocalePath();
+const fullPathWithLocale = localePath(useRoute().path);
+
 useSeoMeta({
   title: t("projects.title"),
   description: t("projects.description"),
   ogTitle: t("projects.title"),
   ogDescription: t("projects.description"),
-  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
+  ogUrl: `${useRuntimeConfig().public.originUrl}${fullPathWithLocale}`,
   ogImage: optimizedProjectsThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,

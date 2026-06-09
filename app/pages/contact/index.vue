@@ -6,10 +6,13 @@ import { z } from "zod";
 
 const { t, locale } = useI18n();
 
+const localePath = useLocalePath();
+const fullPathWithLocale = localePath(useRoute().path);
+
 useSeoMeta({
   title: t("contact.title"),
   description: t("contact.description"),
-  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
+  ogUrl: `${useRuntimeConfig().public.originUrl}${fullPathWithLocale}`,
 });
 
 if (import.meta.server) {

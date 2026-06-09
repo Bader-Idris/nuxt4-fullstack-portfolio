@@ -101,12 +101,15 @@ if (import.meta.server) {
 }
 
 // SEO
+const localePath = useLocalePath();
+const fullPathWithLocale = localePath(useRoute().path);
+
 useSeoMeta({
   title: () => t("about.personal.title") + " | Bio",
   description: () => t("about.personal.description"),
   ogTitle: () => t("about.personal.title"),
   ogDescription: () => t("about.personal.description"),
-  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
+  ogUrl: `${useRuntimeConfig().public.originUrl}${fullPathWithLocale}`,
   ogImage: () => profileImage.value,
   twitterCard: "summary_large_image",
   twitterTitle: () => t("about.personal.title"),

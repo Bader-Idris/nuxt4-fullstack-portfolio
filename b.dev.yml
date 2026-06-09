@@ -122,7 +122,7 @@ services:
   #   volumes:
   #     - redis-data:/backup/redis:ro
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     # image: postgres:17.5-alpine
     container_name: psql
     restart: always
@@ -136,7 +136,7 @@ services:
       POSTGRES_PASSWORD: example
       POSTGRES_DB: articles
     volumes:
-      - psql-data:/var/lib/postgresql/data:rw  # 🔴chmod +x if (node.length > 1)🔴
+      - psql-data-v18:/var/lib/postgresql:rw  # 🔴chmod +x if (node.length > 1)🔴
       - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
   # adminer:  # I think it's not important to obtain
@@ -177,5 +177,5 @@ networks:
 volumes:
   nginx-logs:
   mongo-db:
-  psql-data:
+  psql-data-v18:
   redis-data:

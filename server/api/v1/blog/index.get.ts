@@ -2,7 +2,8 @@ import { prisma } from "@server/plugins/prisma";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
-  const lang = query.lang as string;
+  const langQuery = query.lang as string;
+  const langs = langQuery ? langQuery.split(',').filter(Boolean) : [];
   const publishedOnly = query.publishedOnly !== 'false';
   const redis = event.context.redis;
   
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
   const showOnlyPublished = !isAdmin && !isEditor ? true : publishedOnly;
 
   // Cache key based on query params and user permissions
-  const cacheKey = `blog:list:${lang || 'all'}:${showOnlyPublished}:${isAdmin || isEditor}`;
+  const cacheKey = `blog:list:${langs.join(',') || 'all'}:${showOnlyPublished}:${isAdmin || isEditor}`;
 
   // Try to get from Redis if available
   if (redis) {
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
   try {
     const posts = await prisma.post.findMany({
       where: {
-        ...(lang && { language: lang }),
+        ...(langs.length > 0 && { language: { in: langs } }),
         ...(showOnlyPublished && { published: true }),
       },
       orderBy: {
