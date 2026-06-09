@@ -861,117 +861,116 @@ export default defineNuxtConfig({
     },
   },
 
-  ...(!isDesktop) && {
-    site: {
-      // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
-      url: process.env.NUXT_SITE_URL || "https://baderidris.com",
-      name: process.env.NUXT_SITE_NAME || "Bader Idris",
-      description:
-        "Full Stack Developer specializing in Vue, Nuxt, Node, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
-      defaultLocale: "en",
-      indexable: isSSR,
+  site: {
+    enabled: isSSR,
+    // These automatically respect NUXT_SITE_URL and NUXT_SITE_NAME environment variables
+    url: process.env.NUXT_SITE_URL || "https://baderidris.com",
+    name: process.env.NUXT_SITE_NAME || "Bader Idris",
+    description:
+      "Full Stack Developer specializing in Vue, Nuxt, Nest, DevOps, GSAP, and Three.js. Crafting high-performance, interactive web experiences.",
+    defaultLocale: "en",
+    indexable: isSSR,
+  },
+  sitemap: {
+    enabled: isSSR,
+    // in debugging with devtools, you can view raw sitemaps here:
+    // url: /__sitemap__/debug.json
+    // prerendered file: .output/public/__sitemap__/debug.json
+
+    // we can customize UI:
+    // https://nuxtseo.com/docs/sitemap/advanced/customising-ui#changing-the-columns
+    xslColumns: [
+      { label: 'URL', width: '50%' },
+      { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
+      { "label": "Last Updated", "width": "15%", "select": "concat(substring(sitemap:lastmod,0,11),concat(' ', substring(sitemap:lastmod,12,5)),concat(' ', substring(sitemap:lastmod,20,6)))" },
+      { label: 'Hreflangs', select: 'count(xhtml:link)', width: '5%' },
+      { "label": "Images", "width": "5%", "select": "count(image:image)" },
+    ],
+    xslTips: process.env.IS_DEBUGGING !== "false",
+    debug: isDebug,
+    credits: false,
+    discoverImages: true, // default
+    // strictNuxtContentPaths: true,
+    // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
+    autoI18n: true,// make sure it uses my strategy: prefix_except_default
+    // sitemaps: {
+    //   // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
+    //   posts: {
+    //     sources: ['/api/v1/blog'],
+    //     chunks: true, // Enable chunking
+    //     chunkSize: 2500 // Use 2500 URLs per chunk
+    //   },
+    //   pages: {
+    //     exclude: [
+    //       '/api/v1/blog',
+    //     ]
+    //   },
+    // },
+    sitemaps: true,// we can do {} || boolean; https://nuxtseo.com/docs/sitemap/guides/multi-sitemaps#enabling-multiple-sitemaps
+    // modify the chunk size if you need
+    defaultSitemapsChunkSize: 2000, // default 1000
+    // urls: async () => {
+    // // avoid for large sites: https://nuxtseo.com/docs/sitemap/guides/dynamic-urls
+    // // replace it with: sources: []
+    //   const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
+    //   const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
+
+    //   const routes = staticRoutes.map((route) => ({
+    //     loc: `${baseUrl}${route}`,
+    //     lastmod: new Date().toISOString(),
+    //   }));
+
+    //   try {
+    //     // Dynamic blog posts from PostgreSQL
+    //     // check this too: https://nuxtseo.com/docs/sitemap/advanced/loc-data#dynamic-lastmod-from-apis
+    //     const response = await fetch(`${process.env.DOMAIN_NAME || 'http://localhost:3000'}/api/v1/blog?publishedOnly=true`);
+    //     const result = await response.json();
+    //     if (result && result.data) {
+    //       result.data.forEach((post: any) => {
+    //         routes.push({
+    //           loc: `/blog/${post.slug}`,
+    //           lastmod: post.updatedAt,
+    //         });
+    //       });
+    //     }
+    //   } catch (e) {
+    //     console.warn('Sitemap dynamic fetch failed (expected during early build):', e.message);
+    //   }
+    
+    //   return routes;
+    // },
+    exclude: [
+      "/auth/callback",
+      "/user/forgot-password",
+      "/user/reset-password",
+      "/user/unsubscribe",
+      "/user/verify-email",
+    ],
+    // how could this image/video embedding be useful: https://nuxtseo.com/docs/sitemap/advanced/images-videos#sitemap-images
+  },
+  aiReady: {
+    // https://nuxtseo.com/docs/ai-ready/api/config#enabled
+    enabled: isSSR,
+    debug: isDebug,
+    contentSignal: isSSR ? {
+      aiTrain: false,
+      search: true,
+      aiInput: true
+    } : false,
+    database: {
+      type: 'sqlite',
     },
-    sitemap: {
-      enabled: isSSR,
-      // in debugging with devtools, you can view raw sitemaps here:
-      // url: /__sitemap__/debug.json
-      // prerendered file: .output/public/__sitemap__/debug.json
-  
-      // we can customize UI:
-      // https://nuxtseo.com/docs/sitemap/advanced/customising-ui#changing-the-columns
-      xslColumns: [
-        { label: 'URL', width: '50%' },
-        { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
-        { "label": "Last Updated", "width": "15%", "select": "concat(substring(sitemap:lastmod,0,11),concat(' ', substring(sitemap:lastmod,12,5)),concat(' ', substring(sitemap:lastmod,20,6)))" },
-        { label: 'Hreflangs', select: 'count(xhtml:link)', width: '5%' },
-        { "label": "Images", "width": "5%", "select": "count(image:image)" },
-      ],
-      xslTips: process.env.IS_DEBUGGING !== "false",
-      debug: isDebug,
-      credits: false,
-      discoverImages: true, // default
-      // strictNuxtContentPaths: true,
-      // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
-      autoI18n: true,// make sure it uses my strategy: prefix_except_default
-      // sitemaps: {
-      //   // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
-      //   posts: {
-      //     sources: ['/api/v1/blog'],
-      //     chunks: true, // Enable chunking
-      //     chunkSize: 2500 // Use 2500 URLs per chunk
-      //   },
-      //   pages: {
-      //     exclude: [
-      //       '/api/v1/blog',
-      //     ]
-      //   },
-      // },
-      sitemaps: true,// we can do {} || boolean; https://nuxtseo.com/docs/sitemap/guides/multi-sitemaps#enabling-multiple-sitemaps
-      // modify the chunk size if you need
-      defaultSitemapsChunkSize: 2000, // default 1000
-      // urls: async () => {
-      // // avoid for large sites: https://nuxtseo.com/docs/sitemap/guides/dynamic-urls
-      // // replace it with: sources: []
-      //   const baseUrl = process.env.NUXT_SITE_URL || "https://baderidris.com";
-      //   const staticRoutes = ["/", "/about", "/contact", "/projects", "/projects/train"];
-  
-      //   const routes = staticRoutes.map((route) => ({
-      //     loc: `${baseUrl}${route}`,
-      //     lastmod: new Date().toISOString(),
-      //   }));
-  
-      //   try {
-      //     // Dynamic blog posts from PostgreSQL
-      //     // check this too: https://nuxtseo.com/docs/sitemap/advanced/loc-data#dynamic-lastmod-from-apis
-      //     const response = await fetch(`${process.env.DOMAIN_NAME || 'http://localhost:3000'}/api/v1/blog?publishedOnly=true`);
-      //     const result = await response.json();
-      //     if (result && result.data) {
-      //       result.data.forEach((post: any) => {
-      //         routes.push({
-      //           loc: `/blog/${post.slug}`,
-      //           lastmod: post.updatedAt,
-      //         });
-      //       });
-      //     }
-      //   } catch (e) {
-      //     console.warn('Sitemap dynamic fetch failed (expected during early build):', e.message);
-      //   }
-      
-      //   return routes;
-      // },
-      exclude: [
-        "/auth/callback",
-        "/user/forgot-password",
-        "/user/reset-password",
-        "/user/unsubscribe",
-        "/user/verify-email",
-      ],
-      // how could this image/video embedding be useful: https://nuxtseo.com/docs/sitemap/advanced/images-videos#sitemap-images
-    },
-    aiReady: {
-      // https://nuxtseo.com/docs/ai-ready/api/config#enabled
-      enabled: isSSR,
-      debug: isDebug,
-      contentSignal: isSSR ? {
-        aiTrain: false,
-        search: true,
-        aiInput: true
-      } : false,
-      database: {
-        type: 'sqlite',
-      },
-      // llmsTxt: {
-      //   sections: [
-      //     {
-      //       title: 'API Reference',
-      //       links: [
-      //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
-      //       ]
-      //     }
-      //   ],
-      //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
-      // }
-    },
+    // llmsTxt: {
+    //   sections: [
+    //     {
+    //       title: 'API Reference',
+    //       links: [
+    //         { title: 'REST API', href: '/docs/api', description: 'API documentation' }
+    //       ]
+    //     }
+    //   ],
+    //   notes: '[open-source github repo](https://github.com/Bader-Idris/nuxt4-fullstack-portfolio)'
+    // }
   },
 
   // }),
@@ -983,7 +982,6 @@ export default defineNuxtConfig({
   //   "/api/**": { cors: true }, // where to put in be
   // },
   runtimeConfig: {
-    // ? publicly for client
     public: {
       // Expose desktop/electron flags so client plugins/middleware can
       // guard Electron-specific behaviour (e.g. skip ServiceWorker, skip
@@ -1004,15 +1002,15 @@ export default defineNuxtConfig({
       // iOSServerClientId: 'YOUR_WEB_CLIENT_ID',  // Required for iOS offline mode and server authorization (same as webClientId)
 
       // @ts-nocheck Doesn't work, how to silence public {} for this!
-      ...(!isDesktop && !isCapacitor) && {
-        i18n: {
-          // ssr: process.env.NUXT_SSR !== "false",
-          // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
-          baseUrl: siteUrl,
-          // critical to fix ugly warning: in env var file:
-          // NUXT_PUBLIC_I18N_BASE_URL=https://baderidris.com
-        },
-      },
+      // ...(!isDesktop && !isCapacitor) && {
+      //   i18n: {
+      //     // ssr: process.env.NUXT_SSR !== "false",
+      //     // check https://i18n.nuxtjs.org/docs/api/runtime-config#baseurl
+      //     baseUrl: siteUrl,
+      //     // critical to fix ugly warning: in env var file:
+      //     // NUXT_PUBLIC_I18N_BASE_URL=https://baderidris.com
+      //   },
+      // },
       scripts: {
         googleTagManager: {
           // .env

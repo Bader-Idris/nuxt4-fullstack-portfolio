@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import apn from "@parse/node-apn";
 import { initializeApp, getApps, cert, refreshToken } from "firebase-admin/app";
-import { getMessaging } from "firebase-admin/messaging"; 
+import { getMessaging } from "firebase-admin/messaging";
 
 const config = useRuntimeConfig();
 
