@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import apn from "@parse/node-apn";
-import admin from "firebase-admin";
+import { initializeApp, getApps, cert, refreshToken } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
 
 const config = useRuntimeConfig();
 
@@ -22,12 +23,12 @@ if (config.apnKey && config.apnKeyId && config.apnTeamId) {
 
 // Firebase Admin SDK initialization
 // We use the same pattern as jwt.ts, utilizing useRuntimeConfig()
-if (admin.apps.length === 0) {
+if (getApps().length === 0) {
   try {
     if (config.firebaseRefreshToken) {
       // Use Refresh Token approach as suggested by official docs to avoid file-system dependency
-      admin.initializeApp({
-        credential: admin.credential.refreshToken(config.firebaseRefreshToken),
+      initializeApp({
+        credential: refreshToken(config.firebaseRefreshToken),
         databaseURL: config.firebaseDatabaseUrl,
       });
       console.log("Firebase Admin SDK initialized with refresh token.");
@@ -41,8 +42,8 @@ if (admin.apps.length === 0) {
           readFileSync(config.fcmServiceAccount, "utf8"),
         );
       }
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+      initializeApp({
+        credential: cert(serviceAccount),
       });
       console.log("Firebase Admin SDK initialized with service account.");
     }
@@ -77,7 +78,7 @@ export async function sendAPN(token: string, payload: any) {
 }
 
 export async function sendFCM(token: string, payload: any) {
-  if (!admin.apps.length) {
+  if (!getApps().length) {
     console.error("Firebase Admin SDK is not initialized.");
     return;
   }
@@ -91,7 +92,7 @@ export async function sendFCM(token: string, payload: any) {
   };
 
   try {
-    const response = await admin.messaging().send(message);
+    const response = await getMessaging().send(message);
     console.log("FCM sent:", response);
   } catch (error) {
     console.error("FCM error:", error);

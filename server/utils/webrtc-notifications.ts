@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import admin from "firebase-admin";
+import { getMessaging } from "firebase-admin/messaging";
 import sendEmail from "./sendEmail";
 import { User } from "../models/mongo/User";
 import { PushSubscription } from "../models/mongo/PushSubscription";
@@ -45,7 +45,7 @@ export async function notifyMissedCall(toUserId: string, fromName: string) {
     for (const sub of capSubs) {
       if (sub.platform === "android" || sub.platform === "ios") {
         try {
-          await admin.messaging().send({
+          await getMessaging().send({
             token: sub.token,
             notification: {
               title: payload.title,
@@ -139,7 +139,7 @@ export async function notifyIncomingCall(toUserId: string, fromName: string, cal
     for (const sub of capSubs) {
       if (sub.platform === "android" || sub.platform === "ios") {
         try {
-          await admin.messaging().send({
+          await getMessaging().send({
             token: sub.token,
             notification: {
               title: payload.title,
@@ -174,4 +174,3 @@ export async function notifyIncomingCall(toUserId: string, fromName: string, cal
     console.error("Error in notifyIncomingCall:", error);
   }
 }
-

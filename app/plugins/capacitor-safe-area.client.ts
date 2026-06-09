@@ -20,18 +20,32 @@ export default defineNuxtPlugin(async () => {
       :root {
         /* Fallback values for capacitor */
         --safe-area-inset-top: 25px;
-        /* --safe-area-inset-right: 0px; */
         --safe-area-inset-bottom: 15px;
-        /* --safe-area-inset-left: 0px; */
-        /* --safe-area-inset-status-bar: 25px; */
-        /* --viewport-height: $full-viewport-height !important; */
-        /* TODO: OMG, I need to do DRY with all heigh values of the viewport! ~25 lines */
+      }
+
+      html, body {
+        height: 100dvh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        box-sizing: border-box;
       }
 
       .capacitor-safe-area {
-        /* This will now include your extra 10px */
-        padding-top: var(--safe-area-inset-top);
-        padding-bottom: var(--safe-area-inset-bottom);
+        /* Use padding to create the safe zone without expanding the container */
+        padding-top: var(--safe-area-inset-top) !important;
+        padding-bottom: var(--safe-area-inset-bottom) !important;
+        height: 100dvh !important;
+        box-sizing: border-box !important;
+      }
+
+      /* Override #__nuxt to fit exactly within the padded body */
+      #__nuxt {
+        margin: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        max-height: 100% !important;
+        box-sizing: border-box !important;
       }
       
       /* Android specific handling for bottom safe area */
@@ -54,16 +68,18 @@ export default defineNuxtPlugin(async () => {
       const isAndroid = deviceInfo.platform === "android";
 
       // Calculate adjusted insets
-      let bottomInset = insets.bottom;
+      // Force bottom to be 10% less as requested to prevent "too much" space
+      let bottomInset = insets.bottom * 0.9;
+      
       if (isAndroid) {
         // For Android, ensure we have at least 15px for the bottom safe area
-        bottomInset = Math.max(BOTTOM_SAFE_MARGIN, insets.bottom);
+        bottomInset = Math.max(BOTTOM_SAFE_MARGIN, bottomInset);
       }
 
       const adjustedInsets = {
         top: STATUS_BAR_HEIGHT, // Fixed top value
         right: insets.right,
-        bottom: bottomInset,
+        bottom: Math.floor(bottomInset),
         left: insets.left,
       };
 
@@ -77,11 +93,17 @@ export default defineNuxtPlugin(async () => {
         `${adjustedInsets.bottom}px`,
       );
 
+      // Ensure --full-viewport-height doesn't double-count insets
+      // We set it to 100dvh because we handle insets via body padding + border-box
+      document.documentElement.style.setProperty(
+        "--full-viewport-height",
+        "100dvh"
+      );
+
       // For full viewport elements
       document.documentElement.style.setProperty(
         "--viewport-height",
         `calc(100dvh - ${adjustedInsets.top}px - ${adjustedInsets.bottom}px)`,
-
       );
 
       // Add Android-specific class if needed

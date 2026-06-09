@@ -3,15 +3,8 @@ import { useUserStore } from "~/stores/useUserSocket";
 
 export default defineNuxtPlugin(async (_nuxtApp) => {
   // This plugin runs once on app startup.
-  // Its purpose is to initialize the user's session from the server.
+  // Its purpose is to initialize the user's session.
 
-  if (import.meta.server) {
-    // On the server, we don't need to do anything here.
-    // The user state will be fetched if needed during the rendering process.
-    return;
-  }
-
-  // On the client, try to fetch the user to restore the session.
   const userStore = useUserStore();
 
   // If the user is already authenticated (e.g., from a previous login in the same session),
@@ -20,62 +13,58 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
     return;
   }
 
-  // Don't attempt to restore session on public routes unless we have stored credentials
-  const currentPath = window.location.pathname;
-  const isPublicRoute =
-    currentPath === "/" ||
-    currentPath.startsWith("/about") ||
-    currentPath.startsWith("/projects") ||
-    currentPath === "/contact" ||
-    currentPath.startsWith("/legal") ||
-    currentPath.startsWith("/privacy");
+  // Detect if we should attempt restoration
+  let shouldRestore = false;
 
-  // Only attempt session restoration if:
-  // 1. We're on a protected route, OR
-  // 2. We have stored credentials in localStorage/cookies that suggest the user was previously logged in
-  const hasStoredCredentials = () => {
-    if (typeof window !== "undefined") {
-      // Check for stored user in localStorage
-      const storedUser = localStorage.getItem("user");
-      if (storedUser && storedUser !== "null" && storedUser !== "undefined") {
-        return true;
-      }
-      // Check for auth cookies
-      return (
-        document.cookie.includes("accessToken") ||
-        document.cookie.includes("refreshToken")
-      );
+  if (import.meta.server) {
+    const cookies = useRequestHeaders(["cookie"]);
+    if (cookies.cookie?.includes("accessToken") || cookies.cookie?.includes("refreshToken")) {
+      shouldRestore = true;
     }
-    return false;
-  };
+  } else {
+    // On the client, check localStorage and cookies
+    const storedUser = localStorage.getItem("user");
+    const hasStoredUser = storedUser && storedUser !== "null" && storedUser !== "undefined";
+    const hasAuthCookies = document.cookie.includes("accessToken") || document.cookie.includes("refreshToken");
+    
+    if (hasStoredUser || hasAuthCookies) {
+      shouldRestore = true;
+    }
+  }
 
-  // If on a public route and no stored credentials, skip session restoration
-  if (isPublicRoute && !hasStoredCredentials()) {
+  if (!shouldRestore) {
     return;
   }
 
   try {
-    console.log("Attempting to restore user session...");
+    if (import.meta.server) {
+      console.log("Attempting to restore user session on server...");
+    } else {
+      console.log("Attempting to restore user session on client...");
+    }
+
+    const headers = useRequestHeaders(["cookie"]);
+    const config = useRuntimeConfig();
+    
     const data = await $fetch("/api/v1/auth/me", {
-      // Add a timeout to prevent hanging requests
+      baseURL: config.public.originUrl,
+      headers: headers as any,
       timeout: 5000,
     });
 
     if (data && data.user) {
       userStore.setUser(data.user);
-      console.log("User session restored successfully.");
+      if (import.meta.server) {
+        console.log("User session restored successfully on server.");
+      } else {
+        console.log("User session restored successfully on client.");
+      }
     }
   } catch (error: any) {
     // This will fail if the user is not logged in (401 Unauthorized), which is expected.
-    // We can safely ignore the error. The user remains unauthenticated.
     const status = error?.data?.statusCode || error?.status || 500;
     if (status !== 401) {
-      // Log non-authentication errors
-      console.log("Error restoring user session:", error);
-    } else {
-      console.log(
-        "No active user session found (401). User remains unauthenticated.",
-      );
+      console.log("Error restoring user session:", error.message);
     }
   }
 });
