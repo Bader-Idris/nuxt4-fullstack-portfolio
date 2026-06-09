@@ -37,7 +37,8 @@ export const projectsList: Project[] = [
       es: "Mi primer desafío 3D: Rumbo al horizonte",
     },
     url: "/projects/train",
-    img: "/imgs/train-thumbnail-2026-05-5.webp",
+    // img: "/imgs/train-thumbnail-2026-05-5.webp",
+    img: "/imgs/train-gif.gif",
     imgAlt: "Locomotive ready to race",
     desc: {
       en: "High-fidelity 3D locomotive simulation with professional shadow tuning, angular-sort path extraction, dynamic chimney steam, and a reactive suspension system on an interactive terrain!!",

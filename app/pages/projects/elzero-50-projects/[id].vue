@@ -132,7 +132,19 @@ import { elzeroProjectsList } from "~/apis/elzero_projects_data";
 const route = useRoute();
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
+
 const isRtl = computed(() => locale.value === "ar");
+
+// AI & SEO: Throw a proper 404 error if the project is not found.
+watchEffect(() => {
+  if (!project.value) {
+    showError({
+      statusCode: 404,
+      statusMessage: t("project_not_found", "Project not found in the explorer."),
+      fatal: true,
+    });
+  }
+});
 
 const project = computed(() => {
   const slug = route.params.id as string;

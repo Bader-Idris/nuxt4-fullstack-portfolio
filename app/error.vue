@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import type { NuxtError } from "#app";
 const localePath = useLocalePath();
+const { t } = useI18n();
 
-defineProps({
+const props = defineProps({
   error: {
     type: Object as () => NuxtError,
     default: () => ({ statusCode: 404 }),
   },
+});
+
+// AI & SEO: Ensure error pages (especially 404s) return clear signals to crawlers.
+// This prevents AI from indexing broken links and provides a semantic title.
+useSeoMeta({
+  title: () => `${props.error?.statusCode || 404} - ${t("blog.notFound", "Page Not Found")}`,
+  robots: "noindex, nofollow",
 });
 </script>
 

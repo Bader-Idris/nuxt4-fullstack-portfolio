@@ -154,6 +154,20 @@ const { status, data, error, refresh } = useAsyncData(
   }
 );
 
+// AI & SEO: Throw a proper 404 error if the post is not found.
+// This ensures that the server returns a 404 status code, which is critical
+// for AI crawlers (like GPTBot) and search engines to avoid indexing dead links.
+watchEffect(() => {
+  if (status.value !== "pending" && (!data.value || error.value)) {
+    const statusCode = (error.value as any)?.statusCode || 404;
+    showError({
+      statusCode,
+      statusMessage: t("blog.notFound", "Post Not Found"),
+      fatal: true,
+    });
+  }
+});
+
 const postData = computed(() => data.value);
 
 const { formatDateSeparator } = useDateFormatter();
