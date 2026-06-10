@@ -513,6 +513,7 @@ Custom jails and filters have been created to allow users to add their configura
 
 ### Common Issues
 
+- **pnpm Stability**: Refer to the [pnpm Stability Guide](./docs/PNPM_STABILITY_GUIDE.md) for instructions on locking dependency versions and fixing Docker build failures.
 - **Weak Server Builds**: Refer to [weak_servers.md](./weak_servers.md) for guidance on optimizing builds for limited resources
 - **Docker Issues**: Ensure Docker and Docker Compose are properly installed and running
 - **Environment Variables**: Make sure all required environment variables are properly configured

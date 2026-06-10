@@ -28,8 +28,11 @@ ENV DOCKER_BUILD=true
 RUN rm -rf node_modules && \
     mkdir -p /root/.local/share/pnpm/store
 
+# Disable supply-chain policy checks that fail for very fresh packages in Docker
+# and use --frozen-lockfile to ensure we use the exact resolutions from our local lockfile.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --shamefully-hoist --force
+    pnpm config set minimum-release-age 0 && \
+    pnpm install --shamefully-hoist --frozen-lockfile
 
 # ─────────────────────────────────────────────
 # Stage 3: Build

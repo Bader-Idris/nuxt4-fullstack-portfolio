@@ -266,8 +266,6 @@ export default defineNuxtConfig({
         '@capgo/capacitor-social-login',
         '@rive-app/canvas', // CJS
         '@tiptap/extension-code-block-lowlight',
-        '@unhead/schema-org',
-        '@unhead/schema-org/vue',
         '@vue/devtools-core',
         '@vue/devtools-kit',
         'canvas-confetti',

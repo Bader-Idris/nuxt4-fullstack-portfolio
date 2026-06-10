@@ -94,8 +94,8 @@
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "9.7.0",
-    "nodemailer": "^8.0.10",
-    "nuxt": "4.4.8",
+    "nodemailer": "^8.0.11",
+    "nuxt": "4.4.6",
     "nuxt-ai-ready": "^1.3.9",
     "nuxt-skew-protection": "^1.1.1",
     "nuxt-tiptap-editor": "3.4.0",
@@ -169,7 +169,7 @@
     "@nuxt/test-utils": "4.0.3",
     "@nuxtjs/partytown": "^2.0.0",
     "@nuxtjs/seo": "5.2.1",
-    "@takumi-rs/core": "^1.8.0",
+    "@takumi-rs/core": "^1.8.1",
     "@types/bun": "^1.3.14",
     "@types/canvas-confetti": "^1.9.0",
     "@types/howler": "^2.2.13",
@@ -206,31 +206,13 @@
     "vite-plugin-glsl": "^1.6.0",
     "vue-tsc": "^3.3.4"
   },
-  "resolutions": {
-    "nuxt-schema-org": "6.2.0",
-    "@intlify/shared": "11.4.2",
-    "nitropack": "2.x.x",
-    "nuxi": "3.x.x",
-    "vue": "3.5.35",
-    "vue-router": "5.1.0",
-    "nuxt": "4.4.8"
-  },
-  "overrides": {
-    "nuxt-schema-org": "6.2.0",
-    "@intlify/shared": "11.4.2",
-    "nitropack": "2.x.x",
-    "nuxi": "3.x.x",
-    "vue": "3.5.35",
-    "vue-router": "5.1.0",
-    "nuxt": "4.4.8"
-  },
   "browserslist": [
     "> 1%",
     "last 2 versions",
     "not dead",
     "not ie 11"
   ],
-  "packageManager": "pnpm@11.5.2",
+  "packageManager": "pnpm@11.5.3",
   "appId": "com.baderidris.www",
   "workspaces": [
     "."

@@ -531,6 +531,7 @@ Se han creado cárceles y filtros personalizados para permitir a los usuarios ag
 
 ### Problemas comunes
 
+- **Estabilidad de pnpm**: Consulte la [Guía de estabilidad de pnpm](./docs/PNPM_STABILITY_GUIDE.md) para obtener instrucciones sobre cómo bloquear las versiones de las dependencias y corregir los fallos de construcción de Docker.
 - **Compilaciones en servidores débiles**: Consulte [weak_servers.md](./weak_servers.md) para obtener orientación sobre la optimización de compilaciones para recursos limitados
 - **Problemas con Docker**: Asegúrese de que Docker y Docker Compose estén instalados y funcionando correctamente
 - **Variables de entorno**: Asegúrese de que todas las variables de entorno requeridas estén configuradas correctamente
