@@ -50,6 +50,7 @@ minimumReleaseAgeExclude:
 
 overrides:
   nuxt-schema-org: 6.0.4
+  "@nuxtjs/seo": 5.1.2
   "@intlify/shared": 11.4.2
   nitropack: 2.x.x
   nuxi: 3.x.x
