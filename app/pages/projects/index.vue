@@ -80,13 +80,6 @@ useSeoMeta({
 });
 
 if (import.meta.server) {
-  defineOgImage('Default', {
-    title: t('projects.title'),
-    description: t('projects.description'),
-  });
-}
-
-if (import.meta.server) {
   useSchemaOrg([
     defineWebPage({
       name: t("projects.title"),
