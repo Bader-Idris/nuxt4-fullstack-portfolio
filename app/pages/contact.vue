@@ -123,11 +123,13 @@
 import { useUserStore } from "~/stores/useUserSocket";
 const localePath = useLocalePath();
 const isMobile = useMobile();
-// const { t } = useI18n()
+const { t } = useI18n()
 
 const contactDisplay = ref(isMobile.value ? "none" : "block");
 const socialsDisplay = ref(isMobile.value ? "none" : "block");
 const authStore = useUserStore();
+
+const fullPathWithLocale = localePath(useRoute().path);
 
 // Sidebar resizing logic
 const sidebarWidth = ref(300);
@@ -202,6 +204,27 @@ const copyToClipboard = async (index: number): Promise<void> => {
     }
   }
 };
+
+if (import.meta.server) {
+  useSeoMeta({
+    title: t("contact.title"),
+    description: t("contact.description"),
+    ogUrl: fullPathWithLocale,
+  });
+  
+  defineOgImage("Default.takumi", {
+    title: t("contact.title"),
+    description: t("contact.description"),
+  });
+  
+  useSchemaOrg([
+    defineWebPage({
+      name: t("contact.title"),
+      description: t("contact.description"),
+    })
+  ]);
+}
+
 </script>
 
 <style lang="scss" scoped>

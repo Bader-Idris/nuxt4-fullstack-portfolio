@@ -5,25 +5,6 @@ import { useApiError } from "~/composables/useApiError";
 import { z } from "zod";
 
 const { t, locale } = useI18n();
-
-const localePath = useLocalePath();
-const fullPathWithLocale = localePath(useRoute().path);
-
-useSeoMeta({
-  title: t("contact.title"),
-  description: t("contact.description"),
-  ogUrl: `${useRuntimeConfig().public.originUrl}${fullPathWithLocale}`,
-});
-
-if (import.meta.server) {
-  useSchemaOrg([
-    defineWebPage({
-      name: t("contact.title"),
-      description: t("contact.description"),
-    })
-  ]);
-}
-
 const { getFriendlyErrorMessage } = useApiError();
 const isSubmitted = ref<boolean>(false);
 const thanksImage = ref<string>("/imgs/thanks.svg");

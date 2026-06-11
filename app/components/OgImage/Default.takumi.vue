@@ -13,12 +13,15 @@ const props = defineProps({
 // ai is ugly at making simple things complicated, OMG!
 // check how simple it is: https://nuxtseo.com/docs/og-image/getting-started/installation#next-steps
 const config = useRuntimeConfig();
-const origin = config.public.originUrl;
-
 const siteConfig = useSiteConfig();
 
 const displayTitle = computed(() => props.title || siteConfig.name || "Bader Idris")
 const displayDescription = computed(() => props.description || siteConfig.description || "Full-stack developer & creative technologist.")
+
+const displayHost = computed(() => {
+  if (!siteConfig.url) return 'baderidris.com';
+  return siteConfig.url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+});
 
 const isRtl = computed(() => {
   // Support for Arabic, Hebrew, Persian, etc.
@@ -59,7 +62,7 @@ const truncatedDescription = computed(() => {
         </div>
         <div class="status-pill" :style="{ display: 'flex', alignItems: 'center', backgroundColor: '#011221', border: '1.5px solid #1e2d3d', borderRadius: '999px', padding: '8px 20px', flexDirection: isRtl ? 'row-reverse' : 'row' }">
           <span class="status-dot" :style="{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#43d9ad', margin: isRtl ? '0 0 0 10px' : '0 10px 0 0' }"></span>
-          <span class="status-text">baderidris.com</span>
+          <span class="status-text">{{ displayHost }}</span>
         </div>
       </div>
 
@@ -88,7 +91,7 @@ const truncatedDescription = computed(() => {
           <span class="tag" :style="{ margin: isRtl ? '0 0 0 16px' : '0 16px 0 0' }">#GSAP</span>
           <span class="tag">#ThreeJS</span>
         </div>
-        <div class="url">baderidris.com</div>
+        <div class="url">{{ displayHost }}</div>
       </div>
     </div>
   </div>
