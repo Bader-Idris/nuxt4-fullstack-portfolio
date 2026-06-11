@@ -368,9 +368,7 @@ export default defineNuxtConfig({
     ...(isElectron ? ["nuxt-electron"] : []),
     "@nuxtjs/device",
     "@nuxt/fonts",
-    "@nuxtjs/seo",
-    "nuxt-skew-protection",
-    "nuxt-ai-ready",
+    ...(isSSR ? ["@nuxtjs/seo", "nuxt-ai-ready", "nuxt-skew-protection"] : []),
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     "@vueuse/nuxt",
@@ -1076,12 +1074,18 @@ export default defineNuxtConfig({
   },
   imports: {
     // ? to have auto-import from third party packages, modules do it already in often
-    // presets: [
-    //   {
-    //     from: "vue-i18n",
-    //     imports: ["useI18n"],
-    //   },
-    // ],
+    presets: [
+      ...(isSSR ? [] : [
+        {
+          from: "@/utils/seo-mocks",
+          imports: ["useSchemaOrg", "definePerson", "useSiteConfig", "useOgImage", "useSiteIndexable", "getSiteConfig", "useRobotConfig", "useLinkChecker", "defineOrganization", "defineWebPage", "defineWebSite"],
+        },
+      ]),
+      // {
+      //   from: "vue-i18n",
+      //   imports: ["useI18n"],
+      // },
+    ],
   },
   scripts: {
     registry: {

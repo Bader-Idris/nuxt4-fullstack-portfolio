@@ -48,7 +48,7 @@ import { useSound } from "@/composables/useSound";
 const { t } = useI18n({ useScope: "global" });
 const config = useRuntimeConfig();
 
-if (import.meta.server) {
+if (import.meta.server && config.public.isSSR) {
   useSchemaOrg([
     definePerson({
       name: "Bader Idris",
