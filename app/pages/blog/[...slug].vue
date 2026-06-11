@@ -112,8 +112,8 @@ const fetchPost = async () => {
       Object.assign(headers, reqHeaders);
     }
 
+    // CRITICAL: Internal fetch without absolute baseURL to prevent ECONNREFUSED
     const response: any = await $fetch(`/api/v1/blog/${slug.value}`, {
-      baseURL: config.public.originUrl,
       headers,
     });
 
@@ -123,7 +123,7 @@ const fetchPost = async () => {
     return null;
   } catch (err: any) {
     const status = err.statusCode || 500;
-    
+
     // Auth check for unpublished posts
     if (status === 403 || status === 401) {
       if (import.meta.client) {
@@ -155,8 +155,6 @@ const { status, data, error, refresh } = useAsyncData(
 );
 
 // AI & SEO: Throw a proper 404 error if the post is not found.
-// This ensures that the server returns a 404 status code, which is critical
-// for AI crawlers (like GPTBot) and search engines to avoid indexing dead links.
 watchEffect(() => {
   if (status.value !== "pending" && (!data.value || error.value)) {
     const statusCode = (error.value as any)?.statusCode || 404;
@@ -192,7 +190,7 @@ useSeoMeta({
 });
 
 if (import.meta.server) {
-  defineOgImage("Default", {
+  defineOgImage("Default.takumi", {
     title: computed(() => postData.value?.title || "Blog Post"),
     description: computed(
       () => postData.value?.summary || "Read more on Bader Idris's blog.",
@@ -246,14 +244,12 @@ if (import.meta.server) {
 }
 
 .blog-post-page {
-  overflow: auto !important;
+  flex: 1;
+  overflow-y: auto !important;
   padding: 2rem;
-  @include mainMiddleSettings;
 
   @include mobile {
-    overflow-y: scroll !important;
     padding: 1rem;
-    @include phone-borders;
   }
 }
 

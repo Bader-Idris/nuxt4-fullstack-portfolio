@@ -63,19 +63,10 @@
 <script setup lang="ts">
 import { useUserStore } from "~/stores/useUserSocket";
 
-if (import.meta.server) {
-  defineOgImage("Default", {
-    title: "Blog | Bader Idris",
-    description:
-      "Explore insights on Vue, Nuxt, Node, and creative technologies.",
-  });
-}
-
 const userStore = useUserStore();
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const { formatDateSeparator } = useDateFormatter();
-const config = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
 
@@ -140,8 +131,8 @@ const fetchPosts = async () => {
       Object.assign(headers, reqHeaders);
     }
 
+    // CRITICAL: Internal fetch without absolute baseURL to prevent ECONNREFUSED in built app
     const response: any = await $fetch("/api/v1/blog", {
-      baseURL: config.public.originUrl,
       query: { 
         lang: selectedLangs.value.join(","),
         publishedOnly: canCreate.value ? 'false' : 'true'
@@ -158,14 +149,13 @@ const fetchPosts = async () => {
     if (import.meta.client) {
       showToast("error", t("errors.serverError", "Failed to load posts"));
     } else {
-      // Allow Nuxt to handle SSR errors
       throw err;
     }
     return [];
   }
 };
 
-const { status, data, refresh } = useAsyncData(
+const { status, data } = useAsyncData(
   `blog-list-${route.fullPath}`,
   () => fetchPosts(),
   {
@@ -174,14 +164,13 @@ const { status, data, refresh } = useAsyncData(
   }
 );
 
-useSeoMeta({
-  title: "Blog | Bader Idris",
-});
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use "sass:color";
+
 .blog-list-container {
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   padding: 0 1rem;
 }
@@ -198,7 +187,7 @@ useSeoMeta({
   align-items: center;
   margin-bottom: 3rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #1e2d3d;
+  border-bottom: 1px solid $lines;
 }
 
 .header-actions {
@@ -211,24 +200,24 @@ useSeoMeta({
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #43d9ad;
-  color: #011221;
+  background: $accent1;
+  color: $primary1;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
   font-size: 0.9rem;
   transition: background 0.2s;
-}
 
-.create-post-btn:hover {
-  background: #45eaa2;
+  &:hover {
+    background: color.adjust($accent1, $lightness: 10%);
+  }
 }
 
 .page-title {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #e5e9f0;
+  color: $secondary4;
   margin: 0;
 }
 
@@ -238,20 +227,20 @@ useSeoMeta({
 }
 
 .language-filter button {
-  background: #011221;
-  border: 1px solid #1e2d3d;
+  background: $primary1;
+  border: 1px solid $lines;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  color: #607b96;
+  color: $secondary1;
   cursor: pointer;
   transition: all 0.2s;
-}
 
-.language-filter button.active {
-  background: #fea55f;
-  color: #011221;
-  border-color: #fea55f;
-  font-weight: bold;
+  &.active {
+    background: $accent2;
+    color: $primary1;
+    border-color: $accent2;
+    font-weight: bold;
+  }
 }
 
 .posts-grid {
@@ -261,25 +250,25 @@ useSeoMeta({
 }
 
 .post-card {
-  background: #011221;
-  border: 1px solid #1e2d3d;
+  background: $primary3;
+  border: 1px solid $lines;
   border-radius: 12px;
   padding: 1.5rem;
   text-decoration: none;
   transition:
     transform 0.2s,
     border-color 0.2s;
-}
 
-.post-card:hover {
-  transform: translateY(-4px);
-  border-color: #43d9ad;
+  &:hover {
+    transform: translateY(-4px);
+    border-color: $accent1;
+  }
 }
 
 .post-lang {
   display: block;
   font-size: 0.75rem;
-  color: #43d9ad;
+  color: $accent1;
   font-weight: 700;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
@@ -287,12 +276,12 @@ useSeoMeta({
 
 .post-card-title {
   font-size: 1.5rem;
-  color: #e5e9f0;
+  color: $secondary4;
   margin: 0 0 0.75rem 0;
 }
 
 .post-summary {
-  color: #607b96;
+  color: $secondary1;
   font-size: 1rem;
   line-height: 1.5;
   margin: 0 0 1.5rem 0;
@@ -302,7 +291,7 @@ useSeoMeta({
   display: flex;
   justify-content: space-between;
   font-size: 0.85rem;
-  color: #607b96;
+  color: $secondary1;
 }
 
 .loader-container {
@@ -314,6 +303,6 @@ useSeoMeta({
 .no-posts, .error-container {
   text-align: center;
   padding: 4rem;
-  color: #607b96;
+  color: $secondary1;
 }
 </style>

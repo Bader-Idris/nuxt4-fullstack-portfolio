@@ -45,14 +45,14 @@
           <p>{{ createTimeCodeSnippet }}</p>
         </div>
       </div>
-      <div class="code-block-container">
-        <button class="copy-code-btn" @click="copyCode" aria-label="Copy code">
-          <Icon :name="copied ? 'mdi:check' : 'mdi:content-copy'" size="20" />
-        </button>
-        <ClientOnly>
-          <TiptapEditorContent v-if="editor" :editor="editor" />
-        </ClientOnly>
-      </div>
+      <ClientOnly>
+        <div class="code-block-container">
+          <button class="copy-code-btn" @click="copyCode" aria-label="Copy code">
+            <Icon :name="copied ? 'mdi:check' : 'mdi:content-copy'" size="20" />
+          </button>
+            <TiptapEditorContent v-if="editor" :editor="editor" />
+        </div>
+      </ClientOnly>
     </div>
   </div>
 </template>
@@ -396,7 +396,7 @@ onBeforeMount(() => {
 
 /* VSCode-like Robust Syntax Highlighting Overrides */
 .ProseMirror pre {
-  // background-color: #1e1e1e !important; // Removed hardcoded color to preserve user's preferred background
+  /* background-color: #1e1e1e !important; Removed hardcoded color to preserve user's preferred background */
   color: #d4d4d4 !important;
   padding: 1.5rem !important;
   border-radius: 12px !important;
@@ -548,7 +548,7 @@ onBeforeMount(() => {
     user-select: none;
     padding: 10px 0;
     
-    // Dynamic scroll shadows using mask-image for transparency compatibility
+    /* Dynamic scroll shadows using mask-image for transparency compatibility */
     mask-image: linear-gradient(to bottom, 
       transparent, 
       black 40px, 
@@ -630,7 +630,7 @@ onBeforeMount(() => {
       }
     }
 
-    // Target the code block background specifically
+    /* Target the code block background specifically */
     .code-block-container {
       background-color: rgba(0, 0, 0, 0.2);
       border-radius: 16px;

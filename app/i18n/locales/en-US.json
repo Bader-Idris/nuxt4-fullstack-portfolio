@@ -154,6 +154,7 @@
   "back_to_dashboard": "Back to Dashboard",
   "blog": {
     "title": "Blog",
+    "description": "Explore the ideas and tools that will help you build creative applications.",
     "createPost": "Create Post",
     "notFound": "Post Not Found",
     "backHome": "Go Back Home",

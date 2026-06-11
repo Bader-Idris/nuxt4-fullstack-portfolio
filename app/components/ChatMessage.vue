@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
 
   &.sent {
     align-self: flex-end;
-    background: #dcf8c6; // Classic Telegram green
+    background: #dcf8c6; /* Classic Telegram green */
     color: #000;
     border-radius: 12px 12px 0 12px;
     
@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
   .message-body {
     position: relative;
     padding-bottom: 4px;
-    padding-right: 60px; // Space for meta
+    padding-right: 60px; /* Space for meta */
   }
 
   .message-meta {

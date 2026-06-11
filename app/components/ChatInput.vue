@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
     display: flex;
     gap: 2px;
     padding: 4px;
-    background: #2b2b2b; // Dark Telegram-like bubble
+    background: #2b2b2b; /* Dark Telegram-like bubble */
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     z-index: 100;

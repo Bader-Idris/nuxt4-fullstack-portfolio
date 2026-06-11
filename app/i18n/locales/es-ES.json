@@ -154,6 +154,7 @@
   "back_to_dashboard": "Volver al Panel",
   "blog": {
     "title": "Blog",
+    "description": "Explora las ideas y herramientas tecnológicas que te ayudarán a construir aplicaciones creativas.",
     "createPost": "Crear Post",
     "notFound": "Publicación no encontrada",
     "backHome": "Volver al inicio",
