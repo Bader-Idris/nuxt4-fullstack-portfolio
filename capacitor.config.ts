@@ -6,7 +6,8 @@ import packageJson from "./package.json";
 import "dotenv/config";
 
 const domain =
-  process.env.DOMAIN_NAME?.replace("https://", "") || "baderidris.com";
+  process.env.DOMAIN_NAME?.replace(/^https?:\/\//, "").split("/")[0] ||
+  "baderidris.com";
 
 const config: CapacitorConfig = {
   appId: "com.baderidris.portfolio",

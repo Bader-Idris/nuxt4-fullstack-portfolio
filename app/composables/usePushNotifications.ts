@@ -11,7 +11,7 @@ export const usePushNotifications = () => {
     return "serviceWorker" in navigator && "PushManager" in window;
   });
 
-  const isCapacitor = Capacitor.isNativePlatform();
+  const isCapacitor = Capacitor.isNativePlatform() || config.public.isCapacitor;
 
   function urlBase64ToUint8Array(base64String: string) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

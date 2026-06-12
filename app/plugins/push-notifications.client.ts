@@ -13,10 +13,8 @@ export default defineNuxtPlugin(async (_nuxtApp) => {
 
     if (isCapacitor) {
       initialize();
-    } else if (!config.public.isDesktop) {
-      // Service Workers are NOT supported in Electron renderer processes.
-      // Attempting to register one throws InvalidStateError in the renderer.
-      // Skip SW registration entirely for all desktop (Electron/Electrobun) builds.
+    } else if (!config.public.isDesktop && !config.public.isCapacitor) {
+      // Service Workers are NOT supported in Electron/Capacitor as we want.
       if ("serviceWorker" in navigator) {
         try {
           console.log("Registering service worker...");
