@@ -49,7 +49,7 @@ const windowsTargets = [
 ];
 
 const linuxTargets = [
-  { target: "snap", arch: "x64" },
+  // { target: "snap", arch: "x64" }, full of bugs in electron-builder with snap v9!
   { target: "deb", arch: "x64" },
   { target: "rpm", arch: "x64" },
   { target: "AppImage", arch: "x64" },
@@ -306,29 +306,51 @@ const baseConfig = {
       "libdrm2",
     ],
   },
-  snap: {
-    grade: "stable",
-    confinement: "strict",
-    useTemplateApp: true,
-    stagePackages: [
-      "libnss3",
-      "libnspr4",
-      "libatk1.0-0",
-      "libatk-bridge2.0-0",
-      "libcups2",
-      "libdrm2",
-      "libgtk-3-0",
-      "libnotify4",
-      "libxss1",
-      "libasound2",
-      "libgbm1",
-      "libsecret-1-0",
-      "libayatana-appindicator3-1",
-    ],
-    summary: "Bader's portfolio using Nuxt 4 + Vue 3 + Electron + Capacitor",
-    description:
-      packageJson.description ||
-      "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information.",
+  // ! MIGRATION: replaced legacy `snap` key with `snapcraft` key (electron-builder v26+).
+  // The old `snap` key is deprecated in v26 and will not receive new features.
+  // The new `snapcraft` key requires an explicit `base` field and nests per-core
+  // options cleanly under a matching sub-key (e.g. `core22: { ... }`).
+  // This structure is also fully forward-compatible with v27.
+  // docs: https://www.electron.build/docs/snap
+  snapcraft: {
+    // `base` is required by the new snapcraft key.
+    // core22 = Ubuntu 22.04 LTS — stable choice; use core24 (beta) only if you need
+    // Ubuntu 24.04 / Electron 28+ / Wayland first-class support.
+    base: "core22",
+
+    // All per-core runtime options live under the matching base sub-key.
+    // electron-builder merges this into the generated snapcraft.yaml automatically.
+    core22: {
+      grade: "stable", // "stable" | "devel" — controls Snap Store channel eligibility
+      confinement: "strict", // "strict" | "devmode" | "classic"
+
+      // ! REMOVED: `useTemplateApp: true` — it is automatically forced false whenever
+      // stagePackages differs from the built-in defaults, so keeping it true alongside
+      // a custom stagePackages list creates a validation conflict that crashes the build.
+      // electron-builder will use the full snapcraft path (not the pre-built template)
+      // whenever stagePackages is customised, which is correct here.
+
+      stagePackages: [
+        "libnss3",
+        "libnspr4",
+        "libatk1.0-0",
+        "libatk-bridge2.0-0",
+        "libcups2",
+        "libdrm2",
+        "libgtk-3-0",
+        "libnotify4",
+        "libxss1",
+        "libasound2",
+        "libgbm1",
+        "libsecret-1-0",
+        "libayatana-appindicator3-1",
+      ],
+
+      summary: "Bader's portfolio using Nuxt 4 + Vue 3 + Electron + Capacitor",
+      description:
+        packageJson.description ||
+        "A multi-platform portfolio application built with Nuxt 4, Vue 3, Electron, and Capacitor for mobile. Visit [Bader's Portfolio](https://baderidris.com) for more information.",
+    },
   },
   files: [
     "dist-electron/**/*",
