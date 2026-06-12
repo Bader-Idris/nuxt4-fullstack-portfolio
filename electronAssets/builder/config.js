@@ -318,6 +318,19 @@ const baseConfig = {
     // Ubuntu 24.04 / Electron 28+ / Wayland first-class support.
     base: "core22",
 
+    /*
+       # to downgrade snap from v9 to v7:
+       sudo snap refresh snapcraft --channel=7.x/stable
+
+       snapcraft --version   # should show 7.x.x
+
+       # to upgrade:
+       sudo snap refresh snapcraft --channel=latest/stable
+
+       # Verify upgrade:
+       snapcraft --version    # → 9.x.x or latest
+    */
+
     // All per-core runtime options live under the matching base sub-key.
     // electron-builder merges this into the generated snapcraft.yaml automatically.
     core22: {
