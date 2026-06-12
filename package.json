@@ -36,6 +36,7 @@
     "build:electrobun:mac:only": "electrobun build --env=stable --os=macos",
     "build:electrobun:linux:only": "electrobun build --env=stable --os=linux",
     "generate": "pnpm prebuild && cross-env NUXT_GZIP=false IS_CAPACITOR=true nuxt generate --dotenv .env.capacitor",
+    "generate:cap:pnpm": "pnpm prebuild && cross-env NUXT_GZIP=false IS_CAPACITOR=true nuxt generate --dotenv .env.capacitor && pnpm cap sync && pnpm cap open android",
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare && patch-package",
