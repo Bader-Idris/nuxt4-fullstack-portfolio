@@ -226,6 +226,8 @@
     }
     },
     "dashboard": {
+      "title": "Dashboard - Secure Chat & Video",
+      "description": "Access exclusive content, resources, and services on Bader Idris's platform.",
     "guest_placeholder": {
       "message": "Please {link} to chat with other users.",
       "link_text": "sign in"

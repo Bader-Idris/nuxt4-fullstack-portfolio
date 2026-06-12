@@ -223,6 +223,8 @@
     }
   },
   "dashboard": {
+    "title": "Panel - Chat y Video Seguro",
+    "description": "Acceda a contenido exclusivo, recursos y servicios en la plataforma de Bader Idris.",
   "guest_placeholder": {
     "message": "Por favor {link} para chatear con otros usuarios.",
     "link_text": "inicia sesión"

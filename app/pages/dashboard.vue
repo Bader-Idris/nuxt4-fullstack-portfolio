@@ -428,13 +428,6 @@
 </template>
 
 <script setup lang="ts">
-if (import.meta.server) {
-  defineOgImage('Default', {
-    title: 'Dashboard',
-    description: 'Secure Chat & Video Dashboard'
-  })
-}
-
 import { useSocketStore } from "~/stores/useSocketStore";
 import { useMessagesStore } from "~/stores/useMessagesStore";
 import { useOnlineUsersStore } from "~/stores/useOnlineUsersStore";
@@ -462,13 +455,17 @@ const userStore = useUserStore();
 const localePath = useLocalePath();
 const { t } = useI18n();
 
-useSeoMeta({
-  title: "Dashboard - Secure Chat & Video",
-  description:
-    "Access exclusive content, resources, and services on Bader Idris's platform.",
-});
-
 if (import.meta.server) {
+  defineOgImage("Default.takumi", {
+    title: t("dashboard.title"),
+    description: t("dashboard.description"),
+  });
+  
+  useSeoMeta({
+    title: () => t("dashboard.title"),
+    description: () => t("dashboard.description"),
+  });
+
   useSchemaOrg([
     defineWebPage({
       name: "Dashboard",

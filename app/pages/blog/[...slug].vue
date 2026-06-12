@@ -147,7 +147,7 @@ const fetchPost = async () => {
   }
 };
 
-const { status, data, error, refresh } = useAsyncData(
+const { status, data, error, refresh } = await useAsyncData(
   `blog-post-${slug.value}-${locale.value}`,
   () => fetchPost(),
   {
@@ -169,6 +169,14 @@ watchEffect(() => {
 
 const postData = computed(() => data.value);
 
+// Update cached post for edit page
+const cachedPost = useState<any>("active-blog-post");
+watch(postData, (newVal) => {
+  if (newVal) {
+    cachedPost.value = newVal;
+  }
+}, { immediate: true });
+
 const { formatDateSeparator } = useDateFormatter();
 function formatDate(date: string) {
   return formatDateSeparator(date);
@@ -182,22 +190,30 @@ function editPost() {
 const fullPathWithLocale = computed(() => localePath(route.fullPath));
 
 // Dynamic SEO
+const seoTitle = computed(() => postData.value?.title || t("blog.title"));
+const seoDesc = computed(() => postData.value?.summary || t("blog.description"));
+
 useSeoMeta({
-  title: () => postData.value?.title || t("blog.loading", "Loading..."),
-  description: () => postData.value?.summary,
-  // originUrl can be "./" in Electron, so we use siteUrl for absolute SEO URLs
-  ogImage: () => `${config.public.siteUrl}/_og/r/blog/${slug.value}.png`,
-  ogUrl: () => `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  title: seoTitle.value,
+  ogTitle: seoTitle.value,
+  description: seoDesc.value,
+  ogDescription: seoDesc.value,
+  ogType: "article",
+  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  twitterTitle: seoTitle.value,
+  twitterDescription: seoDesc.value,
+  twitterCard: "summary_large_image",
 });
 
-if (import.meta.server) {
-  defineOgImage("Default.takumi", {
-    title: computed(() => postData.value?.title || "Blog Post"),
-    description: computed(
-      () => postData.value?.summary || "Read more on Bader Idris's blog.",
-    ),
-  });
-}
+defineOgImage("Default.takumi", {
+  title: seoTitle.value,
+  description: seoDesc.value,
+  slug: slug.value,
+  language: postData.value?.language || locale.value,
+  author: postData.value?.author?.name || "Bader Idris",
+  views: postData.value?.viewCount || 0,
+  comments: postData.value?.commentCount || 0,
+});
 
 // Schema.org
 if (import.meta.server) {

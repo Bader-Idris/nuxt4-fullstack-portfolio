@@ -2,19 +2,21 @@
   <div class="blog-content-wrapper" dir="auto">
     <ClientOnly>
       <TiptapEditorContent v-if="editor" :editor="editor" />
+      <template #fallback>
+        <div class="ProseMirror" v-html="content"></div>
+      </template>
     </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
-import { all, createLowlight } from "lowlight";
+import type { Editor } from "@tiptap/vue-3";
 
 const props = defineProps<{
   content: string;
 }>();
 
-const lowlight = createLowlight(all);
+const editor = ref<Editor | null>(null);
 
 // Custom extension to handle text direction automatically
 const Direction = TiptapExtension.create({
@@ -37,18 +39,45 @@ const Direction = TiptapExtension.create({
   },
 });
 
-const editor = useEditor({
-  content: props.content,
-  editable: false,
-  extensions: [
-    TiptapStarterKit.configure({
-      codeBlock: false,
-    }),
-    CodeBlockLowlight.configure({
-      lowlight,
-    }),
-    Direction,
-  ],
+const initEditor = async () => {
+  if (import.meta.server) return;
+
+  try {
+    const [
+      { Editor: TiptapEditor },
+      { CodeBlockLowlight },
+      { all, createLowlight },
+      { default: StarterKit }
+    ] = await Promise.all([
+      import("@tiptap/vue-3"),
+      import("@tiptap/extension-code-block-lowlight"),
+      import("lowlight"),
+      import("@tiptap/starter-kit")
+    ]);
+
+    const lowlight = createLowlight(all);
+
+    editor.value = new TiptapEditor({
+      content: props.content,
+      editable: false,
+      extensions: [
+        StarterKit.configure({
+          codeBlock: false,
+        }),
+        CodeBlockLowlight.configure({
+          lowlight,
+        }),
+        Direction,
+      ],
+    }) as Editor;
+  } catch (err) {
+    console.error("[BlogContent.vue] Tiptap init error:", err);
+    // Fallback logic is already handled by template #fallback or ClientOnly
+  }
+};
+
+onMounted(() => {
+  initEditor();
 });
 
 watch(() => props.content, (newContent) => {

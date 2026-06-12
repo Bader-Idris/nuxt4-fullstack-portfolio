@@ -327,6 +327,7 @@ export default defineNuxtConfig({
       },
     },
     build: {
+      // transpile: ["highlight.js", "lowlight"],
       sourcemap: "hidden", // test if this hides: #14 7.356  WARN
       // [plugin nuxt: components - loader]Sourcemap is likely to be incorrect: a plugin(nuxt: components- loader) was used to transform files,
       // but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help (x25)
@@ -347,6 +348,11 @@ export default defineNuxtConfig({
       //   }
       // }
       chunkSizeWarningLimit: 1000, // kB
+    },
+    resolve: {
+      alias: {
+        "highlight.js/lib/core": path.resolve(__dirname, "node_modules/highlight.js/es/core.js"),
+      },
     },
   },
   typescript: {

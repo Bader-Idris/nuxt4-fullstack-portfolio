@@ -7,6 +7,26 @@ const props = defineProps({
   description: {
     type: String,
     default: ''
+  },
+  slug: {
+    type: String,
+    default: ''
+  },
+  language: {
+    type: String,
+    default: 'en'
+  },
+  author: {
+    type: String,
+    default: 'Bader Idris'
+  },
+  views: {
+    type: [Number, String],
+    default: 0
+  },
+  comments: {
+    type: [Number, String],
+    default: 0
   }
 })
 
@@ -22,6 +42,15 @@ const displayHost = computed(() => {
   if (!siteConfig.url) return 'baderidris.com';
   return siteConfig.url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 });
+
+const displayPath = computed(() => {
+  if (props.slug) return `/blog/${props.slug}`;
+  return '';
+});
+
+const displayAuthor = computed(() => props.author || 'Bader Idris');
+const displayViews = computed(() => props.views || 0);
+const displayComments = computed(() => props.comments || 0);
 
 const isRtl = computed(() => {
   // Support for Arabic, Hebrew, Persian, etc.
@@ -74,6 +103,11 @@ const truncatedDescription = computed(() => {
         textAlign: isRtl ? 'right' : 'left',
         alignItems: isRtl ? 'flex-end' : 'flex-start'
       }">
+        <div class="meta-badges" :style="{ display: 'flex', gap: '12px', marginBottom: '20px', flexDirection: isRtl ? 'row-reverse' : 'row' }">
+          <span class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#43d9ad', fontSize: '18px' }">By {{ displayAuthor }}</span>
+          <span class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#607b96', fontSize: '18px' }">{{ displayViews }} Views</span>
+          <span class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#607b96', fontSize: '18px' }">{{ displayComments }} Comments</span>
+        </div>
         <h1 class="title" :style="{ fontSize: '70px', fontWeight: '700', color: '#e5e9f0', lineHeight: '1.1', marginBottom: '24px' }">
           {{ displayTitle }}
         </h1>
@@ -83,12 +117,11 @@ const truncatedDescription = computed(() => {
       </div>
 
       <div class="footer" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingTop: '24px', borderTop: '1px solid #1e2d3d', flexDirection: isRtl ? 'row-reverse' : 'row' }">
-        <div class="tags" :style="{ display: 'flex', flexDirection: isRtl ? 'row-reverse' : 'row' }">
-          <span class="tag" :style="{ margin: isRtl ? '0 0 0 16px' : '0 16px 0 0' }">#Vue</span>
-          <span class="tag" :style="{ margin: isRtl ? '0 0 0 16px' : '0 16px 0 0' }">#Nuxt</span>
-          <span class="tag" :style="{ margin: isRtl ? '0 0 0 16px' : '0 16px 0 0' }">#Node</span>
-          <span class="tag" :style="{ margin: isRtl ? '0 0 0 16px' : '0 16px 0 0' }">#DevOps</span>
-          <span class="tag" :style="{ margin: isRtl ? '0 0 0 16px' : '0 16px 0 0' }">#GSAP</span>
+        <div class="tags" :style="{ display: 'flex', flexDirection: isRtl ? 'row-reverse' : 'row', alignItems: 'center', gap: '16px' }">
+          <span class="path-display" v-if="displayPath" :style="{ color: '#43d9ad', fontSize: '20px', fontWeight: 'bold', marginRight: isRtl ? '0' : '20px', marginLeft: isRtl ? '20px' : '0' }">{{ displayPath }}</span>
+          <span class="tag">#Vue</span>
+          <span class="tag">#Nuxt</span>
+          <span class="tag">#Node</span>
           <span class="tag">#ThreeJS</span>
         </div>
         <div class="url">{{ displayHost }}</div>

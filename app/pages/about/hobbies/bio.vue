@@ -47,32 +47,48 @@
       </div>
       <ClientOnly>
         <div class="code-block-container">
-          <button class="copy-code-btn" @click="copyCode" aria-label="Copy code">
+          <button class="copy-code-btn" @click="copyCode" :aria-label="t('about.personal.copyCode', 'Copy code')">
             <Icon :name="copied ? 'mdi:check' : 'mdi:content-copy'" size="20" />
           </button>
-            <TiptapEditorContent v-if="editor" :editor="editor" />
+          <TiptapEditorContent v-if="editor" :editor="editor" />
         </div>
+        <template #fallback>
+          <div class="code-block-container ssr-fallback">
+             <div class="ProseMirror" v-html="initialEditorContent"></div>
+          </div>
+        </template>
       </ClientOnly>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
-import { all, createLowlight } from "lowlight";
 import { Flip } from "gsap/all";
 import { toast } from "vue3-toastify";
+import type { Editor } from "@tiptap/vue-3";
 
+// Core composables
 const { t, locale } = useI18n();
-const { $device } = useNuxtApp();
+const device = useDevice();
 const config = useRuntimeConfig();
+const route = useRoute();
 
-// ... image handling ...
+/**
+ * ARCHITECTURE NOTE:
+ * We use a hybrid SSR/Client approach for the bio and code snippet.
+ * 1. Image processing happens on the server (Sharp) to generate WebP.
+ * 2. SEO metadata and Schema.org are generated for both SSR and SSG.
+ * 3. Tiptap Editor is initialized DEFENSIVELY on the client only.
+ *    We use dynamic imports for highlight.js/lowlight to avoid app-breaking SyntaxErrors 
+ *    during initialization/SSR.
+ * 4. A static fallback is provided for the code snippet to ensure it's indexable by SEO.
+ */
+
+// Image Handling - WebP Generation & Pathing
 const imageBasePath = "/imgs/meTwentyFour.jpg";
 const profileImage = useState("profileImage", () => imageBasePath);
 
 if (import.meta.server) {
-  // Use dynamic imports to keep Node-only modules out of the client bundle
   const [fs, path, sharpModule] = await Promise.all([
     import("node:fs"),
     import("node:path"),
@@ -100,16 +116,16 @@ if (import.meta.server) {
   }
 }
 
-// SEO
+// SEO & Meta
 const localePath = useLocalePath();
-const fullPathWithLocale = localePath(useRoute().path);
+const fullPathWithLocale = localePath(route.path);
 
 useSeoMeta({
-  title: () => t("about.personal.title") + " | Bio",
+  title: () => `${t("about.personal.title")} | Bio`,
   description: () => t("about.personal.description"),
   ogTitle: () => t("about.personal.title"),
   ogDescription: () => t("about.personal.description"),
-  ogUrl: `${useRuntimeConfig().public.originUrl}${fullPathWithLocale}`,
+  ogUrl: () => `${config.public.originUrl}${fullPathWithLocale}`,
   ogImage: () => profileImage.value,
   twitterCard: "summary_large_image",
   twitterTitle: () => t("about.personal.title"),
@@ -117,64 +133,46 @@ useSeoMeta({
   twitterImage: () => profileImage.value,
 });
 
-
 if (import.meta.server) {
   useSchemaOrg([
     defineWebPage({
-      name: t("about.personal.title") + " | Bio",
-      description: t("about.personal.description"),
+      name: () => `${t("about.personal.title")} | Bio`,
+      description: () => t("about.personal.description"),
     }),
   ]);
 }
 
+// Bio Interaction & Scrolling
 const bioContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(bioContainer);
 
-// Copy Logic
+// Code Snippet Copy Logic
 const copied = ref(false);
 const copyCode = async () => {
-  const codeElement = document.querySelector(".ProseMirror pre code");
+  if (import.meta.server) return;
+  const codeElement = document.querySelector(".ProseMirror pre code") as HTMLElement | null;
   if (codeElement) {
-    await navigator.clipboard.writeText(codeElement.innerText);
-    copied.value = true;
-    toast(t("messages.copied", "Copied to clipboard!"), {
-      autoClose: 1000,
-      type: "success",
-      position: "bottom-right",
-      theme: "dark",
-    });
-    setTimeout(() => (copied.value = false), 2000);
+    try {
+      await navigator.clipboard.writeText(codeElement.innerText);
+      copied.value = true;
+      toast(t("messages.copied", "Copied to clipboard!"), {
+        autoClose: 1000,
+        type: "success",
+        position: "bottom-right",
+        theme: "dark",
+      });
+      setTimeout(() => (copied.value = false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
   }
 };
 
-// Tiptap Editor Setup
-const lowlight = createLowlight(all);
-
-const Direction = TiptapExtension.create({
-  name: "direction",
-  addGlobalAttributes() {
-    return [
-      {
-        types: ["paragraph", "heading", "blockquote", "codeBlock", "listItem"],
-        attributes: {
-          dir: {
-            default: "auto",
-            renderHTML: (attributes) => ({
-              dir: attributes.dir,
-            }),
-            parseHTML: (element) => element.getAttribute("dir") || "auto",
-          },
-        },
-      },
-    ];
-  },
-});
-
-const editor = useEditor({
-  content: `
+// Tiptap Editor Content Builder
+const buildEditorContent = (tValue: typeof t) => `
 <pre><code class="language-javascript">
   /**
-   * ${t("about.personal.codeSnippet.functionComment")}
+   * ${tValue("about.personal.codeSnippet.functionComment")}
    */
   const pigIt = (str) => {
     return str.split(' ').map(e => {
@@ -184,47 +182,79 @@ const editor = useEditor({
     }).join(' ');
   };
 
-  // ${t("about.personal.codeSnippet.testComment")}
+  // ${tValue("about.personal.codeSnippet.testComment")}
   console.log(pigIt('Pig latin is cool !'));
 </code></pre>
-  `,
-  editable: false,
-  extensions: [
-    TiptapStarterKit.configure({
-      codeBlock: false,
-    }),
-    CodeBlockLowlight.configure({
-      lowlight,
-    }),
-    Direction,
-  ],
+`;
+
+const initialEditorContent = computed(() => buildEditorContent(t));
+
+// Tiptap Editor Initialization - Defensive Client-Only approach
+const editor = shallowRef<Editor | null>(null);
+
+onMounted(async () => {
+  if (import.meta.server) return;
+
+  try {
+    // 1. Dynamically import modules that cause SyntaxErrors during SSR/Initialization
+    const [
+      { Editor: TiptapEditor },
+      { CodeBlockLowlight },
+      { all, createLowlight },
+      { default: StarterKit }
+    ] = await Promise.all([
+      import("@tiptap/vue-3"),
+      import("@tiptap/extension-code-block-lowlight"),
+      import("lowlight"),
+      import("@tiptap/starter-kit")
+    ]);
+
+    const lowlight = createLowlight(all);
+
+    // 2. Custom extension to handle text direction
+    const Direction = TiptapExtension.create({
+      name: "direction",
+      addGlobalAttributes() {
+        return [
+          {
+            types: ["paragraph", "heading", "blockquote", "codeBlock", "listItem"],
+            attributes: {
+              dir: {
+                default: "auto",
+                renderHTML: (attributes) => ({ dir: attributes.dir }),
+                parseHTML: (element) => element.getAttribute("dir") || "auto",
+              },
+            },
+          },
+        ];
+      },
+    });
+
+    // 3. Initialize the editor only on the client with full syntax highlighting
+    editor.value = new TiptapEditor({
+      content: initialEditorContent.value,
+      editable: false,
+      extensions: [
+        StarterKit.configure({ codeBlock: false }),
+        CodeBlockLowlight.configure({ lowlight }),
+        Direction,
+      ],
+    }) as Editor;
+  } catch (err) {
+    console.error("[bio.vue] Tiptap init error:", err);
+  }
 });
 
 // Update editor content when locale changes
 watch(locale, () => {
-  editor.value?.commands.setContent(`
-<pre><code class="language-javascript">
-  /**
-   * ${t("about.personal.codeSnippet.functionComment")}
-   */
-  const pigIt = (str) => {
-    return str.split(' ').map(e => {
-      return e.length > 0 && !e.match(/[!?@#$%^&*]/)
-        ? e.substring(1) + e.slice(0, 1) + 'ay'
-        : e;
-    }).join(' ');
-  };
-
-  // ${t("about.personal.codeSnippet.testComment")}
-  console.log(pigIt('Pig latin is cool !'));
-</code></pre>
-  `);
+  editor.value?.commands.setContent(initialEditorContent.value);
 });
 
 onBeforeUnmount(() => {
   unref(editor)?.destroy();
 });
 
+// Bio Formatting Logic
 const startDate = new Date("2022-06-15");
 const currentDate = new Date();
 const diffInMs = currentDate.getTime() - startDate.getTime();
@@ -245,7 +275,7 @@ interface Segment {
   isBold: boolean;
 }
 
-const bio = computed(() => {
+const bioText = computed(() => {
   return t("about.personal.bio", {
     experience: formattedExperience.value,
   });
@@ -265,7 +295,7 @@ function parseBioText(text: string): Segment[][] {
           isBold: false,
         });
       }
-      segments.push({ text: match[1], isBold: true });
+      segments.push({ text: match[1] ?? "", isBold: true });
       lastIndex = match.index + match[0].length;
     }
 
@@ -277,53 +307,52 @@ function parseBioText(text: string): Segment[][] {
   });
 }
 
-const formattedBio = computed(() => parseBioText(bio.value));
+const formattedBio = computed(() => parseBioText(bioText.value));
 
+// Drag to Scroll Logic
 const isDragging = ref(false);
 const startY = ref(0);
 const scrollTop = ref(0);
 
-const isMobile = computed(() => {
-  return $device.isMobile;
-});
-
 function handleMouseDown(event: MouseEvent | TouchEvent): void {
-  if (isMobile.value) return;
+  if (device.isMobile) return;
   isDragging.value = true;
   bioContainer.value?.classList.add("grabbing");
-  startY.value = "touches" in event ? event.touches[0].pageY : event.pageY;
+  startY.value = "touches" in event ? (event.touches[0]?.pageY ?? 0) : event.pageY;
   scrollTop.value = bioContainer.value?.scrollTop || 0;
 }
 
 function handleMouseMove(event: MouseEvent | TouchEvent): void {
-  if (isMobile.value || !isDragging.value || !bioContainer.value) return;
-  const y = "touches" in event ? event.touches[0].pageY : event.pageY;
+  if (device.isMobile || !isDragging.value || !bioContainer.value) return;
+  const y = "touches" in event ? (event.touches[0]?.pageY ?? startY.value) : event.pageY;
   bioContainer.value.scrollTop = scrollTop.value - (y - startY.value);
 }
 
 function handleMouseUp(): void {
-  if (isMobile.value) return;
+  if (device.isMobile) return;
   isDragging.value = false;
   bioContainer.value?.classList.remove("grabbing");
 }
 
 const createTimeCodeSnippet = computed(() => {
-  const now = new Date();
   const then = new Date("2023-05-19T00:00:00.000Z");
   const rtf = new Intl.RelativeTimeFormat(locale.value, { numeric: "auto" });
-  const diff = now.getTime() - then.getTime();
+  const diff = Date.now() - then.getTime();
   const monthDiff = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
   return t("about.personal.createdTimeAgo", {
     time: rtf.format(-monthDiff, "month"),
   });
 });
 
+// GSAP Flip Lightbox Logic
 const imageRef = ref<HTMLImageElement | null>(null);
 const lightboxImageRef = ref<HTMLImageElement | null>(null);
 const overlayRef = ref<HTMLElement | null>(null);
 const isLightboxOpen = ref(false);
 
 const toggleLightbox = async () => {
+  if (import.meta.server) return;
+  
   if (!isLightboxOpen.value) {
     isLightboxOpen.value = true;
     await nextTick();
@@ -512,6 +541,18 @@ onBeforeMount(() => {
     
     span {
       font-size: 16px;
+    }
+  }
+
+  &.ssr-fallback {
+    .ProseMirror {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      border: 1px solid rgba($lines, 0.4);
+      padding: 1.5rem;
+      color: #d4d4d4;
+      font-family: monospace;
+      white-space: pre-wrap;
     }
   }
 }
