@@ -115,6 +115,7 @@ const fetchPost = async () => {
     // CRITICAL: Internal fetch without absolute baseURL to prevent ECONNREFUSED
     const response: any = await $fetch(`/api/v1/blog/${slug.value}`, {
       headers,
+      baseURL: config.public.originUrl
     });
 
     if (response?.success) {

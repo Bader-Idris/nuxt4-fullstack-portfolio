@@ -64,6 +64,7 @@ const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const userStore = useUserStore();
 const route = useRoute();
+const config = useRuntimeConfig();
 
 const newComment = ref('');
 const submitting = ref(false);
@@ -87,7 +88,8 @@ async function submitComment(parentId: number | null, content?: string) {
   try {
     await $fetch(`/api/v1/blog/${props.postSlug}/comments`, {
       method: 'POST',
-      body: { content: commentContent, parentId }
+      body: { content: commentContent, parentId },
+      baseURL: config.public.originUrl
     });
     
     if (parentId) {

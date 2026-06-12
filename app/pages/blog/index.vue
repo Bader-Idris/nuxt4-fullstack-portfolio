@@ -64,6 +64,7 @@
 import { useUserStore } from "~/stores/useUserSocket";
 
 const userStore = useUserStore();
+const config = useRuntimeConfig();
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const { formatDateSeparator } = useDateFormatter();
@@ -138,6 +139,7 @@ const fetchPosts = async () => {
         publishedOnly: canCreate.value ? 'false' : 'true'
       },
       headers,
+      baseURL: config.public.originUrl
     });
 
     if (response?.success) {
