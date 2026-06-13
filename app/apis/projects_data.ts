@@ -7,7 +7,7 @@ export interface LocalizedString {
 export interface Project {
   title: LocalizedString;
   url: string;
-  img: string;
+  img: string | LocalizedString;
   imgAlt: string;
   desc: LocalizedString;
   tags: string[];
@@ -161,18 +161,18 @@ export const projectsList: Project[] = [
   },
   {
     title: {
-      en: "50 Frontend Challenges: Elzero Edition",
-      ar: "50 تحدي واجهة أمامية: إصدار الزيرو",
-      es: "50 desafíos de interfaz de usuario: Edición Elzero",
+      en: "Dashboard - Secure Chat & Video",
+      ar: "لوحة التحكم - دردشة وفيديو آمن",
+      es: "Panel - Chat y Video Seguro",
     },
-    url: "/projects/elzero-50-projects",
-    img: "/imgs/patterns/cubes.png",
-    imgAlt: "Elzero 50 Projects Challenge Showcase",
+    url: "/dashboard",
+    img: "OG_IMAGE",
+    imgAlt: "Bader Idris Dashboard Showcase",
     desc: {
-      en: "A premium, interactive showcase of 50 frontend challenges from the Elzero Web School. Features a VSCode-style explorer, live playground previews, and full support for English, Arabic, and Spanish.",
-      ar: "عرض تفاعلي متميز لـ 50 تحديًا للواجهة الأمامية من مدرسة الزيرو. يتميز بمستكشف بنمط VSCode، ومعاينات مباشرة للملعب، ودعم كامل للغات الإنجليزية والعربية والإسبانية.",
-      es: "Una muestra interactiva premium de 50 desafíos de frontend de Elzero Web School. Cuenta con un explorador estilo VSCode, vistas previas de juegos en vivo y soporte completo para inglés, árabe y español.",
+      en: "Access exclusive content, resources, and services on Bader Idris's platform. Features real-time chat, video calls, and secure user management.",
+      ar: "الوصول إلى المحتوى والموارد والخدمات الحصرية على منصة بدر إدريس. يتميز بالدردشة في الوقت الفعلي، ومكالمات الفيديو، وإدارة المستخدمين الآمنة.",
+      es: "Acceda a contenido exclusivo, recursos y servicios en la plataforma de Bader Idris. Incluye chat en tiempo real, videollamadas y gestión segura de usuarios.",
     },
-    tags: ["HTML", "CSS", "Javascript", "Nuxt", "Typescript", "Sass"],
+    tags: ["Nuxt", "Socket.io", "WebRTC", "Pinia", "Sass", "Typescript"],
   },
 ];

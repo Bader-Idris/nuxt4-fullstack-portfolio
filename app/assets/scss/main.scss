@@ -10,10 +10,18 @@ html {
   color-scheme: dark light;
 }
 
+html,
 body {
-  font-family: $main-font;
+  font-family: var(--font-family-main), $main-font !important;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 a {
   text-decoration: none;

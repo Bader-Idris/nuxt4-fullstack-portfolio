@@ -182,6 +182,9 @@ html.dark {
   --scrollbar-thumb-hover: #{$dark-accent5};
   /* Yellow for hover contrast */
   --scrollbar-border: #{$dark-lines};
+
+  // Main font family
+  --font-family-main: #{$main-font};
 }
 html.light {
   // for light theme, if needed
@@ -256,4 +259,7 @@ html.light {
   --scrollbar-thumb: #{$dark-accent1};
   --scrollbar-thumb-hover: #{$dark-accent5};
   --scrollbar-border: #{$dark-lines};
+
+  // Main font family
+  --font-family-main: #{$main-font};
 }

@@ -37,16 +37,10 @@ export default defineNitroPlugin((nitroApp) => {
 
         if (filePath && fs.existsSync(filePath)) {
           const stats = fs.statSync(filePath)
-          url.lastmod = stats.mtime.toISOString().split('T')[0]
-        } else if (!url.lastmod) {
-          // Fallback to today if still not set
-          url.lastmod = new Date().toISOString().split('T')[0]
+          url.lastmod = stats.mtime.toISOString()
         }
       } catch (e) {
         // Silently fail for complex routes or missing files
-        if (!url.lastmod) {
-          url.lastmod = new Date().toISOString().split('T')[0]
-        }
       }
     }
   });

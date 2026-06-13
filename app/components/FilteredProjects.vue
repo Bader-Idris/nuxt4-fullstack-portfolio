@@ -20,7 +20,7 @@
               class="link external-link"
               :to="project.url"
             >
-              <img :src="project.img" :alt="project.title[locale] || project.title.en" />
+              <img :src="getProjectImage(project)" :alt="project.title[locale] || project.title.en" />
             </CustomLink>
             <p>{{ project.desc[locale] || project.desc.en }}</p>
 
@@ -41,8 +41,23 @@
 import { projectsList } from "~/apis/projects_data";
 
 const { locale } = useI18n();
+const localePath = useLocalePath();
 
-// const localePath = useLocalePath()
+const getProjectImage = (project: any) => {
+  const img = project.img;
+
+  if (img === "OG_IMAGE") {
+    // Return the dynamic OG image endpoint for the localized route
+    return `${localePath(project.url)}/__og-image__/image.png`;
+  }
+
+  if (typeof img === "object") {
+    return img[locale.value] || img.en;
+  }
+
+  return img;
+};
+
 const props = defineProps({
   activeItems: {
     type: Array,

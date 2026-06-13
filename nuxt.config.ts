@@ -891,6 +891,7 @@ export default defineNuxtConfig({
     debug: isDebug,
     credits: false,
     discoverImages: true, // default
+    autoLastmod: false,
     // strictNuxtContentPaths: true,
     // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
     autoI18n: true,// make sure it uses my strategy: prefix_except_default
