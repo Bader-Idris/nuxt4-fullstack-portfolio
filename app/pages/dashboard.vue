@@ -454,16 +454,18 @@ const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
 const localePath = useLocalePath();
 const { t } = useI18n();
+const fullPathWithLocale = localePath(useRoute().path);
 
 if (import.meta.server) {
+  useSeoMeta({
+    title: t("dashboard.title"),
+    description: t("dashboard.description"),
+    ogUrl: fullPathWithLocale,
+  });
+
   defineOgImage("Default.takumi", {
     title: t("dashboard.title"),
     description: t("dashboard.description"),
-  });
-  
-  useSeoMeta({
-    title: () => t("dashboard.title"),
-    description: () => t("dashboard.description"),
   });
 
   useSchemaOrg([

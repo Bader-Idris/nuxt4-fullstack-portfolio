@@ -27,10 +27,10 @@ services:
       args:
         - NODE_ENV=production
         - PORT=3000
-    image: baderidris/nuxt-portfolio:3.4.1-testing-prod
-    # image: baderidris/nuxt-portfolio:3.4.1-production-slim
-    # image: baderidris/nuxt-portfolio:3.4.1-testing-bun-prod
-    # image: baderidris/nuxt-portfolio:3.4.1-testing-deno-prod
+    image: baderidris/nuxt-portfolio:3.5.0-testing-prod
+    # image: baderidris/nuxt-portfolio:3.5.0-production-slim
+    # image: baderidris/nuxt-portfolio:3.5.0-testing-bun-prod
+    # image: baderidris/nuxt-portfolio:3.5.0-testing-deno-prod
     restart: always
     # mem_limit: 2000m
     # memswap_limit: 2000m

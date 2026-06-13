@@ -190,7 +190,6 @@ export default defineNuxtConfig({
         },
       },
       "/dashboard": {
-        ssr: false,
         prerender: isElectron,
         cache: false,
         headers: {
