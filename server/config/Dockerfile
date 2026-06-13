@@ -112,7 +112,12 @@ WORKDIR /app
 RUN apk add --no-cache vips dumb-init
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
-RUN chown -R node:node /app/.output
+
+# Copy source directories required for lastModified metadata (e.g. sitemap)
+COPY --from=builder /app/app/pages ./app/pages
+COPY --from=builder /app/app/content ./app/content
+
+RUN chown -R node:node /app/.output ./app/pages ./app/content
 USER node
 ARG PORT=3000
 ENV PORT=${PORT}

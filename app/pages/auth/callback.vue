@@ -10,12 +10,15 @@ import { useUserStore } from "~/stores/useUserSocket";
 
 const userStore = useUserStore();
 const localePath = useLocalePath();
+const config = useRuntimeConfig();
 
 onMounted(async () => {
   try {
     // After redirect from OAuth, we have the cookie.
     // Call the /api/me endpoint to get the user data.
-    const response = await $fetch("/api/v1/auth/me");
+    const response: any = await $fetch("/api/v1/auth/me", {
+      baseURL: config.public.originUrl,
+    });
     const user = response.user;
 
     if (user) {

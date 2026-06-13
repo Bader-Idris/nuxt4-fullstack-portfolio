@@ -45,6 +45,11 @@ services:
         - "com.docker.swarm.service.name={{.Service.Name}}-{{.Task.Slot}}"
     volumes:
       - ./node_modules:/app/node_modules:ro
+
+      # # for last modified sitemap!!
+      - ./app/pages:/app/app/pages:ro
+      - ./app/content:/app/app/content:ro
+
       # - app-data:/app/.output/public
     env_file:
       - ./.env.production
