@@ -1119,6 +1119,9 @@ export default defineNuxtConfig({
         partytown: true,
         trigger: "manual", // Controlled manually in app.vue for privacy
       },
+      gravatar: {
+        trigger: "onNuxtReady",
+      },
       // metaPixel: {
       //   id: process.env.META_PIXEL_ID,
       //   partytown: true,

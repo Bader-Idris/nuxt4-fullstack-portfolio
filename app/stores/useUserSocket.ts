@@ -9,6 +9,9 @@ export interface UserSettings {
 export interface User {
   userId: string;
   username: string;
+  email?: string;
+  avatar?: string;
+  avatarHash?: string;
   role: "admin" | "user" | "guest" | "editor" | "premium";
   provider?: "email" | "google" | "facebook";
   lastActiveChat?: string;

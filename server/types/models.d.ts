@@ -29,6 +29,7 @@ declare global {
     name: string;
     email: string;
     password: string;
+    avatar?: string;
     role: "admin" | "user" | "guest" | "editor" | "premium";
     provider: "email" | "google" | "facebook";
     verificationToken?: string;
@@ -86,6 +87,8 @@ declare global {
     name: string;
     userId: string;
     role: string;
+    email: string;
+    avatar?: string;
   }
 
   interface TokenPayload {

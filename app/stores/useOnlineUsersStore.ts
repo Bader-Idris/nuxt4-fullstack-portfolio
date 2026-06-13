@@ -3,6 +3,8 @@ interface OnlineUser {
   socketId: string;
   name: string;
   role: string;
+  avatar?: string;
+  avatarHash?: string;
 }
 
 export const useOnlineUsersStore = defineStore("onlineUsers", {

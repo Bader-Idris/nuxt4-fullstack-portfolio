@@ -5,7 +5,7 @@
 # ─────────────────────────────────────────────
 FROM node:24.16-alpine AS base
 WORKDIR /app
-RUN npm install -g npm@11.16.0
+RUN npm install -g npm@11.17.0
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 RUN --mount=type=cache,target=/var/cache/apk \

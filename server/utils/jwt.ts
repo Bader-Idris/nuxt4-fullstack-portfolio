@@ -9,6 +9,7 @@ export interface TokenUser {
   name: string;
   role: string;
   email?: string;
+  avatar?: string;
 }
 
 export interface TokenPayload {

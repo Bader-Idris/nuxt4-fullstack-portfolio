@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "node:crypto";
 // import { Message, User } from '../models/mongo';
 import { Message } from "../models/mongo";
 
@@ -52,6 +53,8 @@ export async function getContacts(userId: string, page: number, limit: number) {
           _id: 0,
           userId: "$contactInfo._id",
           name: "$contactInfo.name",
+          avatar: "$contactInfo.avatar",
+          email: "$contactInfo.email",
           lastMessage: {
             id: "$lastMessage._id",
             message: "$lastMessage.message",
@@ -63,7 +66,14 @@ export async function getContacts(userId: string, page: number, limit: number) {
       },
     ]);
 
-    return contacts;
+    return contacts.map(contact => {
+      const avatarHash = contact.email
+        ? crypto.createHash("sha256").update(contact.email.toLowerCase().trim()).digest("hex")
+        : undefined;
+      
+      const { email, ...rest } = contact;
+      return { ...rest, avatarHash };
+    });
   } catch (error) {
     console.error("Error fetching contacts:", error);
     throw new Error("Failed to fetch contacts");

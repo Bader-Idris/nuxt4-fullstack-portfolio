@@ -64,6 +64,11 @@
               @click="startChatWith(user.userId)"
             >
               <div class="user-info">
+                <div class="user-avatar-mini">
+                  <img v-if="user.avatar" :src="user.avatar" class="avatar-img" />
+                  <ScriptGravatar v-else-if="user.avatarHash" :hash="user.avatarHash" :size="30" class="avatar-img rounded-full" />
+                  <div v-else class="avatar-placeholder-mini">{{ user.name.charAt(0) }}</div>
+                </div>
                 <span class="user-name">{{ user.name }}</span>
                 <span class="user-status online" />
               </div>
@@ -323,7 +328,11 @@
           >
             <header class="chat-header" data-clarity-mask="true">
               <div class="user-info-header">
-                <div class="avatar-placeholder">{{ getRecipientName()?.charAt(0) || '?' }}</div>
+                <div class="avatar-wrapper">
+                  <img v-if="getRecipientAvatar()" :src="getRecipientAvatar()" class="avatar-img" />
+                  <ScriptGravatar v-else-if="getRecipientAvatarHash()" :hash="getRecipientAvatarHash()" :size="40" class="avatar-img rounded-full" />
+                  <div v-else class="avatar-placeholder">{{ getRecipientName()?.charAt(0) || '?' }}</div>
+                </div>
                 <div class="user-details">
                   <h2>{{ getRecipientName() }}</h2>
                   <span class="online-status">online</span>
@@ -1099,6 +1108,22 @@ const getUserName = (userId: string | null) => {
 
 const getRecipientName = () => getUserName(recipientUserId.value);
 
+const getRecipientAvatar = () => {
+  const contact = messagesStore.contacts.find((c) => c.userId === recipientUserId.value);
+  if (contact) return contact.avatar;
+  const onlineUser = onlineUsersStore.users.find((u) => u.userId === recipientUserId.value);
+  if (onlineUser) return onlineUser.avatar;
+  return null;
+};
+
+const getRecipientAvatarHash = () => {
+  const contact = messagesStore.contacts.find((c) => c.userId === recipientUserId.value);
+  if (contact) return contact.avatarHash;
+  const onlineUser = onlineUsersStore.users.find((u) => u.userId === recipientUserId.value);
+  if (onlineUser) return onlineUser.avatarHash;
+  return null;
+};
+
 const formatTimestamp = (timestamp: string | number | Date) => {
   return new Date(timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -1432,6 +1457,49 @@ function formatDuration(seconds: number) {
       justify-content: center;
       font-weight: bold;
     }
+
+    .avatar-wrapper {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary-hovered);
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-avatar-mini {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary-hovered);
+      flex-shrink: 0;
+
+      .avatar-placeholder-mini {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--gradient-start);
+        color: white;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+    }
+
     .user-details {
       h2 { margin: 0; font-size: 1rem; color: var(--text-primary); }
       .online-status { font-size: 0.8rem; color: #4caf50; }

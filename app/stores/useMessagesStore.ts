@@ -15,6 +15,8 @@ interface Message {
 interface Contact {
   userId: string;
   name: string;
+  avatar?: string;
+  avatarHash?: string;
   lastMessage: {
     id: string;
     message: string;

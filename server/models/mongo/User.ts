@@ -27,6 +27,10 @@ const UserSchema = new Schema<IUser>(
       required: false, // Not required for OAuth providers
       minlength: 6,
     },
+    avatar: {
+      type: String,
+      required: false,
+    },
     provider: {
       type: String,
       enum: ["email", "google", "facebook"],

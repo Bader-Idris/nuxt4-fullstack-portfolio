@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./server/config/nginx/test.Dockerfile
       args:
-        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.4.1-testing-prod
+        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-prod
     # image: nginx:stable-alpine
     container_name: nginx
     ports:

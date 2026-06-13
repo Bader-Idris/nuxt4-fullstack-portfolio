@@ -1,4 +1,5 @@
 import { redisClient } from "../plugins/redis";
+import crypto from "node:crypto";
 import {
   ONLINE_USERS_KEY,
   UNIQUE_ONLINE_USERS_KEY,
@@ -138,12 +139,18 @@ export const addOnlineUserToRedis = async (
   deviceId?: string,
 ) => {
   try {
+    const avatarHash = user.email
+      ? crypto.createHash("sha256").update(user.email.toLowerCase().trim()).digest("hex")
+      : undefined;
+
     const userData = {
       socketId: socketId,
       deviceId: deviceId, // From Nginx io cookie for professional sticky session tracking
       name: user.name,
       role: user.role,
       userId: user.userId,
+      avatar: user.avatar,
+      avatarHash,
       connectedAt: Date.now(),
     };
     const userDataStr = JSON.stringify(userData);
