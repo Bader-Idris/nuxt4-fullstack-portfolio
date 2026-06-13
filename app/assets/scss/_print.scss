@@ -1,0 +1,207 @@
+@use "variables" as *;
+
+@media print {
+  /* 1. Reset Global Layout Constraints */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    /* Ensure background colors and accent colors are printed */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  #__nuxt,
+  .layout-wrapper,
+  .main-content,
+  .home,
+  .container,
+  .about-page,
+  .about-body,
+  .about-main-content,
+  .personal-info,
+  .split-in-half,
+  .project-details {
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+    flex: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    /* Explicitly set background to ensure it's not missed or inherited as transparent */
+    background-color: var(--bg-primary) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Specific section overrides for nested backgrounds */
+  .home, .about-page, .project-details {
+    background-color: var(--bg-primary) !important;
+  }
+
+  .home .container {
+    background-color: var(--bg-primary) !important;
+  }
+
+  /* 2. Skip Hidden GSAPs & Forced Visibility */
+  /* Ensure all content hidden for animations is visible in print */
+  .info > *,
+  .task > p,
+  .github-repo,
+  .greeting,
+  .name,
+  .role,
+  .seo-content,
+  [style*="visibility: hidden"],
+  [style*="opacity: 0"],
+  [style*="transform"] {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    display: block !important;
+  }
+
+  /* SplitText targets - ensure words and lines are visible and flow naturally */
+  .info div,
+  .info span,
+  .task div,
+  .task span,
+  .role div,
+  .role span {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    display: inline-block !important;
+    position: static !important;
+  }
+
+  /* 3. Hide Non-Essential UI Elements */
+  header,
+  footer,
+  nav,
+  .burger-nav,
+  .phone-menu,
+  .LanguageSwitcher,
+  .theme-mode,
+  .ScrollToTop,
+  .scroll-to-top,
+  .ContextMenu,
+  .MobileJoystick,
+  .MobileSnakeGame,
+  .SnakeGame,
+  .GameContainer,
+  .ChatInput,
+  .RiveSplash,
+  .resize-handle,
+  aside,
+  .sidebar-toggle,
+  .projects-sidebar,
+  .project-search-bar,
+  .selected-tabs,
+  .back-button,
+  .social-share,
+  .tabs-container,
+  .copy-code-btn,
+  .lightbox-overlay,
+  .activity-bar,
+  .explorer-lists,
+  .ResizeHandle,
+  .mobile-game-drawer {
+    display: none !important;
+  }
+
+  /* 4. Standardize Typography */
+  body {
+    font-size: 11pt;
+    line-height: 1.4;
+    font-family: 'IBM Plex Sans Arabic', 'Fira Code', sans-serif !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: var(--accent-primary) !important;
+  }
+
+  /* Home page specific text colors */
+  .home .name {
+    color: var(--text-primary) !important;
+  }
+  .home .role {
+    color: var(--accent-secondary) !important;
+  }
+
+  p, blockquote, pre, img, .project-card, .blog-post-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* 5. Professional Color & Stacking Handling */
+  /* Remove artificial z-index separation that "floats" text away from backgrounds */
+  * {
+    z-index: auto !important;
+  }
+
+  a {
+    color: var(--text-link) !important;
+    text-decoration: underline;
+  }
+
+  /* Show URLs after links if they are not internal/buttons */
+  a[href^="http"]:not(.sub-navs):not(.btn):after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    font-style: italic;
+    color: var(--text-secondary) !important;
+  }
+
+  /* 6. Page setup */
+  @page {
+    margin: 1.5cm;
+    size: auto;
+  }
+
+  /* 7. Layout Overrides */
+  .container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .home {
+    padding: 0 !important;
+  }
+
+  .home .container {
+    display: block !important;
+  }
+
+  /* Ensure code blocks look good and don't cut off */
+  pre, code, .code-block-container {
+    background-color: var(--code-bg) !important;
+    border: 1px solid var(--lines-color) !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+  }
+
+  /* 8. Remove transitions and animations */
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
