@@ -4,7 +4,7 @@ ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-prod
 # ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-deno-prod
 # ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-bun-prod
 FROM ${BUILDER_IMAGE} AS builder
-# FROM baderidris/nuxt-portfolio:3.3.4-production-slim AS builder
+# FROM baderidris/nuxt-portfolio:3.5.0-production-slim AS builder
 
 FROM nginx:stable-alpine
 # Debug: Verify copied assets during build

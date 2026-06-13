@@ -65,7 +65,7 @@ services:
     # image: baderidris/nuxt-portfolio:3.2.5-testing-bun-prod
 
     # image: baderidris/nuxt-portfolio:3.3.3-production-slim
-    image: baderidris/nuxt-portfolio:3.4.1-testing-prod
+    image: baderidris/nuxt-portfolio:3.5.0-testing-prod
     # image: baderidris/nuxt-portfolio:3.3.2-testing-prod
     restart: always
     deploy:
