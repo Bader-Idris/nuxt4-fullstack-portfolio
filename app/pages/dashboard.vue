@@ -2,9 +2,33 @@
   <div class="dashboard">
     <!-- Main Content Grid -->
     <ClientOnly>
-      <div class="dashboard-grid">
-        <!-- Online Users List -->
-        <div ref="contactsPanel" class="online-users-panel" data-clarity-mask="true">
+      <!-- Mobile FAB: toggle the users panel on small screens -->
+      <button
+        v-if="isMobile"
+        class="mobile-panel-fab"
+        :class="{ 'is-panel-open': isMobilePanelOpen }"
+        :aria-label="isMobilePanelOpen ? 'Close users panel' : 'Open users panel'"
+        @click="toggleMobilePanel"
+      >
+        <Icon
+          :name="isMobilePanelOpen ? 'mdi:close' : 'mdi:account-group'"
+          width="22"
+          height="22"
+          mode="svg"
+        />
+        <span v-if="!isMobilePanelOpen && onlineUsersStore.users.length" class="fab-badge">
+          {{ onlineUsersStore.users.length }}
+        </span>
+      </button>
+
+      <div class="dashboard-grid" :class="{ 'mobile-panel-open': isMobile && isMobilePanelOpen }">
+        <!-- Online Users List — hidden on mobile until FAB is toggled -->
+        <div
+          ref="contactsPanel"
+          class="online-users-panel"
+          :class="{ 'mobile-hidden': isMobile && !isMobilePanelOpen }"
+          data-clarity-mask="true"
+        >
           <!-- Foldable Connection Status Bar -->
           <ConnectionStatusBar 
             v-model="isStatusFolded"
@@ -257,10 +281,52 @@ const recipientUserId = ref("");
 const showNewMessageIndicator = ref(false);
 const isCallMinimized = ref(false);
 // this has an issue with onMounted, it starts unfolded even with true as folder!
-const [isStatusFolded, toggleStatusFolded] = useToggle(true);
+const [isStatusFolded, toggleStatusFolded] = useToggle(false);
 const [isSettingsFolded, toggleSettingsFolded] = useToggle(true);
 const isClient = import.meta.client;
 const chatInputRef = ref(null);
+
+// Mobile panel toggle — panel is hidden by default on mobile
+// isMobilePanelOpen starts false (SSR-safe), GSAP animates open/close client-side
+const isMobilePanelOpen = ref(false);
+
+function toggleMobilePanel() {
+  if (!import.meta.client) return;
+  const panel = contactsPanel.value;
+  if (!panel) return;
+
+  if (!isMobilePanelOpen.value) {
+    // Open: slide in from left over the grid
+    isMobilePanelOpen.value = true;
+    nextTick(() => {
+      gsap.fromTo(
+        panel,
+        { x: '-100%', opacity: 0, scale: 0.96 },
+        {
+          x: '0%',
+          opacity: 1,
+          scale: 1,
+          duration: 0.42,
+          ease: 'power3.out',
+        }
+      );
+    });
+  } else {
+    // Close: slide out to the left, then flip the flag
+    gsap.to(panel, {
+      x: '-100%',
+      opacity: 0,
+      scale: 0.96,
+      duration: 0.32,
+      ease: 'power3.in',
+      onComplete: () => {
+        isMobilePanelOpen.value = false;
+        // Reset inline transform so desktop layout isn't affected
+        gsap.set(panel, { clearProps: 'all' });
+      },
+    });
+  }
+}
 
 const chatContainer = ref<HTMLElement | null>(null);
 const contactsPanel = ref<HTMLElement | null>(null);
@@ -573,6 +639,11 @@ function startChatWith(userId: string) {
   
   recipientUserId.value = userId;
   socketStore.socket?.emit("update-active-chat", userId);
+
+  // Auto-close the mobile panel after selecting a user — chat area returns to full view
+  if (isMobile.value && isMobilePanelOpen.value) {
+    toggleMobilePanel();
+  }
 }
 
 const handleLoadMore = () => {
@@ -792,8 +863,18 @@ function formatDuration(seconds: number) {
   flex-direction: column;
 
   @include mobile {
-    max-height: 35%;
-    flex-shrink: 0;
+    // On mobile the panel overlays the grid — full height, absolute positioned.
+    // GSAP drives visibility; .mobile-hidden keeps it out of layout/flow.
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    max-height: 100%;
+    border-radius: 16px;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.4);
+    // Hidden by default; GSAP will animate it in when isMobilePanelOpen is true
+    &.mobile-hidden {
+      display: none;
+    }
   }
 
   h3 { 
@@ -816,6 +897,79 @@ function formatDuration(seconds: number) {
     // Only the user list scrolls — not the entire panel
     overflow-y: auto;
     min-height: 0;
+  }
+}
+
+// Dashboard grid in mobile: always single column, chat takes full space
+.dashboard-grid {
+  @include mobile {
+    // The grid becomes a single-column flex so .chat-video-area fills everything
+    position: relative; // needed for the absolute-positioned panel overlay
+  }
+}
+
+// Floating Action Button — appears only on mobile to toggle the users panel
+.mobile-panel-fab {
+  display: none;
+
+  @include mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 80px;
+    // Placement: left side so it doesn't clash with other FABs
+    left: 16px;
+    z-index: 50;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #4d5bce 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(67, 217, 173, 0.4);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    // Pulsing ring when panel is closed to draw attention
+    animation: fab-pulse 2.8s ease-in-out infinite;
+
+    &.is-panel-open {
+      // Switch to a solid close appearance
+      background: linear-gradient(135deg, #e05260 0%, #c0392b 100%);
+      animation: none;
+      box-shadow: 0 4px 20px rgba(224, 82, 96, 0.5);
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+
+    .fab-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 9px;
+      background: #e05260;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--bg-primary);
+    }
+  }
+}
+
+@keyframes fab-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(67, 217, 173, 0.4);
+  }
+  60% {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 0 10px rgba(67, 217, 173, 0);
   }
 }
 
