@@ -84,6 +84,9 @@
             @switch-camera="switchCamera"
             @toggle-fullscreen="toggleFullscreen"
             @end-call="endCall"
+            @set-local-video="onSetLocalVideo"
+            @set-remote-video="onSetRemoteVideo"
+            @set-remote-audio="onSetRemoteAudio"
           />
 
           <!-- Incoming Call Permission Custom Modal (Overlay) -->
@@ -292,6 +295,10 @@ const {
 const currentCallOffer = ref<RTCSessionDescriptionInit | null>(null);
 const isAnimatingSwap = ref(false);
 
+const onSetLocalVideo = (el: any) => { localVideoRef.value = el; };
+const onSetRemoteVideo = (el: any) => { remoteVideoRef.value = el; };
+const onSetRemoteAudio = (el: any) => { remoteAudioRef.value = el; };
+
 // --- Permission Handling ---
 async function checkAndRequestPermissions() {
   if (!import.meta.client) return true;
@@ -360,6 +367,17 @@ watch(incomingOffer, (offer) => {
 });
 
 const isFullscreen = ref(false);
+
+watch(isInCall, (val) => {
+  if (!val && isFullscreen.value) {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => {
+        console.warn("Failed to exit browser fullscreen:", err);
+      });
+    }
+    isFullscreen.value = false;
+  }
+});
 
 // Watcher to periodically check for black camera (videoWidth/Height being 0)
 let blackCameraCheckInterval: any = null;

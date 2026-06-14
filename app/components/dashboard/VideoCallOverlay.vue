@@ -16,7 +16,7 @@
           <template v-if="callType === 'video'">
             <div class="remote-video-container">
               <video
-                ref="remoteVideoRef"
+                :ref="(el) => $emit('set-remote-video', el)"
                 autoplay
                 playsinline
                 class="remote-video"
@@ -28,7 +28,7 @@
             </div>
             <div class="local-video-container">
               <video
-                ref="localVideoRef"
+                :ref="(el) => $emit('set-local-video', el)"
                 autoplay
                 playsinline
                 muted
@@ -43,7 +43,7 @@
           <template v-else>
             <!-- Premium Audio Calling Layout -->
             <div class="audio-call-container" data-clarity-mask="true">
-              <audio ref="remoteAudioRef" autoplay playsinline style="display: none;"></audio>
+              <audio :ref="(el) => $emit('set-remote-audio', el)" autoplay playsinline style="display: none;"></audio>
               <div class="audio-avatar-wrapper">
                 <div class="avatar-large-glow">
                   {{ partnerName?.charAt(0) || '?' }}
@@ -160,7 +160,10 @@ const emit = defineEmits([
   'toggle-video', 
   'switch-camera', 
   'toggle-fullscreen', 
-  'end-call'
+  'end-call',
+  'set-local-video',
+  'set-remote-video',
+  'set-remote-audio'
 ]);
 
 // Internal PiP logic (Swapping, Dragging)
@@ -168,16 +171,7 @@ const isVideosSwapped = ref(false);
 const pipWidth = ref(150);
 let activeDraggable: any = null;
 
-// Expose refs to parent for binding
-const localVideoRef = ref<HTMLVideoElement | null>(null);
-const remoteVideoRef = ref<HTMLVideoElement | null>(null);
-const remoteAudioRef = ref<HTMLAudioElement | null>(null);
-
-defineExpose({
-  localVideoRef,
-  remoteVideoRef,
-  remoteAudioRef
-});
+// We no longer need to expose internal refs because we emit the elements directly.
 
 function updateDraggable() {
   if (!import.meta.client) return;

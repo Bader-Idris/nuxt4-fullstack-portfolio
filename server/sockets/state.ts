@@ -84,12 +84,12 @@ export const deleteOfferFromRedis = async (offerId: string) => {
   }
 };
 
-export const findOfferByUsers = async (offererId: string, answererId: string) => {
+export const findOfferByUsers = async (offererId: string | undefined, answererId: string) => {
   try {
     const allOffers = await redisClient!.hgetall(WEBRTC_OFFERS_KEY);
     for (const offerId in allOffers) {
       const offer = JSON.parse(allOffers[offerId]);
-      if (offer.offererUserId === offererId && offer.answererUserId === answererId) {
+      if ((offererId === undefined || offer.offererUserId === offererId) && offer.answererUserId === answererId) {
         return offer;
       }
     }
