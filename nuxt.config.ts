@@ -649,7 +649,7 @@ export default defineNuxtConfig({
     locales: [
       {
         code: "en",
-        iso: "en", // check if deprecated
+        iso: "en-US", // for icons!
         dir: "ltr",
         language: "en",
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
@@ -661,7 +661,7 @@ export default defineNuxtConfig({
       },
       {
         code: "ar",
-        iso: "ar",
+        iso: "ar-PS",
         dir: "rtl",
         language: "ar",
         file: "ar-PS.json",
@@ -669,7 +669,7 @@ export default defineNuxtConfig({
       },
       {
         code: "es",
-        iso: "es",
+        iso: "es-ES",
         dir: "ltr",
         language: "es",
         file: "es-ES.json",
@@ -916,7 +916,7 @@ export default defineNuxtConfig({
       // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
       posts: {
         includeAppSources: true,       // ← required, even for API-sourced posts
-        include: ['/blog/**'],         // ← claim ownership of /blog/* URLs
+        include: ['/blog', '/blog/**'], // ← claim ownership of all blog-related routes
         sources: ['/api/sitemap/blog'],
         chunks: true,
         chunkSize: 2500,
