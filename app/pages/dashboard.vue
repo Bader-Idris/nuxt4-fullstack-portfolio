@@ -784,7 +784,10 @@ function formatDuration(seconds: number) {
   border-radius: 12px;
   padding: 15px;
   border: 1px solid var(--lines-color);
-  overflow-y: auto;
+  // overflow is hidden at the panel level so only the ul scrolls.
+  // This prevents the ul's flex-grow from burying the ConnectionStatusBar
+  // above the scroll region on mobile (push notification button fix).
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 
@@ -802,6 +805,7 @@ function formatDuration(seconds: number) {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
   }
 
   ul { 
@@ -809,7 +813,9 @@ function formatDuration(seconds: number) {
     padding: 0; 
     margin: 0; 
     flex-grow: 1;
+    // Only the user list scrolls — not the entire panel
     overflow-y: auto;
+    min-height: 0;
   }
 }
 

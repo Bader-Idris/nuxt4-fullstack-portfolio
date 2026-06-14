@@ -244,6 +244,9 @@
   "transport": "Transporte",
   "user": "Usuario",
   "enable_notifications": "Habilitar notificaciones",
+  "settings": "Ajustes",
+  "settings_open_last_chat": "Abrir el último chat activo",
+  "settings_show_names": "Mostrar nombres de usuario en el historial",
   "in_call_with": "En llamada con",
   "call_connecting": "Conectando...",
   "call_statuses": {

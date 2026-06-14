@@ -82,6 +82,7 @@ onMounted(() => {
   overflow: hidden;
   transition: all 0.3s ease;
   width: 100%;
+  flex-shrink: 0;
 
   &.is-folded {
     background: transparent;

@@ -244,6 +244,9 @@
     "transport": "وسيلة النقل",
     "user": "المستخدم",
     "enable_notifications": "تفعيل التنبيهات",
+    "settings": "الإعدادات",
+    "settings_open_last_chat": "فتح آخر محادثة نشطة",
+    "settings_show_names": "إظهار أسماء المستخدمين في السجل",
     "in_call_with": "في مكالمة مع",
     "call_connecting": "جاري الاتصال...",
     "call_statuses": {

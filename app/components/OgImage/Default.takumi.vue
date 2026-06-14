@@ -105,8 +105,8 @@ const truncatedDescription = computed(() => {
       }">
         <div class="meta-badges" :style="{ display: 'flex', gap: '12px', marginBottom: '20px', flexDirection: isRtl ? 'row-reverse' : 'row' }">
           <span class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#43d9ad', fontSize: '18px' }">By {{ displayAuthor }}</span>
-          <span class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#607b96', fontSize: '18px' }">{{ displayViews }} Views</span>
-          <span class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#607b96', fontSize: '18px' }">{{ displayComments }} Comments</span>
+          <span v-if="slug" class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#607b96', fontSize: '18px' }">{{ displayViews }} Views</span>
+          <span v-if="slug" class="badge" :style="{ backgroundColor: '#011221', border: '1px solid #1e2d3d', borderRadius: '4px', padding: '4px 12px', color: '#607b96', fontSize: '18px' }">{{ displayComments }} Comments</span>
         </div>
         <h1 class="title" :style="{ fontSize: '70px', fontWeight: '700', color: '#e5e9f0', lineHeight: '1.1', marginBottom: '24px' }">
           {{ displayTitle }}
