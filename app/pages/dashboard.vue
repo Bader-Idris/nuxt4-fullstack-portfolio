@@ -6,40 +6,27 @@
         <!-- Online Users List -->
         <div ref="contactsPanel" class="online-users-panel" data-clarity-mask="true">
           <!-- Foldable Connection Status Bar -->
-          <aside class="connection-status-bar" :class="{ 'is-folded': isStatusFolded }">
-            <div class="status-header" @click="toggleStatusFolded()">
-              <div class="status-indicator">
-                <span class="dot" :class="(isClient && socketStore.isConnected) ? 'online' : 'offline'" />
-                <span class="label">{{ $t('dashboard.connection_status') }}</span>
-              </div>
-              <Icon :name="isStatusFolded ? 'material-symbols:expand-more' : 'material-symbols:expand-less'" />
-            </div>
-            
-            <div ref="statusContentRef" class="status-content">
-              <p v-if="socketStore.connectionError" class="error">
-                Error: {{ socketStore.connectionError }}
-              </p>
-              <p v-else-if="socketStore.isConnecting" class="info">{{ $t('dashboard.connecting') }}</p>
-              <div v-else-if="socketStore.isConnected && socketStore.currentUser">
-                <p>
-                  {{ $t('dashboard.transport') }}: <span class="highlight">{{ socketStore.transport }}</span>
-                </p>
-                <p>
-                  {{ $t('dashboard.user') }}: <span class="highlight">{{ socketStore.currentUser.name }} ({{ userStore.getUserRole }})</span>
-                </p>
-                <button
-                  v-if="isPushSupported"
-                  class="notifications-btn"
-                  @click="subscribeForNotifications"
-                >
-                  {{ $t('dashboard.enable_notifications') }}
-                </button>
-              </div>
-              <p v-else class="info">{{ $t('dashboard.disconnected') }}</p>
-            </div>
-          </aside>
+          <ConnectionStatusBar 
+            v-model="isStatusFolded"
+            :is-connected="socketStore.isConnected"
+            :is-connecting="socketStore.isConnecting"
+            :connection-error="socketStore.connectionError"
+            :transport="socketStore.transport"
+            :current-user="socketStore.currentUser"
+            :user-role="userStore.getUserRole"
+            :is-push-supported="isPushSupported"
+            @subscribe-notifications="subscribeForNotifications"
+          />
 
           <h3>{{ $t('dashboard.online_users') }} <template v-if="!userStore.isGuest">({{ onlineUsersStore.users.length }})</template><template v-else>(<Icon name="ion:locked" width="12" height="12" mode="svg" />)</template></h3>
+          
+          <!-- Shared Chat Contacts Search Bar -->
+          <ContactSearchBar 
+            v-if="!userStore.isGuest"
+            :contacts="messagesStore.contacts"
+            @select="startChatWith"
+          />
+
           <div v-if="userStore.isGuest" class="guest-view-prompt">
             <i18n-t keypath="dashboard.guest_view_users" scope="global">
               <template #link>
@@ -51,349 +38,99 @@
             {{ $t('dashboard.no_users') }}
           </div>
           <ul>
-            <li
+            <!-- this needs to add offline users with gray circle -->
+            <OnlineUserItem 
               v-for="user in onlineUsersStore.users"
               :key="user.userId"
-              class="user-item"
-              :class="{
-                'active-chat': recipientUserId === user.userId,
-                disabled:
-                  userStore.isGuest ||
-                  user.userId === socketStore.currentUser?.userId,
-              }"
-              @click="startChatWith(user.userId)"
-            >
-              <div class="user-info">
-                <div class="user-avatar-mini">
-                  <img v-if="user.avatar" :src="user.avatar" class="avatar-img" />
-                  <ScriptGravatar v-else-if="user.avatarHash" :hash="user.avatarHash" :size="30" class="avatar-img rounded-full" />
-                  <div v-else class="avatar-placeholder-mini">{{ user.name.charAt(0) }}</div>
-                </div>
-                <span class="user-name">{{ user.name }}</span>
-                <span class="user-status online" />
-              </div>
-              <div class="user-actions">
-                <button
-                  class="vid-call-btn"
-                  :disabled="
-                    isInCall ||
-                    userStore.isGuest ||
-                    user.userId === socketStore.currentUser?.userId
-                  "
-                  @click.stop="initiateCall(user.userId, 'video')"
-                >
-                  <Icon
-                    v-if="
-                      !userStore.isGuest &&
-                      user.userId !== socketStore.currentUser?.userId
-                    "
-                    name="heroicons:video-camera-solid"
-                    width="16"
-                  />
-                  <Icon
-                    v-else
-                    name="ion:locked"
-                    width="15"
-                    height="15"
-                    mode="svg"
-                  />
-                </button>
-                <button
-                  class="call-btn"
-                  :disabled="
-                    isInCall ||
-                    userStore.isGuest ||
-                    user.userId === socketStore.currentUser?.userId
-                  "
-                  @click.stop="initiateCall(user.userId, 'audio')"
-                >
-                  <Icon
-                    v-if="
-                      !userStore.isGuest &&
-                      user.userId !== socketStore.currentUser?.userId
-                    "
-                    name="material-symbols:call"
-                    width="16"
-                    height="16"
-                  />
-                  <Icon
-                    v-else
-                    name="ion:locked"
-                    width="15"
-                    height="15"
-                    mode="svg"
-                  />
-                </button>
-              </div>
-            </li>
+              :user="user"
+              :is-active="recipientUserId === user.userId"
+              :is-me="user.userId === socketStore.currentUser?.userId"
+              :is-guest="userStore.isGuest"
+              :is-in-call="isInCall"
+              @start-chat="startChatWith"
+              @audio-call="initiateCall($event, 'audio')"
+              @video-call="initiateCall($event, 'video')"
+            />
           </ul>
 
           <!-- User Settings Section -->
-          <div v-if="!userStore.isGuest" class="user-settings-section" :class="{ 'is-folded': isSettingsFolded }">
-            <header class="settings-header" @click="toggleSettingsFolded()">
-              <h4><Icon name="material-symbols:settings" /> Settings</h4>
-              <Icon :name="isSettingsFolded ? 'material-symbols:expand-more' : 'material-symbols:expand-less'" />
-            </header>
-            <div ref="settingsContentRef" class="settings-content">
-              <div class="setting-item">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    :checked="userStore.user?.settings?.openLastChat" 
-                    @change="userStore.updateUserSettings({ openLastChat: ($event.target as HTMLInputElement).checked })"
-                  />
-                  Open last active chat
-                </label>
-              </div>
-              <div class="setting-item">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    :checked="userStore.user?.settings?.showOldConversationTitles" 
-                    @change="userStore.updateUserSettings({ showOldConversationTitles: ($event.target as HTMLInputElement).checked })"
-                  />
-                  Show user names in history
-                </label>
-              </div>
-            </div>
-          </div>
+          <UserSettingsSection 
+            v-if="!userStore.isGuest"
+            v-model="isSettingsFolded"
+            :user-settings="userStore.user?.settings"
+            @update-settings="userStore.updateUserSettings"
+          />
         </div>
 
         <!-- Chat and Video Area -->
         <div class="chat-video-area">
           <!-- Video Call UI (Overlay Layer) -->
-          <Transition name="slide-up">
-            <div v-show="isInCall" class="video-call-overlay" :class="{ 'is-fullscreen': isFullscreen }">
-              <div class="call-wrapper">
-                <header class="call-header" data-clarity-mask="true">
-                  <div class="call-partner-info">
-                    <Icon name="material-symbols:call" class="call-icon" />
-                    <span>{{ $t('dashboard.in_call_with') }}: {{ getUserName(currentCallPartner) }}</span>
-                  </div>
-                  <button class="minimize-btn" @click="isCallMinimized = !isCallMinimized">
-                    <Icon :name="isCallMinimized ? 'material-symbols:open-in-full' : 'material-symbols:close-fullscreen'" />
-                  </button>
-                </header>
-
-                <div v-show="!isCallMinimized" class="video-grid" :class="{ 'audio-only-grid': callType === 'audio', 'videos-swapped': isVideosSwapped }">
-                  <template v-if="callType === 'video'">
-                    <div class="remote-video-container">
-                      <video
-                        ref="remoteVideoRef"
-                        autoplay
-                        playsinline
-                        class="remote-video"
-                      />
-                      <div v-if="!remoteStream" class="connecting-overlay">
-                        <span>{{ $t('dashboard.call_connecting') }}</span>
-                        <div class="spinner" />
-                      </div>
-                    </div>
-                    <div class="local-video-container">
-                      <video
-                        ref="localVideoRef"
-                        autoplay
-                        playsinline
-                        muted
-                        class="local-video"
-                        @loadedmetadata="onLocalVideoLoaded"
-                      />
-                      <!-- Resize Handle for PiP -->
-                      <div class="resize-handle">
-                        <Icon name="material-symbols:drag-pan" />
-                      </div>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <!-- Premium Audio Calling Layout -->
-                    <div class="audio-call-container" data-clarity-mask="true">
-                      <audio ref="remoteAudioRef" autoplay playsinline style="display: none;"></audio>
-                      <div class="audio-avatar-wrapper">
-                        <div class="avatar-large-glow">
-                          {{ getUserName(currentCallPartner)?.charAt(0) || '?' }}
-                        </div>
-                        <div class="pulse-ring ring-1"></div>
-                        <div class="pulse-ring ring-2"></div>
-                        <div class="pulse-ring ring-3"></div>
-                      </div>
-                      <div class="audio-call-info">
-                        <h3>{{ getUserName(currentCallPartner) }}</h3>
-                        <p class="audio-status">
-                          <span v-if="callStatus === 'connecting' || !remoteStream">{{ $t('dashboard.call_connecting') }}</span>
-                          <span v-else-if="callStatus === 'ringing'">Ringing...</span>
-                          <span v-else-if="callStatus === 'connected'" class="voice-active">Voice Connected</span>
-                          <span v-else>{{ callStatus }}</span>
-                        </p>
-                      </div>
-                      
-                      <!-- Wave visualizer micro-animation -->
-                      <div class="audio-waves" :class="{ 'animating': callStatus === 'connected' }">
-                        <span class="bar bar-1"></span>
-                        <span class="bar bar-2"></span>
-                        <span class="bar bar-3"></span>
-                        <span class="bar bar-4"></span>
-                        <span class="bar bar-5"></span>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-
-                <div class="call-controls" :class="{ 'minimized': isCallMinimized }">
-                  <button
-                    class="control-btn"
-                    :class="{ active: isMuted }"
-                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
-                    @click="toggleMute"
-                  >
-                    <Icon
-                      :name="
-                        isMuted
-                          ? 'mdi-light:microphone-off'
-                          : 'heroicons:microphone'
-                      "
-                    />
-                  </button>
-                  <button
-                    v-if="callType === 'video'"
-                    class="control-btn"
-                    :class="{ active: isVideoOff }"
-                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
-                    @click="toggleVideo"
-                  >
-                    <Icon
-                      :name="
-                        isVideoOff
-                          ? 'heroicons:video-camera-slash'
-                          : 'heroicons:video-camera'
-                      "
-                    />
-                  </button>
-
-                  <!-- Camera Flip Button with Loading State -->
-                  <button
-                    v-if="callType === 'video' && !isVideoOff"
-                    class="control-btn"
-                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
-                    @click="switchCamera"
-                  >
-                    <div v-if="isSwitchingCamera" class="spinner-small" />
-                    <Icon v-else name="mdi:camera-flip" />
-                  </button>
-
-                  <!-- Fullscreen Button -->
-                  <button
-                    class="control-btn fullscreen-btn"
-                    :class="{ active: isFullscreen }"
-                    :disabled="isSwitchingCamera || isAnimatingSwap || isCleaningUp"
-                    @click="toggleFullscreen"
-                  >
-                    <Icon :name="isFullscreen ? 'material-symbols:fullscreen-exit' : 'material-symbols:fullscreen'" />
-                  </button>
-
-                  <button class="control-btn end-call" :disabled="isCleaningUp" @click="endCall">
-                    <Icon name="heroicons:phone-x-mark" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Transition>
+          <VideoCallOverlay 
+            ref="videoOverlayRef"
+            :is-in-call="isInCall"
+            :is-call-minimized="isCallMinimized"
+            :partner-name="getUserName(currentCallPartner)"
+            :call-type="callType"
+            :call-status="callStatus"
+            :is-muted="isMuted"
+            :is-video-off="isVideoOff"
+            :is-switching-camera="isSwitchingCamera"
+            :is-cleaning-up="isCleaningUp"
+            :is-fullscreen="isFullscreen"
+            :remote-stream="remoteStream"
+            @toggle-minimize="isCallMinimized = !isCallMinimized"
+            @toggle-mute="toggleMute"
+            @toggle-video="toggleVideo"
+            @switch-camera="switchCamera"
+            @toggle-fullscreen="toggleFullscreen"
+            @end-call="endCall"
+          />
 
           <!-- Incoming Call Permission Custom Modal (Overlay) -->
-          <Transition name="fade">
-            <div v-if="callStatus === 'ringing' && !isInCall" class="incoming-call-modal" data-clarity-mask="true">
-              <div class="modal-content">
-                <div class="avatar-large">
-                  {{ getUserName(currentCallPartner)?.charAt(0) || '?' }}
-                </div>
-                <h3>{{ callType === 'video' ? 'Incoming Video Call' : 'Incoming Audio Call' }}</h3>
-                <p>{{ getUserName(currentCallPartner) }} is calling you...</p>
-                <div class="modal-actions">
-                  <button class="accept-btn" @click="acceptIncomingCall(currentCallOffer!)">
-                    <Icon name="material-symbols:call" />
-                    Accept
-                  </button>
-                  <button class="decline-btn" @click="declineIncomingCall">
-                    <Icon name="heroicons:phone-x-mark" />
-                    Decline
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Transition>
+          <IncomingCallModal 
+            :show="callStatus === 'ringing' && !isInCall"
+            :call-type="callType"
+            :partner-name="getUserName(currentCallPartner)"
+            @accept="acceptIncomingCall(currentCallOffer!)"
+            @decline="declineIncomingCall"
+          />
 
           <!-- Chat UI (Base Layer) -->
           <div
             v-if="recipientUserId && !userStore.isGuest"
             class="chat-panel"
           >
-            <header class="chat-header" data-clarity-mask="true">
-              <div class="user-info-header">
-                <div class="avatar-wrapper">
-                  <img v-if="getRecipientAvatar()" :src="getRecipientAvatar()" class="avatar-img" />
-                  <ScriptGravatar v-else-if="getRecipientAvatarHash()" :hash="getRecipientAvatarHash()" :size="40" class="avatar-img rounded-full" />
-                  <div v-else class="avatar-placeholder">{{ getRecipientName()?.charAt(0) || '?' }}</div>
-                </div>
-                <div class="user-details">
-                  <h2>{{ getRecipientName() }}</h2>
-                  <span class="online-status">online</span>
-                </div>
-              </div>
-              <div class="header-actions">
-                <button @click="initiateCall(recipientUserId, 'audio')"><Icon name="material-symbols:call" /></button>
-                <button @click="initiateCall(recipientUserId, 'video')"><Icon name="material-symbols:video-camera-back" /></button>
-              </div>
-            </header>
-            <div
+            <ChatHeader 
+              :recipient-name="getRecipientName()"
+              :recipient-avatar="getRecipientAvatar()"
+              :recipient-avatar-hash="getRecipientAvatarHash()"
+              @audio-call="initiateCall(recipientUserId, 'audio')"
+              @video-call="initiateCall(recipientUserId, 'video')"
+            />
+            <ChatMessagesContainer 
               ref="chatContainer"
-              class="chat-container"
-              @scroll="handleScroll"
-              data-clarity-mask="true"
-            >
-              <div v-if="messagesStore.isLoading" class="loading-indicator">
-                <div class="spinner-small" />
-              </div>
-              
-              <template v-for="(msg, index) in messagesStore.getMessagesForRecipient(recipientUserId)" :key="msg.id">
-                <div v-if="shouldShowDateSeparator(messagesStore.getMessagesForRecipient(recipientUserId), index)" class="date-separator">
-                  <span>{{ formatDateRelative(msg.timestamp) }}</span>
-                </div>
-                
-                <!-- System Message / Call Fingerprint (Localized) -->
-                <div v-if="isCallFingerprint(msg.message)" class="system-message call-fingerprint">
-                  <span class="icon">{{ parseCallFingerprint(msg.message)?.duration > 0 ? '📞' : '📵' }}</span>
-                  <span>{{ getCallFingerprintText(msg.message) }}</span>
-                </div>
-
-                <!-- Backward Compatibility for older HTML fingerprints -->
-                <div v-else-if="msg.message.includes('system-message')" v-html="msg.message" style="display: contents;" />
-                
-                <ChatMessage
-                  v-else
-                  :content="msg.message"
-                  :sender-name="userStore.user?.settings?.showOldConversationTitles ? msg.fromName : ''"
-                  :timestamp="formatTimestamp(msg.timestamp)"
-                  :is-own="msg.from === userStore.getUserId"
-                  @contextmenu.prevent="onMessageContext($event, msg)"
-                  @dblclick="isMobile && onMessageContext($event, msg)"
-                />
-              </template>
-            </div>
+              :messages="messagesStore.getMessagesForRecipient(recipientUserId)"
+              :is-loading="messagesStore.isLoading"
+              :current-user-id="userStore.getUserId"
+              :show-names="userStore.user?.settings?.showOldConversationTitles"
+              :is-mobile="isMobile"
+              @message-context="onMessageContext"
+              @load-more="handleLoadMore"
+              @scroll-bottom-reached="showNewMessageIndicator = false"
+            />
             
             <div
               v-if="showNewMessageIndicator"
               class="new-message-indicator"
               @click="scrollToBottom"
             >
-              <Icon name="material-symbols:arrow-downward" />
+              <Icon name="mdi:arrow-down" />
             </div>
 
-            <div class="input-area" @click="chatInputRef?.focus()">
-              <ChatInput
-                ref="chatInputRef"
-                placeholder="Message"
-                @send="onSendMessage"
-              />
-            </div>
+            <ChatInputArea 
+              ref="chatInputRef"
+              @send="onSendMessage"
+            />
 
             <!-- Custom Context Menu -->
             <ContextMenu
@@ -403,17 +140,17 @@
               @close="contextMenu.show = false"
             >
               <button @click="copyMessage(contextMenu.msg)">
-                <Icon name="material-symbols:content-copy" /> Copy
+                <Icon name="mdi:content-copy" /> Copy
               </button>
               <button @click="replyToMessage(contextMenu.msg)">
-                <Icon name="material-symbols:reply" /> Reply
+                <Icon name="mdi:reply" /> Reply
               </button>
               <button
                 v-if="contextMenu.msg?.from === userStore.getUserId"
                 class="delete"
                 @click="deleteMessage(contextMenu.msg)"
               >
-                <Icon name="material-symbols:delete" /> Delete
+                <Icon name="mdi:delete" /> Delete
               </button>
             </ContextMenu>
           </div>
@@ -463,6 +200,17 @@ const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
 const localePath = useLocalePath();
 const { t } = useI18n();
+
+import ContactSearchBar from "~/components/ContactSearchBar.vue";
+import ConnectionStatusBar from "~/components/dashboard/ConnectionStatusBar.vue";
+import UserSettingsSection from "~/components/dashboard/UserSettingsSection.vue";
+import OnlineUserItem from "~/components/dashboard/OnlineUserItem.vue";
+import IncomingCallModal from "~/components/dashboard/IncomingCallModal.vue";
+import VideoCallOverlay from "~/components/dashboard/VideoCallOverlay.vue";
+import ChatHeader from "~/components/dashboard/ChatHeader.vue";
+import ChatMessagesContainer from "~/components/dashboard/ChatMessagesContainer.vue";
+import ChatInputArea from "~/components/dashboard/ChatInputArea.vue";
+
 const fullPathWithLocale = localePath(useRoute().path);
 
 if (import.meta.server) {
@@ -612,14 +360,6 @@ watch(incomingOffer, (offer) => {
 });
 
 const isFullscreen = ref(false);
-const pipWidth = ref(150); // Default PiP width
-
-// Fix for black camera: occasionally srcObject assignment doesn't trigger playback correctly
-function onLocalVideoLoaded() {
-  if (localVideoRef.value && localVideoRef.value.paused) {
-    localVideoRef.value.play().catch(e => console.warn("Auto-play fix failed:", e));
-  }
-}
 
 // Watcher to periodically check for black camera (videoWidth/Height being 0)
 let blackCameraCheckInterval: any = null;
@@ -670,38 +410,6 @@ const contextMenu = reactive({
   msg: null as any
 });
 
-// --- GSAP Folding Logic ---
-const statusContentRef = ref(null);
-const settingsContentRef = ref(null);
-
-watch(isStatusFolded, (val) => {
-  if (!statusContentRef.value || !import.meta.client) return;
-  if (!val) {
-    gsap.fromTo(statusContentRef.value, 
-      { height: 0, opacity: 0 }, 
-      { height: "auto", opacity: 1, duration: 0.4, ease: "power2.out" }
-    );
-  } else {
-    gsap.to(statusContentRef.value, 
-      { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" }
-    );
-  }
-});
-
-watch(isSettingsFolded, (val) => {
-  if (!settingsContentRef.value || !import.meta.client) return;
-  if (!val) {
-    gsap.fromTo(settingsContentRef.value, 
-      { height: 0, opacity: 0 }, 
-      { height: "auto", opacity: 1, duration: 0.4, ease: "power2.out" }
-    );
-  } else {
-    gsap.to(settingsContentRef.value, 
-      { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" }
-    );
-  }
-});
-
 // --- Lifecycle Hooks ---
 onMounted(async () => {
   if (!import.meta.client) return;
@@ -733,7 +441,9 @@ onMounted(async () => {
     }
 
     // Clear any old contacts since we're now showing online users
+    // Actually, we want to fetch contacts from history now
     messagesStore.clearContacts();
+    messagesStore.fetchContacts();
 
     const pendingAction = await getAndClearPendingAction();
     if (
@@ -761,14 +471,6 @@ onMounted(async () => {
       nextTick(() => scrollToBottom());
     });
 
-    // Initialize folding heights
-    if (isStatusFolded.value && statusContentRef.value) {
-      gsap.set(statusContentRef.value, { height: 0, opacity: 0, overflow: "hidden" });
-    }
-    if (isSettingsFolded.value && settingsContentRef.value) {
-      gsap.set(settingsContentRef.value, { height: 0, opacity: 0, overflow: "hidden" });
-    }
-
     window.addEventListener('click', closeContextMenu);
     document.addEventListener("fullscreenchange", onFullscreenChange);
   } catch (err) {
@@ -788,153 +490,6 @@ onUnmounted(() => {
 });
 
 // --- Watchers ---
-const isVideosSwapped = ref(false);
-let activeDraggable: any = null;
-
-function updateDraggable() {
-  if (!import.meta.client) return;
-
-  if (activeDraggable) {
-    if (Array.isArray(activeDraggable)) {
-      activeDraggable.forEach(d => d.kill());
-    } else {
-      activeDraggable.kill();
-    }
-    activeDraggable = null;
-  }
-
-  nextTick(() => {
-    setTimeout(() => {
-      const pipSelector = isVideosSwapped.value ? ".remote-video-container" : ".local-video-container";
-      const target = document.querySelector(pipSelector) as HTMLElement;
-      if (!target) return;
-
-      const handle = target.querySelector(".resize-handle") as HTMLElement;
-
-      // 1. Position/Drag Logic
-      activeDraggable = Draggable.create(target, {
-        bounds: ".video-call-overlay",
-        edgeResistance: 0.65,
-        type: "x,y",
-        trigger: target,
-        onPress: function() {
-          gsap.set(this.target, { zIndex: 20 });
-        },
-        onClick: (e) => {
-          // Only swap if we didn't click the resize handle
-          if (!(e.target as HTMLElement).closest(".resize-handle")) {
-            toggleVideoSwap();
-          }
-        }
-      })[0];
-
-      // 2. Scale/Resize Logic
-      if (handle) {
-        Draggable.create(handle, {
-          type: "x,y",
-          onDrag: function() {
-            // Calculate new width based on drag distance
-            // We use the delta to scale the container width
-            const newWidth = Math.max(100, Math.min(600, pipWidth.value + this.x));
-            gsap.set(target, { width: newWidth });
-          },
-          onDragEnd: function() {
-            // Save the new width and reset handle position
-            pipWidth.value = target.offsetWidth;
-            gsap.set(this.target, { x: 0, y: 0 });
-            updateDraggable(); // Re-sync bounds
-          }
-        });
-      }
-    }, 150);
-  });
-}
-
-function toggleVideoSwap() {
-  if (!import.meta.client || isAnimatingSwap.value) return;
-  isAnimatingSwap.value = true;
-
-  const localEl = document.querySelector(".local-video-container") as HTMLElement;
-  const remoteEl = document.querySelector(".remote-video-container") as HTMLElement;
-  if (!localEl || !remoteEl) {
-    isAnimatingSwap.value = false;
-    return;
-  }
-
-  // Ensure PiP width is maintained during swap
-  const currentPipWidth = isVideosSwapped.value ? remoteEl.offsetWidth : localEl.offsetWidth;
-
-  // 1. Get FIRST state
-  const localRect = localEl.getBoundingClientRect();
-  const remoteRect = remoteEl.getBoundingClientRect();
-
-  // 2. Toggle LAST state
-  isVideosSwapped.value = !isVideosSwapped.value;
-
-  nextTick(() => {
-    // 3. Wait for DOM updates, then INVERT and PLAY
-    const newLocalRect = localEl.getBoundingClientRect();
-    const newRemoteRect = remoteEl.getBoundingClientRect();
-
-    if (activeDraggable) {
-      activeDraggable.kill();
-      activeDraggable = null;
-    }
-
-    gsap.set([localEl, remoteEl], { clearProps: "all" });
-    
-    // Maintain the PiP size on the new PiP container
-    if (isVideosSwapped.value) {
-      gsap.set(remoteEl, { width: pipWidth.value });
-    } else {
-      gsap.set(localEl, { width: pipWidth.value });
-    }
-
-    const localDeltaX = localRect.left - newLocalRect.left;
-    const localDeltaY = localRect.top - newLocalRect.top;
-    const localScaleX = localRect.width / newLocalRect.width;
-    const localScaleY = localRect.height / newLocalRect.height;
-
-    const remoteDeltaX = remoteRect.left - newRemoteRect.left;
-    const remoteDeltaY = remoteRect.top - newRemoteRect.top;
-    const remoteScaleX = remoteRect.width / newRemoteRect.width;
-    const remoteScaleY = remoteRect.height / newRemoteRect.height;
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        gsap.set([localEl, remoteEl], { clearProps: "transform,scale" });
-        updateDraggable();
-        isAnimatingSwap.value = false;
-      }
-    });
-
-    // Safety fallback
-    setTimeout(() => {
-      if (isAnimatingSwap.value) {
-        isAnimatingSwap.value = false;
-        updateDraggable();
-      }
-    }, 2000);
-
-    tl.fromTo(localEl, 
-      { x: localDeltaX, y: localDeltaY, scaleX: localScaleX, scaleY: localScaleY, transformOrigin: "top left" },
-      { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.5, ease: "power3.inOut" }, 0
-    );
-
-    tl.fromTo(remoteEl, 
-      { x: remoteDeltaX, y: remoteDeltaY, scaleX: remoteScaleX, scaleY: remoteScaleY, transformOrigin: "top left" },
-      { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.5, ease: "power3.inOut" }, 0
-    );
-  });
-}
-
-watch(isInCall, (val) => {
-  if (val && import.meta.client) {
-    isVideosSwapped.value = false;
-    updateDraggable();
-  }
-});
-
 watch(recipientUserId, (newRecipientId) => {
   if (newRecipientId && userStore.isAuthenticated) {
     messagesStore.setLoading(true);
@@ -1001,6 +556,21 @@ function startChatWith(userId: string) {
   recipientUserId.value = userId;
   socketStore.socket?.emit("update-active-chat", userId);
 }
+
+const handleLoadMore = () => {
+  if (
+    !messagesStore.isLoading &&
+    !messagesStore.isEndOfHistory(recipientUserId.value)
+  ) {
+    messagesStore.setLoading(true);
+    messagesStore.incrementPage();
+    socketStore.fetchMessageHistory(
+      recipientUserId.value,
+      messagesStore.page,
+      messagesStore.limit,
+    );
+  }
+};
 
 const handleScroll = () => {
   const container = chatContainer.value;
@@ -1176,83 +746,6 @@ function formatDuration(seconds: number) {
   }
 }
 
-.connection-status-bar {
-  margin-bottom: 1rem;
-  padding: 0;
-  background-color: var(--bg-primary);
-  border-radius: 8px;
-  border: 1px solid var(--lines-color);
-  overflow: hidden;
-  transition: all 0.3s ease;
-  width: 100%;
-
-  &.is-folded {
-    background: transparent;
-    .status-content {
-      border-top-color: transparent !important;
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-    }
-  }
-
-  .status-header {
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    gap: 15px;
-    user-select: none;
-
-    &:hover {
-      background: var(--bg-primary-hovered);
-    }
-
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        &.online { background: #4caf50; box-shadow: 0 0 5px #4caf50; }
-        &.offline { background: var(--accent-error); }
-      }
-      .label {
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: var(--text-secondary);
-      }
-    }
-  }
-
-  .status-content {
-    max-height: 310px;
-    padding: 0 12px 12px;
-    border-top: 1px solid var(--lines-color);
-    animation: fadeIn 0.3s ease;
-
-    p {
-      margin: 8px 0 0;
-      font-size: 0.75rem;
-      color: var(--text-primary);
-      .highlight { color: var(--accent-primary); font-weight: bold; }
-    }
-    
-    .notifications-btn {
-      margin-top: 10px;
-      width: 100%;
-      font-size: 0.7rem;
-    }
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -1264,7 +757,7 @@ function formatDuration(seconds: number) {
     flex-direction: column;
     gap: 1rem;
     flex: 1;
-    min-height: 0; // Fix for flex container height issues
+    min-height: 0;
   }
 }
 
@@ -1274,55 +767,31 @@ function formatDuration(seconds: number) {
   padding: 15px;
   border: 1px solid var(--lines-color);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 
   @include mobile {
-    max-height: 35%; // Slightly reduced to give more space to chat
+    max-height: 35%;
     flex-shrink: 0;
   }
 
-  h3 { color: var(--text-primary); font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid var(--lines-color); padding-bottom: 10px; }
-  ul { list-style: none; padding: 0; margin: 0; }
-}
-
-.user-item {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 5px;
-  cursor: pointer;
-  transition: background 0.2s;
-  
-  &:hover:not(.disabled) { background: var(--bg-primary-hovered); }
-  &.active-chat {
-    background: var(--gradient-start);
-    .user-name { color: white; }
-    .user-status.online { background: white; }
-    .user-actions button { color: white; }
-  }
-  &.disabled { opacity: 0.6; cursor: not-allowed; }
-
-  .user-info {
-    flex: 1;
+  h3 { 
+    color: var(--text-primary); 
+    font-size: 1.1rem; 
+    margin-bottom: 15px; 
+    border-bottom: 1px solid var(--lines-color); 
+    padding-bottom: 10px; 
     display: flex;
     align-items: center;
-    gap: 10px;
-    .user-name { font-weight: 500; color: var(--text-primary); }
-    .user-status.online { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; }
+    justify-content: space-between;
   }
 
-  .user-actions {
-    display: flex;
-    gap: 8px;
-    button {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      &:hover:not(:disabled) { color: var(--accent-primary); }
-    }
+  ul { 
+    list-style: none; 
+    padding: 0; 
+    margin: 0; 
+    flex-grow: 1;
+    overflow-y: auto;
   }
 }
 
@@ -1395,7 +864,7 @@ function formatDuration(seconds: number) {
     font-size: 1.1rem;
     color: var(--text-primary);
     line-height: 1.6;
-    
+
     a {
       color: var(--accent-primary);
       text-decoration: none;
@@ -1428,136 +897,13 @@ function formatDuration(seconds: number) {
   }
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.chat-header {
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--lines-color);
-  background-color: var(--bg-secondary);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 5;
-
-  .user-info-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    .avatar-placeholder {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--gradient-start);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-
-    .avatar-wrapper {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-primary-hovered);
-    }
-
-    .avatar-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .user-avatar-mini {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      overflow: hidden;
-      margin-right: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-primary-hovered);
-      flex-shrink: 0;
-
-      .avatar-placeholder-mini {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--gradient-start);
-        color: white;
-        font-size: 0.8rem;
-        font-weight: bold;
-      }
-    }
-
-    .user-details {
-      h2 { margin: 0; font-size: 1rem; color: var(--text-primary); }
-      .online-status { font-size: 0.8rem; color: #4caf50; }
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 15px;
-    button {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 1.2rem;
-      &:hover { color: var(--accent-primary); }
-    }
-  }
-}
-
-.chat-container {
-  flex-grow: 1;
-  overflow-y: auto;
+.no-users {
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  scroll-behavior: smooth;
-}
-
-.date-separator {
-  display: flex;
-  justify-content: center;
-  margin: 15px 0;
-  span { background: rgba(0, 0, 0, 0.2); color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; backdrop-filter: blur(4px); }
-}
-
-.system-message {
-  align-self: center;
-  margin: 10px 0;
-  padding: 6px 16px;
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  font-size: 0.8rem;
+  text-align: center;
   color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--lines-color);
-  
-  &.call-fingerprint {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
-    font-weight: 500;
-  }
+  font-style: italic;
+  font-size: 0.9rem;
 }
-
-.input-area { padding: 10px 20px 20px; }
 
 .new-message-indicator {
   position: absolute;
@@ -1575,6 +921,23 @@ function formatDuration(seconds: number) {
   z-index: 10;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   border: 1px solid var(--lines-color);
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-10px);}
+  60% {transform: translateY(-5px);}
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Context Menu */
@@ -1605,442 +968,5 @@ function formatDuration(seconds: number) {
     &:hover { background: var(--bg-primary-hovered); }
     &.delete { color: var(--accent-error); }
   }
-}
-
-/* Video Call Overlay Layered Approach */
-.video-call-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: blur(10px);
-
-  &.is-fullscreen {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100dvw !important;
-    height: 100dvh !important;
-    z-index: 99999 !important;
-    border-radius: 0 !important;
-  }
-
-  .call-wrapper { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
-  .call-header {
-    padding: 15px 20px;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-    .call-partner-info { display: flex; align-items: center; gap: 10px; .call-icon { color: #4caf50; animation: pulse 2s infinite; } }
-    .minimize-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; }
-  }
-
-  .video-grid {
-    flex: 1;
-    position: relative;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-
-    &.videos-swapped {
-      .remote-video-container {
-        position: absolute !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        width: 150px !important;
-        height: auto !important;
-        aspect-ratio: 16/9 !important;
-        border-radius: 12px !important;
-        overflow: hidden !important;
-        border: 2px solid rgba(255, 255, 255, 0.3) !important;
-        z-index: 10 !important;
-        
-        .remote-video {
-          width: 100% !important;
-          height: 100% !important;
-          object-fit: cover !important;
-          border-radius: 0 !important;
-        }
-      }
-      
-      .local-video-container {
-        position: static !important;
-        bottom: auto !important;
-        right: auto !important;
-        width: 100% !important;
-        height: 100% !important;
-        aspect-ratio: auto !important;
-        border-radius: 0 !important;
-        border: none !important;
-        z-index: 1 !important;
-        
-        .local-video {
-          width: 100% !important;
-          height: 100% !important;
-          object-fit: cover !important;
-        }
-      }
-    }
-  }
-  .remote-video-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    .remote-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    @include tablet-to-up {
-      height: 90%;
-      width: 90%;
-      .remote-video {
-        object-fit: contain;
-        border-radius: 12px;
-      }
-    }
-  }
-  .local-video-container {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 150px;
-    aspect-ratio: 16/9;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    z-index: 20;
-    cursor: grab;
-
-    &:active { cursor: grabbing; }
-
-    .local-video { width: 100%; height: 100%; object-fit: cover; }
-
-    .resize-handle {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 30px;
-      height: 30px;
-      background: rgba(0, 0, 0, 0.5);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: nwse-resize;
-      z-index: 21;
-      border-bottom-right-radius: 8px;
-      
-      &:hover {
-        background: var(--accent-primary);
-      }
-    }
-  }
-
-  .call-controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    &.minimized {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      border-radius: 30px;
-      padding: 10px 15px;
-      flex-direction: column;
-      width: auto;
-      background: var(--bg-secondary);
-      border: 1px solid var(--lines-color);
-      z-index: 101;
-      .control-btn { width: 40px; height: 40px; }
-    }
-    .control-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      color: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      &:hover { background: rgba(255, 255, 255, 0.2); }
-      &.active { background: var(--accent-error); }
-      &.end-call { background: #ff3b30; }
-    }
-  }
-}
-
-.slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-.slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); opacity: 0; }
-
-@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-.spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--accent-secondary);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.notifications-btn {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--lines-color);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.user-settings-section {
-  margin-top: auto;
-  border-top: 1px solid var(--lines-color);
-  padding-top: 15px;
-
-  &.is-folded {
-    .settings-content {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-    }
-  }
-
-  .settings-header {
-    cursor: pointer;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    h4 {
-      margin: 0;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  }
-
-  .settings-content {
-    overflow: hidden;
-    .setting-item {
-      margin-bottom: 12px;
-      label {
-        font-size: 0.8rem;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        
-        input[type="checkbox"] {
-          accent-color: var(--accent-primary);
-        }
-      }
-    }
-  }
-}
-
-/* Incoming Call Modal */
-.incoming-call-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  .modal-content {
-    background: var(--bg-secondary);
-    padding: 40px;
-    border-radius: 24px;
-    text-align: center;
-    border: 1px solid var(--lines-color);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    width: 320px;
-
-    .avatar-large {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: var(--gradient-start);
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      color: white;
-      font-weight: bold;
-    }
-
-    h3 { color: var(--text-primary); margin-bottom: 10px; }
-    p { color: var(--text-secondary); margin-bottom: 30px; }
-
-    .modal-actions {
-      display: flex;
-      gap: 15px;
-      button {
-        flex: 1;
-        padding: 12px;
-        border-radius: 12px;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.2s;
-
-        &.accept-btn { background: #4caf50; color: white; &:hover { background: #45a049; } }
-        &.decline-btn { background: var(--accent-error); color: white; &:hover { background: #e53935; } }
-      }
-    }
-  }
-}
-
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-
-/* Premium Audio Calling Visuals */
-.audio-only-grid {
-  background: radial-gradient(circle at center, #1b1c2b 0%, #0a0b12 100%) !important;
-}
-
-.audio-call-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 30px;
-  height: 100%;
-  width: 100%;
-  color: white;
-
-  .audio-avatar-wrapper {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .avatar-large-glow {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: var(--gradient-start);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      font-weight: bold;
-      color: white;
-      box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
-      z-index: 2;
-    }
-
-    .pulse-ring {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      animation: audioPulse 3s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-      z-index: 1;
-      opacity: 0;
-
-      &.ring-2 {
-        animation-delay: 1s;
-      }
-      &.ring-3 {
-        animation-delay: 2s;
-      }
-    }
-  }
-
-  .audio-call-info {
-    text-align: center;
-    h3 {
-      font-size: 1.6rem;
-      margin: 0 0 8px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .audio-status {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.7);
-      margin: 0;
-      
-      .voice-active {
-        color: #4caf50;
-        font-weight: 500;
-        text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
-      }
-    }
-  }
-
-  .audio-waves {
-    display: flex;
-    align-items: flex-end;
-    gap: 5px;
-    height: 40px;
-    margin-top: 10px;
-
-    .bar {
-      width: 4px;
-      background: var(--accent-primary);
-      border-radius: 2px;
-      height: 6px;
-      transition: height 0.25s ease;
-    }
-
-    &.animating {
-      .bar-1 { animation: wave 1.2s ease-in-out infinite; }
-      .bar-2 { animation: wave 0.9s ease-in-out infinite 0.2s; }
-      .bar-3 { animation: wave 1.4s ease-in-out infinite 0.4s; }
-      .bar-4 { animation: wave 1.1s ease-in-out infinite 0.1s; }
-      .bar-5 { animation: wave 1.3s ease-in-out infinite 0.3s; }
-    }
-  }
-}
-
-@keyframes audioPulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2.3);
-    opacity: 0;
-  }
-}
-
-@keyframes wave {
-  0%, 100% { height: 6px; }
-  50% { height: 38px; }
 }
 </style>

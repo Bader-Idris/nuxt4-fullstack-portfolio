@@ -6,7 +6,7 @@ export interface LocalizedString {
 
 export interface Project {
   title: LocalizedString;
-  url: string;
+  url: string | LocalizedString;
   img: string | LocalizedString;
   imgAlt: string;
   desc: LocalizedString;
@@ -165,7 +165,11 @@ export const projectsList: Project[] = [
       ar: "لوحة التحكم - دردشة وفيديو آمن",
       es: "Panel - Chat y Video Seguro",
     },
-    url: "/dashboard",
+    url: {
+      en: "/dashboard",
+      ar: "/ar/dashboard",
+      es: "/es/dashboard",
+    },
     img: "OG_IMAGE",
     imgAlt: "Bader Idris Dashboard Showcase",
     desc: {

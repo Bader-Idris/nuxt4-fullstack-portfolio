@@ -11,6 +11,8 @@ export interface SocketCurrentUser {
   name: string;
   socketId: string;
   role: "admin" | "user" | "guest" | "editor" | "premium";
+  avatar?: string;
+  avatarHash?: string;
 }
 
 export const useSocketStore = defineStore("socket", () => {

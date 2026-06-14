@@ -158,16 +158,16 @@ export const addOnlineUserToRedis = async (
     // Use Redis to manage the state
     await redisClient!.hset(ONLINE_USERS_KEY, socketId, userDataStr);
     await redisClient!.hset(UNIQUE_ONLINE_USERS_KEY, user.userId, userDataStr);
-    const newCount = await redisClient!.hincrby(
+    await redisClient!.hincrby(
       USER_CONN_COUNT_KEY,
       user.userId,
       1,
     );
 
-    return newCount;
+    return userData;
   } catch (error) {
     console.error("Error adding user to Redis:", error);
-    return 0;
+    return null;
   }
 };
 

@@ -128,6 +128,9 @@ const relevantTags = computed(() => {
   const q = searchQuery.value.toLowerCase().trim();
   if (!q) return null;
 
+  const searchTerms = q.split(",").map(s => s.trim().replace(/^#/, "")).filter(Boolean);
+  if (searchTerms.length === 0) return null;
+
   const tags = new Set<string>();
   projectsList.forEach((project) => {
     const searchableFields = [
@@ -138,11 +141,14 @@ const relevantTags = computed(() => {
       project.desc.ar,
       project.desc.es,
       ...project.tags,
-    ];
+    ].map(f => f?.toLowerCase());
 
-    if (
-      searchableFields.some((field) => field?.toLowerCase().includes(q))
-    ) {
+    // If ANY of the search terms match this project, add its tags to relevant tags
+    const matchesAnyTerm = searchTerms.some(term => 
+      searchableFields.some(field => field?.includes(term))
+    );
+
+    if (matchesAnyTerm) {
       project.tags.forEach((tag) => tags.add(tag.toLowerCase()));
     }
   });

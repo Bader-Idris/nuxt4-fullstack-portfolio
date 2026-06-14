@@ -37,16 +37,22 @@ const isRtl = computed(() => locale.value === "ar");
 const query = ref("");
 const suggestions = ref<Project[]>([]);
 
+const router = useRouter();
+const route = useRoute();
+
 const emit = defineEmits(["search"]);
 
 const onInput = () => {
   emit("search", query.value);
   
-  if (query.value.length > 1) {
-    const q = query.value.toLowerCase();
+  // Suggest based on the last part after the last comma
+  const parts = query.value.split(',');
+  const lastPart = parts[parts.length - 1].trim().replace(/^#/, "").toLowerCase();
+
+  if (lastPart.length > 1) {
     suggestions.value = projectsList.filter(p => {
       const title = (p.title[locale.value as keyof typeof p.title] || p.title.en).toLowerCase();
-      return title.includes(q);
+      return title.includes(lastPart);
     }).slice(0, 5);
   } else {
     suggestions.value = [];
@@ -54,7 +60,17 @@ const onInput = () => {
 };
 
 const selectSuggestion = (project: Project) => {
-  query.value = project.title[locale.value as keyof typeof project.title] || project.title.en;
+  const title = project.title[locale.value as keyof typeof project.title] || project.title.en;
+  const prefixedTitle = `#${title}`;
+  
+  const parts = query.value.split(',').map(s => s.trim());
+  // Replace the last (incomplete) part with the selected suggestion
+  parts[parts.length - 1] = prefixedTitle;
+  
+  // Remove duplicates
+  const uniqueParts = [...new Set(parts)];
+  query.value = uniqueParts.join(", ");
+  
   suggestions.value = [];
   emit("search", query.value);
 };
@@ -64,6 +80,13 @@ const clearSearch = () => {
   suggestions.value = [];
   emit("search", "");
 };
+
+onMounted(() => {
+  if (route.query.q) {
+    query.value = route.query.q as string;
+    emit("search", query.value);
+  }
+});
 </script>
 
 <style lang="scss" scoped>

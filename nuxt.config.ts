@@ -968,7 +968,7 @@ export default defineNuxtConfig({
     enabled: isSSR,
     debug: isDebug,
     contentSignal: isSSR ? {
-      aiTrain: false,
+      aiTrain: true, // could effect performance, check its results!!
       search: true,
       aiInput: true
     } : false,

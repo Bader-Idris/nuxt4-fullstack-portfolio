@@ -47,33 +47,44 @@ export const handleConnection = async (
       `User connected: ${user.name} (${user.userId}) from device: ${deviceId}`,
     );
 
-    // Add user to Redis and get the new connection count
-    const newCount = await addOnlineUserToRedis(user, socket.id, deviceId);
+    // Add user to Redis and get the user data
+    const userData = await addOnlineUserToRedis(user, socket.id, deviceId);
 
-    if (newCount === 1) {
+    if (!userData) {
+      socket.disconnect();
+      return;
+    }
+
+    // Check connection count for broadcasting (we need to check Redis again or change addOnlineUserToRedis)
+    // For now, let's just broadcast every join or check if it's the first connection elsewhere.
+    // Actually, getOnlineUsersFromRedis will show the user if added.
+    const currentOnlineUsers = await getOnlineUsersFromRedis();
+    const userConnectionCount = currentOnlineUsers.filter(u => u.userId === user.userId).length;
+
+    if (userConnectionCount === 1) {
       // Emit updated online users list ONLY if this was their first connection
       socket.broadcast.emit("user-joined", {
-        userId: user.userId,
-        socketId: socket.id,
-        name: user.name,
-        role: user.role,
+        userId: userData.userId,
+        socketId: userData.socketId,
+        name: userData.name,
+        role: userData.role,
+        avatar: userData.avatar,
+        avatarHash: userData.avatarHash,
       });
     }
 
     // Send socket ID and user info to the client
     socket.emit("connection-established", {
       socketId: socket.id,
-      userId: user.userId,
-      name: user.name,
-      role: user.role,
+      userId: userData.userId,
+      name: userData.name,
+      role: userData.role,
+      avatar: userData.avatar,
+      avatarHash: userData.avatarHash,
     });
 
-    // Send current online users list to the newly connected user
-    const currentOnlineUsers = await getOnlineUsersFromRedis();
-    const filteredOnlineUsers = currentOnlineUsers.filter(
-      (u) => u.userId !== user.userId,
-    ); // Exclude current user
-    socket.emit("online-users", filteredOnlineUsers);
+    // Send current online users list to the newly connected user (INCLUDING THEMSELVES)
+    socket.emit("online-users", currentOnlineUsers);
 
     // Join rooms based on user role
     socket.join(`user-${user.userId}`);

@@ -17,6 +17,8 @@ interface Contact {
   name: string;
   avatar?: string;
   avatarHash?: string;
+  role: string;
+  isOnline: boolean;
   lastMessage: {
     id: string;
     message: string;
@@ -37,7 +39,7 @@ export const useMessagesStore = defineStore("messages", {
     // Contacts related state
     contacts: [] as Contact[],
     contactsPage: 1,
-    contactsLimit: 20,
+    contactsLimit: 50, // Increased limit for better searching
     isLoadingContacts: false,
     hasMoreContacts: true,
   }),
@@ -46,8 +48,9 @@ export const useMessagesStore = defineStore("messages", {
       this.isLoading = isLoading;
     },
     addMessage(message: Message) {
+      const userStore = useUserStore();
       const recipientId =
-        message.from === useUserStore().user.userId ? message.to : message.from;
+        message.from === userStore.user.userId ? message.to : message.from;
       if (!recipientId) return;
 
       const conversation = this.conversations.get(recipientId) || [];
@@ -55,6 +58,31 @@ export const useMessagesStore = defineStore("messages", {
       if (!conversation.some((m) => m.id === message.id)) {
         conversation.push(message);
         this.conversations.set(recipientId, conversation);
+      }
+
+      // Real-time contact list update
+      this.updateContactWithNewMessage(recipientId, message);
+    },
+    updateContactWithNewMessage(userId: string, message: Message) {
+      const existingContactIndex = this.contacts.findIndex(c => c.userId === userId);
+      
+      const lastMsgData = {
+        id: message.id,
+        message: message.message,
+        timestamp: message.timestamp,
+        from: message.from || '',
+        to: message.to || ''
+      };
+
+      if (existingContactIndex !== -1) {
+        // Update existing contact's last message and move to top
+        const contact = this.contacts[existingContactIndex];
+        contact.lastMessage = lastMsgData;
+        this.contacts.splice(existingContactIndex, 1);
+        this.contacts.unshift(contact);
+      } else {
+        // If not in list, it will be fetched on next scroll or we can try to fetch just this user
+        // For now, we rely on the search to fetch from server or wait for next fetchContacts
       }
     },
     setMessages(recipientId: string, newMessages: Message[]) {

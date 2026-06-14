@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import crypto from "node:crypto";
-// import { Message, User } from '../models/mongo';
 import { Message } from "../models/mongo";
+import { redisClient } from "../plugins/redis";
+import { UNIQUE_ONLINE_USERS_KEY } from "../sockets/constants";
 
 export async function getContacts(userId: string, page: number, limit: number) {
   const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -11,6 +12,7 @@ export async function getContacts(userId: string, page: number, limit: number) {
       {
         $match: {
           $or: [{ from: userObjectId }, { to: userObjectId }],
+          isBroadcast: false
         },
       },
       {
@@ -39,7 +41,7 @@ export async function getContacts(userId: string, page: number, limit: number) {
       },
       {
         $lookup: {
-          from: "users", // The name of the User collection in MongoDB
+          from: "users",
           localField: "_id",
           foreignField: "_id",
           as: "contactInfo",
@@ -51,29 +53,36 @@ export async function getContacts(userId: string, page: number, limit: number) {
       {
         $project: {
           _id: 0,
-          userId: "$contactInfo._id",
+          userId: { $toString: "$contactInfo._id" },
           name: "$contactInfo.name",
           avatar: "$contactInfo.avatar",
           email: "$contactInfo.email",
+          role: "$contactInfo.role",
           lastMessage: {
-            id: "$lastMessage._id",
+            id: { $toString: "$lastMessage._id" },
             message: "$lastMessage.message",
             timestamp: "$lastMessage.timestamp",
-            from: "$lastMessage.from",
-            to: "$lastMessage.to",
+            from: { $toString: "$lastMessage.from" },
+            to: { $toString: "$lastMessage.to" },
           },
         },
       },
     ]);
 
-    return contacts.map(contact => {
+    return await Promise.all(contacts.map(async (contact) => {
       const avatarHash = contact.email
         ? crypto.createHash("sha256").update(contact.email.toLowerCase().trim()).digest("hex")
         : undefined;
       
+      const onlineData = await redisClient!.hget(UNIQUE_ONLINE_USERS_KEY, contact.userId);
+      
       const { email, ...rest } = contact;
-      return { ...rest, avatarHash };
-    });
+      return { 
+        ...rest, 
+        avatarHash,
+        isOnline: !!onlineData
+      };
+    }));
   } catch (error) {
     console.error("Error fetching contacts:", error);
     throw new Error("Failed to fetch contacts");

@@ -18,14 +18,14 @@
             <CustomLink
               :aria-label="'go to ' + (project.title[locale] || project.title.en)"
               class="link external-link"
-              :to="project.url"
+              :to="getProjectUrl(project)"
             >
               <img :src="getProjectImage(project)" :alt="project.title[locale] || project.title.en" />
             </CustomLink>
             <p>{{ project.desc[locale] || project.desc.en }}</p>
 
             <CustomButton button-type="default" class="project-link">
-              <CustomLink :to="project.url">
+              <CustomLink :to="getProjectUrl(project)">
                 <!-- <CustomLink :to="localePath(`/projects/${slugify(project.title.en)}`)"> -->
                 View Project
               </CustomLink>
@@ -42,13 +42,30 @@ import { projectsList } from "~/apis/projects_data";
 
 const { locale } = useI18n();
 const localePath = useLocalePath();
+const siteConfig = useSiteConfig();
+
+const getProjectUrl = (project: any) => {
+  const url = project.url;
+  if (typeof url === "object") {
+    return url[locale.value] || url.en;
+  }
+  return url;
+};
 
 const getProjectImage = (project: any) => {
   const img = project.img;
+  const projectUrl = getProjectUrl(project);
 
   if (img === "OG_IMAGE") {
-    // Return the dynamic OG image endpoint for the localized route
-    return `${localePath(project.url)}/__og-image__/image.png`;
+    // Construct the dynamic OG image endpoint for the localized route
+    // Professional approach using /__og-image__/static/<path>/image.png
+    const path = projectUrl.startsWith("http") ? projectUrl : localePath(projectUrl);
+    
+    // Ensure path doesn't have a leading slash for the static endpoint if it's already there
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+    const baseUrl = siteConfig.url?.replace(/\/$/, "");
+    
+    return `${baseUrl}/__og-image__/static/${cleanPath}/image.png`;
   }
 
   if (typeof img === "object") {
@@ -74,6 +91,9 @@ const filteredProjects = computed(() => {
   // @ts-expect-error: props.activeItems is not properly typed
   const activeItemsLower = props.activeItems.map((item) => item.toLowerCase());
 
+  // Split by comma and filter out empty terms
+  const searchTerms = q ? q.split(",").map(s => s.trim()).filter(Boolean) : [];
+
   return projectsList.filter((project) => {
     // 1. Tag Match (Must match at least one selected tag if tags are active)
     const matchesTags = project.tags.some((tag) =>
@@ -81,10 +101,10 @@ const filteredProjects = computed(() => {
     );
     if (!matchesTags) return false;
 
-    // 2. Search Query Match (Guessing Approach)
-    if (!q) return true;
+    // 2. Search Query Match (OR logic for multiple terms)
+    if (searchTerms.length === 0) return true;
 
-    // Search across ALL localized fields to "guess" intent
+    // Search across ALL localized fields
     const searchableFields = [
       project.title.en,
       project.title.ar,
@@ -93,9 +113,14 @@ const filteredProjects = computed(() => {
       project.desc.ar,
       project.desc.es,
       ...project.tags,
-    ];
+    ].map(f => f?.toLowerCase());
 
-    return searchableFields.some((field) => field.toLowerCase().includes(q));
+    // Check if ANY of the search terms match ANY of the searchable fields
+    return searchTerms.some(term => {
+      // Remove '#' prefix for internal searching if present
+      const cleanTerm = term.startsWith("#") ? term.slice(1) : term;
+      return searchableFields.some(field => field?.includes(cleanTerm));
+    });
   });
 });
 
