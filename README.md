@@ -44,7 +44,7 @@ Before starting with this project, ensure you have the following tools installed
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - [pnpm](https://pnpm.io/) package manager (Recommended)
 - [Bun](https://bun.sh/) JavaScript runtime (Alternative)
-- Git version control system
+- [Git](https://git-scm.com/) version control system
 
 ### Installing Prerequisites
 
@@ -114,6 +114,7 @@ cd portfolio
 
 ```bash
 pnpm install
+# pnpm config list && pnpm install --no-frozen-lockfile # recommended for locking and better at riskies of nuxt unstabilty
 # bun install
 ```
 

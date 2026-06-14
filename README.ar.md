@@ -45,7 +45,7 @@ Español
 - [Docker](https://docs.docker.com/get-docker/) و Docker Compose
 - [pnpm](https://pnpm.io/) مدير الحزم (موصى به)
 - [Bun](https://bun.sh/) بيئة تشغيل JavaScript (بديل)
-- نظام التحكم في الإصدار Git
+- [Git](https://git-scm.com/) نظام التحكم في الإصدار
 
 ### تثبيت المتطلبات
 
@@ -115,6 +115,7 @@ cd portfolio
 
 ```bash
 pnpm install
+# pnpm config list && pnpm install --no-frozen-lockfile # recommended for locking and better at riskies of nuxt unstabilty
 # bun install
 ```
 
