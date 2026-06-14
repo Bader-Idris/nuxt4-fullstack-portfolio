@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from "nuxt/config";
-import { definePerson } from "nuxt-schema-org/schema";
 // for electron
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -223,6 +222,11 @@ export default defineNuxtConfig({
     experimental: {
       websocket: true,
       asyncContext: true,
+    },
+
+    prerender: {
+      routes: ["/llms.txt", "/llms-full.txt"],
+      failOnError: false,
     },
 
     serveStatic: process.env.NODE_ENV === "production" && isSSR ? false : true,
@@ -645,9 +649,9 @@ export default defineNuxtConfig({
     locales: [
       {
         code: "en",
-        iso: "en-US", // check if deprecated
+        iso: "en", // check if deprecated
         dir: "ltr",
-        language: "en-US",
+        language: "en",
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
         // https://i18n.nuxtjs.org/docs/guide/lazy-load-translations#basic-usage
         // TODO: 🥊 to be able to fetch from nuxt server 🥊
@@ -657,17 +661,17 @@ export default defineNuxtConfig({
       },
       {
         code: "ar",
-        iso: "ar-PS",
+        iso: "ar",
         dir: "rtl",
-        language: "ar-PS",
+        language: "ar",
         file: "ar-PS.json",
         name: "العربية",
       },
       {
         code: "es",
-        iso: "es-ES",
+        iso: "es",
         dir: "ltr",
-        language: "es-ES",
+        language: "es",
         file: "es-ES.json",
         name: "Español",
       },
@@ -883,9 +887,9 @@ export default defineNuxtConfig({
     xslColumns: [
       { label: 'URL', width: '50%' },
       { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
-      { "label": "Last Updated", "width": "15%", "select": "concat(substring(sitemap:lastmod,0,11),concat(' ', substring(sitemap:lastmod,12,5)),concat(' ', substring(sitemap:lastmod,20,6)))" },
+      { label: "Last Updated", width: "15%", select: "concat(substring(sitemap:lastmod,0,11),concat(' ', substring(sitemap:lastmod,12,5)),concat(' ', substring(sitemap:lastmod,20,6)))" },
       { label: 'Hreflangs', select: 'count(xhtml:link)', width: '5%' },
-      { "label": "Images", "width": "5%", "select": "count(image:image)" },
+      { label: "Images", width: "5%", select: "count(image:image)" },
     ],
     xslTips: process.env.IS_DEBUGGING !== "false",
     debug: isDebug,
@@ -894,21 +898,30 @@ export default defineNuxtConfig({
     autoLastmod: false,
     // strictNuxtContentPaths: true,
     // https://nuxtseo.com/docs/sitemap/api/config#autoi18n
-    autoI18n: true,// make sure it uses my strategy: prefix_except_default
-    // sitemaps: {
-    //   // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
-    //   posts: {
-    //     sources: ['/api/v1/blog'],
-    //     chunks: true, // Enable chunking
-    //     chunkSize: 2500 // Use 2500 URLs per chunk
-    //   },
-    //   pages: {
-    //     exclude: [
-    //       '/api/v1/blog',
-    //     ]
-    //   },
-    // },
-    sitemaps: true,// we can do {} || boolean; https://nuxtseo.com/docs/sitemap/guides/multi-sitemaps#enabling-multiple-sitemaps
+    autoI18n: true,
+    // zeroRuntime: true, // this kills dynamic posts, don't use it ever!!
+    // sitemaps: true,// we can do {} || boolean; https://nuxtseo.com/docs/sitemap/guides/multi-sitemaps#enabling-multiple-sitemaps
+    sitemaps: {
+      pages: {
+        includeAppSources: true,
+        exclude: [
+          '/blog/**',                  // ← hand blog URLs off to posts sitemap
+          '/auth/callback',
+          '/user/forgot-password',
+          '/user/reset-password',
+          '/user/unsubscribe',
+          '/user/verify-email',
+        ],
+      },
+      // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
+      posts: {
+        includeAppSources: true,       // ← required, even for API-sourced posts
+        include: ['/blog/**'],         // ← claim ownership of /blog/* URLs
+        sources: ['/api/sitemap/blog'],
+        chunks: true,
+        chunkSize: 2500,
+      }
+    },
     // modify the chunk size if you need
     defaultSitemapsChunkSize: 2000, // default 1000
     // urls: async () => {
@@ -1058,6 +1071,9 @@ export default defineNuxtConfig({
     apnKeyId: process.env.APN_KEY_ID,
     apnTeamId: process.env.APN_TEAM_ID,
     apnBundleId: process.env.APN_BUNDLE_ID,
+    scripts: {
+      proxySecret: process.env.NUXT_SCRIPTS_PROXY_SECRET,
+    },
   },
   content: {
     // check out content.config.ts file
