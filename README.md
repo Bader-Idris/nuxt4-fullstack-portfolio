@@ -42,7 +42,8 @@ A comprehensive full-stack portfolio application built with Nuxt 4, featuring re
 Before starting with this project, ensure you have the following tools installed on your system:
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
-- [Bun](https://bun.sh/) JavaScript runtime
+- [pnpm](https://pnpm.io/) package manager (Recommended)
+- [Bun](https://bun.sh/) JavaScript runtime (Alternative)
 - Git version control system
 
 ### Installing Prerequisites
@@ -60,6 +61,16 @@ sudo usermod -aG docker $USER
 
 > [!IMPORTANT]  
 > After installing Docker, it's recommended to follow the [Docker post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/) for enhanced security and performance, including running Docker as a non-root user and configuring additional security options.
+
+**pnpm Installation (Recommended):**
+
+```bash
+# Using npm
+npm install -g pnpm
+
+# Or using the official installation script
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
 
 **Bun Installation:**
 
@@ -99,13 +110,11 @@ cd portfolio
 ### Installing Dependencies
 
 > [!IMPORTANT]  
-> Ensure you have Bun installed before running these commands.
-
-> [!TIP]
-> If Bun fails to build the client apps (especially on Windows), it is highly recommended to install and use **pnpm**, as it is more stable and thoroughly tested for these platforms.
+> It is highly recommended to use **pnpm** for installing dependencies and building the project, as it is more stable and thoroughly tested for this codebase.
 
 ```bash
-bun install
+pnpm install
+# bun install
 ```
 
 ### Database Migrations
@@ -116,8 +125,9 @@ bun install
 Before running the application, ensure your database schema is up-to-date by running the Prisma migrations:
 
 ```bash
-bunx prisma migrate deploy
-bunx prisma generate
+pnpm dlx prisma migrate deploy
+pnpm dlx prisma generate
+# bunx prisma migrate deploy
 ```
 
 ## Development
@@ -127,7 +137,7 @@ bunx prisma generate
 To start the development server, navigate to `http://localhost:3000`:
 
 ```bash
-bun run dev
+pnpm dev
 ```
 
 > [!TIP]  
@@ -303,7 +313,7 @@ docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d
 To locally preview the production build:
 
 ```bash
-bun run preview
+pnpm preview
 ```
 
 ### Production Docker Image
@@ -318,7 +328,7 @@ bun run preview
 To add Android and iOS support:
 
 ```bash
-bunx cap add android ios
+pnpm dlx cap add android ios
 ```
 
 Create the mobile environment file:
@@ -333,7 +343,7 @@ cp .env.capacitor.example .env.capacitor
 To customize your app icons, modify the icons in the `/assets` folder as desired, then run:
 
 ```bash
-bunx capacitor-assets generate --assetPath "./assets" --ios --android
+pnpm dlx capacitor-assets generate --assetPath "./assets" --ios --android
 ```
 
 > You can review the configuration requirements in the `assets/requirements.md` file.
@@ -370,7 +380,7 @@ You can check out the [issue here](https://github.com/ionic-team/capacitor-plugi
 - [Electron Application](#electron-application)
 - [Electrobun Application](#electrobun-application)
 - [Production Deployment](#production-deployment)
-...
+
 ### Setup
 
 To create a production build for Electron:
@@ -383,12 +393,12 @@ To create a production build for Electron:
    ```
 
 2. Use the following commands to build the Electron application:
-   - `bun run build:electron`: Build for the current platform
-   - `bun run build:electron:all`: Build for Windows, macOS, and Linux
-   - `bun run build:electron:win`: Build for Windows only
-   - `bun run build:electron:mac`: Build for macOS only
-   - `bun run build:electron:linux`: Build for Linux only
-   - `bun run build:electron:dir`: Build in an unpackaged directory for testing
+   - `pnpm build:electron`: Build for the current platform
+   - `pnpm build:electron:all`: Build for Windows, macOS, and Linux
+   - `pnpm build:electron:win`: Build for Windows only
+   - `pnpm build:electron:mac`: Build for macOS only
+   - `pnpm build:electron:linux`: Build for Linux only
+   - `pnpm build:electron:dir`: Build in an unpackaged directory for testing
 
 ### Linux Installation
 

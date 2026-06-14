@@ -42,7 +42,8 @@ Una aplicación completa de portafolio full-stack construida con Nuxt 4, que inc
 Antes de comenzar con este proyecto, asegúrese de tener las siguientes herramientas instaladas en su sistema:
 
 - [Docker](https://docs.docker.com/get-docker/) y Docker Compose
-- [Bun](https://bun.sh/) entorno de ejecución de JavaScript
+- [pnpm](https://pnpm.io/) administrador de paquetes (Recomendado)
+- [Bun](https://bun.sh/) entorno de ejecución de JavaScript (Alternativa)
 - Sistema de control de versiones Git
 
 ### Instalando los requisitos previos
@@ -60,6 +61,16 @@ sudo usermod -aG docker $USER
 
 > [!IMPORTANT]
 > Después de instalar Docker, se recomienda seguir los [pasos posteriores a la instalación de Docker](https://docs.docker.com/engine/install/linux-postinstall/) para mejorar la seguridad y el rendimiento, incluyendo la ejecución de Docker como usuario no root y configurar opciones adicionales de seguridad.
+
+**Instalación de pnpm (Recomendado):**
+
+```bash
+# Usando npm
+npm install -g pnpm
+
+# Or using the official installation script
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
 
 **Instalación de Bun:**
 
@@ -98,14 +109,12 @@ cd portfolio
 
 ### Instalando dependencias
 
-> [!IMPORTANT]
-> Asegúrese de tener Bun instalado antes de ejecutar estos comandos.
-
-> [!TIP]
-> Si Bun falla al compilar las aplicaciones cliente (especialmente en Windows), se recomienda encarecidamente instalar y usar **pnpm**, ya que es más estable y ha sido probado exhaustivamente para estas plataformas.
+> [!IMPORTANT]  
+> Se recomienda encarecidamente utilizar **pnpm** para instalar las dependencias y compilar el proyecto, ya que es más estable y se ha probado exhaustivamente para este código.
 
 ```bash
-bun install
+pnpm install
+# bun install
 ```
 
 ### Migraciones de la base de datos
@@ -116,8 +125,9 @@ bun install
 Antes de ejecutar la aplicación, asegúrese de que su esquema de base de datos esté actualizado ejecutando las migraciones de Prisma:
 
 ```bash
-bunx prisma migrate deploy
-bunx prisma generate
+pnpm dlx prisma migrate deploy
+pnpm dlx prisma generate
+# bunx prisma migrate deploy
 ```
 
 ## Desarrollo
@@ -127,7 +137,8 @@ bunx prisma generate
 Para iniciar el servidor de desarrollo, vaya a `http://localhost:3000`:
 
 ```bash
-bun run dev
+pnpm dev
+# bun run dev
 ```
 
 > [!TIP]
@@ -303,7 +314,7 @@ docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d
 Para previsualizar localmente la compilación de producción:
 
 ```bash
-bun run preview
+pnpm preview
 ```
 
 ### Imagen Docker de producción
@@ -318,7 +329,7 @@ bun run preview
 Para agregar soporte para Android e iOS:
 
 ```bash
-bunx cap add android ios
+pnpm dlx cap add android ios
 ```
 
 Cree el archivo de entorno móvil:
@@ -333,7 +344,7 @@ cp .env.capacitor.example .env.capacitor
 Para personalizar los iconos de su aplicación, modifique los iconos en la carpeta `/assets` según desee, luego ejecute:
 
 ```bash
-bunx capacitor-assets generate --assetPath "./assets" --ios --android
+pnpm dlx capacitor-assets generate --assetPath "./assets" --ios --android
 ```
 
 > Puede revisar los requisitos de configuración en el archivo `assets/requirements.md`.
@@ -382,13 +393,14 @@ Para crear una compilación de producción para Electron:
    # Configure las variables de entorno
    ```
 
-2. Use los siguientes comandos para compilar la aplicación Electron:
-   - `bun run build:electron`: Compilar para la plataforma actual
-   - `bun run build:electron:all`: Compilar para Windows, macOS y Linux
-   - `bun run build:electron:win`: Compilar solo para Windows
-   - `bun run build:electron:mac`: Compilar solo para macOS
-   - `bun run build:electron:linux`: Compilar solo para Linux
-   - `bun run build:electron:dir`: Compilar en un directorio sin empaquetar para pruebas
+2. Use the following commands to build the Electron application:
+   - `pnpm build:electron`: Compilar para la plataforma actual
+   - `pnpm build:electron:all`: Compilar para Windows, macOS y Linux
+   - `pnpm build:electron:win`: Compilar solo para Windows
+   - `pnpm build:electron:mac`: Compilar solo para macOS
+   - `pnpm build:electron:linux`: Compilar solo para Linux
+   - `pnpm build:electron:dir`: Compilar en un directorio sin empaquetar para pruebas
+
 
 ### Instalación en Linux
 

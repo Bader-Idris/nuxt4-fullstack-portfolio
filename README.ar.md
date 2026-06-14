@@ -43,7 +43,8 @@ Español
 قبل الشروع في هذا المشروع، تأكد من أن لديك الأدوات التالية مثبتة على نظامك:
 
 - [Docker](https://docs.docker.com/get-docker/) و Docker Compose
-- [Bun](https://bun.sh/) بيئة تشغيل JavaScript
+- [pnpm](https://pnpm.io/) مدير الحزم (موصى به)
+- [Bun](https://bun.sh/) بيئة تشغيل JavaScript (بديل)
 - نظام التحكم في الإصدار Git
 
 ### تثبيت المتطلبات
@@ -61,6 +62,16 @@ sudo usermod -aG docker $USER
 
 > [!IMPORTANT]  
 > بعد تثبيت Docker، يُوصى باتباع [خطوات ما بعد التثبيت لـ Docker](https://docs.docker.com/engine/install/linux-postinstall/) لتعزيز الأمان والأداء، بما في ذلك تشغيل Docker كمستخدم غير جذر وتكوين خيارات الأمان الإضافية.
+
+**تثبيت pnpm (موصى به):**
+
+```bash
+# باستخدام npm
+npm install -g pnpm
+
+# أو باستخدام نص التثبيت الرسمي
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
 
 **تثبيت Bun:**
 
@@ -100,13 +111,11 @@ cd portfolio
 ### تثبيت التبعيات
 
 > [!IMPORTANT]  
-> تأكد من أنك قد ثبت Bun قبل تشغيل هذه الأوامر.
-
-> [!TIP]
-> إذا فشل Bun في بناء تطبيقات العميل (خاصة على نظام Windows)، فمن المستحسن بشدة تثبيت واستخدام **pnpm**، حيث أنه أكثر استقراراً ومختبر بشكل جيد لهذه المنصات.
+> يُوصى بشدة باستخدام **pnpm** لتثبيت التبعيات وبناء المشروع، حيث أنه أكثر استقراراً ومختبر بشكل جيد لهذه الكود.
 
 ```bash
-bun install
+pnpm install
+# bun install
 ```
 
 ### ترحيلات قاعدة البيانات
@@ -117,8 +126,9 @@ bun install
 قبل تشغيل التطبيق، تأكد من أن مخطط قاعدة بياناتك محدث بتشغيل ترحيلات Prisma:
 
 ```bash
-bunx prisma migrate deploy
-bunx prisma generate
+pnpm dlx prisma migrate deploy
+pnpm dlx prisma generate
+# bunx prisma migrate deploy
 ```
 
 ## التطوير
@@ -128,7 +138,8 @@ bunx prisma generate
 لبدء خادم التطوير، انتقل إلى `http://localhost:3000`:
 
 ```bash
-bun run dev
+pnpm dev
+# bun run dev
 ```
 
 > [!TIP]  
@@ -304,8 +315,9 @@ docker compose -f b.dev.yml down; docker compose -f compose.prod.test.yaml up -d
 لمعاينة البناء الإنتاجي محليًا:
 
 ```bash
-bun run preview
+pnpm preview
 ```
+
 
 ### صورة Docker للإنتاج
 
@@ -319,7 +331,7 @@ bun run preview
 لإضافة دعم Android وiOS:
 
 ```bash
-bunx cap add android ios
+pnpm dlx cap add android ios
 ```
 
 أنشئ ملف بيئة الجوال:
@@ -334,7 +346,7 @@ cp .env.capacitor.example .env.capacitor
 لتخصيص أيقونات تطبيقك، عدّل الأيقونات في مجلد `/assets` حسب الرغبة، ثم شغّل:
 
 ```bash
-bunx capacitor-assets generate --assetPath "./assets" --ios --android
+pnpm dlx capacitor-assets generate --assetPath "./assets" --ios --android
 ```
 
 > يمكنك مراجعة متطلبات التكوين في ملف `assets/requirements.md`.
@@ -383,12 +395,12 @@ bunx capacitor-assets generate --assetPath "./assets" --ios --android
    ```
 
 2. استخدم الأوامر التالية لبناء تطبيق Electron:
-   - `bun run build:electron`: بناء للمنصة الحالية
-   - `bun run build:electron:all`: بناء لـ Windows وmacOS وLinux
-   - `bun run build:electron:win`: بناء لـ Windows فقط
-   - `bun run build:electron:mac`: بناء لـ macOS فقط
-   - `bun run build:electron:linux`: بناء لـ Linux فقط
-   - `bun run build:electron:dir`: بناء في دليل غير مضغوط للاختبار
+   - `pnpm build:electron`: بناء للمنصة الحالية
+   - `pnpm build:electron:all`: بناء لـ Windows وmacOS وLinux
+   - `pnpm build:electron:win`: بناء لـ Windows فقط
+   - `pnpm build:electron:mac`: بناء لـ macOS فقط
+   - `pnpm build:electron:linux`: بناء لـ Linux فقط
+   - `pnpm build:electron:dir`: بناء في دليل غير مضغوط للاختبار
 
 ### التثبيت على Linux
 
@@ -404,6 +416,24 @@ bunx capacitor-assets generate --assetPath "./assets" --ios --android
   ```bash
   sudo snap install --dangerous nuxt4-fullstack-portfolio_3.4.0_linux_amd64.snap
   ```
+
+## تطبيق Electrobun
+
+بديل حديث وخفيف لـ Electron يستخدم Bun وعارض الويب الخاص بالنظام (system webviews).
+
+### الإعداد
+
+1. استخدم ملف بيئة Electron الحالي أو أنشئ ملفاً مخصصاً إذا لزم الأمر.
+
+2. استخدم الأوامر التالية لبناء أو تطوير تطبيق Electrobun:
+   - `bun run dev:electrobun`: تشغيل وضع التطوير مع HMR ونافذة أصلية.
+   - `bun run build:electrobun`: بناء للمنصة الحالية.
+   - `bun run build:electrobun:all`: بناء لـ Windows وmacOS وLinux بالتتابع.
+   - `bun run build:electrobun:win`: بناء لـ Windows فقط.
+   - `bun run build:electrobun:mac`: بناء لـ macOS فقط.
+   - `bun run build:electrobun:linux`: بناء لـ Linux فقط.
+
+سيتم تنظيم الإصدارات وتأريخها في `./release/electrobun/${version}_${timestamp}/`.
 
 ### تكوين النطاق
 

@@ -152,14 +152,14 @@
     "@iconify-json/file-icons": "^1.2.2",
     "@iconify-json/flat-color-icons": "^1.2.3",
     "@iconify-json/flowbite": "^1.2.7",
-    "@iconify-json/fluent": "^1.2.49",
+    "@iconify-json/fluent": "^1.2.50",
     "@iconify-json/grommet-icons": "^1.2.4",
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/hugeicons": "^1.2.29",
     "@iconify-json/ic": "^1.2.4",
     "@iconify-json/ion": "^1.2.7",
     "@iconify-json/lineicons": "^1.2.6",
-    "@iconify-json/material-symbols": "^1.2.77",
+    "@iconify-json/material-symbols": "^1.2.78",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/mingcute": "^1.2.7",
     "@iconify-json/raphael": "^1.2.1",
@@ -205,7 +205,7 @@
     "vite-plugin-electron": "^1.0.4",
     "vite-plugin-electron-renderer": "^1.0.0",
     "vite-plugin-glsl": "^1.6.0",
-    "vue-tsc": "^3.3.4"
+    "vue-tsc": "^3.3.5"
   },
   "browserslist": [
     "> 1%",
