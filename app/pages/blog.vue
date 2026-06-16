@@ -12,21 +12,26 @@
 // import { useUserStore } from "~/stores/useUserSocket";
 // const userStore = useUserStore();
 const { t, locale } = useI18n();
-// const localePath = useLocalePath();
+const localePath = useLocalePath();
+const config = useRuntimeConfig();
+const route = useRoute();
 
+const fullPathWithLocale = computed(() => localePath(route.path));
 
-if (import.meta.server) {
-  defineOgImage("Default.takumi", {
-    title: t("blog.title"),
-    description: t("blog.description"),
-  });
+useSeoMeta({
+  title: t("blog.title"),
+  ogTitle: t("blog.title"),
+  description: t("blog.description"),
+  ogDescription: t("blog.description"),
+  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+});
 
-  useSeoMeta({
-    title: t("blog.title"),
-    // ogImage: "/_og/r/blog/index.png",
-    description: t("blog.description"),
-  });
-}
+// if (import.meta.server) {}
+defineOgImage("Default.takumi", {
+  title: t("blog.title"),
+  description: t("blog.description"),
+  language: locale.value,
+});
 
 </script>
 

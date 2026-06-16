@@ -226,7 +226,9 @@ const messagesStore = useMessagesStore();
 const onlineUsersStore = useOnlineUsersStore();
 const userStore = useUserStore();
 const localePath = useLocalePath();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const route = useRoute();
+const config = useRuntimeConfig();
 
 import ContactSearchBar from "~/components/ContactSearchBar.vue";
 import ConnectionStatusBar from "~/components/dashboard/ConnectionStatusBar.vue";
@@ -238,20 +240,23 @@ import ChatHeader from "~/components/dashboard/ChatHeader.vue";
 import ChatMessagesContainer from "~/components/dashboard/ChatMessagesContainer.vue";
 import ChatInputArea from "~/components/dashboard/ChatInputArea.vue";
 
-const fullPathWithLocale = localePath(useRoute().path);
+const fullPathWithLocale = computed(() => localePath(route.path));
+
+useSeoMeta({
+  title: t("dashboard.title"),
+  ogTitle: t("dashboard.title"),
+  description: t("dashboard.description"),
+  ogDescription: t("dashboard.description"),
+  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+});
+
+defineOgImage("Default.takumi", {
+  title: t("dashboard.title"),
+  description: t("dashboard.description"),
+  language: locale.value,
+});
 
 if (import.meta.server) {
-  useSeoMeta({
-    title: t("dashboard.title"),
-    description: t("dashboard.description"),
-    ogUrl: fullPathWithLocale,
-  });
-
-  defineOgImage("Default.takumi", {
-    title: t("dashboard.title"),
-    description: t("dashboard.description"),
-  });
-
   useSchemaOrg([
     defineWebPage({
       name: "Dashboard",

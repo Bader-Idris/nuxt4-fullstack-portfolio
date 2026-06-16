@@ -91,7 +91,8 @@
 
 <script setup lang="ts">
 const localePath = useLocalePath();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const config = useRuntimeConfig();
 
 definePageMeta({
   middleware: [
@@ -185,11 +186,20 @@ const handleResize = (x: number) => {
   }
 };
 
+const fullPathWithLocale = computed(() => localePath(route.path));
+
 useSeoMeta({
   title: t("about.title"),
   description: t("about.description"),
   ogTitle: t("about.title"),
   ogDescription: t("about.description"),
+  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+});
+
+defineOgImage("Default.takumi", {
+  title: t("about.title"),
+  description: t("about.description"),
+  language: locale.value,
 });
 
 if (import.meta.server) {
@@ -258,8 +268,6 @@ const hobbiesObj = useState("aboutHobbies", () => [
     path: "university",
   },
 ]);
-
-const config = useRuntimeConfig();
 
 if (import.meta.server) {
   // Use dynamic imports to keep Node-only modules out of the client bundle

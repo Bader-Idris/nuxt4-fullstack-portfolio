@@ -123,13 +123,15 @@
 import { useUserStore } from "~/stores/useUserSocket";
 const localePath = useLocalePath();
 const isMobile = useMobile();
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const config = useRuntimeConfig();
+const route = useRoute();
 
 const contactDisplay = ref(isMobile.value ? "none" : "block");
 const socialsDisplay = ref(isMobile.value ? "none" : "block");
 const authStore = useUserStore();
 
-const fullPathWithLocale = localePath(useRoute().path);
+const fullPathWithLocale = computed(() => localePath(route.path));
 
 // Sidebar resizing logic
 const sidebarWidth = ref(300);
@@ -205,18 +207,21 @@ const copyToClipboard = async (index: number): Promise<void> => {
   }
 };
 
+useSeoMeta({
+  title: t("contact.title"),
+  ogTitle: t("contact.title"),
+  description: t("contact.description"),
+  ogDescription: t("contact.description"),
+  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+});
+
+defineOgImage("Default.takumi", {
+  title: t("contact.title"),
+  description: t("contact.description"),
+  language: locale.value,
+});
+
 if (import.meta.server) {
-  useSeoMeta({
-    title: t("contact.title"),
-    description: t("contact.description"),
-    ogUrl: fullPathWithLocale,
-  });
-  
-  defineOgImage("Default.takumi", {
-    title: t("contact.title"),
-    description: t("contact.description"),
-  });
-  
   useSchemaOrg([
     defineWebPage({
       name: t("contact.title"),

@@ -75,6 +75,10 @@ import { SplitText } from "gsap/all";
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const isMobile = useMobile();
+const config = useRuntimeConfig();
+const route = useRoute();
+
+const fullPathWithLocale = computed(() => localePath(route.path));
 
 // Draggable Mobile Game Drawer State
 const drawerActive = ref(false);
@@ -229,7 +233,7 @@ useSeoMeta({
   ogTitle: t("home.title"),
   description: t("home.description"),
   ogDescription: t("home.description"),
-  ogUrl: `${useRuntimeConfig().public.originUrl}${useLocalePath()(useRoute().path)}`,
+  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
   ogImage: optimizedThumbnail,
   ogImageWidth: 1200,
   ogImageHeight: 630,
@@ -248,6 +252,12 @@ useSeoMeta({
   themeColor: "#01080E",
   keywords:
     "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
+});
+
+defineOgImage("Default.takumi", {
+  title: t("home.title"),
+  description: t("home.description"),
+  language: locale.value,
 });
 
 if (import.meta.server) {
