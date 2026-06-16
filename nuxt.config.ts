@@ -679,6 +679,10 @@ export default defineNuxtConfig({
     defaultLocale: "en",
     defaultDirection: "ltr",
     strategy: "prefix_except_default",
+    // This is useless and breaks the app!
+    // experimental: {
+    //   strictSeo: true,
+    // },
     // vueI18n: "~/i18n/i18n.config.ts", // using custom path, default
   },
   pinia: {

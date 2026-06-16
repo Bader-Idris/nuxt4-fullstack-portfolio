@@ -44,7 +44,8 @@ $body-text-size: 18px;
 $labels-size: 16px;
 $code-snippets-size: 14px;
 
-$main-font: "Fira Code", "monospace";
+/* For Arabic, because it doesn't support Fira Code natively */
+$main-font: "Fira Code", "IBM Plex Sans Arabic", "monospace";
 // $arabic-font: 'Galaxy', sans-serif;
 $spanish-font: "Montserrat", "sans-serif";
 

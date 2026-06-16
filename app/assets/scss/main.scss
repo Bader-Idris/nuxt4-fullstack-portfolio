@@ -11,17 +11,24 @@ html {
 }
 
 html,
-body {
-  font-family: var(--font-family-main), $main-font !important;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
+body,
 button,
 input,
 select,
 textarea {
-  font-family: inherit;
+  font-family: var(--font-family-main), $main-font !important;
+}
+
+html,
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Ensure Arabic/RTL uses the correct font stack */
+[dir="rtl"],
+[lang^="ar"] {
+  font-family: var(--font-family-main), $main-font !important;
 }
 a {
   text-decoration: none;

@@ -429,7 +429,7 @@ onBeforeMount(() => {
   color: #d4d4d4 !important;
   padding: 1.5rem !important;
   border-radius: 12px !important;
-  font-family: "Fira Code", "Cascadia Code", "Consolas", monospace !important;
+  font-family: "Fira Code", "IBM Plex Sans Arabic", "Cascadia Code", "Consolas", monospace !important;
   line-height: 1.6 !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);

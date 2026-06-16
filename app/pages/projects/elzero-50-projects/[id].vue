@@ -433,7 +433,7 @@ watch(
 
   pre {
     margin: 0;
-    font-family: "Fira Code", "Courier New", monospace;
+    font-family: $main-font;
     font-size: 14px;
     color: #d4d4d4;
     line-height: 1.5;
