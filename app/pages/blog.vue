@@ -18,20 +18,21 @@ const route = useRoute();
 
 const fullPathWithLocale = computed(() => localePath(route.path));
 
-useSeoMeta({
-  title: t("blog.title"),
-  ogTitle: t("blog.title"),
-  description: t("blog.description"),
-  ogDescription: t("blog.description"),
-  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
-});
+if (import.meta.server) {
+  useSeoMeta({
+    title: t("blog.title"),
+    ogTitle: t("blog.title"),
+    description: t("blog.description"),
+    ogDescription: t("blog.description"),
+    ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  });
 
-// if (import.meta.server) {}
-defineOgImage("Default.takumi", {
-  title: t("blog.title"),
-  description: t("blog.description"),
-  language: locale.value,
-});
+  defineOgImage("Default.takumi", {
+    title: t("blog.title"),
+    description: t("blog.description"),
+    language: locale.value,
+  });
+}
 
 </script>
 

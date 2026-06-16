@@ -188,29 +188,6 @@ const handleResize = (x: number) => {
 
 const fullPathWithLocale = computed(() => localePath(route.path));
 
-useSeoMeta({
-  title: t("about.title"),
-  description: t("about.description"),
-  ogTitle: t("about.title"),
-  ogDescription: t("about.description"),
-  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
-});
-
-defineOgImage("Default.takumi", {
-  title: t("about.title"),
-  description: t("about.description"),
-  language: locale.value,
-});
-
-if (import.meta.server) {
-  useSchemaOrg([
-    defineWebPage({
-      name: t("about.title"),
-      description: t("about.description"),
-    }),
-  ]);
-}
-
 const checkScreenSize = () => {
   isMobile.value = window.innerWidth < 768;
 };
@@ -330,6 +307,29 @@ const displayContactInfo = computed(() => {
     ? contInfo
     : [contInfo[0].slice(0, -10) + " ...", contInfo[1]];
 });
+
+if (import.meta.server) {
+  useSeoMeta({
+    title: t("about.title"),
+    description: t("about.description"),
+    ogTitle: t("about.title"),
+    ogDescription: t("about.description"),
+    ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  });
+
+  defineOgImage("Default.takumi", {
+    title: t("about.title"),
+    description: t("about.description"),
+    language: locale.value,
+  });
+
+  useSchemaOrg([
+    defineWebPage({
+      name: t("about.title"),
+      description: t("about.description"),
+    }),
+  ]);
+}
 
 onMounted(() => {
   syncActiveState();

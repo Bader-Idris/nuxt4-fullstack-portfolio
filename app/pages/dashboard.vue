@@ -242,21 +242,21 @@ import ChatInputArea from "~/components/dashboard/ChatInputArea.vue";
 
 const fullPathWithLocale = computed(() => localePath(route.path));
 
-useSeoMeta({
-  title: t("dashboard.title"),
-  ogTitle: t("dashboard.title"),
-  description: t("dashboard.description"),
-  ogDescription: t("dashboard.description"),
-  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
-});
-
-defineOgImage("Default.takumi", {
-  title: t("dashboard.title"),
-  description: t("dashboard.description"),
-  language: locale.value,
-});
-
 if (import.meta.server) {
+  useSeoMeta({
+    title: t("dashboard.title"),
+    ogTitle: t("dashboard.title"),
+    description: t("dashboard.description"),
+    ogDescription: t("dashboard.description"),
+    ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  });
+
+  defineOgImage("Default.takumi", {
+    title: t("dashboard.title"),
+    description: t("dashboard.description"),
+    language: locale.value,
+  });
+
   useSchemaOrg([
     defineWebPage({
       name: "Dashboard",
@@ -497,85 +497,6 @@ const contextMenu = reactive({
   x: 0,
   y: 0,
   msg: null as any
-});
-
-// --- Lifecycle Hooks ---
-onMounted(async () => {
-  if (!import.meta.client) return;
-  try {
-    // Make sure socket is initialized
-    socketStore.initializeSocket();
-    setupSocketListeners();
-
-    // Notify server that we are on dashboard
-    socketStore.socket?.emit("enter-page", "dashboard");
-
-    // Fetch latest user info to get lastActiveChat
-    try {
-      const response = await $fetch<{ user: any }>("/api/v1/auth/me");
-      if (response.user) {
-        // Correctly update the store user state
-        userStore.setUser({
-          ...userStore.user,
-          ...response.user,
-          username: response.user.name,
-        });
-        
-        if (userStore.user?.settings?.openLastChat && response.user.lastActiveChat) {
-          startChatWith(response.user.lastActiveChat);
-        }
-      }
-    } catch (e) {
-      console.error("Failed to fetch user profile:", e);
-    }
-
-    // Clear any old contacts since we're now showing online users
-    // Actually, we want to fetch contacts from history now
-    messagesStore.clearContacts();
-    messagesStore.fetchContacts();
-
-    const pendingAction = await getAndClearPendingAction();
-    if (
-      pendingAction &&
-      pendingAction.action === "open_chat" &&
-      pendingAction.fromUserId
-    ) {
-      startChatWith(pendingAction.fromUserId);
-    }
-
-    // Call fingerprint listener
-    socketStore.socket?.on("call-fingerprint", (data: any) => {
-      // We now receive standardized messages like [CALL_FP]:{...}
-      // The template handles localized rendering automatically.
-      messagesStore.addMessage({
-        id: data.id,
-        from: data.from,
-        fromName: data.fromName,
-        to: userStore.getUserId,
-        message: data.message,
-        timestamp: data.timestamp,
-        fromSocketId: '',
-        toSocketId: ''
-      });
-      nextTick(() => scrollToBottom());
-    });
-
-    window.addEventListener('click', closeContextMenu);
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-  } catch (err) {
-    console.error("Error in dashboard mounted hook:", err);
-  }
-});
-
-onUnmounted(() => {
-  if (import.meta.client) {
-    // Notify server that we left dashboard
-    socketStore.socket?.emit("leave-page", "dashboard");
-
-    cleanup();
-    window.removeEventListener('click', closeContextMenu);
-    document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }
 });
 
 // --- Watchers ---
@@ -824,6 +745,86 @@ function formatDuration(seconds: number) {
   const secs = seconds % 60;
   return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 }
+
+// --- Lifecycle Hooks ---
+onMounted(async () => {
+  if (!import.meta.client) return;
+  try {
+    // Make sure socket is initialized
+    socketStore.initializeSocket();
+    setupSocketListeners();
+
+    // Notify server that we are on dashboard
+    socketStore.socket?.emit("enter-page", "dashboard");
+
+    // Fetch latest user info to get lastActiveChat
+    try {
+      const response = await $fetch<{ user: any }>("/api/v1/auth/me");
+      if (response.user) {
+        // Correctly update the store user state
+        userStore.setUser({
+          ...userStore.user,
+          ...response.user,
+          username: response.user.name,
+        });
+        
+        if (userStore.user?.settings?.openLastChat && response.user.lastActiveChat) {
+          startChatWith(response.user.lastActiveChat);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch user profile:", e);
+    }
+
+    // Clear any old contacts since we're now showing online users
+    // Actually, we want to fetch contacts from history now
+    messagesStore.clearContacts();
+    messagesStore.fetchContacts();
+
+    const pendingAction = await getAndClearPendingAction();
+    if (
+      pendingAction &&
+      pendingAction.action === "open_chat" &&
+      pendingAction.fromUserId
+    ) {
+      startChatWith(pendingAction.fromUserId);
+    }
+
+    // Call fingerprint listener
+    socketStore.socket?.on("call-fingerprint", (data: any) => {
+      // We now receive standardized messages like [CALL_FP]:{...}
+      // The template handles localized rendering automatically.
+      messagesStore.addMessage({
+        id: data.id,
+        from: data.from,
+        fromName: data.fromName,
+        to: userStore.getUserId,
+        message: data.message,
+        timestamp: data.timestamp,
+        fromSocketId: '',
+        toSocketId: ''
+      });
+      nextTick(() => scrollToBottom());
+    });
+
+    window.addEventListener('click', closeContextMenu);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+  } catch (err) {
+    console.error("Error in dashboard mounted hook:", err);
+  }
+});
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    // Notify server that we left dashboard
+    socketStore.socket?.emit("leave-page", "dashboard");
+
+    cleanup();
+    window.removeEventListener('click', closeContextMenu);
+    document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }
+});
+
 </script>
 
 <style lang="scss" scoped>

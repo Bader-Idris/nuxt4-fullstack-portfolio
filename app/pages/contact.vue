@@ -207,21 +207,21 @@ const copyToClipboard = async (index: number): Promise<void> => {
   }
 };
 
-useSeoMeta({
-  title: t("contact.title"),
-  ogTitle: t("contact.title"),
-  description: t("contact.description"),
-  ogDescription: t("contact.description"),
-  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
-});
-
-defineOgImage("Default.takumi", {
-  title: t("contact.title"),
-  description: t("contact.description"),
-  language: locale.value,
-});
-
 if (import.meta.server) {
+  useSeoMeta({
+    title: t("contact.title"),
+    ogTitle: t("contact.title"),
+    description: t("contact.description"),
+    ogDescription: t("contact.description"),
+    ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  });
+  
+  defineOgImage("Default.takumi", {
+    title: t("contact.title"),
+    description: t("contact.description"),
+    language: locale.value,
+  });
+
   useSchemaOrg([
     defineWebPage({
       name: t("contact.title"),

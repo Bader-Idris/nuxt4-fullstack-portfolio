@@ -113,6 +113,76 @@ watch(locale, () => {
   setInfoDirection();
 });
 
+// TODO: the whole nuxt/image locally added package doesn't work!
+// const nuxtImgOptions = {
+//   format: 'webp',
+//   width: 1200,
+//   height: 630,
+//   placeholder: [50, 50, 75, 75]
+// }
+
+// // Define thumbnails for each language
+// const thumbnailEn = img('/thumbnail.webp', nuxtImgOptions)
+// const thumbnailEs = img('/thumbnail-es.png', nuxtImgOptions)
+// const thumbnailAr = img('/thumbnail-ar.png', nuxtImgOptions)
+
+const thumbnailEn = `${useRuntimeConfig().public.originUrl}/thumbnail.webp`;
+const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.webp`;
+const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.webp`;
+
+// Create a computed property to determine which thumbnail to use
+const optimizedThumbnail = computed(() => {
+  switch (locale.value) {
+    case "es":
+      return thumbnailEs;
+    case "ar":
+      return thumbnailAr;
+    default:
+      return thumbnailEn;
+  }
+});
+
+if (import.meta.server) {
+  useSeoMeta({
+    title: t("home.title"),
+    ogTitle: t("home.title"),
+    description: t("home.description"),
+    ogDescription: t("home.description"),
+    ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+    ogImage: optimizedThumbnail,
+    ogImageWidth: 1200,
+    ogImageHeight: 630,
+    ogType: "website",
+    twitterCard: "summary_large_image",
+    twitterTitle: t("home.title"),
+    twitterDescription: t("home.description"),
+    twitterImage: optimizedThumbnail,
+    twitterSite: "@bader_idri8628",
+    // fbAppId: 'YOUR_FACEBOOK_APP_ID', // Add your Facebook App ID here
+    appleMobileWebAppStatusBarStyle: "black-translucent",
+    articleAuthor: ["https://baderidris.com/contact"],
+    viewport:
+      "width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes",
+    mobileWebAppCapable: "yes",
+    themeColor: "#01080E",
+    keywords:
+      "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
+  });
+
+  defineOgImage("Default.takumi", {
+    title: t("home.title"),
+    description: t("home.description"),
+    language: locale.value,
+  });
+
+  useSchemaOrg([
+    defineWebPage({
+      name: t("home.title"),
+      description: t("home.description"),
+    })
+  ]);
+}
+
 onMounted(async () => {
   if (import.meta.client) {
     windowWidth.value = window.innerWidth;
@@ -199,75 +269,6 @@ onMounted(async () => {
   }
 });
 
-// TODO: the whole nuxt/image locally added package doesn't work!
-// const nuxtImgOptions = {
-//   format: 'webp',
-//   width: 1200,
-//   height: 630,
-//   placeholder: [50, 50, 75, 75]
-// }
-
-// // Define thumbnails for each language
-// const thumbnailEn = img('/thumbnail.webp', nuxtImgOptions)
-// const thumbnailEs = img('/thumbnail-es.png', nuxtImgOptions)
-// const thumbnailAr = img('/thumbnail-ar.png', nuxtImgOptions)
-
-const thumbnailEn = `${useRuntimeConfig().public.originUrl}/thumbnail.webp`;
-const thumbnailEs = `${useRuntimeConfig().public.originUrl}/thumbnail-es.webp`;
-const thumbnailAr = `${useRuntimeConfig().public.originUrl}/thumbnail-ar.webp`;
-
-// Create a computed property to determine which thumbnail to use
-const optimizedThumbnail = computed(() => {
-  switch (locale.value) {
-    case "es":
-      return thumbnailEs;
-    case "ar":
-      return thumbnailAr;
-    default:
-      return thumbnailEn;
-  }
-});
-
-useSeoMeta({
-  title: t("home.title"),
-  ogTitle: t("home.title"),
-  description: t("home.description"),
-  ogDescription: t("home.description"),
-  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
-  ogImage: optimizedThumbnail,
-  ogImageWidth: 1200,
-  ogImageHeight: 630,
-  ogType: "website",
-  twitterCard: "summary_large_image",
-  twitterTitle: t("home.title"),
-  twitterDescription: t("home.description"),
-  twitterImage: optimizedThumbnail,
-  twitterSite: "@bader_idri8628",
-  // fbAppId: 'YOUR_FACEBOOK_APP_ID', // Add your Facebook App ID here
-  appleMobileWebAppStatusBarStyle: "black-translucent",
-  articleAuthor: ["https://baderidris.com/contact"],
-  viewport:
-    "width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes",
-  mobileWebAppCapable: "yes",
-  themeColor: "#01080E",
-  keywords:
-    "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
-});
-
-defineOgImage("Default.takumi", {
-  title: t("home.title"),
-  description: t("home.description"),
-  language: locale.value,
-});
-
-if (import.meta.server) {
-  useSchemaOrg([
-    defineWebPage({
-      name: t("home.title"),
-      description: t("home.description"),
-    })
-  ]);
-}
 </script>
 
 <style lang="scss" scoped>
