@@ -651,7 +651,7 @@ export default defineNuxtConfig({
         code: "en",
         iso: "en-US", // for icons!
         dir: "ltr",
-        language: "en",
+        language: "en-US",
         // files: ["en/**.json"], // did not work, it can handle js,ts,json files
         // https://i18n.nuxtjs.org/docs/guide/lazy-load-translations#basic-usage
         // TODO: 🥊 to be able to fetch from nuxt server 🥊
@@ -663,7 +663,7 @@ export default defineNuxtConfig({
         code: "ar",
         iso: "ar-PS",
         dir: "rtl",
-        language: "ar",
+        language: "ar-PS",// if you change this, make sure to update html[lang="ar-PS"] {}
         file: "ar-PS.json",
         name: "العربية",
       },
@@ -671,7 +671,7 @@ export default defineNuxtConfig({
         code: "es",
         iso: "es-ES",
         dir: "ltr",
-        language: "es",
+        language: "es-ES",
         file: "es-ES.json",
         name: "Español",
       },
