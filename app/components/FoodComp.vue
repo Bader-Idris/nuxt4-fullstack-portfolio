@@ -306,7 +306,8 @@ watch([isMediumMode, isCrazyMode], () => {
   }
 }
 
-html[lang="es-ES"] {
+html[lang="es-ES"],
+html[lang="es"] {
   .food-left { top: 50%; }
 }
 

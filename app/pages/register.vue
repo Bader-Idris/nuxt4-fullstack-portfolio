@@ -557,7 +557,8 @@ const handleSocialRegisterError = (error: any, provider: string) => {
 </script>
 
 <style lang="scss">
-html[lang="ar-PS"] {
+html[lang="ar-PS"],
+html[lang="ar"] {
   .register {
     .form {
       direction: rtl;
@@ -565,7 +566,8 @@ html[lang="ar-PS"] {
   }
 }
 
-html[lang="es-ES"] {
+html[lang="es-ES"],
+html[lang="es"] {
   // Spanish specific overrides if any
 }
 

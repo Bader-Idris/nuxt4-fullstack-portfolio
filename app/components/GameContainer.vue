@@ -362,7 +362,8 @@ onMounted(() => {
   }
 }
 
-html[lang="es-ES"] {
+html[lang="es-ES"],
+html[lang="es"] {
   .game-controller {
     > span:nth-of-type(2) {
       font-size: calc($body-text-size - 25%);

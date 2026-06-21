@@ -462,7 +462,8 @@ const handleSocialLoginError = (error: any, provider: string) => {
 </script>
 
 <style lang="scss">
-html[lang="ar-PS"] {
+html[lang="ar-PS"],
+html[lang="ar"] {
   .login {
     .form {
       direction: rtl;
@@ -470,7 +471,8 @@ html[lang="ar-PS"] {
   }
 }
 
-html[lang="es-ES"] {
+html[lang="es-ES"],
+html[lang="es"] {
   // Spanish overrides
 }
 

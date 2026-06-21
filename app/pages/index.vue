@@ -621,7 +621,8 @@ onMounted(async () => {
   }
 }
 
-html[lang="es-ES"] {
+html[lang="es-ES"],
+html[lang="es"] {
   .info {
     p {
       font-size: calc($sub-headline-size - 25%) !important;
@@ -629,7 +630,8 @@ html[lang="es-ES"] {
   }
 }
 
-html[lang="ar-PS"] {
+html[lang="ar-PS"],
+html[lang="ar"] {
   .info {
     direction: rtl;
     .greeting {

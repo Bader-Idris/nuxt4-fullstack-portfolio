@@ -199,14 +199,16 @@ useHead({
   transform: translateY(-10px);
 }
 
-html[lang="ar-PS"] {
+html[lang="ar-PS"],
+html[lang="ar"] {
   @include tablet-to-up {
     .language-switcher {
       right: 125px;
     }
   }
 }
-html[lang="es-ES"] {
+html[lang="es-ES"],
+html[lang="es"] {
   @include tablet-to-up {
     .language-switcher {
       right: 160px;
