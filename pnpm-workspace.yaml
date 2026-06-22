@@ -57,3 +57,6 @@ overrides:
   vue: 3.5.35
   vue-router: 5.1.0
   nuxt: 4.4.6
+
+patchedDependencies:
+  '@capacitor-community/app-icon': patches/@capacitor-community__app-icon.patch

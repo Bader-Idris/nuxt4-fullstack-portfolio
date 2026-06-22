@@ -345,7 +345,7 @@ cp .env.capacitor.example .env.capacitor
 Para personalizar los iconos de su aplicación, modifique los iconos en la carpeta `/assets` según desee, luego ejecute:
 
 ```bash
-pnpm dlx capacitor-assets generate --assetPath "./assets" --ios --android
+bunx capacitor-assets generate --assetPath "./app/assets" --ios --android
 ```
 
 > Puede revisar los requisitos de configuración en el archivo `assets/requirements.md`.
