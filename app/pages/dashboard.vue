@@ -751,7 +751,7 @@ onMounted(async () => {
   if (!import.meta.client) return;
   try {
     // Make sure socket is initialized
-    socketStore.initializeSocket();
+    await socketStore.initializeSocket();
     setupSocketListeners();
 
     // Notify server that we are on dashboard

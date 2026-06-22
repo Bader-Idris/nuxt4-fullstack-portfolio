@@ -30,6 +30,7 @@ export const useSocketStore = defineStore("socket", () => {
   const transport = ref<"polling" | "websocket" | "webtransport" | "N/A">(
     "N/A",
   );
+  let initializationPromise: Promise<void> | null = null;
 
   // --- GETTERS ---
   const getConnectionStatus = computed(() => isConnected.value);
@@ -38,7 +39,20 @@ export const useSocketStore = defineStore("socket", () => {
   async function _getCookieStringForCapacitor(): Promise<string> {
     if (!Capacitor.isNativePlatform()) return "";
     try {
-      const cookies = await CapacitorCookies.getCookies();
+      let cookies: Record<string, string> = {};
+      // Retry up to 5 times with a 100ms delay to allow native cookie jar to sync
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        cookies = await CapacitorCookies.getCookies({ url: config.public.originUrl });
+        if (cookies && cookies.accessToken) {
+          break;
+        }
+        // Fallback check
+        cookies = await CapacitorCookies.getCookies();
+        if (cookies && cookies.accessToken) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
       return Object.entries(cookies)
         .map(([key, value]) => `${key}=${value}`)
         .join("; ");
@@ -49,31 +63,59 @@ export const useSocketStore = defineStore("socket", () => {
   }
 
   // --- ACTIONS ---
-  function initializeSocket() {
-    if (socket.value?.connected || isConnecting.value) return;
-    if (socket.value) {
+  function initializeSocket(): Promise<void> {
+    if (socket.value?.connected) return Promise.resolve();
+    if (initializationPromise) return initializationPromise;
+
+    initializationPromise = (async () => {
+      if (socket.value) {
+        isConnecting.value = true;
+        socket.value.connect();
+        return;
+      }
+
+      console.log("Initializing new socket instance...");
       isConnecting.value = true;
-      socket.value.connect();
-      return;
-    }
 
-    console.log("Initializing new socket instance...");
-    isConnecting.value = true;
+      let cookieString = "";
+      if (Capacitor.isNativePlatform()) {
+        cookieString = await _getCookieStringForCapacitor();
+      }
 
-    const options: any = {
-      withCredentials: true,
-      autoConnect: false,
-      connectionStateRecovery: {
-        maxDisconnectionDuration: 2 * 60 * 1000,
-        skipMiddlewares: true,
-      },
-    };
+      const options: any = {
+        withCredentials: true,
+        autoConnect: false,
+        connectionStateRecovery: {
+          maxDisconnectionDuration: 2 * 60 * 1000,
+          skipMiddlewares: true,
+        },
+      };
 
-    const newSocket = io(config.public.socketUrl, options);
-    socket.value = newSocket;
+      if (cookieString) {
+        options.extraHeaders = {
+          cookie: cookieString,
+        };
+        options.transportOptions = {
+          polling: {
+            extraHeaders: {
+              cookie: cookieString,
+            },
+          },
+        };
+      }
 
-    bindBaseEvents();
-    newSocket.connect();
+      const newSocket = io(config.public.socketUrl, options);
+      socket.value = newSocket;
+
+      bindBaseEvents();
+      newSocket.connect();
+    })();
+
+    initializationPromise.finally(() => {
+      initializationPromise = null;
+    });
+
+    return initializationPromise;
   }
 
   function bindBaseEvents() {
@@ -157,6 +199,7 @@ export const useSocketStore = defineStore("socket", () => {
       socket.value.disconnect();
     }
     socket.value = null;
+    initializationPromise = null;
     isConnected.value = false;
     isConnecting.value = false;
     currentUser.value = null;
