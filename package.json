@@ -40,6 +40,7 @@
     "generate:client": "NUXT_SSR=false nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare && patch-package",
+    "capacitor:copy:after": "tsx scripts/patch-native-permissions.ts",
     "lint:old": "eslint . --cache",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

@@ -182,6 +182,20 @@ export function useWebRTC() {
     } else {
       // Switch from audio to video (renegotiation) or start video if off
       try {
+        if (import.meta.client) {
+          const { Capacitor } = await import("@capacitor/core");
+          if (Capacitor.isNativePlatform()) {
+            const { Camera } = await import("@capacitor/camera");
+            const cameraStatus = await Camera.checkPermissions();
+            if (cameraStatus.camera !== "granted") {
+              const requestStatus = await Camera.requestPermissions({ permissions: ["camera"] });
+              if (requestStatus.camera !== "granted") {
+                throw new Error("PermissionDeniedError");
+              }
+            }
+          }
+        }
+
         const videoStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: facingMode.value,

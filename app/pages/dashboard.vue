@@ -371,9 +371,33 @@ const onSetRemoteVideo = (el: any) => { remoteVideoRef.value = el; };
 const onSetRemoteAudio = (el: any) => { remoteAudioRef.value = el; };
 
 // --- Permission Handling ---
-async function checkAndRequestPermissions() {
+async function checkAndRequestPermissions(type: 'audio' | 'video' = 'video') {
   if (!import.meta.client) return true;
   
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (Capacitor.isNativePlatform()) {
+      if (type === "video") {
+        const { Camera } = await import("@capacitor/camera");
+        const cameraStatus = await Camera.checkPermissions();
+        if (cameraStatus.camera !== "granted") {
+          const requestStatus = await Camera.requestPermissions({ permissions: ["camera"] });
+          if (requestStatus.camera !== "granted") {
+            const { toast } = await import("vue3-toastify");
+            toast.error("Camera permission is required for video calls.", {
+              position: "top-center",
+              theme: "dark",
+            });
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  } catch (e) {
+    console.warn("Capacitor detection or native permission request failed, using fallback:", e);
+  }
+
   try {
     // Check if permissions were previously denied
     const micStatus = await navigator.permissions.query({ name: 'microphone' as any });
@@ -398,7 +422,7 @@ async function checkAndRequestPermissions() {
 }
 
 async function initiateCall(userId: string, type: 'audio' | 'video') {
-  const allowed = await checkAndRequestPermissions();
+  const allowed = await checkAndRequestPermissions(type);
   if (allowed) {
     try {
       await rawInitiateCall(userId, type);
@@ -415,7 +439,7 @@ async function initiateCall(userId: string, type: 'audio' | 'video') {
 }
 
 async function acceptIncomingCall(offer: RTCSessionDescriptionInit) {
-  const allowed = await checkAndRequestPermissions();
+  const allowed = await checkAndRequestPermissions(callType.value);
   if (allowed) {
     try {
       await rawAcceptIncomingCall(offer);
