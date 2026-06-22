@@ -177,6 +177,7 @@ const showRiveSplash = ref(false);
 const showMainContent = ref(false);
 const isFirstLoad = ref(true);
 const isOffline = ref(false);
+let backupSplashTimeout: any = null;
 
 useColorMode();
 
@@ -189,6 +190,12 @@ onMounted(async () => {
   if (config.public.isCapacitor === true && Capacitor.isNativePlatform()) {
     // For native Capacitor builds, show the Rive splash screen first immediately
     showRiveSplash.value = true;
+
+    // Backup safety timeout to force app transition if the splash screen component hangs or fails
+    backupSplashTimeout = setTimeout(() => {
+      console.warn("App.vue: Rive splash backup timeout reached, forcing application view");
+      hideSplashAndShowApp();
+    }, 4500);
 
     // Hide the native splash screen in the background (don't wait for it to complete)
     try {
@@ -217,6 +224,12 @@ onMounted(async () => {
  * Crucially, it renders the main content BEFORE initializing Capacitor plugins.
  */
 const hideSplashAndShowApp = async () => {
+  if (backupSplashTimeout) {
+    clearTimeout(backupSplashTimeout);
+    backupSplashTimeout = null;
+  }
+  if (showMainContent.value) return; // Prevent double initialization
+
   showRiveSplash.value = false;
   showMainContent.value = true; // 1. Show the main app UI to prevent a blank screen.
   await nextTick(); // 2. Wait for the DOM to update.
