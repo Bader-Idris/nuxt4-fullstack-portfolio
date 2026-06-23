@@ -32,7 +32,6 @@ minimumReleaseAgeExclude:
   - '@takumi-rs/core@1.8.0'
   - '@takumi-rs/helpers@1.8.0'
   - electron@42.4.0
-  # - or even 6.0.4
   - nuxt-schema-org@6.1.1
   - '@nuxtjs/seo@5.2.1'
   - '@takumi-rs/core-darwin-arm64@1.8.1'

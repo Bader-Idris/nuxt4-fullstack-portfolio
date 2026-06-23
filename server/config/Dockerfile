@@ -19,6 +19,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
 FROM base AS deps
 RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
+COPY patches/ ./patches/
 COPY server/prisma/ ./server/prisma/
 
 # Set flag to suppress local development tooling hooks
