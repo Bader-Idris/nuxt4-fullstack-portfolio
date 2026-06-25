@@ -106,7 +106,7 @@ RUN find .output/server/node_modules/@takumi-rs -mindepth 1 -maxdepth 1 -type d 
 # ─────────────────────────────────────────────
 # Stage 4: Deno Runtime
 # ─────────────────────────────────────────────
-FROM denoland/deno:alpine-2.8.3 AS runner
+FROM denoland/deno:alpine-2.9.0 AS runner
 WORKDIR /app
 RUN apk add --no-cache vips dumb-init
 COPY --from=builder /app/.output ./.output
