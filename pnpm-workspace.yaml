@@ -53,7 +53,7 @@ overrides:
   "@intlify/shared": 11.4.2
   nitropack: 2.x.x
   nuxi: 3.x.x
-  vue: 3.5.35
+  vue: 3.5.39
   vue-router: 5.1.0
   nuxt: 4.4.6
 
