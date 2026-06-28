@@ -169,12 +169,6 @@ if (import.meta.server) {
       "Fullstack engineer, Portfolio, full-stack developer, backend developer, backend engineer, devOps engineer, Vue.js developer, Nuxt.js Developer, Express.js developer, GSAP developer, Three.js developer, beautiful snake game, Bader Idris portfolio",
   });
 
-  defineOgImage("Default.takumi", {
-    title: t("home.title"),
-    description: t("home.description"),
-    language: locale.value,
-  });
-
   useSchemaOrg([
     defineWebPage({
       name: t("home.title"),
