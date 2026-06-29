@@ -85,52 +85,34 @@ const route = useRoute();
  */
 
 // Image Handling - WebP Generation & Pathing
-const imageBasePath = "/imgs/meTwentyFour.jpg";
+const imageBasePath = "/imgs/meTwentyFour.webp";
 const profileImage = useState("profileImage", () => imageBasePath);
-
-if (import.meta.server) {
-  const [fs, path, sharpModule] = await Promise.all([
-    import("node:fs"),
-    import("node:path"),
-    import("sharp"),
-  ]);
-  const sharp = sharpModule.default;
-
-  const inputPath = path.join(process.cwd(), "public/imgs/meTwentyFour.jpg");
-  const outputPath = path.join(process.cwd(), "public/imgs/meTwentyFour.webp");
-
-  try {
-    if (fs.existsSync(inputPath) && !fs.existsSync(outputPath)) {
-      await sharp(inputPath).webp({ quality: 80 }).toFile(outputPath);
-      console.log("[bio.vue] WebP generated");
-    }
-
-    if (fs.existsSync(outputPath)) {
-      profileImage.value = `${config.public.originUrl}/imgs/meTwentyFour.webp`;
-    } else {
-      profileImage.value = `${config.public.originUrl}${imageBasePath}`;
-    }
-  } catch (error) {
-    console.error("[bio.vue] Sharp error:", error);
-    profileImage.value = `${config.public.originUrl}${imageBasePath}`;
-  }
-}
 
 // SEO & Meta
 const localePath = useLocalePath();
 const fullPathWithLocale = localePath(route.path);
+
+const absoluteProfileImage = computed(() => {
+  const origin = config.public.originUrl || config.public.siteUrl || "";
+  const prefix = (origin && !origin.startsWith("http") ? "https://" : "");
+  return origin ? `${prefix}${origin}${profileImage.value}` : profileImage.value;
+});
 
 useSeoMeta({
   title: () => `${t("about.personal.title")} | Bio`,
   description: () => t("about.personal.description"),
   ogTitle: () => t("about.personal.title"),
   ogDescription: () => t("about.personal.description"),
-  ogUrl: () => `${config.public.originUrl}${fullPathWithLocale}`,
-  ogImage: () => profileImage.value,
+  ogUrl: () => {
+    const origin = config.public.originUrl || config.public.siteUrl || "";
+    const prefix = (origin && !origin.startsWith("http") ? "https://" : "");
+    return `${prefix}${origin}${fullPathWithLocale}`;
+  },
+  ogImage: () => absoluteProfileImage.value,
   twitterCard: "summary_large_image",
   twitterTitle: () => t("about.personal.title"),
   twitterDescription: () => t("about.personal.description"),
-  twitterImage: () => profileImage.value,
+  twitterImage: () => absoluteProfileImage.value,
 });
 
 if (import.meta.server) {

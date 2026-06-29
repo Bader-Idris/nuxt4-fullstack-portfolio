@@ -15,7 +15,7 @@
         </div>
 
         <div class="explorer-lists">
-          <FoldableTab :initially-folded="isMobile" @toggle="toggleHobbies">
+          <FoldableTab :initially-folded="isMobileClient" @toggle="toggleHobbies">
             <p>personal_info</p>
           </FoldableTab>
 
@@ -121,18 +121,10 @@ definePageMeta({
 const route = useRoute();
 const activeIconIndex = ref(1);
 const isMobile = useMobile();
-const isHobbiesHidden = ref(isMobile.value);
+const isMobileClient = ref(false); // Hydration safe default matching server
+const isHobbiesHidden = ref(false); // Hydration safe default matching server
 const isContactHidden = ref(true);
 const activeHobbyIndex = ref(0);
-
-// Sync Hobbies open/hidden state with screen size changes
-watch(
-  isMobile,
-  (newVal) => {
-    isHobbiesHidden.value = newVal;
-  },
-  { immediate: true },
-);
 
 const syncActiveState = () => {
   const path = route.path;
@@ -213,76 +205,38 @@ const copyToClipboard = async (index: number) => {
 };
 
 const icons = useState("aboutIcons", () => [
-  { iconSrc: "/imgs/svgs/shell.svg", iconAlt: "shell", path: "professional" },
-  { iconSrc: "/imgs/svgs/circle.svg", iconAlt: "circle", path: "hobbies/bio" },
-  { iconSrc: "/imgs/svgs/game.svg", iconAlt: "game", path: "hobbies" },
+  { iconSrc: "/imgs/svgs/shell.webp", iconAlt: "shell", path: "professional" },
+  { iconSrc: "/imgs/svgs/circle.webp", iconAlt: "circle", path: "hobbies/bio" },
+  { iconSrc: "/imgs/svgs/game.webp", iconAlt: "game", path: "hobbies" },
 ]);
 
 const hobbiesObj = useState("aboutHobbies", () => [
-  { title: "bio", icon: "/imgs/svgs/red-dir.svg", iconAlt: "red folder", path: "bio" },
+  { title: "bio", icon: "/imgs/svgs/red-dir.webp", iconAlt: "red folder", path: "bio" },
   {
     title: "interests",
-    icon: "/imgs/svgs/green-dir.svg",
+    icon: "/imgs/svgs/green-dir.webp",
     iconAlt: "green folder",
     path: "interests",
   },
   {
     title: "education",
-    icon: "/imgs/svgs/purple-dir.svg",
+    icon: "/imgs/svgs/purple-dir.webp",
     iconAlt: "purple folder",
     path: "education",
   },
   {
     title: "high-school",
-    icon: "/imgs/svgs/md-icon.svg",
+    icon: "/imgs/svgs/md-icon.webp",
     iconAlt: "markdown icon",
     path: "high-school",
   },
   {
     title: "University",
-    icon: "/imgs/svgs/md-icon.svg",
+    icon: "/imgs/svgs/md-icon.webp",
     iconAlt: "markdown icon",
     path: "university",
   },
 ]);
-
-if (import.meta.server) {
-  // Use dynamic imports to keep Node-only modules out of the client bundle
-  const [fs, path, sharpModule] = await Promise.all([
-    import("node:fs"),
-    import("node:path"),
-    import("sharp"),
-  ]);
-  const sharp = sharpModule.default;
-
-  const processIcon = async (iconPath: string) => {
-    const inputPath = path.join(process.cwd(), "public", iconPath);
-    const outputPath = inputPath.replace(".svg", ".webp");
-    const webpPath = iconPath.replace(".svg", ".webp");
-
-    if (fs.existsSync(inputPath)) {
-      if (!fs.existsSync(outputPath)) {
-        try {
-          await sharp(inputPath).webp({ quality: 80 }).toFile(outputPath);
-          console.log(`[about.vue] WebP generated: ${webpPath}`);
-        } catch (error) {
-          console.error(`[about.vue] Sharp error for ${iconPath}:`, error);
-          return `${config.public.originUrl}${iconPath}`;
-        }
-      }
-      return `${config.public.originUrl}${webpPath}`;
-    }
-    return `${config.public.originUrl}${iconPath}`;
-  };
-
-  for (const icon of icons.value) {
-    icon.iconSrc = await processIcon(icon.iconSrc);
-  }
-
-  for (const hobby of hobbiesObj.value) {
-    hobby.icon = await processIcon(hobby.icon);
-  }
-}
 
 const toggleHobbies = () => {
   isHobbiesHidden.value = !isHobbiesHidden.value;
@@ -309,12 +263,14 @@ const displayContactInfo = computed(() => {
 });
 
 if (import.meta.server) {
+  const origin = config.public.siteUrl || config.public.originUrl || "";
+  const prefix = (origin && !origin.startsWith("http") ? "https://" : "");
   useSeoMeta({
     title: t("about.title"),
     description: t("about.description"),
     ogTitle: t("about.title"),
     ogDescription: t("about.description"),
-    ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+    ogUrl: `${prefix}${origin}${fullPathWithLocale.value}`,
   });
 
   defineOgImage("Default.takumi", {
@@ -332,6 +288,18 @@ if (import.meta.server) {
 }
 
 onMounted(() => {
+  // Set screen size states on client mount to avoid hydration mismatch
+  isMobileClient.value = isMobile.value;
+  isHobbiesHidden.value = isMobile.value;
+
+  watch(
+    isMobile,
+    (newVal) => {
+      isMobileClient.value = newVal;
+      isHobbiesHidden.value = newVal;
+    }
+  );
+
   syncActiveState();
   checkScreenSize();
   window.addEventListener("resize", checkScreenSize);
