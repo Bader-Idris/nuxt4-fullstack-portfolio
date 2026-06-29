@@ -21,31 +21,42 @@ allowBuilds:
 # ----------------------
 minimumReleaseAgeExclude:
   - mongoose@9.7.0
-  - '@takumi-rs/core-darwin-arm64@1.8.0'
-  - '@takumi-rs/core-darwin-x64@1.8.0'
-  - '@takumi-rs/core-linux-arm64-gnu@1.8.0'
-  - '@takumi-rs/core-linux-arm64-musl@1.8.0'
-  - '@takumi-rs/core-linux-x64-gnu@1.8.0'
-  - '@takumi-rs/core-linux-x64-musl@1.8.0'
-  - '@takumi-rs/core-win32-arm64-msvc@1.8.0'
-  - '@takumi-rs/core-win32-x64-msvc@1.8.0'
-  - '@takumi-rs/core@1.8.0'
-  - '@takumi-rs/helpers@1.8.0'
+  - '@takumi-rs/core-darwin-arm64@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-darwin-x64@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-linux-arm64-gnu@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-linux-arm64-musl@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-linux-x64-gnu@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-linux-x64-musl@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-win32-arm64-msvc@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-win32-x64-msvc@1.8.0 || 1.8.1'
+  - '@takumi-rs/core@1.8.0 || 1.8.1'
+  - '@takumi-rs/helpers@1.8.0 || 1.8.1'
   - electron@42.4.0
   - nuxt-schema-org@6.1.1
   - '@nuxtjs/seo@5.2.1'
-  - '@takumi-rs/core-darwin-arm64@1.8.1'
-  - '@takumi-rs/core-darwin-x64@1.8.1'
-  - '@takumi-rs/core-linux-arm64-gnu@1.8.1'
-  - '@takumi-rs/core-linux-arm64-musl@1.8.1'
-  - '@takumi-rs/core-linux-x64-gnu@1.8.1'
-  - '@takumi-rs/core-linux-x64-musl@1.8.1'
-  - '@takumi-rs/core-win32-arm64-msvc@1.8.1'
-  - '@takumi-rs/core-win32-x64-msvc@1.8.1'
-  - '@takumi-rs/core@1.8.1'
-  - '@takumi-rs/helpers@1.8.1'
   - nodemailer@8.0.11
   - nuxtseo-shared@5.2.1
+  - '@csstools/postcss-alpha-function@2.0.7'
+  - '@csstools/postcss-color-function-display-p3-linear@2.0.6'
+  - '@csstools/postcss-color-function@5.0.6'
+  - '@csstools/postcss-color-mix-function@4.0.6'
+  - '@csstools/postcss-color-mix-variadic-function-arguments@2.0.6'
+  - '@csstools/postcss-content-alt-text@3.0.2'
+  - '@csstools/postcss-contrast-color-function@3.0.6'
+  - '@csstools/postcss-gamut-mapping@3.0.6'
+  - '@csstools/postcss-gradients-interpolation-method@6.0.6'
+  - '@csstools/postcss-hwb-function@5.0.6'
+  - '@csstools/postcss-ic-unit@5.0.2'
+  - '@csstools/postcss-image-function@1.0.1'
+  - '@csstools/postcss-light-dark-function@3.0.2'
+  - '@csstools/postcss-oklab-function@5.0.6'
+  - '@csstools/postcss-progressive-custom-properties@5.1.1'
+  - '@csstools/postcss-relative-color-syntax@4.0.6'
+  - postcss-color-functional-notation@8.0.6
+  - postcss-double-position-gradients@7.0.2
+  - postcss-lab-function@8.0.6
+  - postcss-preset-env@11.3.2
+  - postcss@8.5.16
 
 overrides:
   nuxt-schema-org: 6.0.4

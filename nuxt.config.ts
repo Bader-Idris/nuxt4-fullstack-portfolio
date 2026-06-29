@@ -26,7 +26,7 @@ const siteUrl = process.env.DOMAIN_NAME;
 export default defineNuxtConfig({
   ssr: isSSR,
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-05-28",
+  compatibilityDate: "2026-06-28",
   devtools: {
     enabled: isDebug,
 
@@ -1142,6 +1142,10 @@ export default defineNuxtConfig({
       gravatar: {
         trigger: "onNuxtReady",
       },
+      // https://scripts.nuxt.com/scripts/youtube-player#useScriptYouTubePlayer
+      youtubePlayer: {
+        trigger: 'onNuxtReady',
+      }
       // metaPixel: {
       //   id: process.env.META_PIXEL_ID,
       //   partytown: true,
