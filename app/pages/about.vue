@@ -205,34 +205,34 @@ const copyToClipboard = async (index: number) => {
 };
 
 const icons = useState("aboutIcons", () => [
-  { iconSrc: "/imgs/svgs/shell.webp", iconAlt: "shell", path: "professional" },
-  { iconSrc: "/imgs/svgs/circle.webp", iconAlt: "circle", path: "hobbies/bio" },
-  { iconSrc: "/imgs/svgs/game.webp", iconAlt: "game", path: "hobbies" },
+  { iconSrc: "/imgs/svgs/shell.svg", iconAlt: "shell", path: "professional" },
+  { iconSrc: "/imgs/svgs/circle.svg", iconAlt: "circle", path: "hobbies/bio" },
+  { iconSrc: "/imgs/svgs/game.svg", iconAlt: "game", path: "hobbies" },
 ]);
 
 const hobbiesObj = useState("aboutHobbies", () => [
-  { title: "bio", icon: "/imgs/svgs/red-dir.webp", iconAlt: "red folder", path: "bio" },
+  { title: "bio", icon: "/imgs/svgs/red-dir.svg", iconAlt: "red folder", path: "bio" },
   {
     title: "interests",
-    icon: "/imgs/svgs/green-dir.webp",
+    icon: "/imgs/svgs/green-dir.svg",
     iconAlt: "green folder",
     path: "interests",
   },
   {
     title: "education",
-    icon: "/imgs/svgs/purple-dir.webp",
+    icon: "/imgs/svgs/purple-dir.svg",
     iconAlt: "purple folder",
     path: "education",
   },
   {
     title: "high-school",
-    icon: "/imgs/svgs/md-icon.webp",
+    icon: "/imgs/svgs/md-icon.svg",
     iconAlt: "markdown icon",
     path: "high-school",
   },
   {
     title: "University",
-    icon: "/imgs/svgs/md-icon.webp",
+    icon: "/imgs/svgs/md-icon.svg",
     iconAlt: "markdown icon",
     path: "university",
   },
