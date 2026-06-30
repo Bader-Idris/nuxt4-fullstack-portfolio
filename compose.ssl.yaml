@@ -20,6 +20,7 @@ services:
       - app-data:/var/www/html
       # instead, we'll mount from nginx to certbot
       # - certbot-webroot:/var/www/html
+      - certbot-webroot:/var/www/certbot
 
       - ./server/config/nginx/for_server_exclusively.html:/usr/share/nginx/html/index.html:ro
       - certbot-etc:/etc/letsencrypt     # ? certs and keys
