@@ -214,7 +214,7 @@
     "not dead",
     "not ie 11"
   ],
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.10.0",
   "appId": "com.baderidris.www",
   "workspaces": [
     "."
