@@ -246,6 +246,11 @@ const diffInMonths = Math.floor(
 );
 
 const formattedExperience = computed(() => {
+  if (diffInMonths === 0) {
+    return t("about.personal.experienceDurationYears", {
+      years: diffInYears,
+    });
+  }
   return t("about.personal.experienceDuration", {
     years: diffInYears,
     months: diffInMonths,

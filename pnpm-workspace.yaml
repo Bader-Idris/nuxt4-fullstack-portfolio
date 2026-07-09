@@ -21,16 +21,16 @@ allowBuilds:
 # ----------------------
 minimumReleaseAgeExclude:
   - mongoose@9.7.0
-  - '@takumi-rs/core-darwin-arm64@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-darwin-x64@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-linux-arm64-gnu@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-linux-arm64-musl@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-linux-x64-gnu@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-linux-x64-musl@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-win32-arm64-msvc@1.8.0 || 1.8.1'
-  - '@takumi-rs/core-win32-x64-msvc@1.8.0 || 1.8.1'
-  - '@takumi-rs/core@1.8.0 || 1.8.1'
-  - '@takumi-rs/helpers@1.8.0 || 1.8.1'
+  - '@takumi-rs/core-darwin-arm64@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-darwin-x64@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-linux-arm64-gnu@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-linux-arm64-musl@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-linux-x64-gnu@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-linux-x64-musl@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-win32-arm64-msvc@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core-win32-x64-msvc@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/core@1.8.0 || 1.8.1 || 2.0.2'
+  - '@takumi-rs/helpers@1.8.0 || 1.8.1 || 2.0.2'
   - electron@42.4.0
   - nuxt-schema-org@6.1.1
   - '@nuxtjs/seo@5.2.1'
@@ -67,6 +67,7 @@ overrides:
   vue: 3.5.39
   vue-router: 5.1.0
   nuxt: 4.4.6
+  nuxtseo-shared: 5.3.1
 
 patchedDependencies:
   '@capacitor-community/app-icon': patches/@capacitor-community__app-icon.patch
