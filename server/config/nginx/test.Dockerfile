@@ -1,6 +1,6 @@
 # This is the custom nginx Dockerfile that fetches the static files from the Nuxt build output
 # and serves them using nginx
-ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-prod
+ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.1-testing-prod
 # ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-deno-prod
 # ARG BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-bun-prod
 FROM ${BUILDER_IMAGE} AS builder

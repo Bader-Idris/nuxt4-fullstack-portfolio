@@ -57,6 +57,8 @@ minimumReleaseAgeExclude:
   - postcss-lab-function@8.0.6
   - postcss-preset-env@11.3.2
   - postcss@8.5.16
+  - '@csstools/selector-resolve-nested@4.0.1'
+  - postcss-nesting@14.0.1
 
 overrides:
   nuxt-schema-org: 6.0.4
@@ -64,9 +66,9 @@ overrides:
   "@intlify/shared": 11.4.2
   nitropack: 2.x.x
   nuxi: 3.x.x
-  vue: 3.5.39
-  vue-router: 5.1.0
-  nuxt: 4.4.6
+  vue: 3.5.40
+  vue-router: 5.2.0
+  nuxt: 4.5.0
   nuxtseo-shared: 5.3.1
 
 patchedDependencies:

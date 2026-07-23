@@ -401,7 +401,7 @@ const googleRegister = async () => {
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
 
     console.log("Calling SocialLogin.login for Google...");
-    const result = await SocialLogin.login({
+    const loginResult = await SocialLogin.login({
       provider: "google",
       options: {
         scopes: ["openid", "email", "profile"],
@@ -409,11 +409,14 @@ const googleRegister = async () => {
     });
     console.log(
       "SocialLogin.login result received:",
-      JSON.stringify(result, null, 2),
+      JSON.stringify(loginResult, null, 2),
     );
 
-    if (!result.accessToken) {
-      throw new Error("No access token received from Google");
+    const token = loginResult.result.accessToken?.token;
+    const idToken = loginResult.result.idToken;
+
+    if (!token && !idToken) {
+      throw new Error("No access token or ID token received from Google");
     }
 
     // Use the dedicated Google social auth endpoint for Capacitor
@@ -423,8 +426,8 @@ const googleRegister = async () => {
     const response = await $fetch<any>(socialUrl, {
       method: "POST",
       body: {
-        accessToken: result.accessToken,
-        idToken: result.idToken,
+        accessToken: token,
+        idToken: idToken,
       },
       baseURL: config.public.originUrl,
       credentials: "include",
@@ -454,15 +457,17 @@ const facebookRegister = async () => {
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
 
     console.log("Calling SocialLogin.login for Facebook...");
-    const result = await SocialLogin.login({
+    const loginResult = await SocialLogin.login({
       provider: "facebook",
       options: {
         permissions: ["public_profile", "email"],
       },
     });
-    console.log("SocialLogin.login result:", JSON.stringify(result, null, 2));
+    console.log("SocialLogin.login result:", JSON.stringify(loginResult, null, 2));
 
-    if (!result.accessToken) {
+    const token = loginResult.result.accessToken?.token;
+
+    if (!token) {
       throw new Error("No access token received from Facebook");
     }
 
@@ -470,7 +475,7 @@ const facebookRegister = async () => {
     const response = await $fetch<any>(socialUrl, {
       method: "POST",
       body: {
-        accessToken: result.accessToken,
+        accessToken: token,
       },
       baseURL: config.public.originUrl,
       credentials: "include",

@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./server/config/nginx/test.Dockerfile
       args:
-        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.0-testing-prod
+        - BUILDER_IMAGE=baderidris/nuxt-portfolio:3.5.1-testing-prod
     # image: nginx:stable-alpine
     container_name: nginx
     ports:
@@ -27,7 +27,7 @@ services:
       args:
         - NODE_ENV=production
         - PORT=3000
-    image: baderidris/nuxt-portfolio:3.5.0-testing-prod
+    image: baderidris/nuxt-portfolio:3.5.1-testing-prod
     # image: baderidris/nuxt-portfolio:3.5.0-production-slim
     # image: baderidris/nuxt-portfolio:3.5.0-testing-bun-prod
     # image: baderidris/nuxt-portfolio:3.5.0-testing-deno-prod

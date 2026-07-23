@@ -48,7 +48,10 @@ export default defineNuxtConfig({
   experimental: {
     normalizeComponentNames: true,
     appManifest: false,
+    // ssrStreaming: true, // nuxt 4.5+ https://nuxt.com/blog/v4-5#experimental-ssr-streaming
+    // it's sincely useful in time, and could be isolated to specific routes
   },
+  tracingChannel: isDebug, // nuxt 4.5+ // check if it's useful in prod
   nitro: {
     // // Fix for Windows path resolution in prerenderer
     // TODO: test on windows!!
@@ -324,7 +327,12 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@use "${path.join(__dirname, "app/assets/scss/index.scss").replace(/\\/g, "/")}" as *;`,
+          additionalData: (content, filename) => {
+            if (filename.replace(/\\/g, "/").includes("app/assets/scss/")) {
+              return content;
+            }
+            return `@use "${path.join(__dirname, "app/assets/scss/index.scss").replace(/\\/g, "/")}" as *;\n` + content;
+          },
           silenceDeprecations: ["legacy-js-api"],
         },
       },
