@@ -400,6 +400,7 @@ onMounted(() => {
       transform: rotate(180deg);
 
       > span {
+        user-select: none;
         border-radius: 5px;
         width: 50px;
         height: 30px;
