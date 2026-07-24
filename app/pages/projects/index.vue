@@ -40,6 +40,48 @@ const handleSearch = (q: string) => {
   searchQuery.value = q;
 };
 
+// Automatically check tools in the sidebar when search matches a project
+watch(searchQuery, (newQuery) => {
+  const q = newQuery.toLowerCase().trim();
+  if (!q) return;
+
+  const searchTerms = q.split(",").map(s => s.trim().replace(/^#/, "")).filter(Boolean);
+  if (searchTerms.length === 0) return;
+
+  const matchedTags = new Set<string>();
+  projectsList.forEach((project) => {
+    const searchableFields = [
+      project.title.en,
+      project.title.ar,
+      project.title.es,
+      project.desc.en,
+      project.desc.ar,
+      project.desc.es,
+      ...project.tags,
+    ].map(f => f?.toLowerCase());
+
+    const matchesAnyTerm = searchTerms.some(term => 
+      searchableFields.some(field => field?.includes(term))
+    );
+
+    if (matchesAnyTerm) {
+      project.tags.forEach(tag => matchedTags.add(tag.toLowerCase()));
+    }
+  });
+
+  let changed = false;
+  list.value.forEach((item) => {
+    if (matchedTags.has(item.title.toLowerCase()) && !item.isActive) {
+      item.isActive = true;
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    saveActiveItems();
+  }
+});
+
 // Sidebar resizing logic
 const sidebarWidth = ref(300);
 const isResizing = ref(false);

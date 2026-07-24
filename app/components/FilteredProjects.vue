@@ -1,6 +1,7 @@
 <template>
   <div>
     <div v-if="filteredProjects.length === 0" class="empty-message">
+      <Icon name="tabler:info-circle" class="empty-icon" />
       <p>
         {{ $t("projects.caution") }}
       </p>
@@ -152,32 +153,68 @@ onMounted(() => {
 
 <style lang="scss">
 .empty-message {
-  color: $accent1;
-  border-radius: 25px;
-  background: #181818;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  background-color: rgba($primary3, 0.4);
+  border: 1px dashed $lines;
+  border-radius: 16px;
+  max-width: 600px;
+  margin: 40px auto;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
 
-  @include mobile {
-    box-shadow: 0 0 20px 7px #ffffff12;
-    width: calc(100% - 20px);
-    margin: auto;
-    text-align: center;
-    line-height: 1.5;
-    font-size: 26px;
-    padding: 10px;
+  &:hover {
+    border-color: rgba($accent1, 0.5);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3), 0 0 15px 1px rgba($accent1, 0.1);
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    color: $accent1;
+    margin-bottom: 20px;
+    opacity: 0.85;
+    animation: empty-pulse 2s infinite ease-in-out;
   }
 
   p {
-    @include tablet-to-up {
-      // left: 300px;
-      position: absolute;
-      width: calc(100% - 300px);
-      max-width: 1000px;
-      font-size: 36px;
-      margin: 0 50px;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    font-size: 20px;
+    line-height: 1.6;
+    color: $secondary1;
+    margin: 0;
+    white-space: pre-line;
+    // left: 300px;
+  }
+
+  @include mobile {
+    margin: 20px auto;
+    padding: 30px 20px;
+    max-width: calc(100% - 30px);
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 15px;
     }
+
+    p {
+      font-size: 16px;
+    }
+  }
+}
+
+@keyframes empty-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
   }
 }
 

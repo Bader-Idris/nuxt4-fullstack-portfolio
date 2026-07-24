@@ -16,10 +16,20 @@
       <span>{{ $t("home.gameTips_0") }}</span>
       <span>{{ $t("home.gameTips_1") }}</span>
       <div class="board-arrows">
-        <span @click="triggerKeyPress('ArrowDown')">
+        <span
+          class="key-arrow-down"
+          @mousedown="handleArrowMouseDown('ArrowDown')"
+          @mouseup="handleArrowMouseUp('ArrowDown')"
+          @mouseleave="handleArrowMouseLeave('ArrowDown')"
+        >
           <Icon name="bxs:up-arrow" width="15" height="15" mode="svg" />
         </span>
-        <span @click="triggerKeyPress('ArrowRight')">
+        <span
+          class="key-arrow-right"
+          @mousedown="handleArrowMouseDown('ArrowRight')"
+          @mouseup="handleArrowMouseUp('ArrowRight')"
+          @mouseleave="handleArrowMouseLeave('ArrowRight')"
+        >
           <Icon
             name="bxs:up-arrow"
             width="15"
@@ -28,7 +38,12 @@
             class="left"
           />
         </span>
-        <span @click="triggerKeyPress('ArrowUp')">
+        <span
+          class="key-arrow-up"
+          @mousedown="handleArrowMouseDown('ArrowUp')"
+          @mouseup="handleArrowMouseUp('ArrowUp')"
+          @mouseleave="handleArrowMouseLeave('ArrowUp')"
+        >
           <Icon
             name="bxs:up-arrow"
             width="15"
@@ -37,7 +52,12 @@
             class="down"
           />
         </span>
-        <span @click="triggerKeyPress('ArrowLeft')">
+        <span
+          class="key-arrow-left"
+          @mousedown="handleArrowMouseDown('ArrowLeft')"
+          @mouseup="handleArrowMouseUp('ArrowLeft')"
+          @mouseleave="handleArrowMouseLeave('ArrowLeft')"
+        >
           <Icon
             name="bxs:up-arrow"
             width="15"
@@ -86,6 +106,8 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from "@vueuse/core";
+
 const winningScore = ref(10);
 
 // Reactive state for food, typed as an array of FoodItem
@@ -119,10 +141,90 @@ function setWinningScore(scoreValue: number): void {
   resetFoodLeft();
 }
 
+const getKeySelector = (key: string): string => {
+  if (key === "ArrowUp" || key === "KeyW") return ".key-arrow-up";
+  if (key === "ArrowDown" || key === "KeyS") return ".key-arrow-down";
+  if (key === "ArrowLeft" || key === "KeyA") return ".key-arrow-left";
+  if (key === "ArrowRight" || key === "KeyD") return ".key-arrow-right";
+  return "";
+};
+
+const depressKey = (key: string) => {
+  if (!import.meta.client) return;
+
+  const selector = getKeySelector(key);
+  if (!selector) return;
+
+  const el = document.querySelector(selector) as HTMLElement;
+  if (!el) return;
+
+  useGSAP().killTweensOf(el);
+  useGSAP().to(el, {
+    y: 3,
+    scale: 0.95,
+    boxShadow: "0 1px 0px 0px #000, 0 1px 4px rgba(0,0,0,0.3)",
+    backgroundColor: "#222",
+    duration: 0.05,
+    ease: "power1.out",
+  });
+};
+
+const releaseKey = (key: string) => {
+  if (!import.meta.client) return;
+
+  const selector = getKeySelector(key);
+  if (!selector) return;
+
+  const el = document.querySelector(selector) as HTMLElement;
+  if (!el) return;
+
+  useGSAP().killTweensOf(el);
+  useGSAP().to(el, {
+    y: 0,
+    scale: 1,
+    boxShadow: "0 4px 0px 0px #000, 0 4px 10px rgba(0,0,0,0.5)",
+    backgroundColor: "#111",
+    duration: 0.1,
+    ease: "power1.out",
+    onComplete: () => {
+      useGSAP().set(el, { clearProps: "all" });
+    },
+  });
+};
+
+// Function to handle mouse down on arrow keys
+const handleArrowMouseDown = (key: string) => {
+  depressKey(key);
+  triggerSignal.value = { code: key, timestamp: Date.now() };
+};
+
+// Function to handle mouse up on arrow keys
+const handleArrowMouseUp = (key: string) => {
+  releaseKey(key);
+};
+
+// Function to handle mouse leave on arrow keys
+const handleArrowMouseLeave = (key: string) => {
+  releaseKey(key);
+};
+
 // Function to trigger a keyboard event, with typed key parameter
 function triggerKeyPress(key: string): void {
+  depressKey(key);
+  setTimeout(() => releaseKey(key), 80);
   triggerSignal.value = { code: key, timestamp: Date.now() };
 }
+
+// Add keydown listener to animate the hints when physical keys are pressed
+useEventListener(document, "keydown", (event: KeyboardEvent) => {
+  if (event.repeat) return;
+  depressKey(event.code);
+});
+
+// Add keyup listener to release the hints when physical keys are released
+useEventListener(document, "keyup", (event: KeyboardEvent) => {
+  releaseKey(event.code);
+});
 
 // Function to handle food being eaten, updating foodLeft based on score
 function handleFoodEaten(score: number): void {
@@ -305,13 +407,22 @@ onMounted(() => {
 
       & span {
         text-align: center;
-        line-height: 28px;
+        line-height: 26px;
         cursor: pointer;
         display: inline-block;
         width: 50px;
         height: 30px;
-        background: black;
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 6px;
+        box-shadow: 0 4px 0px 0px #000, 0 4px 10px rgba(0, 0, 0, 0.5);
         z-index: z("content");
+        transition: background-color 0.1s, border-color 0.1s;
+
+        &:hover {
+          background-color: #1a1a1a;
+          border-color: rgba($accent2, 0.4);
+        }
 
         &:first-of-type {
           order: 2;

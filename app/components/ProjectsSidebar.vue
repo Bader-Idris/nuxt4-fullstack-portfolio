@@ -29,7 +29,7 @@
           class="project-item"
           :class="{ active: item.isActive }"
         >
-          {{ item.title }}
+          {{ item.title }} ({{ getProjectCount(item.title) }})
         </p>
       </label>
     </div>
@@ -37,6 +37,8 @@
 </template>
 
 <script setup lang="ts">
+import { projectsList } from "~/apis/projects_data";
+
 defineProps({
   list: {
     type: Array as any,
@@ -51,6 +53,12 @@ const emit = defineEmits(["toggle-active"]);
 // @ts-expect-error: item has an implicit any type
 const toggleActiveItem = (item) => {
   emit("toggle-active", item);
+};
+
+const getProjectCount = (title: string): number => {
+  return projectsList.filter((project) =>
+    project.tags.some((tag) => tag.toLowerCase() === title.toLowerCase())
+  ).length;
 };
 
 const getIconName = (title: string): string => {
