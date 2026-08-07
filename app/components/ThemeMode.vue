@@ -5,8 +5,8 @@ const colorMode = useColorMode();
 
 const modes = [
   { value: "system", icon: "material-symbols:autorenew", label: "System" },
-  { value: "light", icon: "i-lucide-sun", label: "Light" },
-  { value: "dark", icon: "i-lucide-moon", label: "Dark" },
+  { value: "light", icon: "lucide:sun", label: "Light" },
+  { value: "dark", icon: "lucide:moon", label: "Dark" },
 ];
 
 const isOpen = ref(false);
@@ -31,7 +31,7 @@ const selectMode = (mode) => {
       <span class="label">{{
         modes.find((m) => m.value === colorMode)?.label
       }}</span>
-      <Icon name="i-lucide-chevron-down" class="chevron-icon" />
+      <Icon name="lucide:chevron-down" class="chevron-icon" />
     </button>
 
     <!-- Dropdown menu -->

@@ -48,7 +48,16 @@
         </div>
         <LazyMobileSnakeGame @close="drawerActive = false" />
       </div>
-      <div v-else class="open-trigger" @click="drawerActive = true">
+      <div
+        v-else
+        ref="openTriggerRef"
+        class="open-trigger"
+        @touchstart="onTriggerTouchStart"
+        @touchmove="onTriggerTouchMove"
+        @touchend="onTriggerTouchEnd"
+        @mousedown.prevent="onTriggerTouchStart"
+        @click="handleTriggerClick"
+      >
          <span>// {{ $t("home.pullUpToPlay") }}</span>
       </div>
     </div>
@@ -82,6 +91,96 @@ const fullPathWithLocale = computed(() => localePath(route.path));
 
 // Draggable Mobile Game Drawer State
 const drawerActive = ref(false);
+const openTriggerRef = ref<HTMLElement | null>(null);
+
+let touchStartY = 0;
+let isDraggingTrigger = false;
+let currentDeltaY = 0;
+
+const onTriggerTouchStart = (e: TouchEvent | MouseEvent) => {
+  const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+  touchStartY = clientY;
+  isDraggingTrigger = true;
+  currentDeltaY = 0;
+  
+  if (!("touches" in e)) {
+    window.addEventListener("mousemove", onTriggerTouchMove);
+    window.addEventListener("mouseup", onTriggerTouchEnd);
+  }
+};
+
+const onTriggerTouchMove = (e: TouchEvent | MouseEvent) => {
+  if (!isDraggingTrigger) return;
+  const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+  const deltaY = touchStartY - clientY; // drag up is positive
+  
+  if (deltaY < 0) {
+    currentDeltaY = 0;
+  } else {
+    currentDeltaY = deltaY;
+  }
+  
+  if (e.cancelable && currentDeltaY > 5) {
+    e.preventDefault();
+  }
+  
+  if (openTriggerRef.value) {
+    gsap.set(openTriggerRef.value, { y: -currentDeltaY, xPercent: -50 });
+  }
+};
+
+const onTriggerTouchEnd = () => {
+  if (!isDraggingTrigger) return;
+  isDraggingTrigger = false;
+  
+  window.removeEventListener("mousemove", onTriggerTouchMove);
+  window.removeEventListener("mouseup", onTriggerTouchEnd);
+  
+  const threshold = 60; // 60px pull up threshold to open
+  if (currentDeltaY > threshold) {
+    if (openTriggerRef.value) {
+      gsap.to(openTriggerRef.value, {
+        y: -150,
+        opacity: 0,
+        duration: 0.25,
+        ease: "power2.out",
+        onComplete: () => {
+          drawerActive.value = true;
+          gsap.set(openTriggerRef.value!, { y: 0, opacity: 1, xPercent: -50 });
+        }
+      });
+    } else {
+      drawerActive.value = true;
+    }
+  } else {
+    if (openTriggerRef.value) {
+      gsap.to(openTriggerRef.value, {
+        y: 0,
+        duration: 0.3,
+        ease: "back.out(1.7)",
+        xPercent: -50
+      });
+    }
+  }
+};
+
+const handleTriggerClick = () => {
+  if (currentDeltaY > 5) return;
+  if (openTriggerRef.value) {
+    gsap.to(openTriggerRef.value, {
+      y: -100,
+      opacity: 0,
+      duration: 0.3,
+      ease: "power2.out",
+      onComplete: () => {
+        drawerActive.value = true;
+        gsap.set(openTriggerRef.value!, { y: 0, opacity: 1, xPercent: -50 });
+      }
+    });
+  } else {
+    drawerActive.value = true;
+  }
+};
 
 const windowWidth = ref(500);
 const windowHeight = ref(500);

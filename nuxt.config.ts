@@ -285,6 +285,7 @@ export default defineNuxtConfig({
         'three/examples/jsm/loaders/GLTFLoader.js',
         'vue3-toastify',
         'zod',
+        'magic-string', // Pre-bundle for CJS compat: @vue/compiler-sfc requires it as CJS
       ],
       exclude: ["@dimforge/rapier3d-compat"],
     },
@@ -622,16 +623,91 @@ export default defineNuxtConfig({
   //     enabled: true,
   //   },
   // },
-  ...(!isDesktop && !isCapacitor && {
-    icon: {
-      // Prevent massive server-side bundling of icons
-      // By scanning for used icons and bundling them for the client
-      clientBundle: {
-        scan: true,
-        includeCustomCollections: true,
-      },
+  icon: {
+    // Prevent massive server-side bundling of icons
+    // By scanning for used icons and bundling them for the client
+    clientBundle: {
+      scan: true,
+      includeCustomCollections: true,
+      icons: [
+        // Language switcher flag icons
+        "circle-flags:us",
+        "circle-flags:ps",
+        "circle-flags:es",
+
+        // Theme mode icons
+        "material-symbols:autorenew",
+        "lucide:sun",
+        "lucide:moon",
+        "lucide:chevron-down",
+
+        // Projects sidebar dynamic icons
+        "ri:html5-fill",
+        "flowbite:css-solid",
+        "teenyicons:javascript-solid",
+        "mdi:vuejs",
+        "akar-icons:typescript-fill",
+        "basil:android-solid",
+        "ic:baseline-apple",
+        "mdi:docker",
+        "fa6-brands:sass",
+        "simple-icons:nginx",
+        "lineicons:nuxt",
+        "file-icons:electron",
+        "simple-icons:gnubash",
+        "file-icons:nestjs",
+        "tabler:brand-threejs",
+        "simple-icons:capacitor",
+        "mdi:code-tags",
+
+        // Elzero projects data dynamic icons
+        "material-symbols:format-quote-rounded",
+        "material-symbols:gallery-thumbnail-rounded",
+        "material-symbols:event-available-rounded",
+        "material-symbols:currency-exchange-rounded",
+        "material-symbols:bookmarks-rounded",
+        "material-symbols:grid-view-rounded",
+        "material-symbols:newspaper-rounded",
+        "material-symbols:waves-rounded",
+        "material-symbols:volume-up-rounded",
+        "material-symbols:alarm-rounded",
+        "material-symbols:code-blocks-rounded",
+        "material-symbols:featured-play-list-rounded",
+
+        // Ternary or condition-based template icons
+        "mdi:chevron-down",
+        "mdi:chevron-right",
+        "mdi:arrow-right",
+        "mdi:arrow-left",
+        "mdi:close",
+        "mdi:account-group",
+        "mdi:check",
+        "mdi:content-copy",
+        "mdi:stop",
+        "mdi:speedometer",
+        "mdi:terrain",
+        "mdi:layers-outline",
+        "mdi:chevron-up",
+        "mdi:open-in-new",
+        "mdi:close-network-outline",
+        "mdi:fullscreen-exit",
+        "mdi:fullscreen",
+        "material-symbols:expand-less",
+        "material-symbols:expand-more",
+        "mdi:microphone-off",
+        "mdi:microphone",
+        "mdi:video-off",
+        "mdi:video",
+        "mdi:check-circle",
+        "mdi:alert-circle-outline",
+        "mdi:eye-outline",
+        "mdi:information-outline",
+        "vscode-icons:file-type-html",
+        "vscode-icons:file-type-css",
+        "vscode-icons:file-type-js-official",
+      ],
     },
-  }),
+  },
   i18n: {
     debug: isDebug,
     // Force baseUrl here for build-time SEO tag generation
@@ -670,10 +746,17 @@ export default defineNuxtConfig({
     defaultLocale: "en",
     defaultDirection: "ltr",
     strategy: "prefix_except_default",
-    // This is useless and breaks the app!
-    // experimental: {
-    //   strictSeo: true,
-    // },
+    /*
+    experimental: {
+      // @nuxtjs/i18n 10.6.0 introduced optimizeMessageBundling which conflicts
+      // with the Vite environment API and causes unplugin-vue-i18n:resource to
+      // receive pre-compiled ESM output instead of raw JSON, producing
+      // "Unexpected token 'export'" from jsonc-eslint-parser.
+      optimizeMessageBundling: false,
+      // strictSeo: true, // This is useless and breaks the app!
+    },
+    */
+
     // vueI18n: "~/i18n/i18n.config.ts", // using custom path, default
   },
   pinia: {
