@@ -604,6 +604,8 @@ defineExpose({
 
   .outcome-display {
     display: relative;
+    user-select: none;
+    user-drag: none;
     button {
       background-color: $accent1;
       color: $primary1;

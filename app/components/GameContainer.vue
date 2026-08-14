@@ -350,6 +350,7 @@ onMounted(() => {
     & > span {
       display: block;
       margin: 10px 0;
+      user-drag: none;
     }
 
     .mode-selector {

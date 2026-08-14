@@ -46,9 +46,12 @@
             {{ t("blog.backToBlog", "Back to Blog") }}
           </NuxtLink>
           <ClientOnly>
-            <div v-if="postData.isAuthor || isAdmin">
+            <div v-if="postData.isAuthor || isAdmin" class="author-actions">
               <button class="edit-btn" @click="editPost">
                 <Icon name="material-symbols:edit" /> Edit Post
+              </button>
+              <button class="delete-btn" @click="deletePost">
+                <Icon name="material-symbols:delete" /> Delete Post
               </button>
             </div>
           </ClientOnly>
@@ -184,6 +187,23 @@ function formatDate(date: string) {
 
 function editPost() {
   navigateTo(localePath(`/blog/edit/${slug.value}`));
+}
+
+async function deletePost() {
+  if (!confirm(t("blog.confirmDelete", "Are you sure you want to delete this post?"))) {
+    return;
+  }
+  try {
+    const res: any = await $fetch(`/api/v1/blog/${slug.value}`, {
+      method: "DELETE",
+    });
+    if (res?.success) {
+      showToast("success", t("blog.deleteSuccess", "Post deleted successfully"));
+      router.push(localePath("/blog"));
+    }
+  } catch (err: any) {
+    showToast("error", err.statusMessage || t("errors.serverError", "Failed to delete post"));
+  }
 }
 
 // Pre-calculate path to avoid calling useLocalePath inside getters
@@ -353,8 +373,31 @@ if (import.meta.server) {
     align-items: center;
     gap: 1rem;
 
+    .author-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
     .edit-btn {
       background: $accent1;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      transition: opacity 0.2s;
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+
+    .delete-btn {
+      background: #e53e3e;
       color: white;
       border: none;
       padding: 10px 20px;

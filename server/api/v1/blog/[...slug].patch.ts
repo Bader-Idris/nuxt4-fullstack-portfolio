@@ -6,6 +6,7 @@ const updatePostSchema = z.object({
   title: z.string().min(3).max(255).optional(),
   content: z.string().min(10).optional(),
   published: z.boolean().optional(),
+  status: z.enum(["published", "draft", "deleted"]).optional(),
   language: z.enum(["en", "es", "ar"]).optional(),
   summary: z.string().max(500).optional(),
 });

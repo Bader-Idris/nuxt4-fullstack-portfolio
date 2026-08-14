@@ -92,7 +92,10 @@ To handle PostgreSQL's connection limits and prevent leaks during development (H
 *   **Nuxt SEO:** Integrated with `@nuxtjs/seo` for automatic meta tag generation and sitemap management.
 *   **Takumi OG Images:** Uses the **Takumi** renderer for generating high-fidelity OpenGraph images dynamically based on post content (Title, Summary, Tags).
 *   **Unicode Slugs:** Slugs support full Unicode characters (including Arabic). The system automatically generates sanitized, SEO-friendly Unicode slugs from titles while maintaining standard URL encoding.
-*   **Dynamic Sitemap:** The `nuxt.config.ts` is configured to dynamically fetch all published post slugs from the PostgreSQL database, ensuring search engines always have an up-to-date list of content without requiring a site rebuild.
+*   **Dynamic Sitemap Chunking & Rate Limiting:** 
+    * The `posts` sitemap (`/__sitemap__/<locale>-posts.xml`) fetches live published content from PostgreSQL via `/api/sitemap/blog`.
+    * Configured with `includeAppSources: false` on the `posts` sitemap to prevent static filesystem routes (like `/blog/create`) from populating post sitemaps.
+    * Uses a chunk size limit of 1,000 items (`chunkSize: 1000`) and supports database pagination (`page` and `limit`) to prevent memory spikes and keep queries fast and safe.
 *   **View Tracking:** View counts are tracked asynchronously on each GET request for published posts to avoid blocking the main response thread.
 
 ## 7. Real-time Interactions

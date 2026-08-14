@@ -26,7 +26,7 @@ const siteUrl = process.env.DOMAIN_NAME;
 export default defineNuxtConfig({
   ssr: isSSR,
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-06-28",
+  compatibilityDate: "2026-08-14",
   devtools: {
     enabled: isDebug,
 
@@ -285,7 +285,6 @@ export default defineNuxtConfig({
         'three/examples/jsm/loaders/GLTFLoader.js',
         'vue3-toastify',
         'zod',
-        'magic-string', // Pre-bundle for CJS compat: @vue/compiler-sfc requires it as CJS
       ],
       exclude: ["@dimforge/rapier3d-compat"],
     },
@@ -516,6 +515,7 @@ export default defineNuxtConfig({
   }),
   tiptap: {
     prefix: "Tiptap", //prefix for Tiptap imports, composables not included
+    disableHistoryExtension: true,
   },
   // pwa: {
   //   // official source: https://github.com/vite-pwa/nuxt/blob/main/playground/nuxt.config.ts
@@ -983,7 +983,6 @@ export default defineNuxtConfig({
       pages: {
         includeAppSources: true,
         exclude: [
-          '/blog/**',                  // ← hand blog URLs off to posts sitemap
           '/auth/callback',
           '/user/forgot-password',
           '/user/reset-password',
@@ -993,15 +992,14 @@ export default defineNuxtConfig({
       },
       // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
       posts: {
-        includeAppSources: true,       // ← required, even for API-sourced posts
+        includeAppSources: false,      // ← disable static page auto-discovery (/blog/create, etc.) for posts sitemap
         include: ['/blog', '/blog/**'], // ← claim ownership of all blog-related routes
+        exclude: ['/blog/create', '/blog/edit/**'],
         sources: ['/api/sitemap/blog'],
-        chunks: true,
-        chunkSize: 2500,
       }
     },
     // modify the chunk size if you need
-    defaultSitemapsChunkSize: 2000, // default 1000
+    defaultSitemapsChunkSize: 1000, // default 1000
     // urls: async () => {
     // // avoid for large sites: https://nuxtseo.com/docs/sitemap/guides/dynamic-urls
     // // replace it with: sources: []

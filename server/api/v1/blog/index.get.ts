@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
   try {
     const posts = await prisma.post.findMany({
       where: {
+        status: { not: 'deleted' },
         ...(langs.length > 0 && { language: { in: langs } }),
         ...(showOnlyPublished && { published: true }),
       },

@@ -54,6 +54,14 @@ export default defineEventHandler(async (event) => {
     const isEditor = user?.role === 'editor';
     const isAuthor = user && post.author.mongodbId === user.userId;
     
+    // Hide deleted posts from regular clients and search engines
+    if (post.status === 'deleted' && !isAdmin && !isEditor) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: `Post not found: ${slug}`,
+      });
+    }
+
     // Auth check for unpublished posts
     if (!post.published && !isAdmin && !isEditor && !isAuthor) {
       throw createError({

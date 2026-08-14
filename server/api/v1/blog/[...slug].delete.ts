@@ -56,8 +56,9 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    await prisma.post.delete({
+    await prisma.post.update({
       where: { id: post.id },
+      data: { status: 'deleted' },
     });
 
     return {

@@ -33,6 +33,7 @@ model Post {
   slug      String    @unique
   content   String?   // Tiptap HTML content
   published Boolean   @default(false)
+  status    String    @default("published") // published, draft, deleted
   viewCount Int       @default(0)
   language  String    @default("en") // en, es, ar
   summary   String?
