@@ -988,6 +988,10 @@ export default defineNuxtConfig({
           '/user/reset-password',
           '/user/unsubscribe',
           '/user/verify-email',
+          '/blog',
+          '/blog/**',
+          '/blog/create',
+          '/blog/edit/**',
         ],
       },
       // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks

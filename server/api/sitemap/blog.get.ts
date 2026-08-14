@@ -1,30 +1,41 @@
-import { prisma as importedPrisma } from "@server/plugins/prisma";
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
 import type { PrismaClient } from "@server/prisma/generated/prisma/client";
 
-const RETRY_ATTEMPTS = 6;
-const RETRY_DELAY_MS = 1500; // 6 × 1.5s = up to 9s total — enough for psql cold start
+const RETRY_ATTEMPTS = 5;
+const RETRY_DELAY_MS = 1000;
 
 async function getPrismaWithRetry(event: any): Promise<PrismaClient | null> {
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
-    const activePrisma = importedPrisma || event.context.prisma || (globalThis as any).prisma;
+    const activePrisma =
+      event?.context?.prisma ||
+      getPrismaClient() ||
+      importedPrisma ||
+      (globalThis as any).prisma;
+
     if (activePrisma) return activePrisma;
-    console.warn(`[sitemap/blog] Prisma not ready, attempt ${attempt}/${RETRY_ATTEMPTS} — retrying in ${RETRY_DELAY_MS}ms`);
-    await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+
+    if (attempt < RETRY_ATTEMPTS) {
+      console.warn(
+        `[sitemap/blog] Prisma not ready, attempt ${attempt}/${RETRY_ATTEMPTS} — retrying in ${RETRY_DELAY_MS}ms`
+      );
+      await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+    }
   }
-  return importedPrisma || event.context.prisma || (globalThis as any).prisma || null;
+  return null;
 }
 
 export default defineEventHandler(async (event) => {
   const db = await getPrismaWithRetry(event);
 
   if (!db) {
-    console.error("[sitemap/blog] Prisma unavailable after all retries — serving empty sitemap");
+    console.error("[sitemap/blog] Prisma database unavailable after retries — serving empty sitemap");
     return [];
   }
 
   const query = getQuery(event);
-  const page = Math.max(1, parseInt(String(query.page || '1'), 10));
-  const limit = Math.min(1000, Math.max(1, parseInt(String(query.limit || '1000'), 10)));
+  const page = Math.max(1, parseInt(String(query.page || "1"), 10));
+  const hasExplicitLimit = typeof query.limit !== "undefined";
+  const limit = Math.min(50000, Math.max(1, parseInt(String(query.limit || "50000"), 10)));
   const skip = (page - 1) * limit;
 
   try {
@@ -36,29 +47,53 @@ export default defineEventHandler(async (event) => {
       }),
       db.post.findMany({
         where: { published: true, status: { not: "deleted" } },
-        select: { slug: true, updatedAt: true },
+        select: {
+          slug: true,
+          updatedAt: true,
+          createdAt: true,
+          title: true,
+          summary: true,
+          language: true,
+        },
         orderBy: { updatedAt: "desc" },
-        take: limit,
-        skip: skip,
+        ...(hasExplicitLimit ? { take: limit, skip } : {}),
       }),
     ]);
 
-    const routes: { loc: string; lastmod: Date; _i18nTransform: boolean }[] = [];
+    const routes: any[] = [];
 
+    // Blog listing entry
     if (page === 1) {
-      routes.push({
-        loc: "/blog",
-        lastmod: latestPost?.updatedAt ?? new Date(),
-        _i18nTransform: true,
-      });
+      const blogLastmod = latestPost?.updatedAt
+        ? new Date(latestPost.updatedAt).toISOString()
+        : new Date().toISOString();
+
+      routes.push(
+        asSitemapUrl({
+          loc: "/blog",
+          lastmod: blogLastmod,
+          _i18nTransform: true,
+          changefreq: "daily",
+          priority: 0.9,
+          _sitemap: "posts",
+        })
+      );
     }
 
+    // Dynamic blog post entries
     for (const post of posts) {
-      routes.push({
-        loc: `/blog/${post.slug}`,
-        lastmod: post.updatedAt,
-        _i18nTransform: true,
-      });
+      if (!post.slug) continue;
+      const lastmodDate = post.updatedAt || post.createdAt || new Date();
+      routes.push(
+        asSitemapUrl({
+          loc: `/blog/${post.slug}`,
+          lastmod: new Date(lastmodDate).toISOString(),
+          _i18nTransform: true,
+          changefreq: "weekly",
+          priority: 0.8,
+          _sitemap: "posts",
+        })
+      );
     }
 
     return routes;
