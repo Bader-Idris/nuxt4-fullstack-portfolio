@@ -100,6 +100,27 @@ const isExpanded = ref(false);
 const repliesContainer = ref<HTMLElement | null>(null);
 const localReplyContent = ref('');
 
+const REPLY_STORAGE_KEY = computed(() => `draft_reply_${props.postSlug}_${props.comment.id}`);
+
+onMounted(() => {
+  if (import.meta.client) {
+    const saved = localStorage.getItem(REPLY_STORAGE_KEY.value);
+    if (saved && !localReplyContent.value) {
+      localReplyContent.value = saved;
+    }
+  }
+});
+
+watch(localReplyContent, (val) => {
+  if (import.meta.client) {
+    if (val && val.trim()) {
+      localStorage.setItem(REPLY_STORAGE_KEY.value, val);
+    } else {
+      localStorage.removeItem(REPLY_STORAGE_KEY.value);
+    }
+  }
+});
+
 function toggleReplies() {
   isExpanded.value = !isExpanded.value;
   const container = repliesContainer.value;
@@ -115,6 +136,9 @@ function toggleReplies() {
 function submitReply(parentId: number) {
   emit('submit-reply', parentId, localReplyContent.value);
   localReplyContent.value = '';
+  if (import.meta.client) {
+    localStorage.removeItem(REPLY_STORAGE_KEY.value);
+  }
 }
 
 function formatRelativeTime(date: string) {

@@ -74,6 +74,29 @@ const activeReplyId = ref<number | null>(null);
 const { data: response, pending, refresh } = await useFetch<any>(() => `/api/v1/blog/${props.postSlug}/comments`);
 const comments = computed(() => response.value?.data || []);
 
+const STORAGE_KEY = computed(() => `draft_comment_${props.postSlug}`);
+
+// Restore saved draft on mount / slug change
+onMounted(() => {
+  if (import.meta.client) {
+    const saved = localStorage.getItem(STORAGE_KEY.value);
+    if (saved && !newComment.value) {
+      newComment.value = saved;
+    }
+  }
+});
+
+// Auto-save draft as user types
+watch(newComment, (val) => {
+  if (import.meta.client) {
+    if (val && val.trim()) {
+      localStorage.setItem(STORAGE_KEY.value, val);
+    } else {
+      localStorage.removeItem(STORAGE_KEY.value);
+    }
+  }
+});
+
 function handleLoginRedirect() {
   navigateTo(localePath('/login') + '?redirect=' + encodeURIComponent(route.fullPath));
 }
@@ -96,6 +119,9 @@ async function submitComment(parentId: number | null, content?: string) {
       activeReplyId.value = null;
     } else {
       newComment.value = '';
+      if (import.meta.client) {
+        localStorage.removeItem(STORAGE_KEY.value);
+      }
     }
     await refresh();
     emit('comment-added');
