@@ -1,5 +1,5 @@
 # Stage 1: Base image with bun
-FROM oven/bun:1.3.14-alpine AS base
+FROM oven/bun:1.4.0-alpine AS base
 
 # Install Python and build tools for native dependencies (Alpine version)
 RUN apk add --no-cache python3 make g++ libpng-dev libjpeg-turbo-dev
@@ -46,7 +46,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 
 # Stage 4: Production runner
 # Nuxt/Nitro produces a standalone server with bundled dependencies
-FROM oven/bun:1.3.14-alpine AS runner
+FROM oven/bun:1.4.0-alpine AS runner
 
 # RUN apk add --no-cache vips
 # WORKDIR /app

@@ -47,7 +47,7 @@ export default defineNuxtConfig({
   },
   experimental: {
     normalizeComponentNames: true,
-    appManifest: false,
+    appManifest: true,
     // ssrStreaming: true, // nuxt 4.5+ https://nuxt.com/blog/v4-5#experimental-ssr-streaming
     // it's sincely useful in time, and could be isolated to specific routes
   },

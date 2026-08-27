@@ -407,6 +407,11 @@ header {
             @include flex-container(column, nowrap, unset, flex-start);
             position: relative;
 
+            html[lang="ar-PS"] &,
+            html[lang="ar"] & {
+              direction: rtl;
+            }
+
             & > a {
               &::before {
                 content: "";
