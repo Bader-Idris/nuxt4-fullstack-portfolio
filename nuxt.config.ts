@@ -1,7 +1,7 @@
 import { defineNuxtConfig } from "nuxt/config";
 // for electron
 import path, { dirname } from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import glsl from "vite-plugin-glsl";
 // import { writeFileSync } from 'node:fs'
 // TODO: this crashes with: _nuxt/!~{00x}~-legacy.js:25:12: ERROR: Transforming destructuring to the configured target environment ("chrome64", "edge79", "es2020", "firefox67", "safari12" + 2 overrides) is not supported yet
@@ -9,6 +9,15 @@ import glsl from "vite-plugin-glsl";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Ensure globalThis._importMeta_ on Windows has a valid absolute file:/// URL with drive letter
+// to prevent Node.js ERR_INVALID_FILE_URL_PATH ('File URL path must be absolute') during prerendering/bundling
+if (typeof globalThis !== "undefined") {
+  (globalThis as any)._importMeta_ = (globalThis as any)._importMeta_ || {
+    url: pathToFileURL(path.resolve(process.cwd(), "_entry.js")).href,
+    env: process.env,
+  };
+}
 
 const isElectron = process.env.IS_ELECTRON === "true";
 const isElectrobun = process.env.IS_ELECTROBUN === "true";
@@ -53,6 +62,29 @@ export default defineNuxtConfig({
   },
   tracingChannel: isDebug, // nuxt 4.5+ // check if it's useful in prod
   nitro: {
+    hooks: {
+      "prerender:init"() {
+        if (typeof globalThis !== "undefined") {
+          (globalThis as any)._importMeta_ = {
+            url: pathToFileURL(path.resolve(process.cwd(), "_entry.js")).href,
+            env: process.env,
+          };
+        }
+      },
+      "prerender:config"() {
+        if (typeof globalThis !== "undefined") {
+          (globalThis as any)._importMeta_ = {
+            url: pathToFileURL(path.resolve(process.cwd(), "_entry.js")).href,
+            env: process.env,
+          };
+        }
+      },
+    },
+    rollupConfig: {
+      output: {
+        banner: `import { pathToFileURL as _p2u } from "node:url"; import { resolve as _pRes } from "node:path"; if (typeof globalThis !== "undefined" && (!globalThis._importMeta_ || globalThis._importMeta_.url === "file:///_entry.js")) { globalThis._importMeta_ = { url: _p2u(_pRes(process.cwd(), "_entry.js")).href, env: process.env }; };`,
+      },
+    },
     // // Fix for Windows path resolution in prerenderer
     // TODO: test on windows!!
     // ...(process.platform === 'win32' && {
