@@ -1,4 +1,5 @@
-import { prisma } from "@server/plugins/prisma";
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { decodeSlug } from "@server/utils/slug";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -7,7 +8,9 @@ export default defineEventHandler(async (event) => {
   const publishedOnly = query.publishedOnly !== 'false';
   const redis = event.context.redis;
   
-  if (!prisma) {
+  const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
+
+  if (!db) {
     throw createError({
       statusCode: 500,
       statusMessage: "Database connection not initialized",
@@ -18,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const isAdmin = user?.role === 'admin';
   const isEditor = user?.role === 'editor';
   
-  // Professionals: if not admin/editor, always show only published
+  // If not admin/editor, always show only published
   const showOnlyPublished = !isAdmin && !isEditor ? true : publishedOnly;
 
   // Cache key based on query params and user permissions
@@ -29,7 +32,6 @@ export default defineEventHandler(async (event) => {
     try {
       const cachedData = await redis.get(cacheKey);
       if (cachedData) {
-        // console.log(`🚀 [blog API GET ALL] Serving from cache: ${cacheKey}`);
         return {
           success: true,
           data: JSON.parse(cachedData),
@@ -42,7 +44,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const posts = await prisma.post.findMany({
+    const posts = await db.post.findMany({
       where: {
         status: { not: 'deleted' },
         ...(langs.length > 0 && { language: { in: langs } }),
@@ -67,7 +69,7 @@ export default defineEventHandler(async (event) => {
     const responseData = posts.map(post => ({
       id: post.id,
       title: post.title,
-      slug: post.slug,
+      slug: decodeSlug(post.slug),
       summary: post.summary,
       published: post.published,
       language: post.language,

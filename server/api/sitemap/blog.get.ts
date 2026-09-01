@@ -1,5 +1,7 @@
 import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
 import type { PrismaClient } from "@server/prisma/generated/prisma/client";
+import { decodeSlug } from "@server/utils/slug";
+import { extractImagesFromHtml } from "@server/utils/sitemap";
 
 const RETRY_ATTEMPTS = 5;
 const RETRY_DELAY_MS = 1000;
@@ -25,6 +27,11 @@ async function getPrismaWithRetry(event: any): Promise<PrismaClient | null> {
 }
 
 export default defineEventHandler(async (event) => {
+  // Set explicit no-cache headers so internal and external fetches always get fresh data
+  setHeader(event, "Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  setHeader(event, "Pragma", "no-cache");
+  setHeader(event, "Expires", "0");
+
   const db = await getPrismaWithRetry(event);
 
   if (!db) {
@@ -49,6 +56,7 @@ export default defineEventHandler(async (event) => {
         where: { published: true, status: { not: "deleted" } },
         select: {
           slug: true,
+          content: true,
           updatedAt: true,
           createdAt: true,
           title: true,
@@ -80,18 +88,24 @@ export default defineEventHandler(async (event) => {
       );
     }
 
-    // Dynamic blog post entries
+    // Dynamic blog post entries with multilingual & image SEO support
     for (const post of posts) {
       if (!post.slug) continue;
+      const cleanSlug = decodeSlug(post.slug);
+      if (!cleanSlug) continue;
+
       const lastmodDate = post.updatedAt || post.createdAt || new Date();
+      const images = extractImagesFromHtml(post.content);
+
       routes.push(
         asSitemapUrl({
-          loc: `/blog/${post.slug}`,
+          loc: `/blog/${cleanSlug}`,
           lastmod: new Date(lastmodDate).toISOString(),
           _i18nTransform: true,
           changefreq: "weekly",
           priority: 0.8,
           _sitemap: "posts",
+          ...(images.length > 0 ? { images } : {}),
         })
       );
     }

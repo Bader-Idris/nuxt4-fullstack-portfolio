@@ -1,9 +1,18 @@
-import { prisma } from "@server/plugins/prisma";
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateSitemapCache } from "@server/utils/sitemap";
+import { decodeSlug, getSlugLookupVariants, slugify } from "@server/utils/slug";
 import { z } from "zod";
 
-const slugSchema = z.string().min(1).max(255).refine(val => /^[\p{L}0-9-\/]+$/u.test(val), { message: "Invalid slug format" });
 const updatePostSchema = z.object({
   title: z.string().min(3).max(255).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(255)
+    .refine((val) => /^[\p{L}\p{N}\p{M}\s_\-%+]+$/u.test(decodeSlug(val)), {
+      message: "Slug must contain valid letters, numbers, hyphens, or underscores",
+    })
+    .optional(),
   content: z.string().min(10).optional(),
   published: z.boolean().optional(),
   status: z.enum(["published", "draft", "deleted"]).optional(),
@@ -12,9 +21,10 @@ const updatePostSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
+  const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
   const user = event.context.user;
-  
-  if (!prisma) {
+
+  if (!db) {
     throw createError({
       statusCode: 500,
       statusMessage: "Database connection not initialized",
@@ -28,17 +38,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const slugParams = getRouterParam(event, 'slug');
-  const rawSlug = Array.isArray(slugParams) ? slugParams.join('/') : slugParams;
-  
-  const slugValidation = slugSchema.safeParse(rawSlug);
-  if (!slugValidation.success) {
+  const rawSlug = getRouterParam(event, "slug");
+
+  if (!rawSlug) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Invalid slug format",
+      statusMessage: "Slug is required",
     });
   }
-  const slug = slugValidation.data;
+
+  const slugVariants = getSlugLookupVariants(rawSlug);
+  const decodedSlug = decodeSlug(rawSlug);
 
   const body = await readBody(event);
   const bodyValidation = updatePostSchema.safeParse(body);
@@ -50,21 +60,29 @@ export default defineEventHandler(async (event) => {
   }
   const updateData = bodyValidation.data;
 
+  // Ensure slug is saved decoded and normalized if updated
+  if (updateData.slug) {
+    const rawDecoded = decodeSlug(updateData.slug);
+    updateData.slug = slugify(rawDecoded) || rawDecoded;
+  }
+
   try {
-    const post = await prisma.post.findUnique({
-      where: { slug },
-      include: { author: true }
+    const post = await db.post.findFirst({
+      where: {
+        OR: slugVariants.map((slug) => ({ slug })),
+      },
+      include: { author: true },
     });
 
     if (!post) {
       throw createError({
         statusCode: 404,
-        statusMessage: `Post not found: ${slug}`,
+        statusMessage: `Post not found: ${decodedSlug}`,
       });
     }
 
-    const isAdmin = user.role === 'admin';
-    const isEditor = user.role === 'editor';
+    const isAdmin = user.role === "admin";
+    const isEditor = user.role === "editor";
     const isAuthor = post.author.mongodbId === user.userId;
 
     if (!isAdmin && !isEditor && !isAuthor) {
@@ -74,10 +92,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const updatedPost = await prisma.post.update({
+    const updatedPost = await db.post.update({
       where: { id: post.id },
       data: updateData,
     });
+
+    // Invalidate sitemap cache on post edit
+    await invalidateSitemapCache();
 
     return {
       success: true,
@@ -85,10 +106,10 @@ export default defineEventHandler(async (event) => {
       data: updatedPost,
     };
   } catch (e: any) {
-    console.error(`[blog API PATCH] Error updating ${slug}:`, e.message);
+    console.error(`[blog API PATCH] Error updating ${decodedSlug}:`, e.message);
     throw createError({
       statusCode: e.statusCode || 500,
-      statusMessage: e.statusMessage || 'Internal Server Error',
+      statusMessage: e.statusMessage || "Internal Server Error",
     });
   }
 });

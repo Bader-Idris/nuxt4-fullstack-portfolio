@@ -3,7 +3,7 @@
     <div v-if="status === 'pending' && !postData" class="loader-container">
       <CustomLoader />
     </div>
-    <div v-else-if="error || (!status === 'pending' && !postData)" class="error-container">
+    <div v-else-if="error || (!postData && status !== 'pending')" class="error-container">
       <h1>{{ t("blog.notFound", "Post Not Found") }}</h1>
       <NuxtLink :to="localePath('/blog')">{{
         t("blog.backToBlog", "Back to Blog")
@@ -71,6 +71,7 @@
 <script setup lang="ts">
 import { useUserStore } from "~/stores/useUserSocket";
 import { useDateFormatter } from "~/composables/useDateFormatter";
+import { decodeSlug, encodeSlug } from "~/utils/slug";
 
 const blogPostContainer = ref<HTMLElement | null>(null);
 useMiddleClickScroll(blogPostContainer);
@@ -78,14 +79,53 @@ useMiddleClickScroll(blogPostContainer);
 const route = useRoute();
 const router = useRouter();
 const localePath = useLocalePath();
-const { t, locale } = useI18n();
+const { t, locale, locales } = useI18n();
 const config = useRuntimeConfig();
 const userStore = useUserStore();
 
+// Fully decodes multilingual, Arabic, and space-enriched slugs
 const slug = computed(() => {
-  const s = route.params.slug;
-  return Array.isArray(s) ? s.join("/") : s;
+  return decodeSlug(route.params.slug);
 });
+
+// Client-side address bar clean decode for percent-encoded clicks from sitemaps/bookmarks
+const cleanAddressBarUrl = () => {
+  if (import.meta.client && typeof window !== "undefined") {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("%")) {
+      try {
+        let decodedPath = currentPath;
+        for (let i = 0; i < 3; i++) {
+          try {
+            const d = decodeURI(decodedPath);
+            if (d === decodedPath) break;
+            decodedPath = d;
+          } catch {
+            break;
+          }
+        }
+        if (decodedPath !== currentPath) {
+          window.history.replaceState(
+            window.history.state,
+            "",
+            decodedPath + window.location.search + window.location.hash
+          );
+        }
+      } catch {}
+    }
+  }
+};
+
+onMounted(() => {
+  cleanAddressBarUrl();
+});
+
+watch(
+  () => route.fullPath,
+  () => {
+    cleanAddressBarUrl();
+  }
+);
 
 // Client-only toast initialization
 const showToast = (type: "success" | "error", message: string) => {
@@ -110,15 +150,23 @@ const fetchPost = async () => {
       "x-locale": locale.value,
     };
 
+    let baseURL = config.public.originUrl;
     if (import.meta.server) {
       const reqHeaders = useRequestHeaders(["cookie"]);
       Object.assign(headers, reqHeaders);
+      try {
+        const reqUrl = useRequestURL();
+        if (reqUrl?.origin) {
+          baseURL = reqUrl.origin;
+        }
+      } catch {}
     }
 
-    // CRITICAL: Internal fetch without absolute baseURL to prevent ECONNREFUSED
-    const response: any = await $fetch(`/api/v1/blog/${slug.value}`, {
+    // Direct fetch with safe encoded slug and origin-aware baseURL for SSR/SSG
+    const encodedTarget = encodeSlug(slug.value);
+    const response: any = await $fetch(`/api/v1/blog/${encodedTarget}`, {
       headers,
-      baseURL: config.public.originUrl
+      baseURL,
     });
 
     if (response?.success) {
@@ -151,34 +199,33 @@ const fetchPost = async () => {
 };
 
 const { status, data, error, refresh } = await useAsyncData(
-  `blog-post-${slug.value}-${locale.value}`,
-  () => fetchPost(),
-  {
-    server: true,
-  }
+  `blog-post-${slug.value}`,
+  () => fetchPost()
 );
 
-// AI & SEO: Throw a proper 404 error if the post is not found.
-watchEffect(() => {
-  if (status.value !== "pending" && (!data.value || error.value)) {
-    const statusCode = (error.value as any)?.statusCode || 404;
-    showError({
-      statusCode,
-      statusMessage: t("blog.notFound", "Post Not Found"),
-      fatal: true,
-    });
-  }
-});
+// SSR & SEO: If post not found during server render, throw clean 404 for search bots & browsers
+if (import.meta.server && (!data.value || error.value)) {
+  const statusCode = (error.value as any)?.statusCode || 404;
+  throw createError({
+    statusCode,
+    statusMessage: t("blog.notFound", "Post Not Found"),
+    fatal: true,
+  });
+}
 
 const postData = computed(() => data.value);
 
 // Update cached post for edit page
 const cachedPost = useState<any>("active-blog-post");
-watch(postData, (newVal) => {
-  if (newVal) {
-    cachedPost.value = newVal;
-  }
-}, { immediate: true });
+watch(
+  postData,
+  (newVal) => {
+    if (newVal) {
+      cachedPost.value = newVal;
+    }
+  },
+  { immediate: true }
+);
 
 const { formatDateSeparator } = useDateFormatter();
 function formatDate(date: string) {
@@ -186,7 +233,7 @@ function formatDate(date: string) {
 }
 
 function editPost() {
-  navigateTo(localePath(`/blog/edit/${slug.value}`));
+  navigateTo(localePath(`/blog/edit/${encodeSlug(slug.value)}`));
 }
 
 async function deletePost() {
@@ -194,7 +241,7 @@ async function deletePost() {
     return;
   }
   try {
-    const res: any = await $fetch(`/api/v1/blog/${slug.value}`, {
+    const res: any = await $fetch(`/api/v1/blog/${encodeSlug(slug.value)}`, {
       method: "DELETE",
     });
     if (res?.success) {
@@ -206,10 +253,16 @@ async function deletePost() {
   }
 }
 
-// Pre-calculate path to avoid calling useLocalePath inside getters
-const fullPathWithLocale = computed(() => localePath(route.fullPath));
+// Canonical & Multilingual SEO URL calculation
+const siteBaseUrl = computed(() => {
+  const raw = config.public.siteUrl || config.public.originUrl || "https://baderidris.com";
+  return String(raw).replace(/\/$/, "");
+});
 
-// Dynamic SEO
+const currentLocalePath = computed(() => localePath(`/blog/${slug.value}`));
+const canonicalUrl = computed(() => `${siteBaseUrl.value}${currentLocalePath.value}`);
+
+// Dynamic SEO tags
 const seoTitle = computed(() => postData.value?.title || t("blog.title"));
 const seoDesc = computed(() => postData.value?.summary || t("blog.description"));
 
@@ -219,10 +272,39 @@ useSeoMeta({
   description: seoDesc.value,
   ogDescription: seoDesc.value,
   ogType: "article",
-  ogUrl: `${config.public.siteUrl}${fullPathWithLocale.value}`,
+  ogUrl: canonicalUrl.value,
   twitterTitle: seoTitle.value,
   twitterDescription: seoDesc.value,
   twitterCard: "summary_large_image",
+  articlePublishedTime: () => postData.value?.createdAt,
+  articleModifiedTime: () => postData.value?.updatedAt,
+  articleAuthor: () => [postData.value?.author?.name || "Bader Idris"],
+});
+
+// Canonical & alternate hreflangs
+useHead(() => {
+  const links: any[] = [
+    { rel: "canonical", href: canonicalUrl.value },
+  ];
+
+  // Generate alternate hreflang links for multilingual search engines
+  const supportedLocales = ["en", "ar", "es"];
+  for (const code of supportedLocales) {
+    const localizedPath = localePath(`/blog/${slug.value}`, code);
+    links.push({
+      rel: "alternate",
+      hreflang: code,
+      href: `${siteBaseUrl.value}${localizedPath}`,
+    });
+  }
+  // Default hreflang fallback
+  links.push({
+    rel: "alternate",
+    hreflang: "x-default",
+    href: `${siteBaseUrl.value}${localePath(`/blog/${slug.value}`, "en")}`,
+  });
+
+  return { link: links };
 });
 
 defineOgImage("Default.takumi", {
@@ -235,14 +317,16 @@ defineOgImage("Default.takumi", {
   comments: postData.value?.commentCount || 0,
 });
 
-// Schema.org
+// Schema.org Structured Data for Google Rich Results
 if (import.meta.server) {
   useSchemaOrg([
     defineArticle({
       headline: () => postData.value?.title,
       description: () => postData.value?.summary,
       datePublished: () => postData.value?.createdAt,
-      author: [{ name: postData.value?.author.name || "Bader Idris" }],
+      dateModified: () => postData.value?.updatedAt || postData.value?.createdAt,
+      inLanguage: () => postData.value?.language || locale.value,
+      author: [{ name: postData.value?.author?.name || "Bader Idris" }],
     }),
   ]);
 }
@@ -300,70 +384,70 @@ if (import.meta.server) {
     position: absolute;
     top: 0;
     right: 0;
-    background: $accent2;
+    background: #ff5722;
     color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
+    padding: 4px 8px;
     font-size: 0.75rem;
     font-weight: bold;
+    border-radius: 4px;
     text-transform: uppercase;
   }
 
   .post-title {
     font-size: 2.2rem;
-    color: $secondary4;
+    color: $accent1;
     margin-bottom: 1rem;
-    line-height: 1.2;
-    font-weight: 600;
-    @include mobile {
-      font-size: 1.8rem;
-    }
+    line-height: 1.3;
+    font-weight: 700;
   }
 
   .post-meta {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     gap: 1.5rem;
     color: $secondary1;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
 
     .views {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 0.3rem;
     }
 
     .language-badge {
       background: $primary3;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: bold;
       border: 1px solid $lines;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
   }
 }
 
 .post-footer {
-  margin-top: 4rem;
-  padding-top: 2rem;
+  margin-top: 3rem;
   border-top: 1px solid $lines;
+  padding-top: 2rem;
 
   .post-summary {
-    background: $primary3;
-    padding: 1.5rem;
-    border-radius: 12px;
+    background: rgba($primary3, 0.4);
+    border-left: 3px solid $accent1;
+    padding: 1rem;
+    border-radius: 0 6px 6px 0;
     margin-bottom: 2rem;
+
     h3 {
-      margin-top: 0;
-      color: $secondary1;
       font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      color: $secondary4;
+      margin-bottom: 0.5rem;
     }
+
     p {
-      margin-bottom: 0;
-      font-style: italic;
+      color: $secondary1;
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
   }
 
@@ -371,59 +455,59 @@ if (import.meta.server) {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     gap: 1rem;
 
     .author-actions {
       display: flex;
       gap: 0.75rem;
-      align-items: center;
-    }
 
-    .edit-btn {
-      background: $accent1;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: bold;
-      transition: opacity 0.2s;
-      &:hover {
-        opacity: 0.8;
-      }
-    }
+      button {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
 
-    .delete-btn {
-      background: #e53e3e;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: bold;
-      transition: opacity 0.2s;
-      &:hover {
-        opacity: 0.8;
+        &.edit-btn {
+          background: rgba($accent1, 0.1);
+          color: $accent1;
+          border: 1px solid rgba($accent1, 0.3);
+
+          &:hover {
+            background: $accent1;
+            color: $primary1;
+          }
+        }
+
+        &.delete-btn {
+          background: rgba(#f44336, 0.1);
+          color: #f44336;
+          border: 1px solid rgba(#f44336, 0.3);
+
+          &:hover {
+            background: #f44336;
+            color: white;
+          }
+        }
       }
     }
   }
 }
 
 .comments-section {
-  margin-top: 4rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid $lines;
+
   h3 {
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-    color: $secondary2;
-    border-bottom: 2px solid $lines;
-    padding-bottom: 10px;
-    display: inline-block;
+    font-size: 1.3rem;
+    color: $secondary4;
+    margin-bottom: 1.5rem;
   }
 }
 
@@ -433,7 +517,21 @@ if (import.meta.server) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  text-align: center;
+  min-height: 50vh;
+  gap: 1rem;
+
+  h1 {
+    color: $accent1;
+    font-size: 1.8rem;
+  }
+
+  a {
+    color: $secondary1;
+    text-decoration: underline;
+
+    &:hover {
+      color: $accent1;
+    }
+  }
 }
 </style>

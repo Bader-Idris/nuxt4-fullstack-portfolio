@@ -106,6 +106,7 @@ import { useUserStore } from "~/stores/useUserSocket";
 import PostPreview from "~/components/blog/PostPreview.vue";
 import { toast } from "vue3-toastify";
 import { z } from "zod";
+import { decodeSlug, encodeSlug, slugify } from "~/utils/slug";
 
 const config = useRuntimeConfig();
 const headers = useRequestHeaders(["cookie"]);
@@ -117,6 +118,7 @@ const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
 const localePath = useLocalePath();
+
 const { t } = useI18n();
 
 const isEdit = computed(() => !!route.params.slug);
@@ -128,11 +130,11 @@ const postSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(255),
   slug: z
     .string()
-    .min(3, "Slug must be at least 3 characters")
+    .min(1, "Slug is required")
     .max(255)
-    .refine((val) => /^[\p{L}0-9-]+$/u.test(val), {
+    .refine((val) => /^[\p{L}\p{N}\p{M}\s_\-%+]+$/u.test(decodeSlug(val)), {
       message:
-        "Slug must be lowercase alphanumeric (including Unicode) with hyphens",
+        "Slug must contain valid letters, numbers, hyphens, or underscores",
     }),
   content: z.string().min(1, "Content is required"),
   published: z.boolean().default(false),
@@ -158,18 +160,19 @@ const cachedPost = useState<any>("active-blog-post");
 
 // Load post data if editing
 if (isEdit.value) {
-  const currentSlug = Array.isArray(route.params.slug)
-    ? route.params.slug.join("/")
-    : route.params.slug;
+  const decodedCurrentSlug = decodeSlug(route.params.slug);
+  const encodedCurrentSlug = encodeSlug(decodedCurrentSlug);
+
   // Try to use cached data first to avoid redundant DB hits
   if (
     cachedPost.value &&
-    (cachedPost.value.slug === currentSlug ||
-      cachedPost.value.id === currentSlug)
+    (cachedPost.value.slug === decodedCurrentSlug ||
+      decodeSlug(cachedPost.value.slug) === decodedCurrentSlug ||
+      cachedPost.value.id === decodedCurrentSlug)
   ) {
     populateForm(cachedPost.value);
   } else {
-    const { data: post } = await useFetch<any>(`/api/v1/blog/${currentSlug}`, {
+    const { data: post } = await useFetch<any>(`/api/v1/blog/${encodedCurrentSlug}`, {
       baseURL: config.public.originUrl,
       headers,
     });
@@ -200,16 +203,7 @@ function goBack() {
 
 function generateSlug() {
   if (isEdit.value) return;
-  // Support for Arabic and other Unicode characters in slugs
-  const generated = form.title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-
-  // Basic check for slug format during generation
-  form.slug = generated;
+  form.slug = slugify(form.title);
 }
 
 async function savePost() {
@@ -220,6 +214,8 @@ async function savePost() {
   }
 
   let body: any = { ...form };
+  const rawSlug = decodeSlug(form.slug);
+  body.slug = slugify(rawSlug) || rawSlug;
 
   if (isEdit.value) {
     const currentData = JSON.stringify(form);
@@ -248,12 +244,17 @@ async function savePost() {
     }
     noChangesDetected.value = false;
     body = patches;
+    if (body.slug) {
+      const rawEditSlug = decodeSlug(body.slug);
+      body.slug = slugify(rawEditSlug) || rawEditSlug;
+    }
   }
 
   submitting.value = true;
   try {
+    const decodedTarget = decodeSlug(route.params.slug);
     const url = isEdit.value
-      ? `/api/v1/blog/${route.params.slug}`
+      ? `/api/v1/blog/${encodeSlug(decodedTarget)}`
       : "/api/v1/blog";
     const method = isEdit.value ? "PATCH" : "POST";
 
@@ -271,7 +272,8 @@ async function savePost() {
       cachedPost.value = response.data;
     }
 
-    navigateTo(localePath(`/blog/${form.slug}`));
+    const finalSlug = decodeSlug(body.slug || form.slug);
+    navigateTo(localePath(`/blog/${encodeSlug(finalSlug)}`));
   } catch (e: any) {
     toast.error(e.statusMessage || "Failed to save post.");
   } finally {

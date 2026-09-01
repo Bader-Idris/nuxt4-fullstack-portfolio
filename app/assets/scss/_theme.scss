@@ -1,0 +1,144 @@
+@use "./variables" as *;
+
+// --------------------------------------------
+// CSS CUSTOM PROPERTIES FOR THEMES
+// --------------------------------------------
+
+$popupMainColor: #1976d2;
+$popupBubbleTextColor: $popupMainColor;
+$popupBubbleBackgroundColor: #fff;
+$popupMainBackgroundColor: rgba(245, 245, 245, 0.9);
+
+html.dark {
+  color-scheme: dark;
+  // Dark Theme overrides
+  --bg-primary: #{$dark-primary1};
+  --bg-secondary: #{$dark-primary2};
+  --bg-tertiary: #{$dark-primary3};
+  --bg-primary-hovered: #{$dark-primary1-hovered};
+
+  --text-primary: #{$dark-secondary4};
+  --text-secondary: #{$dark-secondary1};
+  --text-link: #{$dark-accent2};
+  --text-inverted: #{$light-secondary4}; // For text on light elements in dark mode
+
+  --accent-primary: #{$dark-accent1};
+  --accent-secondary: #{$dark-accent2};
+  --accent-error: #{$dark-accent3};
+  --accent-warning: #{$dark-accent5}; // $dark-accent5 is yellow, good for warnings
+  --accent-success: #{$dark-accent2}; // $dark-accent2 is green/teal, good for success
+
+  --btn-primary-bg: #{$dark-btn1-bg};
+  --btn-primary-text: #{$dark-btn1-clr};
+  --btn-secondary-bg: #{$dark-btn2-bg};
+  --btn-secondary-text: #{$dark-btn2-clr};
+  --btn-tertiary-bg: #{$dark-btn3-bg};
+  --btn-tertiary-text: #{$dark-btn3-clr};
+  --btn-tertiary-border: #{$dark-lines};
+
+  --lines-color: #{$dark-lines};
+  --gradient-start: #{$dark-gradients1};
+  --gradient-end: #{$dark-gradients2};
+  --code-bg: #{$dark-code-snippets-bg};
+
+  // Variables for ThemeMode component (dark mode)
+  --thememode-toggle-bg: #{$dark-btn2-bg};
+  --thememode-toggle-text: #{$dark-btn2-clr};
+  --thememode-toggle-border: #{$dark-lines};
+  --thememode-toggle-hover-bg: #{$dark-primary1-hovered};
+  --thememode-toggle-hover-border: #{$dark-accent1};
+
+  --thememode-dropdown-bg: #{$dark-primary1};
+  --thememode-dropdown-border: #{$dark-lines};
+  --thememode-dropdown-item-text: #{$dark-secondary4};
+  --thememode-dropdown-item-hover-bg: #{$dark-primary1-hovered};
+  --thememode-dropdown-item-active-bg: #{$dark-primary1-hovered};
+  --thememode-dropdown-item-active-text: #{$dark-accent1};
+
+  /* Scrollbar variables for dark theme */
+  --scrollbar-track: #{$dark-primary2};
+  --scrollbar-thumb: #{$dark-accent1};
+  --scrollbar-thumb-hover: #{$dark-accent5};
+  /* Yellow for hover contrast */
+  --scrollbar-border: #{$dark-lines};
+
+  // Main font family
+  --font-family-main: #{$main-font};
+}
+
+html.light {
+  // for light theme
+  color-scheme: light;
+  --bg-primary: #{$light-primary1};
+  --bg-secondary: #{$light-primary2};
+  --bg-tertiary: #{$light-primary3};
+  --bg-primary-hovered: #{$light-primary1-hovered};
+
+  --text-primary: #{$light-secondary4};
+  --text-secondary: #{$light-secondary1};
+  --text-link: #{$light-accent2};
+  --text-inverted: #{$dark-secondary4}; // For text on dark elements in light mode
+
+  --accent-primary: #{$light-accent1};
+  --accent-secondary: #{$light-accent2};
+  --accent-error: #{$light-accent3};
+  --accent-warning: #{$light-accent4};
+  --accent-success: #{$light-accent5};
+
+  --btn-primary-bg: #{$light-btn1-bg};
+  --btn-primary-text: #{$light-btn1-clr};
+  --btn-secondary-bg: #{$light-btn2-bg};
+  --btn-secondary-text: #{$light-btn2-clr};
+  --btn-tertiary-bg: #{$light-btn3-bg};
+  --btn-tertiary-text: #{$light-btn3-clr};
+  --btn-tertiary-border: #{$light-lines};
+
+  --lines-color: #{$light-lines};
+  --gradient-start: #{$light-gradients1};
+  --gradient-end: #{$light-gradients2};
+  --code-bg: #{$light-code-snippets-bg};
+
+  // Variables for ThemeMode component (light mode)
+  --thememode-toggle-bg: #{$light-btn2-bg};
+  --thememode-toggle-text: #{$light-btn2-clr};
+  --thememode-toggle-border: #{$light-lines};
+  --thememode-toggle-hover-bg: #{$light-primary1-hovered};
+  --thememode-toggle-hover-border: #{$light-accent1};
+
+  --thememode-dropdown-bg: #{$light-primary2};
+  --thememode-dropdown-border: #{$light-lines};
+  --thememode-dropdown-item-text: #{$light-secondary1};
+  --thememode-dropdown-item-hover-bg: #{$light-primary1-hovered};
+  --thememode-dropdown-item-active-bg: #{$light-primary1-hovered};
+  --thememode-dropdown-item-active-text: #{$light-accent1};
+
+  // Font sizes
+  --font-size-headline: #{$headline-size};
+  --font-size-sub-headline: #{$sub-headline-size};
+  --font-size-body: #{$body-text-size};
+  --font-size-labels: #{$labels-size};
+  --font-size-code: #{$code-snippets-size};
+
+  // Main font family
+  --font-family-main: #{$main-font};
+
+  /* Scrollbar variables for light theme */
+  --scrollbar-track: #{$light-primary2};
+  --scrollbar-thumb: #{$light-accent1};
+  --scrollbar-thumb-hover: #{$light-accent4};
+  /* Yellow for hover contrast */
+  --scrollbar-border: #{$light-lines};
+}
+
+:root {
+  --accent-color: #{$accent1}; // Default accent color
+
+  /* Default scrollbar variables (fallback to dark theme values) */
+  --scrollbar-track: #{$dark-primary2};
+  --scrollbar-thumb: #{$dark-accent1};
+  --scrollbar-thumb-hover: #{$dark-accent5};
+  --scrollbar-border: #{$dark-lines};
+
+  // Main font family
+  --font-family-main: #{$main-font};
+}

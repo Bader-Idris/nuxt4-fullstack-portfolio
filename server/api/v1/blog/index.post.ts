@@ -1,12 +1,18 @@
-import { prisma } from "@server/plugins/prisma";
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
 import { syncUserToPrisma } from "@server/utils/prismaSync";
+import { invalidateSitemapCache } from "@server/utils/sitemap";
+import { decodeSlug, slugify } from "@server/utils/slug";
 import { z } from "zod";
 
 const createPostSchema = z.object({
   title: z.string().min(3).max(255),
-  slug: z.string().min(3).max(255).refine(val => /^[\p{L}0-9-]+$/u.test(val), {
-    message: "Slug must be lowercase alphanumeric (including Unicode) with hyphens"
-  }),
+  slug: z
+    .string()
+    .min(1)
+    .max(255)
+    .refine((val) => /^[\p{L}\p{N}\p{M}\s_\-%+]+$/u.test(decodeSlug(val)), {
+      message: "Slug must contain valid letters, numbers, hyphens, or underscores",
+    }),
   content: z.string().optional(),
   published: z.boolean().default(false),
   language: z.enum(["en", "es", "ar"]).default("en"),
@@ -14,17 +20,18 @@ const createPostSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
+  const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
   const user = event.context.user;
-  
-  if (!prisma) {
+
+  if (!db) {
     throw createError({
       statusCode: 500,
       statusMessage: "Database connection not initialized",
     });
   }
 
-  // Only Admin or Editor can create posts (or custom roles if defined)
-  if (!user || (user.role !== 'admin' && user.role !== 'editor')) {
+  // Only Admin or Editor can create posts
+  if (!user || (user.role !== "admin" && user.role !== "editor")) {
     throw createError({
       statusCode: 403,
       statusMessage: "Insufficient permissions to create blog posts",
@@ -41,6 +48,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const postData = validation.data;
+  // Always normalize slug to clean decoded UTF-8 slug format
+  const rawDecoded = decodeSlug(postData.slug);
+  postData.slug = slugify(rawDecoded) || rawDecoded;
 
   try {
     // Ensure user exists in Prisma
@@ -52,7 +62,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const post = await prisma.post.create({
+    const post = await db.post.create({
       data: {
         ...postData,
         authorId: prismaUser.id,
@@ -63,15 +73,17 @@ export default defineEventHandler(async (event) => {
     const redis = event.context.redis;
     if (redis) {
       try {
-        const keys = await redis.keys('blog:list:*');
+        const keys = await redis.keys("blog:list:*");
         if (keys.length > 0) {
           await redis.del(...keys);
-          // console.log("🗑️ Blog list cache invalidated");
         }
       } catch (e) {
         console.warn("⚠️ Failed to invalidate Redis cache:", e);
       }
     }
+
+    // Invalidate sitemap cache so new post immediately shows in sitemaps
+    await invalidateSitemapCache();
 
     return {
       success: true,
@@ -79,7 +91,7 @@ export default defineEventHandler(async (event) => {
       data: post,
     };
   } catch (e: any) {
-    if (e.code === 'P2002') {
+    if (e.code === "P2002") {
       throw createError({
         statusCode: 400,
         statusMessage: "A post with this slug already exists",

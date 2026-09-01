@@ -1,5 +1,6 @@
-import { prisma } from "@server/plugins/prisma";
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
 import { syncUserToPrisma } from "@server/utils/prismaSync";
+import { decodeSlug, getSlugLookupVariants } from "@server/utils/slug";
 import { z } from "zod";
 
 const commentSchema = z.object({
@@ -8,9 +9,10 @@ const commentSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
+  const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
   const user = event.context.user;
-  
-  if (!prisma) {
+
+  if (!db) {
     throw createError({
       statusCode: 500,
       statusMessage: "Database connection not initialized",
@@ -24,8 +26,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const slugParams = getRouterParam(event, 'slug');
-  const slug = Array.isArray(slugParams) ? slugParams.join('/') : slugParams;
+  const rawSlug = getRouterParam(event, "slug");
+  if (!rawSlug) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Slug is required",
+    });
+  }
+
+  const slugVariants = getSlugLookupVariants(rawSlug);
+  const decodedSlug = decodeSlug(rawSlug) || rawSlug;
 
   const body = await readBody(event);
   const validation = commentSchema.safeParse(body);
@@ -38,15 +48,17 @@ export default defineEventHandler(async (event) => {
   const { content, parentId } = validation.data;
 
   try {
-    const post = await prisma.post.findUnique({
-      where: { slug },
-      select: { id: true }
+    const post = await db.post.findFirst({
+      where: {
+        OR: slugVariants.map((slug) => ({ slug })),
+      },
+      select: { id: true },
     });
 
     if (!post) {
       throw createError({
         statusCode: 404,
-        statusMessage: "Post not found",
+        statusMessage: `Post not found: ${decodedSlug}`,
       });
     }
 
@@ -59,7 +71,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const comment = await prisma.comment.create({
+    const comment = await db.comment.create({
       data: {
         content,
         postId: post.id,
@@ -68,9 +80,9 @@ export default defineEventHandler(async (event) => {
       },
       include: {
         author: {
-          select: { name: true }
-        }
-      }
+          select: { name: true },
+        },
+      },
     });
 
     return {
@@ -79,10 +91,10 @@ export default defineEventHandler(async (event) => {
       data: comment,
     };
   } catch (e: any) {
-    console.error("[blog API COMMENT POST] Error:", e.message);
+    console.error(`[blog API COMMENT POST] Error for ${decodedSlug}:`, e.message);
     throw createError({
-      statusCode: 500,
-      statusMessage: "Internal Server Error",
+      statusCode: e.statusCode || 500,
+      statusMessage: e.statusMessage || "Internal Server Error",
     });
   }
 });

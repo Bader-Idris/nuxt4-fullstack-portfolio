@@ -62,6 +62,8 @@ const emit = defineEmits(['comment-added']);
 
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
+import { decodeSlug, encodeSlug } from "~/utils/slug";
+
 const userStore = useUserStore();
 const route = useRoute();
 const config = useRuntimeConfig();
@@ -69,12 +71,18 @@ const config = useRuntimeConfig();
 const newComment = ref('');
 const submitting = ref(false);
 const submittingReply = ref(false);
-const activeReplyId = ref<number | null>(null);
-
-const { data: response, pending, refresh } = await useFetch<any>(() => `/api/v1/blog/${props.postSlug}/comments`);
+const slug = computed(() => decodeSlug(props.postSlug));
+const encodedSlug = computed(() => encodeSlug(props.postSlug));
+const { data: response, pending, refresh } = await useFetch<any>(
+  () => `/api/v1/blog/${encodedSlug.value}/comments`,
+  {
+    key: `comments-${slug.value}`,
+    baseURL: config.public.originUrl,
+  }
+);
 const comments = computed(() => response.value?.data || []);
 
-const STORAGE_KEY = computed(() => `draft_comment_${props.postSlug}`);
+const STORAGE_KEY = computed(() => `draft_comment_${slug.value}`);
 
 // Restore saved draft on mount / slug change
 onMounted(() => {
@@ -109,7 +117,7 @@ async function submitComment(parentId: number | null, content?: string) {
   if (parentId) submittingReply.value = true;
   
   try {
-    await $fetch(`/api/v1/blog/${props.postSlug}/comments`, {
+    await $fetch(`/api/v1/blog/${encodedSlug.value}/comments`, {
       method: 'POST',
       body: { content: commentContent, parentId },
       baseURL: config.public.originUrl

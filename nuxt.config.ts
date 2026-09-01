@@ -26,7 +26,7 @@ const siteUrl = process.env.DOMAIN_NAME;
 export default defineNuxtConfig({
   ssr: isSSR,
   // read this for compatibility https://nitro.build/config#compatibilitydate
-  compatibilityDate: "2026-08-14",
+  compatibilityDate: "2026-09-01",
   devtools: {
     enabled: isDebug,
 
@@ -159,6 +159,24 @@ export default defineNuxtConfig({
         cache: false,
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
+      "/sitemap.xml": {
+        prerender: false,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      },
+      "/sitemap_index.xml": {
+        prerender: false,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      },
+      "/__sitemap__/**": {
+        prerender: false,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       },
       "/socket.io/**": {
@@ -823,6 +841,10 @@ export default defineNuxtConfig({
           href: "https://fonts.gstatic.com",
           crossorigin: "anonymous",
         },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap",
+        },
       ],
     },
   },
@@ -843,6 +865,14 @@ export default defineNuxtConfig({
   },
   fonts: {
     devtools: isDebug,
+    priority: ["local"],
+    providers: {
+      google: false,
+      bunny: false,
+      fontshare: false,
+      fontsource: false,
+      adobe: false,
+    },
     families: [
       { name: "Fira Code", weights: [400, 600, 700], global: true,
         src: [

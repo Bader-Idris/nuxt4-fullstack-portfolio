@@ -1,12 +1,12 @@
-import { prisma } from "@server/plugins/prisma";
-import { z } from "zod";
-
-const slugSchema = z.string().min(1).max(255).refine(val => /^[\p{L}0-9-\/]+$/u.test(val), { message: "Invalid slug format" });
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateSitemapCache } from "@server/utils/sitemap";
+import { decodeSlug, getSlugLookupVariants } from "@server/utils/slug";
 
 export default defineEventHandler(async (event) => {
+  const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
   const user = event.context.user;
   
-  if (!prisma) {
+  if (!db) {
     throw createError({
       statusCode: 500,
       statusMessage: "Database connection not initialized",
@@ -20,28 +20,30 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const slugParams = getRouterParam(event, 'slug');
-  const rawSlug = Array.isArray(slugParams) ? slugParams.join('/') : slugParams;
+  const rawSlug = getRouterParam(event, 'slug');
   
-  const slugValidation = slugSchema.safeParse(rawSlug);
-  if (!slugValidation.success) {
+  if (!rawSlug) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Invalid slug format",
+      statusMessage: "Slug is required",
     });
   }
-  const slug = slugValidation.data;
+
+  const slugVariants = getSlugLookupVariants(rawSlug);
+  const decodedSlug = decodeSlug(rawSlug);
 
   try {
-    const post = await prisma.post.findUnique({
-      where: { slug },
+    const post = await db.post.findFirst({
+      where: {
+        OR: slugVariants.map(slug => ({ slug })),
+      },
       include: { author: true }
     });
 
     if (!post) {
       throw createError({
         statusCode: 404,
-        statusMessage: `Post not found: ${slug}`,
+        statusMessage: `Post not found: ${decodedSlug}`,
       });
     }
 
@@ -56,17 +58,20 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    await prisma.post.update({
+    await db.post.update({
       where: { id: post.id },
       data: { status: 'deleted' },
     });
+
+    // Invalidate sitemap cache on post deletion so it disappears immediately from sitemaps
+    await invalidateSitemapCache();
 
     return {
       success: true,
       message: "Post deleted successfully",
     };
   } catch (e: any) {
-    console.error(`[blog API DELETE] Error deleting ${slug}:`, e.message);
+    console.error(`[blog API DELETE] Error deleting ${decodedSlug}:`, e.message);
     throw createError({
       statusCode: e.statusCode || 500,
       statusMessage: e.statusMessage || 'Internal Server Error',

@@ -1,7 +1,5 @@
-/* 1. Backup: Google Fonts CDN (for web/SSR environments) */
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap");
+/* Primary: Local optimized fonts */
 
-/* 2. Primary: Local optimized fonts (Nuxt Fonts) */
 /* 
    Using relative paths from app/assets/scss/ to public/fonts/ 
    This ensures Vite processes and hashes the assets, which is 

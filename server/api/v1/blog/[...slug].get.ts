@@ -1,32 +1,32 @@
-import { prisma } from "@server/plugins/prisma";
-import { z } from "zod";
-
-const slugSchema = z.string().min(1).max(255).refine(val => /^[\p{L}0-9-\/]+$/u.test(val), { message: "Invalid slug format" });
+import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { decodeSlug, getSlugLookupVariants } from "@server/utils/slug";
 
 export default defineEventHandler(async (event) => {
-  const slugParams = getRouterParam(event, 'slug');
-  const rawSlug = Array.isArray(slugParams) ? slugParams.join('/') : slugParams;
-  
-  if (!prisma) {
+  const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
+
+  if (!db) {
     throw createError({
       statusCode: 500,
       statusMessage: "Database connection not initialized",
     });
   }
 
-  // Validate slug
-  const validation = slugSchema.safeParse(rawSlug);
-  if (!validation.success) {
+  const rawSlug = getRouterParam(event, "slug");
+  if (!rawSlug) {
     throw createError({
       statusCode: 400,
-      statusMessage: validation.error.issues[0].message,
+      statusMessage: "Slug is required",
     });
   }
-  const slug = validation.data;
+
+  const slugVariants = getSlugLookupVariants(rawSlug);
+  const decodedSlug = decodeSlug(rawSlug) || rawSlug;
 
   try {
-    const post = await prisma.post.findUnique({
-      where: { slug },
+    const post = await db.post.findFirst({
+      where: {
+        OR: slugVariants.map((slug) => ({ slug })),
+      },
       include: {
         author: {
           select: {
@@ -34,31 +34,31 @@ export default defineEventHandler(async (event) => {
             mongodbId: true,
             name: true,
             role: true,
-          }
+          },
         },
         _count: {
-          select: { comments: true }
-        }
-      }
+          select: { comments: true },
+        },
+      },
     });
 
     if (!post) {
       throw createError({
         statusCode: 404,
-        statusMessage: `Post not found: ${slug}`,
+        statusMessage: `Post not found: ${decodedSlug}`,
       });
     }
 
     const user = event.context.user;
-    const isAdmin = user?.role === 'admin';
-    const isEditor = user?.role === 'editor';
+    const isAdmin = user?.role === "admin";
+    const isEditor = user?.role === "editor";
     const isAuthor = user && post.author.mongodbId === user.userId;
-    
+
     // Hide deleted posts from regular clients and search engines
-    if (post.status === 'deleted' && !isAdmin && !isEditor) {
+    if (post.status === "deleted" && !isAdmin && !isEditor) {
       throw createError({
         statusCode: 404,
-        statusMessage: `Post not found: ${slug}`,
+        statusMessage: `Post not found: ${decodedSlug}`,
       });
     }
 
@@ -66,16 +66,18 @@ export default defineEventHandler(async (event) => {
     if (!post.published && !isAdmin && !isEditor && !isAuthor) {
       throw createError({
         statusCode: 403,
-        statusMessage: 'You are not authorized to view this unpublished post',
+        statusMessage: "You are not authorized to view this unpublished post",
       });
     }
 
     // Tracking views
     if (post.published) {
-      prisma.post.update({
-        where: { id: post.id },
-        data: { viewCount: { increment: 1 } }
-      }).catch(err => console.error('[blog API] Failed to increment view count:', err));
+      db.post
+        .update({
+          where: { id: post.id },
+          data: { viewCount: { increment: 1 } },
+        })
+        .catch((err: any) => console.error("[blog API] Failed to increment view count:", err));
     }
 
     return {
@@ -84,13 +86,13 @@ export default defineEventHandler(async (event) => {
         ...post,
         commentCount: post._count.comments,
         isAuthor: isAuthor || false,
-      }
+      },
     };
   } catch (e: any) {
-    console.error(`[blog API GET] Error fetching ${slug}:`, e.message);
+    console.error(`[blog API GET] Error fetching ${decodedSlug}:`, e.message);
     throw createError({
       statusCode: e.statusCode || 500,
-      statusMessage: e.statusMessage || 'Internal Server Error',
+      statusMessage: e.statusMessage || "Internal Server Error",
     });
   }
 });

@@ -1,4 +1,5 @@
 import { defineNitroPlugin } from "nitropack/runtime/plugin";
+import { decodeSlug } from "@server/utils/slug";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -20,7 +21,7 @@ function getLastmodFromFile(relativePath: string): string | null {
       const stats = fs.statSync(candidate);
       return stats.mtime.toISOString();
     } catch {
-      // not found, try next
+      // not found, try next candidate
     }
   }
 
@@ -35,19 +36,21 @@ export default defineNitroPlugin((nitroApp) => {
       if (url.lastmod && !url._generated) continue;
 
       try {
-        // URL has to be dynamic with runtimeConfig
         const urlObj = new URL(url.loc, "https://baderidris.com");
         let relativePath = urlObj.pathname.replace(/\/$/, "") || "/";
 
-        // Strip locale prefix: /ar/about → /about
+        // Strip locale prefix: /ar/about → /about, /es/blog → /blog
         relativePath = relativePath.replace(LOCALE_PATTERN, "/").replace(/\/+/g, "/") || "/";
 
-        const lastmod = getLastmodFromFile(relativePath);
+        // Fully decode URL components for file system lookup
+        const decodedRelativePath = decodeSlug(relativePath) || relativePath;
+
+        const lastmod = getLastmodFromFile(decodedRelativePath);
 
         if (lastmod) {
           url.lastmod = lastmod;
         } else if (!url.lastmod) {
-          // Dynamic routes or files not found: fall back to build time
+          // Dynamic routes or files not found: fall back to build/current time
           url.lastmod = new Date().toISOString();
         }
       } catch {
