@@ -70,14 +70,14 @@ export default defineEventHandler(async (event) => {
       id: post.id,
       title: post.title,
       slug: decodeSlug(post.slug),
-      summary: post.summary,
+      summary: post.summary || "",
       published: post.published,
       language: post.language,
-      viewCount: post.viewCount,
+      viewCount: post.viewCount || 0,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
-      commentCount: post._count.comments,
-      author: post.author.name,
+      commentCount: post._count?.comments || 0,
+      author: post.author?.name || "Bader Idris",
     }));
 
     // Save to Redis if available (cache for 5 minutes)
@@ -94,10 +94,10 @@ export default defineEventHandler(async (event) => {
       data: responseData,
     };
   } catch (e: any) {
-    console.error("[blog API GET ALL] Error fetching posts:", e.message);
+    console.error("[blog API GET ALL] Error fetching posts:", e?.message || e);
     throw createError({
-      statusCode: 500,
-      statusMessage: "Internal Server Error",
+      statusCode: e.statusCode || 500,
+      statusMessage: e.statusMessage || e.message || "Internal Server Error",
     });
   }
 });

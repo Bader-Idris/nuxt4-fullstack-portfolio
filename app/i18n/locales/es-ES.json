@@ -167,7 +167,11 @@
     "loginButton": "Iniciar sesión para comentar",
     "reply": "Responder",
     "submitReply": "Enviar respuesta",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "deletePost": "Eliminar publicación",
+    "confirmDelete": "¿Estás seguro de que deseas eliminar esta publicación?",
+    "deleteSuccess": "Publicación eliminada con éxito",
+    "noPosts": "No se encontraron publicaciones."
   },
   "auth": {
     "login": "Iniciar sesión",

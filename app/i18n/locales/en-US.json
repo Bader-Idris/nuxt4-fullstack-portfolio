@@ -173,8 +173,9 @@
     "cancel": "Cancel",
     "deletePost": "Delete Post",
     "confirmDelete": "Are you sure you want to delete this post?",
-    "deleteSuccess": "Post deleted successfully"
-    },
+    "deleteSuccess": "Post deleted successfully",
+    "noPosts": "No posts found."
+  },
     "auth": {
     "login": "Login",
     "register": "Register",

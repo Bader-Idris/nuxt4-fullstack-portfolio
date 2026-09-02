@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
     const user = event.context.user;
     const isAdmin = user?.role === "admin";
     const isEditor = user?.role === "editor";
-    const isAuthor = user && post.author.mongodbId === user.userId;
+    const isAuthor = Boolean(user && post.author?.mongodbId === user.userId);
 
     // Hide deleted posts from regular clients and search engines
     if (post.status === "deleted" && !isAdmin && !isEditor) {
@@ -84,7 +84,11 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: {
         ...post,
-        commentCount: post._count.comments,
+        author: {
+          ...post.author,
+          name: post.author?.name || "Bader Idris",
+        },
+        commentCount: post._count?.comments || 0,
         isAuthor: isAuthor || false,
       },
     };

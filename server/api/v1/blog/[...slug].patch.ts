@@ -66,6 +66,13 @@ export default defineEventHandler(async (event) => {
     updateData.slug = slugify(rawDecoded) || rawDecoded;
   }
 
+  // Keep published boolean and status field aligned
+  if (updateData.published !== undefined && updateData.status === undefined) {
+    updateData.status = updateData.published ? "published" : "draft";
+  } else if (updateData.status !== undefined && updateData.published === undefined) {
+    updateData.published = updateData.status === "published";
+  }
+
   try {
     const post = await db.post.findFirst({
       where: {

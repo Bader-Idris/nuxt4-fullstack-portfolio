@@ -19,10 +19,11 @@ export function getPrismaClient(): PrismaClient | null {
     return global.prisma;
   }
 
-  const psqlUrl = process.env.PSQL_URL || process.env.DATABASE_URL;
-  if (!psqlUrl) {
+  const rawUrl = process.env.PSQL_URL || process.env.DATABASE_URL;
+  if (!rawUrl) {
     return null;
   }
+  const psqlUrl = rawUrl.trim().replace(/^["']|["']$/g, "");
 
   try {
     if (!global.pgPool) {

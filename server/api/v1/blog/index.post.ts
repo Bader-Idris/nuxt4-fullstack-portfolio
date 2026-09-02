@@ -15,6 +15,7 @@ const createPostSchema = z.object({
     }),
   content: z.string().optional(),
   published: z.boolean().default(false),
+  status: z.enum(["published", "draft", "deleted"]).optional(),
   language: z.enum(["en", "es", "ar"]).default("en"),
   summary: z.string().max(500).optional(),
 });
@@ -62,9 +63,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    const finalStatus = postData.status || (postData.published ? "published" : "draft");
+    const finalPublished = finalStatus === "published" ? true : postData.published;
+
     const post = await db.post.create({
       data: {
         ...postData,
+        status: finalStatus,
+        published: finalPublished,
         authorId: prismaUser.id,
       },
     });

@@ -32,8 +32,8 @@ export default defineNitroPlugin((nitroApp) => {
   // @ts-expect-error — nuxt-simple-sitemap hook
   nitroApp.hooks.hook("sitemap:resolved", async (ctx) => {
     for (const url of ctx.urls) {
-      // Skip if lastmod already set by an API source (blog posts, etc.)
-      if (url.lastmod && !url._generated) continue;
+      // Skip if lastmod is already set (e.g. from /api/sitemap/blog or DB)
+      if (url.lastmod) continue;
 
       try {
         const urlObj = new URL(url.loc, "https://baderidris.com");
@@ -49,9 +49,6 @@ export default defineNitroPlugin((nitroApp) => {
 
         if (lastmod) {
           url.lastmod = lastmod;
-        } else if (!url.lastmod) {
-          // Dynamic routes or files not found: fall back to build/current time
-          url.lastmod = new Date().toISOString();
         }
       } catch {
         // Malformed URL — leave lastmod as-is

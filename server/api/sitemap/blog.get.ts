@@ -88,20 +88,25 @@ export default defineEventHandler(async (event) => {
       );
     }
 
-    // Dynamic blog post entries with multilingual & image SEO support
+    // Dynamic blog post entries: route is localized according to post.language and appears ONLY ONCE
     for (const post of posts) {
       if (!post.slug) continue;
       const cleanSlug = decodeSlug(post.slug);
       if (!cleanSlug) continue;
 
-      const lastmodDate = post.updatedAt || post.createdAt || new Date();
+      const lastmodDate = post.updatedAt || post.createdAt;
       const images = extractImagesFromHtml(post.content);
+
+      // Determine language prefix (ar -> /ar/blog/..., es -> /es/blog/..., en/default -> /blog/...)
+      const lang = post.language || "en";
+      const prefix = lang === "ar" ? "/ar" : lang === "es" ? "/es" : "";
+      const loc = `${prefix}/blog/${cleanSlug}`;
 
       routes.push(
         asSitemapUrl({
-          loc: `/blog/${cleanSlug}`,
-          lastmod: new Date(lastmodDate).toISOString(),
-          _i18nTransform: true,
+          loc,
+          lastmod: lastmodDate ? new Date(lastmodDate).toISOString() : new Date().toISOString(),
+          _i18nTransform: false,
           changefreq: "weekly",
           priority: 0.8,
           _sitemap: "posts",

@@ -1052,15 +1052,37 @@ export default defineNuxtConfig({
           '/user/verify-email',
           '/blog',
           '/blog/**',
+          '/ar/blog',
+          '/ar/blog/**',
+          '/es/blog',
+          '/es/blog/**',
           '/blog/create',
           '/blog/edit/**',
+          '/ar/blog/create',
+          '/ar/blog/edit/**',
+          '/es/blog/create',
+          '/es/blog/edit/**',
         ],
       },
       // we can add chunks for big posts: https://nuxtseo.com/docs/sitemap/api/config#chunks
       posts: {
         includeAppSources: false,      // ← disable static page auto-discovery (/blog/create, etc.) for posts sitemap
-        include: ['/blog', '/blog/**'], // ← claim ownership of all blog-related routes
-        exclude: ['/blog/create', '/blog/edit/**'],
+        include: [
+          '/blog',
+          '/blog/**',
+          '/ar/blog',
+          '/ar/blog/**',
+          '/es/blog',
+          '/es/blog/**',
+        ], // ← claim ownership of all blog-related routes across all languages
+        exclude: [
+          '/blog/create',
+          '/blog/edit/**',
+          '/ar/blog/create',
+          '/ar/blog/edit/**',
+          '/es/blog/create',
+          '/es/blog/edit/**',
+        ],
         sources: ['/api/sitemap/blog'],
       }
     },

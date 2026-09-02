@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
 
     await db.post.update({
       where: { id: post.id },
-      data: { status: 'deleted' },
+      data: { status: "deleted", published: false },
     });
 
     // Invalidate sitemap cache on post deletion so it disappears immediately from sitemaps
