@@ -1,58 +1,75 @@
 import { defineNitroPlugin } from "nitropack/runtime/plugin";
-import { decodeSlug } from "@server/utils/slug";
-import fs from "node:fs";
-import path from "node:path";
+import { getPrismaClient } from "@server/plugins/prisma";
 
-const SUPPORTED_LOCALES = ["ar", "es", "en"] as const;
-const LOCALE_PATTERN = new RegExp(`^/(${SUPPORTED_LOCALES.join("|")})(\/|$)`);
-
-function getLastmodFromFile(relativePath: string): string | null {
-  const pagesDir = path.resolve(process.cwd(), "app/pages");
-
-  const normalised = relativePath === "/" ? "/index" : relativePath;
-
-  const candidates = [
-    path.join(pagesDir, `${normalised}.vue`),
-    path.join(pagesDir, normalised, "index.vue"),
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      const stats = fs.statSync(candidate);
-      return stats.mtime.toISOString();
-    } catch {
-      // not found, try next candidate
-    }
-  }
-
-  return null; // dynamic route or missing file — caller decides fallback
-}
-
+/**
+ * Resolves `lastmod` for static sitemap pages using real DB timestamps.
+ *
+ * Blog post routes already carry DB-accurate `lastmod` from `/api/sitemap/blog`.
+ * Static pages (/, /about, /projects, …) previously fell back to filesystem
+ * mtime — which is meaningless after a git clone or deployment and changes
+ * randomly with every build.
+ *
+ * Strategy:
+ *   - Query the most recent `updatedAt` across `posts` and `contents` tables.
+ *   - Use that value as the `lastmod` for every static page that lacks one.
+ *
+ * This is semantically correct: a static page's "last modification" is best
+ * approximated by the last time any content on the site changed in the DB.
+ */
 export default defineNitroPlugin((nitroApp) => {
   // @ts-expect-error — nuxt-simple-sitemap hook
   nitroApp.hooks.hook("sitemap:resolved", async (ctx) => {
-    for (const url of ctx.urls) {
-      // Skip if lastmod is already set (e.g. from /api/sitemap/blog or DB)
-      if (url.lastmod) continue;
+    // Fast-path: if every URL already has lastmod (e.g. all dynamic), skip DB hit.
+    const needsLastmod = ctx.urls.some((u: any) => !u.lastmod);
+    if (!needsLastmod) return;
 
+    // Resolve Prisma — reuse the singleton created by the prisma plugin.
+    const db = getPrismaClient();
+
+    let fallbackLastmod: string | null = null;
+
+    if (db) {
       try {
-        const urlObj = new URL(url.loc, "https://baderidris.com");
-        let relativePath = urlObj.pathname.replace(/\/$/, "") || "/";
+        const [latestPost, latestContent] = await Promise.all([
+          db.post
+            .findFirst({
+              where: { published: true, status: { not: "deleted" } },
+              orderBy: { updatedAt: "desc" },
+              select: { updatedAt: true },
+            })
+            .catch(() => null),
 
-        // Strip locale prefix: /ar/about → /about, /es/blog → /blog
-        relativePath = relativePath.replace(LOCALE_PATTERN, "/").replace(/\/+/g, "/") || "/";
+          db.content
+            .findFirst({
+              orderBy: { updatedAt: "desc" },
+              select: { updatedAt: true },
+            })
+            .catch(() => null),
+        ]);
 
-        // Fully decode URL components for file system lookup
-        const decodedRelativePath = decodeSlug(relativePath) || relativePath;
+        const candidates: Date[] = [];
+        if (latestPost?.updatedAt) candidates.push(new Date(latestPost.updatedAt));
+        if (latestContent?.updatedAt) candidates.push(new Date(latestContent.updatedAt));
 
-        const lastmod = getLastmodFromFile(decodedRelativePath);
-
-        if (lastmod) {
-          url.lastmod = lastmod;
+        if (candidates.length > 0) {
+          const latest = new Date(Math.max(...candidates.map((d) => d.getTime())));
+          fallbackLastmod = latest.toISOString();
         }
-      } catch {
-        // Malformed URL — leave lastmod as-is
+      } catch (e: any) {
+        console.warn("⚠️ [sitemap] DB lastmod query failed:", e?.message || e);
       }
+    }
+
+    if (!fallbackLastmod) {
+      // DB unavailable — skip rather than polluting the sitemap with today's date.
+      console.warn("⚠️ [sitemap] No DB-backed lastmod available; leaving static-page lastmod unset.");
+      return;
+    }
+
+    for (const url of ctx.urls) {
+      // Blog routes already carry precise per-post timestamps from /api/sitemap/blog.
+      if (url.lastmod) continue;
+      url.lastmod = fallbackLastmod;
     }
   });
 });
