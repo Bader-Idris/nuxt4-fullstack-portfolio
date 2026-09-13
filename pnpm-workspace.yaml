@@ -8,6 +8,7 @@ allowBuilds:
   core-js: true
   electron-winstaller: true
   esbuild: true
+  msgpackr-extract: true
   prisma: true
   protobufjs: true
   sharp: true
@@ -33,8 +34,8 @@ minimumReleaseAgeExclude:
   - '@takumi-rs/helpers@1.8.0 || 1.8.1 || 2.0.2 || 2.5.11'
   - electron@42.4.0
   - nuxt-schema-org@6.1.1
-  - '@nuxtjs/seo@5.2.1'
-  - nodemailer@8.0.11
+  - '@nuxtjs/seo@5.2.1 || 5.3.16'
+  - nodemailer@8.0.11 || 10.0.9
   - nuxtseo-shared@5.2.1
   - '@csstools/postcss-alpha-function@2.0.7'
   - '@csstools/postcss-color-function-display-p3-linear@2.0.6'
@@ -89,6 +90,7 @@ minimumReleaseAgeExclude:
   - '@img/sharp-win32-x64@0.35.4'
   - sharp@0.35.4
   - terser@5.51.0
+  - sass@1.104.1
 
 overrides:
   # nuxt-schema-org: 6.0.4
@@ -98,7 +100,7 @@ overrides:
   nitropack: 2.x.x
   nuxi: 3.x.x
   vue: 3.5.40
-  vue-router: 5.2.0
+  vue-router: 5.3.1
   nuxt: 4.5.2
   nuxtseo-shared: 5.3.14
 
