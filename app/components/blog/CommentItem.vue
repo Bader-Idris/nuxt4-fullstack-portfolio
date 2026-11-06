@@ -34,6 +34,8 @@
         <LazyTiptapEditor 
           v-model="localReplyContent" 
           :placeholder="t('blog.addComment', 'Add a reply...')" 
+          variant="comment"
+          min-height="70px"
         />
         <div class="reply-actions">
           <button @click="emit('cancel-reply')" class="cancel-btn">{{ t('blog.cancel', 'Cancel') }}</button>

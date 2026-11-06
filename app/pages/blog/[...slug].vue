@@ -22,6 +22,10 @@
             formatDate(postData.createdAt)
           }}</time>
           <span class="author">By {{ postData.author.name }}</span>
+          <span class="reading-time"
+            ><Icon name="material-symbols:schedule" />
+            {{ postReadingTime }} min read</span
+          >
           <span class="views"
             ><Icon name="material-symbols:visibility" />
             {{ postData.viewCount }}</span
@@ -31,6 +35,25 @@
           }}</span>
         </div>
       </header>
+
+      <!-- Table of Contents for Long Articles -->
+      <nav v-if="postHeadings.length >= 2" class="article-toc" aria-label="Table of contents">
+        <div class="toc-header">
+          <Icon name="material-symbols:format-list-bulleted" />
+          <span>Table of Contents</span>
+        </div>
+        <ul class="toc-list">
+          <li
+            v-for="(h, idx) in postHeadings"
+            :key="idx"
+            :class="`toc-level-${h.level}`"
+          >
+            <a :href="`#${h.id}`" @click.prevent="scrollToHeading(h.id)">
+              {{ h.text }}
+            </a>
+          </li>
+        </ul>
+      </nav>
 
       <BlogContent :content="postData.content" />
 
@@ -227,6 +250,51 @@ watch(
   { immediate: true }
 );
 
+const postWordCount = computed(() => {
+  if (!postData.value?.content) return 0;
+  const stripped = postData.value.content.replace(/<[^>]+>/g, " ").trim();
+  if (!stripped) return 0;
+  return stripped.split(/\s+/).filter(Boolean).length;
+});
+
+const postReadingTime = computed(() => {
+  return Math.max(1, Math.ceil(postWordCount.value / 200));
+});
+
+const postHeadings = computed(() => {
+  if (!postData.value?.content) return [];
+  const regex = /<h([1-3])([^>]*)>(.*?)<\/h\1>/gi;
+  const headings: { level: number; id: string; text: string }[] = [];
+  let match;
+  while ((match = regex.exec(postData.value.content)) !== null) {
+    const level = parseInt(match[1], 10);
+    const attrs = match[2] || "";
+    const idMatch = attrs.match(/id="([^"]*)"/i);
+    const id = idMatch ? idMatch[1] : "";
+    const rawText = match[3] || "";
+    const text = rawText.replace(/<[^>]+>/g, "").trim();
+    if (text) {
+      headings.push({
+        level,
+        id: id || slugify(text),
+        text,
+      });
+    }
+  }
+  return headings;
+});
+
+function scrollToHeading(id: string) {
+  if (typeof document === "undefined") return;
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth" });
+    const url = new URL(window.location.href);
+    url.hash = id;
+    window.history.pushState(null, "", url.toString());
+  }
+}
+
 const { formatDateSeparator } = useDateFormatter();
 function formatDate(date: string) {
   return formatDateSeparator(date);
@@ -378,12 +446,10 @@ if (import.meta.server) {
   margin-bottom: 3rem;
   border-bottom: 1px solid $lines;
   padding-bottom: 1.5rem;
-  position: relative;
 
   .unpublished-badge {
-    position: absolute;
-    top: 0;
-    right: 0;
+    display: inline-block;
+    margin-bottom: 0.75rem;
     background: #ff5722;
     color: white;
     padding: 4px 8px;
@@ -409,6 +475,13 @@ if (import.meta.server) {
     font-size: 0.85rem;
     flex-wrap: wrap;
 
+    .reading-time {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: $accent2;
+    }
+
     .views {
       display: flex;
       align-items: center;
@@ -422,6 +495,57 @@ if (import.meta.server) {
       border-radius: 4px;
       font-size: 0.75rem;
       font-weight: 600;
+    }
+  }
+}
+
+.article-toc {
+  background: rgba($primary3, 0.6);
+  border: 1px solid $lines;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2.5rem;
+
+  .toc-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: $accent1;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    li {
+      &.toc-level-1 {
+        font-weight: 600;
+      }
+      &.toc-level-2 {
+        padding-inline-start: 1rem;
+      }
+      &.toc-level-3 {
+        padding-inline-start: 2rem;
+        font-size: 0.9em;
+      }
+
+      a {
+        color: $secondary1;
+        text-decoration: none;
+        transition: color 0.15s;
+
+        &:hover {
+          color: $accent2;
+          text-decoration: underline;
+        }
+      }
     }
   }
 }

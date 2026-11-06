@@ -86,16 +86,22 @@ watch(() => [props.x, props.y], () => {
   }
 });
 
-// Close on click outside or escape
+// Close on click outside, right-click outside, or escape
+const onKeydown = (e: KeyboardEvent) => {
+  if (e.key === "Escape") close();
+};
+const onWindowContextmenu = () => close();
+
 onMounted(() => {
   window.addEventListener("click", close);
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
+  window.addEventListener("contextmenu", onWindowContextmenu);
+  window.addEventListener("keydown", onKeydown);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("click", close);
+  window.removeEventListener("contextmenu", onWindowContextmenu);
+  window.removeEventListener("keydown", onKeydown);
 });
 </script>
 

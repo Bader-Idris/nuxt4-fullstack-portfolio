@@ -1,7 +1,19 @@
 import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateBlogListCache } from "@server/utils/cacheInvalidation";
 import { invalidateSitemapCache } from "@server/utils/sitemap";
 
 export default defineEventHandler(async (event) => {
+  // Explicitly admin-only (auth middleware already restricts this route to
+  // admin/editor) — available in every environment without extra flags,
+  // and a no-op when the database already has posts.
+  const seedUser = event.context.user;
+  if (!seedUser || seedUser.role !== "admin") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Admin access required",
+    });
+  }
+
   const db = event?.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
 
   if (!db) {
@@ -39,6 +51,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await invalidateSitemapCache();
+  await invalidateBlogListCache(event.context.redis);
 
   return { success: true, message: "Database seeded with 3 posts" };
 });

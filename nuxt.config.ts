@@ -55,6 +55,7 @@ export default defineNuxtConfig({
     compatibilityVersion: 5,
   },
   experimental: {
+    nitroAutoImports: true,
     normalizeComponentNames: true,
     appManifest: true,
     // ssrStreaming: true, // nuxt 4.5+ https://nuxt.com/blog/v4-5#experimental-ssr-streaming

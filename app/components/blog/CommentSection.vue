@@ -8,6 +8,8 @@
           <LazyTiptapEditor 
             v-model="newComment" 
             :placeholder="t('blog.addComment', 'Add a public comment...')" 
+            variant="comment"
+            min-height="80px"
           />
           <button :disabled="submitting || !newComment.trim()" @click="submitComment(null)" >
             <span v-if="submitting" class="spinner"></span>

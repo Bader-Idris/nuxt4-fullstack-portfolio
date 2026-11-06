@@ -63,9 +63,11 @@ export default defineEventHandler(async (event) => {
         `--- Capacitor Social Login Error (${provider}) ---`,
         error,
       );
+      // Log the detail, return a generic message: upstream validator errors
+      // can contain internals we don't want reflected to the client
       throw createError({
         statusCode: 401,
-        statusMessage: error.message || "Social authentication failed",
+        statusMessage: "Social authentication failed",
       });
     }
   }

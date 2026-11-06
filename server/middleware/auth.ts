@@ -1,6 +1,11 @@
 import { isTokenValid, attachCookiesToResponse } from "../utils/jwt";
 import { Token } from "../models/mongo";
+import { ensureWelcomePost } from "../utils/ensureWelcomePost";
 import { getCookie } from "h3";
+
+// One lazy-seed attempt per server process (ensureWelcomePost itself is
+// idempotent and no-ops on a non-empty posts table)
+let welcomePostEnsured = false;
 
 export default defineEventHandler(async (event) => {
   const path = event.path;
@@ -102,5 +107,13 @@ export default defineEventHandler(async (event) => {
         statusMessage: "Insufficient permissions for management actions",
       });
     }
+  }
+
+  // Production bootstrap: the first authorized admin request seeds the
+  // Welcome post (attributed to that admin). Dev seeds at startup instead
+  // via the seed-blog plugin; ensureWelcomePost no-ops if posts exist.
+  if (!welcomePostEnsured && user?.role === "admin" && !import.meta.prerender) {
+    welcomePostEnsured = true;
+    void ensureWelcomePost(user);
   }
 });

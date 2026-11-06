@@ -1,4 +1,5 @@
 import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateBlogListCache } from "@server/utils/cacheInvalidation";
 import { invalidateSitemapCache } from "@server/utils/sitemap";
 import { decodeSlug, getSlugLookupVariants } from "@server/utils/slug";
 
@@ -63,8 +64,9 @@ export default defineEventHandler(async (event) => {
       data: { status: "deleted", published: false },
     });
 
-    // Invalidate sitemap cache on post deletion so it disappears immediately from sitemaps
+    // Invalidate sitemap + list caches so deletions reflect immediately
     await invalidateSitemapCache();
+    await invalidateBlogListCache(event.context.redis);
 
     return {
       success: true,

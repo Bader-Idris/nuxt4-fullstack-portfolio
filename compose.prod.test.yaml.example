@@ -68,8 +68,8 @@ services:
     memswap_limit: 300m
 
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=Bader
-      - MONGO_INITDB_ROOT_PASSWORD=myPassword
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-Bader}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-myPassword}
     volumes:
       - mongo-db:/data/db:rw
       - ./server/config/mongo/mongod.conf:/etc/mongod.conf:ro
@@ -84,15 +84,15 @@ services:
       - redis-data:/data:rw
       - ./server/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     environment:
-      - REDIS_USER=default
-      - REDIS_PASSWORD=redis_password
+      - REDIS_USER=${REDIS_USER:-default}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
     networks:
       - app-network
     privileged: true
     command: >
       sh -c "sysctl vm.overcommit_memory=1 &&
-      redis-server /usr/local/etc/redis/redis.conf --requirepass redis_password &&
-      AUTH default redis_password &&
+      redis-server /usr/local/etc/redis/redis.conf --requirepass $$REDIS_PASSWORD &&
+      AUTH default $$REDIS_PASSWORD &&
       save 60 1"
   # TODO: with binding the data volume we can do backup services as:
   # redis-backup:
@@ -105,9 +105,9 @@ services:
     container_name: psql
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
-      POSTGRES_DB: articles
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-example}
+      POSTGRES_DB: ${POSTGRES_DB:-articles}
     volumes:
       - psql-data-v18:/var/lib/postgresql:rw
       - ./server/config/psql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
@@ -135,13 +135,13 @@ services:
       # --------------------------
       - DB01_TYPE=pgsql
       - DB01_HOST=psql
-      - DB01_USER=postgres
-      - DB01_PASS=example
+      - DB01_USER=${POSTGRES_USER:-postgres}
+      - DB01_PASS=${POSTGRES_PASSWORD:-example}
       - DB01_NAME=articles
       - DB02_TYPE=mongo
       - DB02_HOST=mongo
-      - DB02_USER=Bader
-      - DB02_PASS=myPassword
+      - DB02_USER=${MONGO_INITDB_ROOT_USERNAME:-Bader}
+      - DB02_PASS=${MONGO_INITDB_ROOT_PASSWORD:-myPassword}
       - DB02_NAME=portfolio
       - DB02_AUTH=admin
     volumes:

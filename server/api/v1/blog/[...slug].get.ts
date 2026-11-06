@@ -70,14 +70,28 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Tracking views
+    // Tracking views — throttled per IP (1 view per post per hour) so view
+    // counts can't be trivially inflated by replaying requests
     if (post.published) {
-      db.post
-        .update({
-          where: { id: post.id },
-          data: { viewCount: { increment: 1 } },
-        })
-        .catch((err: any) => console.error("[blog API] Failed to increment view count:", err));
+      const redis = event.context.redis;
+      let shouldCount = true;
+      if (redis) {
+        try {
+          const ip = getRequestIP(event, { xForwardedFor: true }) || "unknown";
+          const viewKey = `blog:view:${post.id}:${ip}`;
+          shouldCount = (await redis.set(viewKey, "1", "EX", 3600, "NX")) === "OK";
+        } catch {
+          // Redis unavailable: keep counting rather than lose view data
+        }
+      }
+      if (shouldCount) {
+        db.post
+          .update({
+            where: { id: post.id },
+            data: { viewCount: { increment: 1 } },
+          })
+          .catch((err: any) => console.error("[blog API] Failed to increment view count:", err));
+      }
     }
 
     return {

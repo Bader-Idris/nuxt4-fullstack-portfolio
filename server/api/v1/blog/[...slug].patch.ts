@@ -1,4 +1,5 @@
 import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateBlogListCache } from "@server/utils/cacheInvalidation";
 import { invalidateSitemapCache } from "@server/utils/sitemap";
 import { decodeSlug, getSlugLookupVariants, slugify } from "@server/utils/slug";
 import { z } from "zod";
@@ -104,8 +105,9 @@ export default defineEventHandler(async (event) => {
       data: updateData,
     });
 
-    // Invalidate sitemap cache on post edit
+    // Invalidate sitemap + list caches so edits (e.g. unpublish) reflect immediately
     await invalidateSitemapCache();
+    await invalidateBlogListCache(event.context.redis);
 
     return {
       success: true,

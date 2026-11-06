@@ -1,7 +1,23 @@
 import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateBlogListCache } from "@server/utils/cacheInvalidation";
 import { invalidateSitemapCache } from "@server/utils/sitemap";
 
 export default defineEventHandler(async (event) => {
+  // This endpoint creates junk data and dumps every post (authors included):
+  // never expose it in production unless explicitly enabled, and admin-only then.
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction && process.env.ENABLE_TEST_ENDPOINT !== "true") {
+    throw createError({ statusCode: 404, statusMessage: "Not Found" });
+  }
+
+  const authUser = event.context.user;
+  if (isProduction && (!authUser || authUser.role !== "admin")) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Admin access required",
+    });
+  }
+
   const db = event.context?.prisma || getPrismaClient() || importedPrisma || (globalThis as any).prisma;
 
   if (!db) {
@@ -38,9 +54,18 @@ export default defineEventHandler(async (event) => {
 
   // Invalidate sitemap cache immediately so newly created post appears in sitemaps
   await invalidateSitemapCache();
+  await invalidateBlogListCache(event.context.redis);
 
   const allPosts = await db.post.findMany({
-    include: { author: true },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      published: true,
+      status: true,
+      createdAt: true,
+      author: { select: { name: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

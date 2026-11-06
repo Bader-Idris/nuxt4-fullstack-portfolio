@@ -132,7 +132,15 @@ const contextMenu = reactive({
   content: ""
 });
 
+// Right-click on desktop, tap on touch devices. A desktop left-click must
+// stay free for native text selection — that was the conflict.
+let coarsePointer = false;
+
 const onResultContext = (event: MouseEvent, text: string) => {
+  if (event.type === "click" && !coarsePointer) return;
+  // Keep ContextMenu's outside-click closer from dismissing the menu that
+  // this very tap just opened
+  event.stopPropagation();
   contextMenu.show = true;
   contextMenu.x = event.clientX;
   contextMenu.y = event.clientY;
@@ -153,6 +161,7 @@ onMounted(() => {
   if (import.meta.client) {
     date.value = new Date();
     formattedDate.value = formatDateShort(date.value).toUpperCase();
+    coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
   }
 });
 
@@ -198,7 +207,7 @@ onBeforeUnmount(() => {
 
       <div class="input-group">
         <label for="_message">{{ t("contact.form.message") }}</label>
-        <TiptapEditor
+        <textarea
           id="_message"
           v-model="message"
           :placeholder="t('contact.form.message_placeholder')"
@@ -256,7 +265,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="set" @contextmenu.prevent="onResultContext($event, message)" @click="onResultContext($event, message)">
             <span class="options">message</span>
-            <p class="message results" style="white-space: pre-line" v-html="message"></p>
+            <p class="message results" style="white-space: pre-line">{{ message }}</p>
           </div>
           <div class="set" @contextmenu.prevent="onResultContext($event, formattedDate)" @click="onResultContext($event, formattedDate)">
             <span class="options">date</span>

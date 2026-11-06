@@ -1,4 +1,5 @@
 import { getPrismaClient, prisma as importedPrisma } from "@server/plugins/prisma";
+import { invalidateBlogListCache } from "@server/utils/cacheInvalidation";
 import { syncUserToPrisma } from "@server/utils/prismaSync";
 import { invalidateSitemapCache } from "@server/utils/sitemap";
 import { decodeSlug, slugify } from "@server/utils/slug";
@@ -76,17 +77,7 @@ export default defineEventHandler(async (event) => {
     });
 
     // Invalidate Redis cache for blog lists
-    const redis = event.context.redis;
-    if (redis) {
-      try {
-        const keys = await redis.keys("blog:list:*");
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
-      } catch (e) {
-        console.warn("⚠️ Failed to invalidate Redis cache:", e);
-      }
-    }
+    await invalidateBlogListCache(event.context.redis);
 
     // Invalidate sitemap cache so new post immediately shows in sitemaps
     await invalidateSitemapCache();
@@ -104,9 +95,10 @@ export default defineEventHandler(async (event) => {
       });
     }
     console.error("[blog API POST] Error creating post:", e);
+    // Don't leak internal error details (e.g. Prisma errors) to clients
     throw createError({
       statusCode: 500,
-      statusMessage: "Internal Server Error: " + (e.message || "Unknown error"),
+      statusMessage: "Internal Server Error",
     });
   }
 });
